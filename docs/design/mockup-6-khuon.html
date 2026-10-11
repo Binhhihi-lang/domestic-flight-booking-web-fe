@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup — Đặt vé máy bay nội địa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<style>
+/* =====================================================================
+   TOKEN — khớp src/_tokens.scss của dự án
+   ===================================================================== */
+:root{
+  --primary:#0770cd; --primary-bright:#0194f3; --primary-hover:#0a57a8; --primary-soft:#eaf7ff;
+  --on-primary:#fff;
+  --accent:#ff5e1f; --accent-soft:#fff1ea; --on-accent:#3d1a08;
+  /* Màu ngữ nghĩa: dùng tông TƯƠI hơn bản cũ (bản cũ dùng chữ nâu/xỉn
+     #7A5400, #8E2024 nhìn nặng). Vẫn giữ >= 4.5:1 để đọc được. */
+  --success:#00a651; --success-soft:#dcfce7; --on-success:#15803d;
+  --warning:#f2a81d; --warning-soft:#fef3c7; --on-warning:#b45309;
+  --danger:#e5484d; --danger-soft:#fee2e2; --on-danger:#b91c1c;
+  --info:#0194f3; --info-soft:#e0f2fe; --on-info:#0369a1;
+  --bg:#f7f9fa; --surface:#fff; --surface-alt:#fbfcfd;
+  /* Nền tối (footer, sidebar, hero overlay) lấy đúng màu footer Traveloka
+     #05285D — navy ngả xanh dương. Bản cũ #0B1524 ngả đen xám nên nhìn khác hẳn. */
+  --dark:#05285d; --dark-2:#083a7d; --dark-line:#1a4a8a;
+  --ink:#03121a; --muted:#687176; --subtle:#6a737a;
+  --line:#dde3e8; --line-soft:#edf1f4;
+  --r-sm:6px; --r:10px; --r-lg:14px; --r-xl:16px;
+  --sh-sm:0 1px 4px rgba(3,18,26,.06); --sh:0 2px 10px rgba(3,18,26,.07); --sh-lg:0 4px 16px rgba(3,18,26,.10);
+  --fast:130ms; --dur:200ms; --ease:cubic-bezier(.4,0,.2,1);
+  --fh:'Be Vietnam Pro',system-ui,sans-serif;
+  --fb:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--fh);margin:0;line-height:1.25}
+a{color:var(--primary-bright);text-decoration:none}
+a:hover{text-decoration:underline}
+.tn{font-variant-numeric:tabular-nums}
+.mi{font-family:'Material Icons';font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;vertical-align:middle}
+
+/* ===================== KHUNG MOCKUP ===================== */
+/* Desktop: sidebar doc ben trai. Mobile: sidebar thanh ngang cuon o tren,
+   de khong chiem mat cho va khong gay tran ngang. */
+.shell{display:grid;grid-template-columns:216px 1fr;min-height:100vh}
+.nav{background:var(--dark);color:#e6edf5;padding:18px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.nav__brand{padding:0 18px 16px;font-family:var(--fh);font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--dark-line);margin-bottom:12px}
+.nav__brand .mi{color:var(--primary-bright);font-size:22px}
+.nav__lbl{padding:14px 18px 6px;font-size:10.5px;font-weight:700;letter-spacing:.8px;color:#6b7f96;text-transform:uppercase}
+.nav__item{display:flex;align-items:center;gap:9px;padding:9px 18px;font-size:13.5px;color:#c3d0de;cursor:pointer;border-left:3px solid transparent;transition:background var(--fast);white-space:nowrap}
+.nav__item:hover{background:var(--dark-2);color:#fff}
+.nav__item.on{background:var(--dark-2);color:#fff;border-left-color:var(--primary-bright);font-weight:600}
+.nav__item .mi{font-size:18px;color:#6b7f96;flex:0 0 auto}
+.nav__item.on .mi{color:var(--primary-bright)}
+.main{padding:0;min-width:0}
+
+/* Mobile: chuyen sidebar thanh dai ngang cuon duoc. */
+@media(max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .nav{position:sticky;top:0;height:auto;padding:0;z-index:60;display:flex;align-items:center;gap:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav__brand{padding:11px 14px;border-bottom:0;border-right:1px solid var(--dark-line);margin-bottom:0;font-size:13.5px;flex:0 0 auto}
+  .nav__lbl{display:none}
+  .nav__item{padding:13px 14px;border-left:0;border-bottom:3px solid transparent;flex:0 0 auto;font-size:13px}
+  .nav__item.on{border-left:0;border-bottom-color:var(--primary-bright);background:transparent}
+}
+.screen{display:none}
+.screen.on{display:block}
+.note{background:#fff8e1;border-left:3px solid var(--warning);padding:10px 16px;font-size:12.5px;color:#7a5400}
+
+/* ===================== THÀNH PHẦN DÙNG CHUNG ===================== */
+.topbar{background:var(--surface);border-bottom:1px solid var(--line);min-height:60px;display:flex;align-items:center;gap:22px;padding:10px 26px;position:sticky;top:0;z-index:20;flex-wrap:wrap}
+.topbar__brand{display:flex;align-items:center;gap:8px;font-family:var(--fh);font-weight:700;font-size:16px;color:var(--primary-bright);white-space:nowrap}
+.topbar__brand .mi{font-size:23px}
+.topbar__nav{display:flex;gap:20px;font-size:14px;overflow-x:auto;scrollbar-width:none}
+.topbar__nav::-webkit-scrollbar{display:none}
+.topbar__nav a{color:var(--ink);font-weight:500;white-space:nowrap}
+.topbar__nav a.on{color:var(--primary-bright);font-weight:600}
+.topbar__sp{flex:1}
+@media(max-width:900px){
+  .topbar{gap:12px;padding:9px 14px}
+  /* Mobile: giau hang link ngang (khong du cho, wrap xuong hang 2 lam topbar
+     cao 146px ~ 1/5 man hinh). Thay bang nut hamburger — dung chuan mobile. */
+  .topbar__nav{display:none}
+  .topbar__menu{display:inline-flex}
+  .topbar__sp{flex:1 1 0}
+}
+.topbar__menu{display:none;border:0;background:transparent;padding:8px;cursor:pointer;border-radius:var(--r)}
+.topbar__menu .mi{font-size:24px;color:var(--ink)}
+@media(max-width:520px){
+  /* Man rat hep: an chu o nut phu, chi giu icon. */
+  .topbar__brand span:not(.mi){font-size:14px}
+  .btn--hide-sm{display:none}
+}
+/* Mobile: topbar phai GON. Nut dang nhap/dang ky chiem 146px chieu cao la qua nhieu
+   (gan 1/5 man hinh dien thoai), nen rut gon chu va giam padding. */
+@media(max-width:900px){
+  .topbar{padding:7px 12px;gap:8px;min-height:52px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .topbar::-webkit-scrollbar{display:none}
+  .topbar .btn--md{padding:8px 12px;font-size:12.5px}
+  .topbar .btn .mi{font-size:19px}
+  .topbar__brand{font-size:14.5px}
+  .topbar__brand .mi{font-size:20px}
+}
+/* Man rat nho: an chu o nut phu, chi giu icon — tranh topbar wrap thanh 2 hang. */
+@media(max-width:430px){
+  /* Man rat nho (iPhone SE 375px). Do duoc: brand 169px + nut Dang nhap 109px
+     + nut Dang ky 68px = 394px > 375px nen nut cuoi bi cat. Thu tu: an chu brand
+     (giu icon), thu hep nut. */
+  .topbar__brand span:not(.mi){display:none}
+  .topbar__brand{gap:0}
+  .topbar .btn--hide-sm{display:none}
+  .topbar .btn--md{padding:8px 9px;font-size:12px}
+  .topbar .btn--md .mi{font-size:18px}
+  .topbar{gap:6px;padding:7px 10px}
+}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1.5px solid transparent;border-radius:var(--r);font-family:var(--fb);font-weight:600;cursor:pointer;transition:all var(--fast) var(--ease);white-space:nowrap}
+.btn--md{padding:10px 18px;font-size:14px}
+.btn--sm{padding:6px 12px;font-size:12.5px}
+.btn--primary{background:var(--primary);color:var(--on-primary)}
+.btn--primary:hover{background:var(--primary-hover)}
+.btn--secondary{background:var(--surface);color:var(--primary);border-color:var(--primary)}
+.btn--secondary:hover{background:var(--primary-soft)}
+.btn--ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn--ghost:hover{background:var(--surface-alt)}
+.btn--text{background:transparent;color:var(--primary-bright);padding:6px 6px}
+.btn--text:hover{text-decoration:underline}
+.btn--danger{background:var(--danger);color:#fff}
+.btn--accent{background:var(--accent);color:var(--on-accent)}
+.btn:disabled{background:var(--line-soft);color:var(--subtle);border-color:var(--line);cursor:not-allowed}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;line-height:1.45;white-space:nowrap}
+.badge__dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.b-success{background:var(--success-soft);color:var(--on-success)}
+.b-warning{background:var(--warning-soft);color:var(--on-warning)}
+.b-danger{background:var(--danger-soft);color:var(--on-danger)}
+.b-info{background:var(--primary-soft);color:#08537f}
+.b-neutral{background:var(--line-soft);color:var(--muted)}
+.b-accent{background:var(--accent-soft);color:#a33407}
+/* overflow:hidden + min-width:0: card la khung bao, neu noi dung con rong (bang)
+   thi khong duoc day chinh no ra ngoai khung trang. */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-sm);overflow:hidden;min-width:0}
+.card__hd{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card__hd h3{font-size:15.5px;font-weight:600}
+.card__bd{padding:18px}
+.card__ft{padding:12px 18px;border-top:1px solid var(--line);background:var(--surface-alt);display:flex;justify-content:flex-end;gap:8px;border-radius:0 0 var(--r-lg) var(--r-lg)}
+.wrap{max-width:1240px;margin:0 auto;padding:22px 26px 60px}
+@media(max-width:900px){.wrap{padding:18px 14px 44px}}
+.page-h{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.page-h h1{font-size:24px;font-weight:600}
+.page-h p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
+@media(max-width:640px){.page-h h1{font-size:20px}}
+.sec-t{font-size:16px;font-weight:600;margin:0 0 3px}
+.sec-s{font-size:13px;color:var(--muted);margin:0 0 14px}
+
+/* field */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;font-weight:600}
+.field input,.field select{font-family:var(--fb);font-size:14.5px;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--surface);outline:none;width:100%;color:var(--ink)}
+.field input::placeholder{color:var(--subtle)}
+.field input:focus,.field select:focus{border-color:var(--primary-bright);box-shadow:0 0 0 3px rgba(1,148,243,.14)}
+.field .hint{font-size:11.5px;color:var(--subtle)}
+.field.err input{border-color:var(--danger)}
+.field.err .hint{color:var(--danger)}
+
+/* table */
+/* Khung cuon ngang cho bang: bang rong 640px, khung nay phai tu cuon thay vi
+   day ca trang tran ngang. min-width:0 bat buoc khi nam trong grid/flex. */
+.tbl-wrap{overflow-x:auto;min-width:0;max-width:100%}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+.tbl th{text-align:left;font-size:11.5px;font-weight:700;color:var(--muted);padding:11px 14px;background:var(--surface-alt);border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:13px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+.tbl tbody tr:hover{background:#f8fbff}
+.tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.tbl .code{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.3px}
+
+/* ===================== P1 — TRANG CHỦ (học theo VietFly) ===================== */
+.hero{position:relative;min-height:340px;display:flex;align-items:flex-start;overflow:hidden}
+.hero__bg{position:absolute;inset:0;background-size:cover;background-position:center 40%}
+.hero__ov{position:absolute;inset:0;background:linear-gradient(100deg,rgba(4,26,48,.86) 0%,rgba(4,26,48,.62) 46%,rgba(4,26,48,.28) 100%)}
+.hero__in{position:relative;z-index:2;max-width:1240px;margin:0 auto;padding:54px 26px 0;width:100%}
+.hero h1{color:#fff;font-size:40px;font-weight:700;letter-spacing:-.8px;max-width:620px;text-shadow:0 2px 12px rgba(0,0,0,.28)}
+.hero p{color:rgba(255,255,255,.92);font-size:16.5px;margin:13px 0 0;max-width:520px;text-shadow:0 1px 8px rgba(0,0,0,.3)}
+@media(max-width:900px){
+  .hero{min-height:250px}
+  .hero__in{padding:34px 14px 0}
+  .hero h1{font-size:27px;letter-spacing:-.4px}
+  .hero p{font-size:14.5px}
+}
+@media(max-width:520px){
+  .hero{min-height:210px}
+  .hero h1{font-size:23px}
+}
+
+.searchbar{max-width:1240px;margin:-58px auto 0;position:relative;z-index:5;padding:0 26px}
+@media(max-width:900px){.searchbar{padding:0 14px;margin-top:-34px}}
+.searchbar__card{background:var(--surface);border-radius:var(--r-xl);box-shadow:0 14px 40px rgba(3,18,26,.18);overflow:hidden}
+.trip{display:flex;gap:8px;padding:18px 20px 0}
+@media(max-width:900px){.trip{padding:14px 14px 0}}
+/* Chip chon loai hanh trinh (Khu hoi / Mot chieu). */
+.chip{border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-family:var(--fb);font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px;cursor:pointer;transition:all var(--fast) var(--ease);white-space:nowrap;min-height:40px}
+.chip:hover{border-color:var(--primary-bright);color:var(--primary)}
+.chip.on{border-color:var(--primary-bright);background:var(--primary-soft);color:var(--primary);font-weight:700}
+.searchform{display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;padding:14px 20px 20px;align-items:end}
+@media(max-width:900px){.searchform{padding:12px 14px 16px}}
+@media(max-width:1100px){.searchform{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.searchform{grid-template-columns:1fr;gap:11px}}
+.swap{position:relative}
+/* Nut doi chieu nam trong o "Diem den". O nay can du cho cho ca chu lan nut,
+   nen dat flex va cho input co min-width:0 de khong bi cat chu. */
+.swap__btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;box-shadow:var(--sh-sm)}
+.swap__btn:hover{background:var(--primary-soft);border-color:var(--primary-bright)}
+.swap__btn .mi{font-size:16px;color:var(--primary-bright)}
+.swap input{padding-right:40px;min-width:0;text-overflow:ellipsis}
+
+/* Khối nội dung trang chủ */
+.home-sec{max-width:1240px;margin:0 auto;padding:38px 26px 0}
+@media(max-width:900px){.home-sec{padding:26px 14px 0}}
+.home-sec h2{font-size:23px;font-weight:700;letter-spacing:-.3px;margin:0 0 4px}
+.home-sec>p{font-size:14px;color:var(--muted);margin:0 0 18px}
+@media(max-width:640px){.home-sec h2{font-size:19px}}
+
+.route-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+@media(max-width:640px){.route-grid{grid-template-columns:1fr 1fr;gap:11px}}
+@media(max-width:420px){.route-grid{grid-template-columns:1fr}}
+.route{border-radius:var(--r-lg);overflow:hidden;background:var(--surface);border:1px solid var(--line);cursor:pointer;transition:transform var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+.route:hover{transform:translateY(-4px);box-shadow:var(--sh-lg)}
+.route__img{height:148px;background-size:cover;background-position:center;position:relative}
+@media(max-width:640px){.route__img{height:112px}}
+.route__bd{padding:14px 16px 16px}
+@media(max-width:640px){.route__bd{padding:11px 12px 13px}}
+.route__nm{font-family:var(--fh);font-size:15.5px;font-weight:700;margin-bottom:4px}
+@media(max-width:640px){.route__nm{font-size:14px}}
+.route__al{font-size:11.5px;color:var(--muted);margin-bottom:11px;line-height:1.45}
+.route__pr{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.route__pr span{font-size:12px;color:var(--muted)}
+.route__pr b{font-family:var(--fh);font-size:19px;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums}
+.route__pr b small{font-size:11.5px;font-weight:600}
+@media(max-width:640px){.route__pr b{font-size:16px}}
+
+.promo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(288px,1fr));gap:16px}
+@media(max-width:640px){.promo-grid{grid-template-columns:1fr}}
+.promo{border-radius:var(--r-lg);overflow:hidden;background:var(--surface);border:1px solid var(--line);cursor:pointer;transition:transform var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
+.promo:hover{transform:translateY(-4px);box-shadow:var(--sh-lg)}
+.promo__img{height:158px;background-size:cover;background-position:center;position:relative}
+.promo__tag{position:absolute;top:12px;left:12px;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:var(--r-sm);color:#fff}
+.promo__bd{padding:15px 16px 16px}
+.promo__nm{font-family:var(--fh);font-size:15.5px;font-weight:700;margin-bottom:6px}
+.promo__ds{font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:11px}
+.promo__lk{font-size:12.5px;font-weight:700;color:var(--primary-bright);display:flex;align-items:center;gap:4px}
+.promo__lk .mi{font-size:16px}
+
+.why{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:40px}
+.why__in{max-width:1240px;margin:0 auto;padding:38px 26px}
+.why__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:16px;margin-top:20px}
+.why__c{padding:18px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface-alt)}
+.why__ic{width:42px;height:42px;border-radius:var(--r);background:var(--primary-soft);display:flex;align-items:center;justify-content:center;margin-bottom:13px}
+.why__ic .mi{font-size:23px;color:var(--primary)}
+.why__c b{display:block;font-family:var(--fh);font-size:15px;font-weight:700;margin-bottom:6px}
+.why__c span{font-size:12.5px;color:var(--muted);line-height:1.6}
+
+.partners{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.partner{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:var(--r);padding:11px 20px;font-size:14px;font-weight:600;background:var(--surface)}
+.partner .mi{font-size:20px}
+
+.cta{max-width:1240px;margin:40px auto 0;padding:0 26px}
+.cta__in{background:linear-gradient(115deg,#0a4d8c,#0770cd 52%,#0194f3);border-radius:var(--r-xl);padding:30px 34px;display:flex;align-items:center;gap:26px;flex-wrap:wrap;position:relative;overflow:hidden}
+.cta__in::after{content:'';position:absolute;inset:0;background:radial-gradient(560px 240px at 88% 10%,rgba(255,255,255,.18),transparent 62%)}
+.cta__tx{position:relative;z-index:1;flex:1;min-width:250px}
+.cta__tx h3{color:#fff;font-size:21px;font-weight:700;margin-bottom:6px}
+.cta__tx p{color:rgba(255,255,255,.88);font-size:13.5px;margin:0;max-width:440px}
+.cta__form{position:relative;z-index:1;display:flex;gap:9px;flex-wrap:wrap}
+.cta__form input{border:0;border-radius:var(--r);padding:12px 15px;font-family:var(--fb);font-size:14px;min-width:236px;outline:none}
+
+.foot{background:var(--dark);color:#c3d0de;margin-top:44px}
+.foot__in{max-width:1240px;margin:0 auto;padding:40px 26px 26px;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:30px}
+@media(max-width:860px){.foot__in{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.foot__in{grid-template-columns:1fr}}
+.foot__b{display:flex;align-items:center;gap:8px;font-family:var(--fh);font-weight:700;font-size:16px;color:#fff;margin-bottom:12px}
+.foot__b .mi{font-size:22px;color:var(--primary-bright)}
+.foot p{font-size:12.5px;line-height:1.7;margin:0 0 14px;color:#8ea3b8}
+.foot h4{color:#fff;font-size:13.5px;font-weight:700;margin:0 0 13px}
+.foot ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.foot li{font-size:12.5px;color:#8ea3b8;display:flex;align-items:center;gap:7px}
+.foot li .mi{font-size:16px;color:#6b7f96}
+.foot__soc{display:flex;gap:8px;margin-top:16px}
+.foot__s{width:32px;height:32px;border-radius:var(--r-sm);background:var(--dark-2);display:flex;align-items:center;justify-content:center}
+.foot__s .mi{font-size:17px;color:#8ea3b8}
+.foot__bot{border-top:1px solid var(--dark-line);padding:16px 26px;max-width:1240px;margin:0 auto;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:12px;color:#6b7f96}
+.foot__pay{display:flex;gap:7px;align-items:center}
+.foot__pay span{background:var(--dark-2);padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600;color:#8ea3b8}
+
+/* ===================== P2 — KẾT QUẢ ===================== */
+.result-wrap{max-width:1240px;margin:0 auto;padding:18px 26px 60px;display:grid;grid-template-columns:262px 1fr;gap:20px;align-items:start}
+/* min-width:0 bat buoc cho con cua grid: mac dinh grid item co min-width:auto
+   nen noi dung rong (hang chuyen bay) se day cot ra ngoai khung -> tran ngang. */
+.result-wrap>*{min-width:0}
+/* Nguong 1080px (khong phai 940px): o 1024px, cot danh sach chi con ~700px
+   sau khi tru bo loc 262px -> hang chuyen bi chat, gio bay tran ra 7px.
+   Chuyen sang 1 cot som hon de bo loc nam tren, danh sach du rong. */
+@media(max-width:1080px){.result-wrap{grid-template-columns:1fr;padding:14px 14px 44px;gap:14px}}
+.filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);position:sticky;top:78px}
+@media(max-width:940px){
+  /* Mobile: bo sticky de bo loc khong chiem man hinh khi cuon. */
+  .filters{position:static}
+}
+.filters__hd{padding:14px 16px;border-bottom:1px solid var(--line);font-family:var(--fh);font-weight:600;font-size:14.5px;display:flex;justify-content:space-between;align-items:center}
+.filters__g{padding:14px 16px;border-bottom:1px solid var(--line-soft)}
+.filters__g:last-child{border-bottom:0}
+.filters__t{font-size:12px;font-weight:700;margin-bottom:9px;color:var(--ink)}
+.opt{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13px;cursor:pointer;color:var(--ink)}
+.opt input{width:15px;height:15px;accent-color:var(--primary);cursor:pointer;flex:0 0 auto}
+.opt__n{margin-left:auto;font-size:11.5px;color:var(--subtle);font-variant-numeric:tabular-nums}
+.sortbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:11px 16px;margin-bottom:12px;flex-wrap:wrap}
+@media(max-width:640px){.sortbar{padding:10px 12px;gap:7px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}.sortbar::-webkit-scrollbar{display:none}}
+.sortbar__t{font-size:13px;color:var(--muted);white-space:nowrap}
+.sortbtn{border:1.5px solid var(--line);background:var(--surface);font-family:var(--fb);font-size:12.5px;font-weight:600;color:var(--muted);padding:6px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.sortbtn.on{border-color:var(--primary-bright);background:var(--primary-soft);color:var(--primary)}
+.fr{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:11px;transition:border-color var(--dur),box-shadow var(--dur)}
+@media(max-width:640px){.fr{padding:13px 13px}}
+.fr:hover{border-color:#c5e0f5;box-shadow:var(--sh)}
+.fr__top{display:grid;grid-template-columns:198px 1fr auto;gap:20px;align-items:center}
+@media(max-width:820px){.fr__top{grid-template-columns:1fr;gap:14px}}
+.fr__al{display:flex;align-items:center;gap:11px;min-width:0}
+.fr__logo{width:42px;height:42px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:13.5px;color:#fff;flex:0 0 auto;letter-spacing:.3px}
+.fr__aln{font-size:13.5px;font-weight:600;line-height:1.3;min-width:0}
+.fr__aln small{display:block;font-size:11.5px;font-weight:500;color:var(--subtle);font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap}
+.fr__times{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;min-width:0}
+.fr__t{font-family:var(--fh);font-size:20px;font-weight:700;letter-spacing:-.3px;font-variant-numeric:tabular-nums;line-height:1.1}
+.fr__ap{font-size:11.5px;color:var(--muted);margin-top:3px}
+.fr__mid{text-align:center;min-width:104px}
+.fr__dur{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:5px}
+.fr__line{height:2px;background:var(--line);border-radius:2px;position:relative}
+.fr__line::before,.fr__line::after{content:'';position:absolute;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--primary-bright)}
+.fr__line::before{left:0}
+.fr__line::after{right:0;background:#fff;border:2px solid var(--primary-bright);top:-4px}
+.fr__line--stop{background:linear-gradient(90deg,var(--primary-bright) 0 42%,var(--line) 42% 58%,var(--primary-bright) 58% 100%)}
+.fr__stop{font-size:11px;color:var(--subtle);margin-top:5px}
+.fr__right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.fr__price{font-family:var(--fh);font-size:22px;font-weight:700;letter-spacing:-.4px;font-variant-numeric:tabular-nums;color:var(--primary)}
+.fr__price small{font-size:12.5px;font-weight:600}
+.fr__per{font-size:11px;color:var(--muted);margin-top:-4px}
+.fr__old{font-size:12px;color:var(--subtle);text-decoration:line-through;font-variant-numeric:tabular-nums}
+.fr__feats{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;padding-top:11px;border-top:1px dashed var(--line)}
+.fr__f{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.fr__f .mi{font-size:15px;color:var(--success)}
+.fr__f--no .mi{color:var(--danger)}
+
+/* ===================== P6 — AUTH ===================== */
+.auth{display:grid;grid-template-columns:1fr 1fr;min-height:100vh}
+.auth__aside{background:linear-gradient(160deg,#0a4d8c,#0770cd 55%,#0194f3);padding:44px 48px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;position:relative;overflow:hidden}
+.auth__aside::after{content:'';position:absolute;inset:0;background:radial-gradient(700px 300px at 75% 15%,rgba(255,255,255,.15),transparent 60%)}
+.auth__brand{display:flex;align-items:center;gap:9px;font-family:var(--fh);font-weight:700;font-size:17px;position:relative;z-index:1}
+.auth__brand .mi{font-size:25px}
+.auth__quote{position:relative;z-index:1}
+.auth__quote h2{font-size:27px;font-weight:700;letter-spacing:-.4px;max-width:420px}
+.auth__quote p{color:rgba(255,255,255,.85);margin:12px 0 0;font-size:14.5px;max-width:380px}
+.auth__stats{display:flex;gap:30px;position:relative;z-index:1}
+.auth__stat b{display:block;font-family:var(--fh);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.auth__stat span{font-size:12px;color:rgba(255,255,255,.8)}
+.auth__form{display:flex;align-items:center;justify-content:center;padding:40px 26px;background:var(--surface)}
+.auth__box{width:100%;max-width:392px}
+.auth__box h1{font-size:25px;font-weight:700;margin-bottom:6px}
+.auth__box>p{font-size:13.5px;color:var(--muted);margin:0 0 26px}
+.auth__fields{display:flex;flex-direction:column;gap:15px}
+.auth__row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px}
+.auth__row label{display:flex;align-items:center;gap:7px;color:var(--muted);cursor:pointer}
+.auth__row input{accent-color:var(--primary);cursor:pointer}
+.auth__sep{display:flex;align-items:center;gap:12px;margin:22px 0;color:var(--subtle);font-size:12px}
+.auth__sep::before,.auth__sep::after{content:'';flex:1;height:1px;background:var(--line)}
+.auth__social{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.auth__soc{display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px solid var(--line);border-radius:var(--r);padding:10px;font-size:13.5px;font-weight:600;cursor:pointer;background:var(--surface);font-family:var(--fb);color:var(--ink)}
+.auth__soc:hover{background:var(--surface-alt)}
+.auth__foot{text-align:center;font-size:13px;color:var(--muted);margin-top:24px}
+/* Mobile/tablet: panel gioi thieu chiem het man hinh va day form xuong duoi
+   -> an di, chi giu form. Form moi la viec nguoi dung can lam.
+   Dat SAU cac rule goc, neu dat truoc se bi ghi de (da tung bi loi nay). */
+@media(max-width:880px){
+  .auth{grid-template-columns:1fr;min-height:auto}
+  .auth__aside{display:none}
+  .auth__form{padding:32px 20px 40px;min-height:auto}
+}
+
+/* ===================== P7 — BẢNG CRUD ===================== */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .grow{flex:1;min-width:210px;max-width:330px}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
+.pager__p{display:flex;gap:5px;align-items:center}
+.pg{min-width:32px;height:32px;border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r-sm);font-family:var(--fb);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pg.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.pg:disabled{opacity:.45;cursor:not-allowed}
+.rowacts{display:flex;gap:5px;justify-content:flex-end}
+
+/* ===================== P9 — DASHBOARD ===================== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 17px;position:relative;overflow:hidden}
+.stat__ic{width:38px;height:38px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;margin-bottom:11px}
+.stat__ic .mi{font-size:21px}
+.stat__l{font-size:12.5px;color:var(--muted);margin-bottom:3px}
+.stat__v{font-family:var(--fh);font-size:26px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.stat__d{font-size:11.5px;margin-top:5px;display:flex;align-items:center;gap:3px}
+.stat__d .mi{font-size:15px}
+.up{color:var(--success)}
+.down{color:var(--danger)}
+.dash-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:start}
+@media(max-width:1000px){.dash-grid{grid-template-columns:1fr}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:14px;margin-bottom:20px}
+@media(max-width:560px){.stats{grid-template-columns:1fr 1fr;gap:10px}}
+@media(max-width:420px){.stats{grid-template-columns:1fr}}
+.bars{display:flex;align-items:flex-end;gap:11px;height:172px;padding:14px 4px 0}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end}
+.bar__b{width:100%;max-width:42px;background:linear-gradient(180deg,var(--primary-bright),var(--primary));border-radius:var(--r-sm) var(--r-sm) 0 0;position:relative;transition:opacity var(--dur)}
+.bar:hover .bar__b{opacity:.82}
+.bar__l{font-size:11px;color:var(--muted)}
+.bar__v{font-size:11px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.rank{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.rank:last-child{border-bottom:0}
+.rank__i{width:26px;height:26px;border-radius:var(--r-sm);background:var(--primary-soft);color:var(--primary);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-variant-numeric:tabular-nums}
+.rank__n{font-size:13.5px;font-weight:600}
+.rank__m{font-size:11.5px;color:var(--muted)}
+.rank__v{margin-left:auto;text-align:right}
+.rank__v b{display:block;font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.rank__v small{font-size:11px;color:var(--muted)}
+
+/* ===================== P11 — TÀI KHOẢN ===================== */
+.acct{display:grid;grid-template-columns:236px 1fr;gap:20px;align-items:start}
+/* min-width:0 cho con cua grid — neu khong, cot phai bi noi dung rong day ra ngoai. */
+.acct>*{min-width:0}
+@media(max-width:900px){.acct{grid-template-columns:1fr;gap:14px}}
+.acct__nav{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;min-width:0}
+.acct__me{padding:17px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center}
+.acct__av{width:46px;height:46px;border-radius:50%;background:linear-gradient(140deg,var(--primary),var(--primary-bright));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:17px;flex:0 0 auto}
+.acct__nm{font-family:var(--fh);font-weight:600;font-size:14.5px}
+.acct__em{font-size:11.5px;color:var(--muted)}
+@media(max-width:900px){
+  /* Mobile: menu tai khoan thanh dai ngang cuon, khong chiem chieu doc. */
+  .acct__nav{display:flex;overflow-x:auto;scrollbar-width:none}
+  .acct__nav::-webkit-scrollbar{display:none}
+  .acct__me{display:none}
+  .acct__lnk{border-left:0;border-bottom:3px solid transparent;flex:0 0 auto;white-space:nowrap;padding:12px 15px}
+  .acct__lnk.on{border-left:0;border-bottom-color:var(--primary)}
+}
+.ticket{display:grid;grid-template-columns:1fr auto;gap:18px;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:12px;background:var(--surface)}
+@media(max-width:720px){
+  .ticket{grid-template-columns:1fr}
+  .ticket__side{border-left:0;border-top:1px dashed var(--line);align-items:stretch;min-width:0}
+}
+.voucher{display:grid;grid-template-columns:104px 1fr auto;gap:0;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:12px;background:var(--surface)}
+@media(max-width:720px){
+  .voucher{grid-template-columns:82px 1fr}
+  .voucher__side{border-left:0;border-top:1px dashed var(--line);grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;min-width:0;padding:12px 14px}
+}
+.wallet{background:linear-gradient(150deg,#0a4d8c,#0770cd 60%,#0194f3);border-radius:var(--r-lg);padding:22px;color:#fff;position:relative;overflow:hidden;margin-bottom:16px}
+@media(max-width:640px){.wallet{padding:18px}.wallet__v{font-size:28px}}
+.acct__av{width:46px;height:46px;border-radius:50%;background:linear-gradient(140deg,var(--primary),var(--primary-bright));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:17px;flex:0 0 auto}
+.acct__nm{font-family:var(--fh);font-weight:600;font-size:14.5px}
+.acct__em{font-size:11.5px;color:var(--muted)}
+.acct__lnk{display:flex;align-items:center;gap:10px;padding:11px 17px;font-size:13.5px;color:var(--ink);border-left:3px solid transparent;cursor:pointer}
+.acct__lnk:hover{background:var(--surface-alt)}
+.acct__lnk.on{background:var(--primary-soft);border-left-color:var(--primary);color:var(--primary);font-weight:600}
+.acct__lnk .mi{font-size:19px;color:var(--muted)}
+.acct__lnk.on .mi{color:var(--primary)}
+.ticket__main{padding:16px 18px}
+.ticket__code{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.5px;margin-bottom:9px}
+.ticket__route{display:flex;align-items:center;gap:14px;margin-bottom:11px}
+.ticket__pt{font-family:var(--fh);font-size:19px;font-weight:700;letter-spacing:-.3px;font-variant-numeric:tabular-nums;line-height:1.1}
+.ticket__pn{font-size:11.5px;color:var(--muted);margin-top:2px}
+.ticket__arrow{flex:1;text-align:center;color:var(--subtle)}
+.ticket__arrow .mi{font-size:19px}
+.ticket__meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.ticket__meta span{display:flex;align-items:center;gap:4px}
+.ticket__meta .mi{font-size:15px}
+.ticket__side{border-left:1px dashed var(--line);padding:16px 18px;display:flex;flex-direction:column;justify-content:center;gap:9px;align-items:flex-end;background:var(--surface-alt);min-width:172px}
+.voucher{display:grid;grid-template-columns:104px 1fr auto;gap:0;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:12px;background:var(--surface)}
+.voucher__left{background:linear-gradient(150deg,var(--primary),var(--primary-bright));color:#fff;padding:16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.voucher__val{font-family:var(--fh);font-size:22px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.voucher__val small{font-size:13px}
+.voucher__type{font-size:10.5px;opacity:.9}
+.voucher__bd{padding:14px 16px}
+.voucher__nm{font-family:var(--fh);font-size:14.5px;font-weight:600;margin-bottom:4px}
+.voucher__ds{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.45}
+.voucher__mt{display:flex;gap:13px;flex-wrap:wrap;font-size:11.5px;color:var(--subtle)}
+.voucher__side{border-left:1px dashed var(--line);padding:14px 16px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:8px;background:var(--surface-alt);min-width:150px}
+.wallet{background:linear-gradient(150deg,#0a4d8c,#0770cd 60%,#0194f3);border-radius:var(--r-lg);padding:22px;color:#fff;position:relative;overflow:hidden;margin-bottom:16px}
+.wallet::after{content:'';position:absolute;inset:0;background:radial-gradient(500px 220px at 85% 12%,rgba(255,255,255,.16),transparent 60%)}
+.wallet__in{position:relative;z-index:1}
+.wallet__l{font-size:12.5px;color:rgba(255,255,255,.85)}
+.wallet__v{font-family:var(--fh);font-size:34px;font-weight:700;letter-spacing:-.8px;font-variant-numeric:tabular-nums;margin:5px 0 0}
+.wallet__hint{font-size:12px;color:rgba(255,255,255,.75);margin-top:7px}
+.tx{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
+.tx:last-child{border-bottom:0}
+.tx__ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.tx__ic .mi{font-size:18px}
+.tx__t{font-size:13.5px;font-weight:600}
+.tx__d{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tx__a{margin-left:auto;text-align:right}
+.tx__a b{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.tx__a small{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ==================== NAV ==================== -->
+<nav class="nav">
+  <div class="nav__brand"><span class="mi">flight_takeoff</span> Mockup 6 khuôn</div>
+
+  <div class="nav__lbl">Khách hàng</div>
+  <div class="nav__item on" data-go="p1"><span class="mi">home</span> P1 · Trang chủ</div>
+  <div class="nav__item" data-go="p2"><span class="mi">search</span> P2 · Kết quả tìm chuyến</div>
+  <div class="nav__item" data-go="p6"><span class="mi">login</span> P6 · Đăng nhập / Đăng ký</div>
+  <div class="nav__item" data-go="p11"><span class="mi">person</span> P11 · Tài khoản khách</div>
+
+  <div class="nav__lbl">Quản trị</div>
+  <div class="nav__item" data-go="p9"><span class="mi">dashboard</span> P9 · Dashboard</div>
+  <div class="nav__item" data-go="p7"><span class="mi">table_rows</span> P7 · Danh sách + bảng</div>
+</nav>
+
+<main class="main">
+
+<!-- ==================== P1 — TRANG CHỦ ==================== -->
+<section class="screen on" id="p1">
+  <div class="topbar">
+    <div class="topbar__brand"><span class="mi">flight_takeoff</span> Vé Máy Bay Nội Địa</div>
+    <div class="topbar__nav">
+      <a href="#" class="on">Trang chủ</a>
+      <a href="#">Đặt vé</a>
+      <a href="#">Tra cứu vé</a>
+      <a href="#">Khuyến mãi</a>
+      <a href="#">Tin tức</a>
+    </div>
+    <div class="topbar__sp"></div>
+    <button class="btn btn--ghost btn--md btn--hide-sm"><span class="mi">notifications_none</span></button>
+    <button class="btn btn--ghost btn--md"><span class="mi">person</span> Đăng nhập</button>
+    <button class="btn btn--primary btn--md">Đăng ký</button>
+  </div>
+
+  <div class="hero">
+    <div class="hero__bg" style="background-image:url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1600&q=80')"></div>
+    <div class="hero__ov"></div>
+    <div class="hero__in">
+      <h1>Đặt vé máy bay nội địa dễ dàng</h1>
+      <p>Tìm chuyến bay phù hợp với lịch trình và ngân sách của bạn</p>
+    </div>
+  </div>
+
+  <div class="searchbar">
+    <div class="searchbar__card">
+      <div class="trip">
+        <button class="chip on">Khứ hồi</button>
+        <button class="chip">Một chiều</button>
+      </div>
+
+      <div class="searchform">
+        <div class="field">
+          <label>Điểm đi</label>
+          <input value="Hà Nội (HAN)" />
+        </div>
+        <div class="field swap">
+          <label>Điểm đến</label>
+          <input value="TP. Hồ Chí Minh (SGN)" />
+          <button class="swap__btn" title="Đổi chiều"><span class="mi">swap_horiz</span></button>
+        </div>
+        <div class="field">
+          <label>Ngày đi</label>
+          <input value="15/10/2026" />
+        </div>
+        <div class="field">
+          <label>Ngày về</label>
+          <input value="20/10/2026" />
+        </div>
+        <button class="btn btn--primary btn--md" style="height:46px;padding:0 28px">
+          <span class="mi">search</span> Tìm chuyến bay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tuyến bay phổ biến -->
+  <div class="home-sec">
+    <h2>Tuyến bay phổ biến</h2>
+    <p>Khám phá các hành trình được lựa chọn nhiều nhất</p>
+    <div class="route-grid">
+      <div class="route">
+        <div class="route__img" style="background-image:url('https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600&q=80')"></div>
+        <div class="route__bd">
+          <div class="route__nm">Hà Nội → TP. HCM</div>
+          <div class="route__al">Vietnam Airlines, Vietjet, Bamboo</div>
+          <div class="route__pr"><span>Thời gian: 2h 10m</span><b>1.290.000<small>₫</small></b></div>
+        </div>
+      </div>
+      <div class="route">
+        <div class="route__img" style="background-image:url('https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&q=80')"></div>
+        <div class="route__bd">
+          <div class="route__nm">Hà Nội → Đà Nẵng</div>
+          <div class="route__al">Vietnam Airlines, Vietjet, Bamboo</div>
+          <div class="route__pr"><span>Thời gian: 1h 25m</span><b>890.000<small>₫</small></b></div>
+        </div>
+      </div>
+      <div class="route">
+        <div class="route__img" style="background-image:url('https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=600&q=80')"></div>
+        <div class="route__bd">
+          <div class="route__nm">TP. HCM → Phú Quốc</div>
+          <div class="route__al">Vietjet, Bamboo, Vietravel</div>
+          <div class="route__pr"><span>Thời gian: 1h 05m</span><b>690.000<small>₫</small></b></div>
+        </div>
+      </div>
+      <div class="route">
+        <div class="route__img" style="background-image:url('https://images.unsplash.com/photo-1528181304800-259b08848526?w=600&q=80')"></div>
+        <div class="route__bd">
+          <div class="route__nm">Hà Nội → Nha Trang</div>
+          <div class="route__al">Vietnam Airlines, Vietjet, Bamboo</div>
+          <div class="route__pr"><span>Thời gian: 1h 50m</span><b>1.090.000<small>₫</small></b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ưu đãi -->
+  <div class="home-sec">
+    <h2>Ưu đãi hấp dẫn</h2>
+    <p>Săn ngay vé rẻ với các chương trình khuyến mãi độc quyền</p>
+    <div class="promo-grid">
+      <div class="promo">
+        <div class="promo__img" style="background-image:url('https://images.unsplash.com/photo-1528127269322-539801943592?w=700&q=80')">
+          <span class="promo__tag" style="background:var(--danger)">Giảm 20%</span>
+        </div>
+        <div class="promo__bd">
+          <div class="promo__nm">Đà Lạt Mùa Sương Mù</div>
+          <div class="promo__ds">Nhập mã <b>DALAT20</b> giảm ngay 20% giá vé trực tiếp khi đặt vé khứ hồi. Áp dụng đến hết 15/11.</div>
+          <div class="promo__lk">Xem chi tiết <span class="mi">arrow_forward</span></div>
+        </div>
+      </div>
+      <div class="promo">
+        <div class="promo__img" style="background-image:url('https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=700&q=80')">
+          <span class="promo__tag" style="background:var(--primary-bright)">Giá sốc</span>
+        </div>
+        <div class="promo__bd">
+          <div class="promo__nm">Hội An Hoài Cổ</div>
+          <div class="promo__ds">Vé bay Hà Nội – Đà Nẵng chỉ từ 499K (chưa thuế phí). Số lượng có hạn cho chuyến bay sáng sớm.</div>
+          <div class="promo__lk">Xem chi tiết <span class="mi">arrow_forward</span></div>
+        </div>
+      </div>
+      <div class="promo">
+        <div class="promo__img" style="background-image:url('https://images.unsplash.com/photo-1528181304800-259b08848526?w=700&q=80')">
+          <span class="promo__tag" style="background:var(--accent)">Đồng giá</span>
+        </div>
+        <div class="promo__bd">
+          <div class="promo__nm">Bay Đồng Giá 99K</div>
+          <div class="promo__ds">Mở bán hàng ngàn vé đồng giá 99K toàn mạng bay nội địa vào mỗi thứ 5 hàng tuần. Đặt ngay kẻo lỡ!</div>
+          <div class="promo__lk">Xem chi tiết <span class="mi">arrow_forward</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vì sao chọn -->
+  <div class="why">
+    <div class="why__in">
+      <h2 style="font-size:23px;font-weight:700;margin:0 0 4px">Tại sao chọn chúng tôi?</h2>
+      <p style="font-size:14px;color:var(--muted);margin:0">Cam kết mang lại trải nghiệm đặt vé nội địa tốt nhất cho khách hàng</p>
+      <div class="why__grid">
+        <div class="why__c">
+          <div class="why__ic"><span class="mi">sell</span></div>
+          <b>Giá tốt nhất</b>
+          <span>Cam kết giá vé máy bay nội địa rẻ nhất, thường xuyên có nhiều chương trình khuyến mãi hấp dẫn mỗi tuần.</span>
+        </div>
+        <div class="why__c">
+          <div class="why__ic"><span class="mi">schedule</span></div>
+          <b>Đặt vé nhanh chóng</b>
+          <span>Hệ thống đặt vé tự động, giúp hoàn tất giao dịch và nhận vé điện tử chỉ trong 3 phút ngắn ngủi.</span>
+        </div>
+        <div class="why__c">
+          <div class="why__ic"><span class="mi">headset_mic</span></div>
+          <b>Hỗ trợ 24/7</b>
+          <span>Đội ngũ chăm sóc khách hàng chuyên nghiệp, luôn sẵn sàng giải đáp và xử lý mọi yêu cầu hoàn vé bất kể ngày đêm.</span>
+        </div>
+        <div class="why__c">
+          <div class="why__ic"><span class="mi">lock</span></div>
+          <b>Thanh toán an toàn</b>
+          <span>Bảo mật tuyệt đối thông tin thanh toán của khách hàng nhờ hệ thống mã hóa và cổng giao dịch an toàn nhất.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Đối tác -->
+  <div class="home-sec" style="text-align:center">
+    <h2 style="text-align:center">Đối tác hàng không</h2>
+    <p style="text-align:center">Hợp tác với 6 hãng bay nội địa lớn nhất Việt Nam</p>
+    <div class="partners">
+      <div class="partner"><span class="mi" style="color:#0b4fa8">flight</span> Vietnam Airlines</div>
+      <div class="partner"><span class="mi" style="color:#ed1b24">flight</span> Vietjet Air</div>
+      <div class="partner"><span class="mi" style="color:#0f8a4d">flight</span> Bamboo Airways</div>
+      <div class="partner"><span class="mi" style="color:#e8a33d">flight</span> Vietravel Airlines</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <div class="cta__in">
+      <div class="cta__tx">
+        <h3>Đăng ký nhận ưu đãi</h3>
+        <p>Nhận thông tin khuyến mãi sớm nhất và mã giảm giá độc quyền qua hộp thư điện tử của bạn hàng tuần.</p>
+      </div>
+      <div class="cta__form">
+        <input placeholder="Nhập email của bạn..." />
+        <button class="btn btn--md" style="background:#fff;color:var(--primary)">Đăng ký</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="foot">
+    <div class="foot__in">
+      <div>
+        <div class="foot__b"><span class="mi">flight_takeoff</span> Vé Máy Bay Nội Địa</div>
+        <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+        <div class="foot__soc">
+          <div class="foot__s"><span class="mi">facebook</span></div>
+          <div class="foot__s"><span class="mi">photo_camera</span></div>
+          <div class="foot__s"><span class="mi">play_circle</span></div>
+          <div class="foot__s"><span class="mi">chat</span></div>
+        </div>
+      </div>
+      <div>
+        <h4>Hỗ trợ</h4>
+        <ul>
+          <li>Hướng dẫn đặt vé</li>
+          <li>Chính sách hoàn vé</li>
+          <li>Câu hỏi thường gặp</li>
+          <li>Liên hệ hỗ trợ</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Khám phá</h4>
+        <ul>
+          <li>Điểm đến phổ biến</li>
+          <li>Cẩm nang du lịch</li>
+          <li>Ứng dụng di động</li>
+          <li>Khách hàng thân thiết</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Liên hệ</h4>
+        <ul>
+          <li><span class="mi">call</span> 1900 1234</li>
+          <li><span class="mi">mail</span> support@vedi.local</li>
+          <li><span class="mi">place</span> Hoàn Kiếm, Hà Nội</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot__bot">
+      <span>© 2026 Vé Máy Bay Nội Địa. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+      <div class="foot__pay">
+        <span>VISA</span><span>Napas</span><span>MoMo</span>
+      </div>
+    </div>
+  </footer>
+</section>
+
+<!-- ==================== P2 — KẾT QUẢ TÌM CHUYẾN ==================== -->
+<section class="screen" id="p2">
+  <div class="topbar">
+    <div class="topbar__brand"><span class="mi">flight_takeoff</span> Vé Máy Bay Nội Địa</div>
+    <div class="topbar__nav"><a href="#">Trang chủ</a><a href="#">Khuyến mãi</a><a href="#">Tin tức</a></div>
+    <div class="topbar__sp"></div>
+    <button class="btn btn--ghost btn--md"><span class="mi">person</span> Đăng nhập</button>
+  </div>
+
+  <div class="note">
+    <b>Ghi chú thiết kế:</b> đây là khuôn dày dữ liệu nhất. Mỗi hàng chuyến phải cho thấy ngay: giờ bay, thời lượng, số điểm dừng, hành lý, điều kiện hoàn vé, số ghế còn lại, giá.
+  </div>
+
+  <div class="wrap" style="padding-top:16px">
+    <div class="page-h">
+      <div>
+        <h1>Hà Nội → Đà Nẵng</h1>
+        <p>Thứ Bảy, 15/11/2026 · 1 người lớn · Phổ thông · <b style="color:var(--ink)">24 chuyến bay</b></p>
+      </div>
+      <button class="btn btn--ghost btn--md"><span class="mi">tune</span> Sửa tìm kiếm</button>
+    </div>
+  </div>
+
+  <div class="result-wrap" style="padding-top:0">
+    <!-- Bộ lọc -->
+    <aside class="filters">
+      <div class="filters__hd">Bộ lọc <button class="btn btn--text btn--sm">Xóa hết</button></div>
+
+      <div class="filters__g">
+        <div class="filters__t">Hãng hàng không</div>
+        <label class="opt"><input type="checkbox" checked /> Vietnam Airlines <span class="opt__n">8</span></label>
+        <label class="opt"><input type="checkbox" checked /> Vietjet Air <span class="opt__n">7</span></label>
+        <label class="opt"><input type="checkbox" /> Bamboo Airways <span class="opt__n">5</span></label>
+        <label class="opt"><input type="checkbox" /> Vietravel Airlines <span class="opt__n">4</span></label>
+      </div>
+
+      <div class="filters__g">
+        <div class="filters__t">Giờ khởi hành</div>
+        <label class="opt"><input type="checkbox" /> Sáng sớm (00:00–05:59) <span class="opt__n">3</span></label>
+        <label class="opt"><input type="checkbox" checked /> Sáng (06:00–11:59) <span class="opt__n">9</span></label>
+        <label class="opt"><input type="checkbox" checked /> Chiều (12:00–17:59) <span class="opt__n">8</span></label>
+        <label class="opt"><input type="checkbox" /> Tối (18:00–23:59) <span class="opt__n">4</span></label>
+      </div>
+
+      <div class="filters__g">
+        <div class="filters__t">Điểm dừng</div>
+        <label class="opt"><input type="radio" name="st" checked /> Bay thẳng <span class="opt__n">17</span></label>
+        <label class="opt"><input type="radio" name="st" /> 1 điểm dừng <span class="opt__n">7</span></label>
+      </div>
+
+      <div class="filters__g">
+        <div class="filters__t">Tiện ích</div>
+        <label class="opt"><input type="checkbox" /> Có hành lý ký gửi</label>
+        <label class="opt"><input type="checkbox" /> Được hoàn vé</label>
+        <label class="opt"><input type="checkbox" /> Được đổi ngày</label>
+      </div>
+
+      <div class="filters__g">
+        <div class="filters__t">Khoảng giá</div>
+        <input type="range" style="width:100%;accent-color:var(--primary)" />
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:5px" class="tn">
+          <span>760.000₫</span><span>2.400.000₫</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Danh sách -->
+    <div>
+      <div class="sortbar">
+        <span class="sortbar__t">Sắp xếp:</span>
+        <button class="sortbtn on">Rẻ nhất</button>
+        <button class="sortbtn">Nhanh nhất</button>
+        <button class="sortbtn">Sớm nhất</button>
+        <button class="sortbtn">Muộn nhất</button>
+        <div style="flex:1"></div>
+        <span style="font-size:12.5px;color:var(--muted)" class="tn">24 kết quả</span>
+      </div>
+
+      <!-- Row 1 -->
+      <div class="fr">
+        <div class="fr__top">
+          <div class="fr__al">
+            <div class="fr__logo" style="background:#0b4fa8">VN</div>
+            <div class="fr__aln">Vietnam Airlines<small>VN 165 · Airbus A321</small></div>
+          </div>
+          <div class="fr__times">
+            <div><div class="fr__t">06:15</div><div class="fr__ap">Nội Bài (HAN)</div></div>
+            <div class="fr__mid">
+              <div class="fr__dur">1h 25m</div>
+              <div class="fr__line"></div>
+              <div class="fr__stop">Bay thẳng</div>
+            </div>
+            <div style="text-align:right"><div class="fr__t">07:40</div><div class="fr__ap">Đà Nẵng (DAD)</div></div>
+          </div>
+          <div class="fr__right">
+            <span class="badge b-warning"><span class="badge__dot"></span>Còn 4 ghế</span>
+            <div class="fr__price">890.000<small>₫</small></div>
+            <div class="fr__per">mỗi khách</div>
+            <button class="btn btn--primary btn--sm" style="width:100%">Chọn</button>
+          </div>
+        </div>
+        <div class="fr__feats">
+          <span class="fr__f"><span class="mi">check_circle</span> 23kg ký gửi</span>
+          <span class="fr__f"><span class="mi">check_circle</span> 7kg xách tay</span>
+          <span class="fr__f"><span class="mi">check_circle</span> Hoàn vé trước 24h</span>
+          <span class="fr__f"><span class="mi">check_circle</span> Đổi ngày</span>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="fr">
+        <div class="fr__top">
+          <div class="fr__al">
+            <div class="fr__logo" style="background:#ed1b24">VJ</div>
+            <div class="fr__aln">Vietjet Air<small>VJ 507 · Airbus A320</small></div>
+          </div>
+          <div class="fr__times">
+            <div><div class="fr__t">07:20</div><div class="fr__ap">Nội Bài (HAN)</div></div>
+            <div class="fr__mid">
+              <div class="fr__dur">1h 30m</div>
+              <div class="fr__line"></div>
+              <div class="fr__stop">Bay thẳng</div>
+            </div>
+            <div style="text-align:right"><div class="fr__t">08:50</div><div class="fr__ap">Đà Nẵng (DAD)</div></div>
+          </div>
+          <div class="fr__right">
+            <span class="badge b-accent"><span class="badge__dot"></span>Giá tốt nhất</span>
+            <div class="fr__old tn">890.000₫</div>
+            <div class="fr__price" style="color:var(--accent)">760.000<small>₫</small></div>
+            <div class="fr__per">mỗi khách</div>
+            <button class="btn btn--primary btn--sm" style="width:100%">Chọn</button>
+          </div>
+        </div>
+        <div class="fr__feats">
+          <span class="fr__f"><span class="mi">check_circle</span> 20kg ký gửi</span>
+          <span class="fr__f"><span class="mi">check_circle</span> 7kg xách tay</span>
+          <span class="fr__f fr__f--no"><span class="mi">cancel</span> Không hoàn vé</span>
+        </div>
+      </div>
+
+      <!-- Row 3 — có điểm dừng -->
+      <div class="fr">
+        <div class="fr__top">
+          <div class="fr__al">
+            <div class="fr__logo" style="background:#0f8a4d">QH</div>
+            <div class="fr__aln">Bamboo Airways<small>QH 205 · Airbus A321</small></div>
+          </div>
+          <div class="fr__times">
+            <div><div class="fr__t">13:05</div><div class="fr__ap">Nội Bài (HAN)</div></div>
+            <div class="fr__mid">
+              <div class="fr__dur">4h 35m</div>
+              <div class="fr__line fr__line--stop"></div>
+              <div class="fr__stop">1 điểm dừng · Đà Nẵng</div>
+            </div>
+            <div style="text-align:right"><div class="fr__t">17:40</div><div class="fr__ap">Đà Nẵng (DAD)</div></div>
+          </div>
+          <div class="fr__right">
+            <div class="fr__price">1.050.000<small>₫</small></div>
+            <div class="fr__per">mỗi khách</div>
+            <button class="btn btn--secondary btn--sm" style="width:100%">Chọn</button>
+          </div>
+        </div>
+        <div class="fr__feats">
+          <span class="fr__f"><span class="mi">check_circle</span> 20kg ký gửi</span>
+          <span class="fr__f"><span class="mi">check_circle</span> Suất ăn nóng</span>
+          <span class="fr__f"><span class="mi">check_circle</span> Hoàn vé trước 48h</span>
+        </div>
+      </div>
+
+      <!-- Row 4 -->
+      <div class="fr">
+        <div class="fr__top">
+          <div class="fr__al">
+            <div class="fr__logo" style="background:#0b4fa8">VN</div>
+            <div class="fr__aln">Vietnam Airlines<small>VN 173 · Boeing 787-9</small></div>
+          </div>
+          <div class="fr__times">
+            <div><div class="fr__t">18:30</div><div class="fr__ap">Nội Bài (HAN)</div></div>
+            <div class="fr__mid">
+              <div class="fr__dur">1h 25m</div>
+              <div class="fr__line"></div>
+              <div class="fr__stop">Bay thẳng</div>
+            </div>
+            <div style="text-align:right"><div class="fr__t">19:55</div><div class="fr__ap">Đà Nẵng (DAD)</div></div>
+          </div>
+          <div class="fr__right">
+            <span class="badge b-success"><span class="badge__dot"></span>Còn nhiều ghế</span>
+            <div class="fr__price">1.240.000<small>₫</small></div>
+            <div class="fr__per">mỗi khách</div>
+            <button class="btn btn--primary btn--sm" style="width:100%">Chọn</button>
+          </div>
+        </div>
+        <div class="fr__feats">
+          <span class="fr__f"><span class="mi">check_circle</span> 23kg ký gửi</span>
+          <span class="fr__f"><span class="mi">check_circle</span> Suất ăn nóng</span>
+          <span class="fr__f"><span class="mi">check_circle</span> Hoàn vé trước 24h</span>
+          <span class="fr__f"><span class="mi">check_circle</span> Đổi ngày</span>
+        </div>
+      </div>
+
+      <!-- Row 5 — hết chỗ -->
+      <div class="fr" style="opacity:.62">
+        <div class="fr__top">
+          <div class="fr__al">
+            <div class="fr__logo" style="background:#6b7f96">VU</div>
+            <div class="fr__aln">Vietravel Airlines<small>VU 305 · Airbus A321</small></div>
+          </div>
+          <div class="fr__times">
+            <div><div class="fr__t">21:10</div><div class="fr__ap">Nội Bài (HAN)</div></div>
+            <div class="fr__mid">
+              <div class="fr__dur">1h 30m</div>
+              <div class="fr__line"></div>
+              <div class="fr__stop">Bay thẳng</div>
+            </div>
+            <div style="text-align:right"><div class="fr__t">22:40</div><div class="fr__ap">Đà Nẵng (DAD)</div></div>
+          </div>
+          <div class="fr__right">
+            <span class="badge b-danger"><span class="badge__dot"></span>Hết chỗ</span>
+            <div class="fr__price" style="color:var(--subtle)">1.180.000<small>₫</small></div>
+            <button class="btn btn--sm" style="width:100%" disabled>Hết chỗ</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:center;margin-top:18px">
+        <button class="btn btn--ghost btn--md"><span class="mi">expand_more</span> Xem thêm 19 chuyến</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== P6 — ĐĂNG NHẬP / ĐĂNG KÝ ==================== -->
+<section class="screen" id="p6">
+  <div class="auth">
+    <aside class="auth__aside">
+      <div class="auth__brand"><span class="mi">flight_takeoff</span> Vé Máy Bay Nội Địa</div>
+
+      <div class="auth__quote">
+        <h2>Đăng nhập để đặt vé và quản lý chuyến đi của bạn</h2>
+        <p>Theo dõi booking, nhận vé điện tử, và dùng voucher đã nhận ngay khi thanh toán.</p>
+      </div>
+
+      <div class="auth__stats">
+        <div class="auth__stat"><b>6</b><span>hãng hàng không</span></div>
+        <div class="auth__stat"><b>32</b><span>đường bay nội địa</span></div>
+        <div class="auth__stat"><b>24/7</b><span>hỗ trợ khách hàng</span></div>
+      </div>
+    </aside>
+
+    <div class="auth__form">
+      <div class="auth__box">
+        <h1>Đăng nhập</h1>
+        <p>Chào mừng trở lại. Nhập thông tin tài khoản của bạn.</p>
+
+        <div class="auth__fields">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" value="customer@demo.local" />
+          </div>
+
+          <div class="field">
+            <label>Mật khẩu</label>
+            <input type="password" value="12345678" />
+          </div>
+
+          <div class="auth__row">
+            <label><input type="checkbox" checked /> Ghi nhớ đăng nhập</label>
+            <a href="#">Quên mật khẩu?</a>
+          </div>
+
+          <button class="btn btn--primary btn--md" style="width:100%;padding:12px">Đăng nhập</button>
+        </div>
+
+        <div class="auth__sep">hoặc tiếp tục với</div>
+
+        <div class="auth__social">
+          <button class="auth__soc"><span class="mi">mail</span> Google</button>
+          <button class="auth__soc"><span class="mi">phone_iphone</span> Số điện thoại</button>
+        </div>
+
+        <p class="auth__foot">Chưa có tài khoản? <a href="#">Đăng ký ngay</a></p>
+
+        <div style="margin-top:26px;padding:13px 15px;background:var(--primary-soft);border-radius:var(--r);border-left:3px solid var(--primary-bright)">
+          <div style="font-size:12px;font-weight:700;color:#08537f;margin-bottom:5px">Tài khoản demo (mock)</div>
+          <div style="font-size:12px;color:#08537f;line-height:1.6" class="tn">
+            admin@demo.local · staff@demo.local · customer@demo.local<br />
+            Mật khẩu: <b>12345678</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Biến thể: form đăng ký + trạng thái lỗi -->
+  <div style="padding:40px 26px;background:var(--surface);border-top:1px solid var(--line)">
+    <div style="max-width:1240px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:26px">
+      <div>
+        <h2 class="sec-t">Biến thể — Đăng ký</h2>
+        <p class="sec-s">Cùng khuôn, thêm ô họ tên và điều khoản</p>
+        <div class="card"><div class="card__bd">
+          <div class="auth__fields">
+            <div class="field"><label>Họ và tên</label><input value="Nguyễn Minh Anh" /></div>
+            <div class="field"><label>Email</label><input type="email" value="minhanh@example.com" /></div>
+            <div class="field"><label>Số điện thoại</label><input value="0912 345 678" /></div>
+            <div class="field"><label>Mật khẩu</label><input type="password" value="matkhau123" /><span class="hint">Tối thiểu 8 ký tự, gồm chữ và số</span></div>
+            <div class="auth__row"><label><input type="checkbox" /> Tôi đồng ý với Điều khoản và Chính sách bảo mật</label></div>
+            <button class="btn btn--primary btn--md" style="width:100%">Tạo tài khoản</button>
+          </div>
+        </div></div>
+      </div>
+
+      <div>
+        <h2 class="sec-t">Biến thể — Trạng thái lỗi</h2>
+        <p class="sec-s">Lỗi hiện ngay tại ô nhập, kèm chữ giải thích</p>
+        <div class="card"><div class="card__bd">
+          <div class="auth__fields">
+            <div class="field err">
+              <label>Email</label>
+              <input value="minhanh@" />
+              <span class="hint">Email không đúng định dạng</span>
+            </div>
+            <div class="field err">
+              <label>Mật khẩu</label>
+              <input type="password" value="123" />
+              <span class="hint">Mật khẩu phải có ít nhất 8 ký tự</span>
+            </div>
+            <div class="field">
+              <label>Số điện thoại</label>
+              <input value="0912 345 678" />
+              <span class="hint">Không bắt buộc</span>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:9px;align-items:flex-start;background:var(--danger-soft);border-left:3px solid var(--danger);padding:11px 13px;border-radius:var(--r)">
+            <span class="mi" style="color:var(--on-danger);font-size:19px">error</span>
+            <div>
+              <div style="font-family:var(--fh);font-size:13px;font-weight:600;color:var(--on-danger)">Không thể đăng ký</div>
+              <div style="font-size:12.5px;color:var(--on-danger);opacity:.9">Có 2 ô cần sửa. Kiểm tra lại thông tin đã nhập.</div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== P9 — DASHBOARD ==================== -->
+<section class="screen" id="p9">
+  <div class="topbar">
+    <button class="topbar__menu" type="button" aria-label="Mở menu"><span class="mi">menu</span></button>
+    <div class="topbar__brand"><span class="mi">flight_takeoff</span> Khu vực vận hành</div>
+    <div class="topbar__nav"><a href="#" class="on">Dashboard</a><a href="#">Chuyến bay</a><a href="#">Booking</a><a href="#">Người dùng</a></div>
+    <div class="topbar__sp"></div>
+    <span style="font-size:13.5px;color:var(--muted)">Quản trị viên</span>
+    <div class="acct__av" style="width:34px;height:34px;font-size:13px">QT</div>
+  </div>
+
+  <div class="wrap">
+    <div class="page-h">
+      <div>
+        <h1>Dashboard</h1>
+        <p>Tổng quan hoạt động · cập nhật lúc 14:32, 11/10/2026</p>
+      </div>
+      <div style="display:flex;gap:9px">
+        <button class="btn btn--ghost btn--md"><span class="mi">calendar_month</span> 30 ngày qua</button>
+        <button class="btn btn--primary btn--md"><span class="mi">download</span> Xuất báo cáo</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat__ic" style="background:var(--primary-soft)"><span class="mi" style="color:var(--primary)">confirmation_number</span></div>
+        <div class="stat__l">Booking hôm nay</div>
+        <div class="stat__v">1.284</div>
+        <div class="stat__d up"><span class="mi">trending_up</span> +12,4% so với hôm qua</div>
+      </div>
+      <div class="stat">
+        <div class="stat__ic" style="background:var(--success-soft)"><span class="mi" style="color:var(--on-success)">payments</span></div>
+        <div class="stat__l">Doanh thu hôm nay</div>
+        <div class="stat__v">1,42<span style="font-size:17px"> tỷ</span></div>
+        <div class="stat__d up"><span class="mi">trending_up</span> +8,1% so với hôm qua</div>
+      </div>
+      <div class="stat">
+        <div class="stat__ic" style="background:var(--warning-soft)"><span class="mi" style="color:var(--on-warning)">flight</span></div>
+        <div class="stat__l">Chuyến đang mở bán</div>
+        <div class="stat__v">248</div>
+        <div class="stat__d down"><span class="mi">trending_down</span> −3 chuyến so với hôm qua</div>
+      </div>
+      <div class="stat">
+        <div class="stat__ic" style="background:var(--danger-soft)"><span class="mi" style="color:var(--on-danger)">event_seat</span></div>
+        <div class="stat__l">Chuyến sắp hết ghế</div>
+        <div class="stat__v">17</div>
+        <div class="stat__d down"><span class="mi">warning</span> Cần mở chuyến bổ sung</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="card">
+        <div class="card__hd">
+          <h3>Booking theo ngày</h3>
+          <span style="font-size:12.5px;color:var(--muted)">7 ngày gần nhất</span>
+        </div>
+        <div class="card__bd">
+          <div class="bars">
+            <div class="bar"><span class="bar__v tn">986</span><div class="bar__b" style="height:58%"></div><span class="bar__l">05/11</span></div>
+            <div class="bar"><span class="bar__v tn">1.102</span><div class="bar__b" style="height:66%"></div><span class="bar__l">06/11</span></div>
+            <div class="bar"><span class="bar__v tn">1.340</span><div class="bar__b" style="height:80%"></div><span class="bar__l">07/11</span></div>
+            <div class="bar"><span class="bar__v tn">1.188</span><div class="bar__b" style="height:71%"></div><span class="bar__l">08/11</span></div>
+            <div class="bar"><span class="bar__v tn">1.512</span><div class="bar__b" style="height:90%"></div><span class="bar__l">09/11</span></div>
+            <div class="bar"><span class="bar__v tn">1.672</span><div class="bar__b" style="height:100%"></div><span class="bar__l">10/11</span></div>
+            <div class="bar"><span class="bar__v tn">1.284</span><div class="bar__b" style="height:77%"></div><span class="bar__l">11/11</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__hd"><h3>Đường bay bán chạy</h3><button class="btn btn--text btn--sm">Xem tất cả</button></div>
+        <div class="card__bd" style="padding-top:6px;padding-bottom:6px">
+          <div class="rank"><div class="rank__i">1</div><div><div class="rank__n">HAN → SGN</div><div class="rank__m">Hà Nội – TP.HCM</div></div><div class="rank__v"><b class="tn">412</b><small>booking</small></div></div>
+          <div class="rank"><div class="rank__i">2</div><div><div class="rank__n">HAN → DAD</div><div class="rank__m">Hà Nội – Đà Nẵng</div></div><div class="rank__v"><b class="tn">286</b><small>booking</small></div></div>
+          <div class="rank"><div class="rank__i">3</div><div><div class="rank__n">SGN → DAD</div><div class="rank__m">TP.HCM – Đà Nẵng</div></div><div class="rank__v"><b class="tn">198</b><small>booking</small></div></div>
+          <div class="rank"><div class="rank__i">4</div><div><div class="rank__n">HAN → PQC</div><div class="rank__m">Hà Nội – Phú Quốc</div></div><div class="rank__v"><b class="tn">154</b><small>booking</small></div></div>
+          <div class="rank"><div class="rank__i">5</div><div><div class="rank__n">SGN → CXR</div><div class="rank__m">TP.HCM – Nha Trang</div></div><div class="rank__v"><b class="tn">121</b><small>booking</small></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card__hd"><h3>Chuyến bay cần chú ý</h3><span class="badge b-warning"><span class="badge__dot"></span>17 chuyến</span></div>
+      <div class="tbl-wrap"><table class="tbl">
+        <thead>
+          <tr>
+            <th>Chuyến</th><th>Tuyến</th><th>Khởi hành</th>
+            <th class="num">Ghế trống</th><th class="num">Tổng ghế</th>
+            <th>Lấp đầy</th><th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="code">VN 165</td><td>HAN → DAD</td><td class="tn">15/11 · 06:15</td>
+            <td class="num">4</td><td class="num">180</td>
+            <td><span class="badge b-danger">97,8%</span></td>
+            <td><span class="badge b-warning">Sắp hết</span></td>
+            <td class="rowacts"><button class="btn btn--text btn--sm">Mở chuyến bổ sung</button></td>
+          </tr>
+          <tr>
+            <td class="code">VJ 507</td><td>HAN → DAD</td><td class="tn">15/11 · 07:20</td>
+            <td class="num">2</td><td class="num">180</td>
+            <td><span class="badge b-danger">98,9%</span></td>
+            <td><span class="badge b-danger">Gần đầy</span></td>
+            <td class="rowacts"><button class="btn btn--text btn--sm">Mở chuyến bổ sung</button></td>
+          </tr>
+          <tr>
+            <td class="code">QH 205</td><td>HAN → DAD</td><td class="tn">15/11 · 13:05</td>
+            <td class="num">28</td><td class="num">180</td>
+            <td><span class="badge b-warning">84,4%</span></td>
+            <td><span class="badge b-warning">Sắp hết</span></td>
+            <td class="rowacts"><button class="btn btn--text btn--sm">Xem</button></td>
+          </tr>
+          <tr>
+            <td class="code">VN 173</td><td>HAN → DAD</td><td class="tn">15/11 · 18:30</td>
+            <td class="num">96</td><td class="num">274</td>
+            <td><span class="badge b-success">65,0%</span></td>
+            <td><span class="badge b-success">Bình thường</span></td>
+            <td class="rowacts"><button class="btn btn--text btn--sm">Xem</button></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== P7 — DANH SÁCH + BẢNG ==================== -->
+<section class="screen" id="p7">
+  <div class="topbar">
+    <button class="topbar__menu" type="button" aria-label="Mở menu"><span class="mi">menu</span></button>
+    <div class="topbar__brand"><span class="mi">flight_takeoff</span> Khu vực vận hành</div>
+    <div class="topbar__nav"><a href="#">Dashboard</a><a href="#">Chuyến bay</a><a href="#">Booking</a><a href="#" class="on">Hãng hàng không</a></div>
+    <div class="topbar__sp"></div>
+    <span style="font-size:13.5px;color:var(--muted)">Quản trị viên</span>
+    <div class="acct__av" style="width:34px;height:34px;font-size:13px">QT</div>
+  </div>
+
+  <div class="wrap">
+    <div class="page-h">
+      <div>
+        <h1>Hãng hàng không</h1>
+        <p>Quản lý danh mục hãng bay nội địa</p>
+      </div>
+      <button class="btn btn--primary btn--md"><span class="mi">add</span> Thêm hãng hàng không</button>
+    </div>
+
+    <div class="card">
+      <div class="card__bd" style="padding-bottom:6px">
+        <div class="toolbar">
+          <div class="field grow">
+            <input placeholder="Tìm theo mã hoặc tên hãng" />
+          </div>
+          <select class="field" style="width:auto;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--r);font-family:var(--fb);font-size:14.5px;background:var(--surface);color:var(--ink)">
+            <option>Tất cả trạng thái</option><option>Đang hoạt động</option><option>Tạm dừng</option>
+          </select>
+          <button class="btn btn--ghost btn--md"><span class="mi">filter_alt</span> Lọc thêm</button>
+        </div>
+      </div>
+
+      <div class="tbl-wrap"><table class="tbl">
+        <thead>
+          <tr>
+            <th style="width:44px"><input type="checkbox" style="accent-color:var(--primary)" /></th>
+            <th>Mã</th><th>Tên hãng</th><th>Quốc gia</th>
+            <th class="num">Số chuyến</th><th>Trạng thái</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="checkbox" style="accent-color:var(--primary)" /></td>
+            <td class="code">VN</td><td>Vietnam Airlines</td><td>Việt Nam</td>
+            <td class="num">1.248</td>
+            <td><span class="badge b-success"><span class="badge__dot"></span>Hoạt động</span></td>
+            <td class="rowacts">
+              <button class="btn btn--ghost btn--sm">Sửa</button>
+              <button class="btn btn--text btn--sm">Xóa</button>
+            </td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="accent-color:var(--primary)" /></td>
+            <td class="code">VJ</td><td>Vietjet Air</td><td>Việt Nam</td>
+            <td class="num">986</td>
+            <td><span class="badge b-success"><span class="badge__dot"></span>Hoạt động</span></td>
+            <td class="rowacts"><button class="btn btn--ghost btn--sm">Sửa</button><button class="btn btn--text btn--sm">Xóa</button></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="accent-color:var(--primary)" /></td>
+            <td class="code">QH</td><td>Bamboo Airways</td><td>Việt Nam</td>
+            <td class="num">312</td>
+            <td><span class="badge b-success"><span class="badge__dot"></span>Hoạt động</span></td>
+            <td class="rowacts"><button class="btn btn--ghost btn--sm">Sửa</button><button class="btn btn--text btn--sm">Xóa</button></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="accent-color:var(--primary)" /></td>
+            <td class="code">VU</td><td>Vietravel Airlines</td><td>Việt Nam</td>
+            <td class="num">87</td>
+            <td><span class="badge b-success"><span class="badge__dot"></span>Hoạt động</span></td>
+            <td class="rowacts"><button class="btn btn--ghost btn--sm">Sửa</button><button class="btn btn--text btn--sm">Xóa</button></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="accent-color:var(--primary)" /></td>
+            <td class="code">BL</td><td>Pacific Airlines</td><td>Việt Nam</td>
+            <td class="num">0</td>
+            <td><span class="badge b-neutral"><span class="badge__dot"></span>Tạm dừng</span></td>
+            <td class="rowacts"><button class="btn btn--ghost btn--sm">Sửa</button><button class="btn btn--text btn--sm">Xóa</button></td>
+          </tr>
+          <tr>
+            <td><input type="checkbox" style="accent-color:var(--primary)" /></td>
+            <td class="code">VJ2</td><td>Thai Vietjet Air</td><td>Thái Lan</td>
+            <td class="num">54</td>
+            <td><span class="badge b-success"><span class="badge__dot"></span>Hoạt động</span></td>
+            <td class="rowacts"><button class="btn btn--ghost btn--sm">Sửa</button><button class="btn btn--text btn--sm">Xóa</button></td>
+          </tr>
+        </tbody>
+      </table></div>
+
+      <div class="pager">
+        <span class="tn">Hiển thị 1–6 trong 6 hãng hàng không</span>
+        <div class="pager__p">
+          <button class="pg" disabled><span class="mi" style="font-size:18px">chevron_left</span></button>
+          <button class="pg on">1</button>
+          <button class="pg" disabled><span class="mi" style="font-size:18px">chevron_right</span></button>
+          <select style="margin-left:8px;padding:6px 9px;border:1.5px solid var(--line);border-radius:var(--r-sm);font-family:var(--fb);font-size:12.5px;background:var(--surface);color:var(--ink)">
+            <option>10 / trang</option><option>20 / trang</option><option>50 / trang</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Biến thể: rỗng, đang tải, xác nhận xóa, form -->
+    <h2 class="sec-t" style="margin:32px 0 3px">Biến thể của cùng khuôn</h2>
+    <p class="sec-s">Khuôn này dùng cho 14 màn CRUD — chỉ khác cột và trường trong form</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(292px,1fr));gap:16px">
+      <div class="card">
+        <div class="card__bd">
+          <div style="text-align:center;padding:26px 10px">
+            <span class="mi" style="font-size:46px;color:var(--subtle)">flight_takeoff</span>
+            <div style="font-family:var(--fh);font-size:15.5px;font-weight:600;margin-top:11px">Chưa có hãng hàng không</div>
+            <div style="font-size:12.5px;color:var(--muted);margin:4px 0 16px">Thêm hãng đầu tiên để bắt đầu</div>
+            <button class="btn btn--primary btn--sm"><span class="mi" style="font-size:17px">add</span> Thêm hãng hàng không</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__bd">
+          <div style="display:flex;flex-direction:column;align-items:center;padding:32px 10px;gap:12px">
+            <div style="width:24px;height:24px;border:2.5px solid var(--primary-soft);border-top-color:var(--primary);border-radius:50%"></div>
+            <span style="font-size:12.5px;color:var(--muted)">Đang tải dữ liệu…</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__bd" style="display:flex;flex-direction:column;gap:11px">
+          <div style="height:13px;width:62%;background:linear-gradient(90deg,var(--line-soft) 25%,var(--line) 37%,var(--line-soft) 63%);border-radius:6px"></div>
+          <div style="height:13px;width:88%;background:linear-gradient(90deg,var(--line-soft) 25%,var(--line) 37%,var(--line-soft) 63%);border-radius:6px"></div>
+          <div style="height:13px;width:74%;background:linear-gradient(90deg,var(--line-soft) 25%,var(--line) 37%,var(--line-soft) 63%);border-radius:6px"></div>
+          <div style="height:13px;width:45%;background:linear-gradient(90deg,var(--line-soft) 25%,var(--line) 37%,var(--line-soft) 63%);border-radius:6px"></div>
+          <div style="font-size:11.5px;color:var(--subtle);margin-top:3px">Khung xương khi tải</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px" class="formrow">
+      <div class="card">
+        <div class="card__hd"><h3>Form thêm/sửa</h3></div>
+        <div class="card__bd">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="field"><label>Mã hãng <span style="color:var(--danger)">*</span></label><input value="VN" /><span class="hint">Tối đa 10 ký tự, ví dụ VN</span></div>
+            <div class="field"><label>Tên hãng <span style="color:var(--danger)">*</span></label><input value="Vietnam Airlines" /></div>
+            <div class="field"><label>Quốc gia</label><input value="Việt Nam" /></div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="checkbox" checked style="accent-color:var(--primary);width:16px;height:16px" />
+              <span style="font-size:13.5px">Đang hoạt động</span>
+            </div>
+          </div>
+        </div>
+        <div class="card__ft">
+          <button class="btn btn--ghost btn--sm">Hủy</button>
+          <button class="btn btn--primary btn--sm">Lưu</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__hd"><h3>Hộp thoại xác nhận xóa</h3></div>
+        <div class="card__bd">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:38px;height:38px;border-radius:50%;background:var(--danger-soft);display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+              <span class="mi" style="color:var(--on-danger);font-size:21px">warning</span>
+            </div>
+            <div>
+              <div style="font-family:var(--fh);font-size:15px;font-weight:600;margin-bottom:5px">Xóa hãng hàng không?</div>
+              <div style="font-size:13px;color:var(--muted);line-height:1.55">
+                Bạn có chắc muốn xóa <b style="color:var(--ink)">"Vietnam Airlines"</b>?
+                Bản ghi vẫn được giữ lại để tra lịch sử, không xóa vĩnh viễn.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card__ft">
+          <button class="btn btn--ghost btn--sm">Hủy</button>
+          <button class="btn btn--danger btn--sm">Xóa hãng hàng không</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== P11 — TÀI KHOẢN KHÁCH ==================== -->
+<section class="screen" id="p11">
+  <div class="topbar">
+    <div class="topbar__brand"><span class="mi">flight_takeoff</span> Vé Máy Bay Nội Địa</div>
+    <div class="topbar__nav"><a href="#">Trang chủ</a><a href="#">Khuyến mãi</a><a href="#">Tin tức</a></div>
+    <div class="topbar__sp"></div>
+    <div style="display:flex;align-items:center;gap:9px">
+      <div class="acct__av" style="width:34px;height:34px;font-size:13px">MA</div>
+      <span style="font-size:13.5px;font-weight:600">Nguyễn Minh Anh</span>
+      <span class="mi" style="color:var(--muted)">expand_more</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="page-h">
+      <div>
+        <h1>Vé của tôi</h1>
+        <p>Quản lý booking, vé điện tử và voucher đã nhận</p>
+      </div>
+    </div>
+
+    <div class="acct">
+      <!-- Menu tài khoản -->
+      <aside class="acct__nav">
+        <div class="acct__me">
+          <div class="acct__av">MA</div>
+          <div>
+            <div class="acct__nm">Nguyễn Minh Anh</div>
+            <div class="acct__em">customer@demo.local</div>
+          </div>
+        </div>
+        <div class="acct__lnk on"><span class="mi">confirmation_number</span> Vé của tôi</div>
+        <div class="acct__lnk"><span class="mi">card_membership</span> Voucher của tôi</div>
+        <div class="acct__lnk"><span class="mi">account_balance_wallet</span> Ví của tôi</div>
+        <div class="acct__lnk"><span class="mi">person</span> Hồ sơ cá nhân</div>
+        <div class="acct__lnk"><span class="mi">lock</span> Đổi mật khẩu</div>
+      </aside>
+
+      <div>
+        <!-- Ví -->
+        <div class="wallet">
+          <div class="wallet__in">
+            <div class="wallet__l">Số dư ví</div>
+            <div class="wallet__v">1.848.000₫</div>
+            <div class="wallet__hint">Tiền hoàn từ booking đã hủy · dùng để thanh toán vé mới</div>
+          </div>
+        </div>
+
+        <!-- Vé -->
+        <h2 class="sec-t">Booking sắp tới</h2>
+        <p class="sec-s">2 booking đang hoạt động</p>
+
+        <div class="ticket">
+          <div class="ticket__main">
+            <div class="ticket__code">MÃ ĐẶT CHỖ · ABC123</div>
+            <div class="ticket__route">
+              <div><div class="ticket__pt">06:15</div><div class="ticket__pn">Hà Nội (HAN)</div></div>
+              <div class="ticket__arrow"><span class="mi">trending_flat</span></div>
+              <div><div class="ticket__pt">07:40</div><div class="ticket__pn">Đà Nẵng (DAD)</div></div>
+            </div>
+            <div class="ticket__meta">
+              <span><span class="mi">calendar_month</span> Thứ Bảy, 15/11/2026</span>
+              <span><span class="mi">flight</span> VN 165 · Vietnam Airlines</span>
+              <span><span class="mi">person</span> 1 người lớn</span>
+              <span><span class="mi">event_seat</span> Ghế 12A</span>
+            </div>
+          </div>
+          <div class="ticket__side">
+            <span class="badge b-success"><span class="badge__dot"></span>Đã xác nhận</span>
+            <div style="text-align:right">
+              <div style="font-size:11.5px;color:var(--muted)">Tổng thanh toán</div>
+              <div style="font-family:var(--fh);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums">890.000₫</div>
+            </div>
+            <button class="btn btn--primary btn--sm" style="width:100%">Xem vé điện tử</button>
+            <button class="btn btn--text btn--sm">Hủy booking</button>
+          </div>
+        </div>
+
+        <div class="ticket">
+          <div class="ticket__main">
+            <div class="ticket__code">MÃ ĐẶT CHỖ · XYZ789</div>
+            <div class="ticket__route">
+              <div><div class="ticket__pt">18:30</div><div class="ticket__pn">Hà Nội (HAN)</div></div>
+              <div class="ticket__arrow"><span class="mi">trending_flat</span></div>
+              <div><div class="ticket__pt">19:55</div><div class="ticket__pn">Đà Nẵng (DAD)</div></div>
+            </div>
+            <div class="ticket__meta">
+              <span><span class="mi">calendar_month</span> Chủ Nhật, 23/11/2026</span>
+              <span><span class="mi">flight</span> VN 173 · Vietnam Airlines</span>
+              <span><span class="mi">person</span> 2 người lớn, 1 trẻ em</span>
+              <span><span class="mi">event_seat</span> Chưa chọn ghế</span>
+            </div>
+          </div>
+          <div class="ticket__side">
+            <span class="badge b-warning"><span class="badge__dot"></span>Chờ thanh toán</span>
+            <div style="text-align:right">
+              <div style="font-size:11.5px;color:var(--muted)">Tổng thanh toán</div>
+              <div style="font-family:var(--fh);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums">3.240.000₫</div>
+            </div>
+            <button class="btn btn--accent btn--sm" style="width:100%">Thanh toán ngay</button>
+            <div style="font-size:11px;color:var(--danger)">Còn 8 phút để hoàn tất</div>
+          </div>
+        </div>
+
+        <!-- Voucher -->
+        <h2 class="sec-t" style="margin-top:30px">Voucher của tôi</h2>
+        <p class="sec-s">3 voucher khả dụng · 1 đã dùng</p>
+
+        <div class="voucher">
+          <div class="voucher__left">
+            <div class="voucher__val">50K</div>
+            <div class="voucher__type">giảm tiền</div>
+          </div>
+          <div class="voucher__bd">
+            <div class="voucher__nm">Giảm 50.000₫ mùa hè</div>
+            <div class="voucher__ds">Áp dụng mọi chuyến bay nội địa. Đơn tối thiểu 500.000₫. Không áp dụng cho hành khách em bé.</div>
+            <div class="voucher__mt">
+              <span>HSD: 31/12/2026</span>
+              <span>Đơn tối thiểu 500.000₫</span>
+              <span>Một chiều &amp; khứ hồi</span>
+            </div>
+          </div>
+          <div class="voucher__side">
+            <span class="badge b-success"><span class="badge__dot"></span>Khả dụng</span>
+            <button class="btn btn--secondary btn--sm">Dùng ngay</button>
+          </div>
+        </div>
+
+        <div class="voucher">
+          <div class="voucher__left" style="background:linear-gradient(150deg,#b8420a,#ff7a45)">
+            <div class="voucher__val">10<small>%</small></div>
+            <div class="voucher__type">giảm phần trăm</div>
+          </div>
+          <div class="voucher__bd">
+            <div class="voucher__nm">Giảm 10% Vietnam Airlines</div>
+            <div class="voucher__ds">Chỉ áp dụng chuyến bay Vietnam Airlines. Trần giảm 200.000₫.</div>
+            <div class="voucher__mt">
+              <span>HSD: 20/12/2026</span>
+              <span>Trần giảm 200.000₫</span>
+              <span>Chỉ hãng VN</span>
+            </div>
+          </div>
+          <div class="voucher__side">
+            <span class="badge b-info"><span class="badge__dot"></span>Đang giữ</span>
+            <button class="btn btn--sm" disabled>Đang dùng</button>
+          </div>
+        </div>
+
+        <div class="voucher" style="opacity:.6">
+          <div class="voucher__left" style="background:linear-gradient(150deg,#6b7f96,#93a7be)">
+            <div class="voucher__val">100K</div>
+            <div class="voucher__type">giảm tiền</div>
+          </div>
+          <div class="voucher__bd">
+            <div class="voucher__nm">Giảm 100.000₫ Tết 2026</div>
+            <div class="voucher__ds">Đã dùng cho booking ABC100 ngày 02/10/2026.</div>
+            <div class="voucher__mt"><span>Đã dùng lúc 02/10/2026</span></div>
+          </div>
+          <div class="voucher__side">
+            <span class="badge b-neutral"><span class="badge__dot"></span>Đã dùng</span>
+          </div>
+        </div>
+
+        <!-- Lịch sử ví -->
+        <h2 class="sec-t" style="margin-top:30px">Lịch sử ví</h2>
+        <p class="sec-s">Giao dịch hoàn tiền và thanh toán</p>
+
+        <div class="card"><div class="card__bd" style="padding-top:6px;padding-bottom:6px">
+          <div class="tx">
+            <div class="tx__ic" style="background:var(--success-soft)"><span class="mi" style="color:var(--on-success)">south_west</span></div>
+            <div><div class="tx__t">Hoàn tiền hủy vé</div><div class="tx__d">Booking ABC100 · 09/10/2026 14:22</div></div>
+            <div class="tx__a"><b style="color:var(--success)">+1.848.000₫</b><small>Số dư: 1.848.000₫</small></div>
+          </div>
+          <div class="tx">
+            <div class="tx__ic" style="background:var(--danger-soft)"><span class="mi" style="color:var(--on-danger)">north_east</span></div>
+            <div><div class="tx__t">Thanh toán vé</div><div class="tx__d">Booking ABC123 · 05/10/2026 09:41</div></div>
+            <div class="tx__a"><b style="color:var(--danger)">−890.000₫</b><small>Số dư: 0₫</small></div>
+          </div>
+          <div class="tx">
+            <div class="tx__ic" style="background:var(--success-soft)"><span class="mi" style="color:var(--on-success)">south_west</span></div>
+            <div><div class="tx__t">Hoàn tiền hủy vé</div><div class="tx__d">Booking ABC099 · 28/09/2026 16:05</div></div>
+            <div class="tx__a"><b style="color:var(--success)">+890.000₫</b><small>Số dố: 890.000₫</small></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+  <div style="height:40px"></div>
+</section>
+
+</main>
+</div>
+
+<script>
+document.querySelectorAll('.nav__item').forEach(function (item) {
+  item.addEventListener('click', function () {
+    var target = item.getAttribute('data-go');
+    document.querySelectorAll('.nav__item').forEach(function (n) { n.classList.remove('on'); });
+    document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('on'); });
+    item.classList.add('on');
+    var el = document.getElementById(target);
+    if (el) { el.classList.add('on'); }
+    window.scrollTo(0, 0);
+  });
+});
+</script>
+</body>
+</html>

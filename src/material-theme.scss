@@ -1,38 +1,106 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
+// =====================================================================
+// material-theme.scss — Material 3 đọc màu từ token chung.
+//
+// Vì sao override: mat.theme() sinh màu từ palette có sẵn (azure → #005cbb),
+// không cho nhét thẳng #0194F3. Nên ta để nó sinh trước, rồi ghi đè
+// --mat-sys-* bằng token của mình. Nhờ vậy Tailwind và Material khớp nhau.
+//
+// light-dark(a, b) là hàm CSS chuẩn: tự chọn a hay b theo color-scheme,
+// nên không cần khối dark riêng.
+// =====================================================================
 @use '@angular/material' as mat;
 
 html {
   height: 100%;
+
+  // typography: 'Inter' (KHÔNG phải Roboto) — mat.theme ghi cứng tên font vào
+  // mọi token --mat-sys-*-*, nên truyền 'Roboto' sẽ khiến toàn bộ component
+  // Material render Roboto, bất kể ta khai font gì trong CSS. Đã kiểm chứng
+  // bằng cách đo computed font trong trình duyệt.
   @include mat.theme(
     (
       color: (
         primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
-      typography: Roboto,
+      typography: 'Inter',
       density: 0,
     )
   );
+
+  // ---- Ghi đè màu Material bằng token chung ----
+  // Dùng #0770CD (không phải #0194F3) vì đây là màu NỀN nút có chữ trắng:
+  // #0194F3 chỉ đạt 3.22:1, không đủ chuẩn WCAG AA 4.5:1.
+  --mat-sys-primary: light-dark(#0770cd, #4da9f7);
+  --mat-sys-on-primary: light-dark(#ffffff, #04121f);
+  --mat-sys-primary-container: light-dark(#eaf7ff, #0d2b45);
+  --mat-sys-on-primary-container: light-dark(#08537f, #a8d8ff);
+
+  --mat-sys-error: light-dark(#e5484d, #f87171);
+  --mat-sys-on-error: light-dark(#ffffff, #3a1a1c);
+  --mat-sys-error-container: light-dark(#fee2e2, #3a1a1c);
+  --mat-sys-on-error-container: light-dark(#b91c1c, #f7b4b6);
+
+  --mat-sys-surface: light-dark(#ffffff, #121f31);
+  --mat-sys-surface-container: light-dark(#f7f9fa, #17263a);
+  --mat-sys-surface-container-high: light-dark(#edf1f4, #1f3145);
+  --mat-sys-on-surface: light-dark(#03121a, #e6edf5);
+  --mat-sys-on-surface-variant: light-dark(#687176, #93a7be);
+  --mat-sys-outline: light-dark(#dde3e8, #2c4257);
+  --mat-sys-outline-variant: light-dark(#edf1f4, #1f3145);
+
+  // Nền trang lấy từ token, không lấy mặc định của Material.
+  --mat-sys-background: light-dark(#f7f9fa, #05285d);
+  --mat-sys-on-background: light-dark(#03121a, #e6edf5);
+
+  // ---- Ghi đè BO GÓC: Material mặc định bo tròn kiểu viên thuốc (9999px) ----
+  // cho mọi nút. Kiểu Traveloka dùng bo góc chữ nhật nhẹ, nên phải ép lại —
+  // nếu không, nút Material và component tự viết sẽ bo khác nhau, nhìn lệch.
+  --mat-sys-corner-full: 8px;
+  --mat-sys-corner-extra-large: 16px;
+  --mat-sys-corner-large: 14px;
+  --mat-sys-corner-medium: 10px;
+  --mat-sys-corner-small: 6px;
+  --mat-sys-corner-extra-small: 4px;
+
+  // ---- Ghi đè CHỮ: tiêu đề dùng Be Vietnam Pro, không dùng Inter ----
+  // Material chỉ cho một font chung qua mat.theme(), nên phải override riêng
+  // các token tiêu đề để có được cặp chữ "Be Vietnam Pro (tiêu đề) + Inter (nội dung)".
+  // Đây là chỗ trước đây bị bỏ sót: chỉ override màu mà quên chữ, nên toàn bộ
+  // giao diện render Roboto dù đã khai font khác trong CSS.
+  --mat-sys-display-large: 400 3.5rem / 4rem var(--font-heading);
+  --mat-sys-display-medium: 400 2.8rem / 3.3rem var(--font-heading);
+  --mat-sys-display-small: 400 2.25rem / 2.75rem var(--font-heading);
+
+  --mat-sys-headline-large: 400 2rem / 2.5rem var(--font-heading);
+  --mat-sys-headline-medium: 400 1.75rem / 2.25rem var(--font-heading);
+  --mat-sys-headline-small: 600 1.5rem / 2rem var(--font-heading);
+
+  --mat-sys-title-large: 600 1.375rem / 1.75rem var(--font-heading);
+  --mat-sys-title-medium: 600 1rem / 1.5rem var(--font-heading);
+  --mat-sys-title-small: 600 0.875rem / 1.25rem var(--font-heading);
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
   color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
   margin: 0;
   height: 100%;
+}
+
+// Chế độ tối: đổi color-scheme để light-dark() chọn nhánh tối.
+[data-theme='dark'] body {
+  color-scheme: dark;
+}
+
+// Chữ tiêu đề của Material dùng font tiêu đề.
+.mat-typography h1,
+.mat-typography h2,
+.mat-typography h3,
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
 }

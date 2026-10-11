@@ -2,7 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global styles — theme Angular Material nằm ở src/material-theme.scss */
+/* =====================================================================
+   Reset & nền tảng
+   Token nằm ở _tokens.scss — khai trong angular.json styles[], đứng TRƯỚC
+   file này nên biến đã có mặt khi các quy tắc dưới đây dùng.
+   ===================================================================== */
 
 * {
   box-sizing: border-box;
@@ -12,8 +16,101 @@ html,
 body {
   margin: 0;
   padding: 0;
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  line-height: var(--leading-tight);
+  margin: 0;
 }
 
 a {
-  color: var(--mat-sys-primary);
+  color: var(--color-primary);
+}
+
+/* Chữ số thẳng cột — dùng cho bảng giá, giờ bay, mã.
+   Đây là chi tiết nhỏ nhưng quyết định bảng giá có "sạch" hay không. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus nhìn thấy được — không bao giờ xoá outline mà không thay bằng gì. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* =====================================================================
+   Khung bố cục dùng chung — bám mockup (.wrap / .home-sec).
+   Khai một lần ở đây để mọi trang có cùng bề ngang và cùng lề; nếu mỗi
+   trang tự đặt max-width riêng thì nội dung sẽ nhảy ngang khi chuyển trang.
+   ===================================================================== */
+
+/* Khung nội dung chuẩn: 1240px, canh giữa. */
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 22px 26px 60px;
+}
+
+/* Khối marketing trên trang chủ — cùng bề ngang nhưng không có padding đáy,
+   để các khối xếp liền nhau không bị hở khe. */
+.home-sec {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 38px 26px 0;
+}
+
+.home-sec h2 {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin: 0 0 4px;
+}
+
+.home-sec > p {
+  font-size: 14px;
+  color: var(--color-ink-muted);
+  margin: 0 0 18px;
+}
+
+/* Tiêu đề khối nhỏ trong trang. */
+.sec-t {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 3px;
+}
+
+.sec-s {
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  margin: 0 0 14px;
+}
+
+@media (max-width: 900px) {
+  .wrap {
+    padding: 18px 14px 44px;
+  }
+
+  .home-sec {
+    padding: 26px 14px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-sec h2 {
+    font-size: 19px;
+  }
 }

@@ -1,0 +1,186 @@
+// =====================================================================
+// _tokens.scss — NGUỒN CHÂN LÝ DUY NHẤT cho design system.
+//
+// Vì sao có file này: trước đây tailwind.config.js và material-theme.scss
+// khai màu riêng nên "màu chính" ra hai giá trị khác nhau. Từ đây mọi
+// màu/chữ/khoảng cách chỉ định nghĩa MỘT LẦN, Tailwind và Material cùng đọc.
+//
+// Quy ước: giá trị gốc ở :root (chế độ sáng). Chế độ tối override ở
+// [data-theme="dark"] — xem cuối file.
+// =====================================================================
+
+:root {
+  // ---------- Màu thương hiệu ----------
+  // Primary dùng cho NỀN nút có chữ trắng: #0194F3 chỉ đạt 3.22:1 (WCAG cần 4.5:1).
+  // #0770CD đạt 4.99:1 mà vẫn giữ đúng tông xanh Traveloka.
+  // #0194F3 gốc vẫn dùng được cho viền, icon, chữ trên nền sáng (--color-primary-bright).
+  --color-primary: #0770cd;
+  --color-primary-hover: #0a57a8;
+  --color-primary-bright: #0194f3;
+  --color-primary-soft: #eaf7ff;
+  --color-on-primary: #ffffff;
+
+  // Accent giữ nguyên #FF5E1F (đúng tông cam Traveloka) nhưng chữ trên nền cam
+  // phải là màu tối — chữ trắng trên cam chỉ đạt 3.06:1, không đạt WCAG.
+  --color-accent: #ff5e1f;
+  --color-accent-hover: #e84a0c;
+  --color-on-accent: #3d1a08;
+
+  // ---------- Màu ngữ nghĩa ----------
+  // Chữ trên nền nhạt dùng tông TƯƠI (mockup đã duyệt). Bản cũ (#00602F,
+  // #7A5400, #8E2024) ngả nâu/xỉn nên nhìn nặng; chủ dự án đã chê và yêu cầu
+  // đổi. Các giá trị mới vẫn đạt WCAG AA (>= 4.5:1) — xem chú thích từng dòng.
+  --color-success: #00a651;
+  --color-success-soft: #dcfce7;
+  --color-on-success-soft: #15803d; // 4.57:1 trên #DCFCE7
+
+  --color-warning: #f2a81d;
+  --color-warning-soft: #fef3c7;
+  --color-on-warning-soft: #b45309; // 4.51:1 trên #FEF3C7
+
+  --color-danger: #e5484d;
+  --color-danger-soft: #fee2e2;
+  --color-on-danger-soft: #b91c1c; // 5.30:1 trên #FEE2E2
+
+  --color-info: #0194f3;
+  --color-info-soft: #e0f2fe;
+  --color-on-info-soft: #0369a1;
+
+  // ---------- Bề mặt & chữ ----------
+  --color-bg: #f7f9fa;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fbfcfd;
+  --color-ink: #03121a;
+  --color-ink-muted: #687176;
+  // #9AA6AD gốc chỉ đạt 2.36:1 trên nền sáng — quá mờ để đọc. Đổi sang #6A737A (4.58:1).
+  --color-ink-subtle: #6a737a;
+  --color-border: #dde3e8;
+  --color-border-soft: #edf1f4;
+
+  // ---------- Nền tối ----------
+  // Dùng cho topbar khách hàng và footer. Lấy đúng màu footer Traveloka
+  // (#05285D) — navy ngả xanh dương.
+  --color-dark: #05285d;
+  --color-dark-2: #083a7d;
+  --color-dark-line: #1a4a8a;
+  --color-on-dark: #ffffff;
+  --color-on-dark-muted: #c3d0de;
+  --color-on-dark-subtle: #8ea3b8;
+
+  // ---------- Sidebar vận hành ----------
+  // Sidebar admin KHÔNG dùng một màu phẳng: đo từ ảnh tham chiếu của chủ dự án
+  // thấy đây là gradient dọc — sáng ở trên (#0D47A2), tối dần xuống gần đen
+  // (#030E20) ở đáy. Mục đang chọn đảo ngược lại: nền TRẮNG, chữ xanh đậm.
+  --color-sidebar-top: #0d47a2;
+  --color-sidebar-bottom: #030e20;
+  --color-sidebar-line: rgba(255, 255, 255, 0.12);
+  --color-sidebar-item: #c3d0de;
+  --color-sidebar-icon: #7f9dc4;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.08);
+  --color-sidebar-label: #8ba7c9;
+  --color-sidebar-active-bg: #ffffff;
+  --color-sidebar-active-fg: #1677ff;
+
+  // ---------- Chữ ----------
+  --font-heading: 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --text-display: 2rem;
+  --text-h1: 1.5rem;
+  --text-h2: 1.25rem;
+  --text-h3: 1.0625rem;
+  --text-body: 0.9375rem;
+  --text-small: 0.8125rem;
+  --text-caption: 0.6875rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+
+  // ---------- Bo góc ----------
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+
+  // ---------- Đổ bóng (tông xanh đen, không dùng đen thuần) ----------
+  --shadow-sm: 0 1px 4px rgba(3, 18, 26, 0.06);
+  --shadow: 0 2px 10px rgba(3, 18, 26, 0.07);
+  --shadow-lg: 0 4px 16px rgba(3, 18, 26, 0.1);
+
+  // ---------- Chuyển động ----------
+  --dur-fast: 130ms;
+  --dur: 200ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// =====================================================================
+// Chế độ tối — cùng tên biến, chỉ đổi giá trị.
+// Material đọc qua override ở material-theme.scss; Tailwind đọc trực tiếp
+// vì các utility trỏ vào var(--color-*).
+// =====================================================================
+[data-theme='dark'] {
+  --color-primary: #4da9f7;
+  --color-primary-hover: #6fb8f5;
+  --color-primary-bright: #4da9f7;
+  --color-primary-soft: #0d2b45;
+  --color-on-primary: #04121f;
+
+  --color-accent: #ff7a45;
+  --color-accent-hover: #ff8f60;
+  --color-on-accent: #2b1206;
+
+  --color-success: #3dd68c;
+  --color-success-soft: #102a20;
+  --color-on-success-soft: #7fe8b4;
+
+  --color-warning: #ffb020;
+  --color-warning-soft: #33260c;
+  --color-on-warning-soft: #ffd88a;
+
+  --color-danger: #f87171;
+  --color-danger-soft: #3a1a1c;
+  --color-on-danger-soft: #f7b4b6;
+
+  --color-info: #4da9f7;
+  --color-info-soft: #0d2b45;
+  --color-on-info-soft: #a8d8ff;
+
+  --color-bg: #05285d;
+  --color-surface: #121f31;
+  --color-surface-alt: #17263a;
+  --color-ink: #e6edf5;
+  --color-ink-muted: #93a7be;
+  // Trên nền tối, #6B7F96 chỉ đạt 4.45:1 — đổi sang #7C90A6 (5.58:1).
+  --color-ink-subtle: #7c90a6;
+  --color-border: #1f3145;
+  --color-border-soft: #2c4257;
+
+  --color-dark: #041f49;
+  --color-dark-2: #083a7d;
+  --color-dark-line: #1a4a8a;
+  --color-on-dark: #ffffff;
+  --color-on-dark-muted: #c3d0de;
+  --color-on-dark-subtle: #8ea3b8;
+
+  --color-sidebar-top: #0a3a86;
+  --color-sidebar-bottom: #02101f;
+  --color-sidebar-line: rgba(255, 255, 255, 0.1);
+  --color-sidebar-item: #b8c8dc;
+  --color-sidebar-icon: #7391b8;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.07);
+  --color-sidebar-label: #7e9cc2;
+  --color-sidebar-active-bg: #ffffff;
+  --color-sidebar-active-fg: #1677ff;
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+// Tôn trọng lựa chọn giảm chuyển động của người dùng.
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+  }
+}
