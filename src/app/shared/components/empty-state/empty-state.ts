@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { AppButton } from '../../ui/app-button/app-button';
+import { AppButton } from '@shared/ui/app-button/app-button';
 
 /**
  * Trạng thái danh sách rỗng.

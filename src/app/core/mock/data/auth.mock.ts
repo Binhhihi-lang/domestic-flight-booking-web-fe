@@ -1,4 +1,4 @@
-import { AuthenticatedUser, LoginResponse } from '../../models/auth.model';
+import { AuthenticatedUser, LoginResponse } from '@core/models/auth.model';
 
 /**
  * Tài khoản giả để đăng nhập khi bật mock.

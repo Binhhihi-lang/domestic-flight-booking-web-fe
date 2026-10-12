@@ -1,7 +1,20 @@
-import { Airline } from '../models/airline.model';
-import { AIRLINES_MOCK } from './data/airlines.mock';
-import { buildLoginResponse, findMockUser, MOCK_PASSWORD } from './data/auth.mock';
-import { businessError, duplicate, notFound, ok, paginate, readParams } from './mock-response';
+import { Airline } from '@core/models/airline.model';
+import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
+import { Airport, City } from '@core/models/location.model';
+import { Promotion, Voucher } from '@core/models/promotion.model';
+import { AIRLINES_MOCK } from '@core/mock/data/airlines.mock';
+import {
+  AIRCRAFT_MOCK,
+  NEWS_CATEGORIES_MOCK,
+  NEWS_MOCK,
+  PROMOTIONS_MOCK,
+  SEAT_TYPES_MOCK,
+  VOUCHERS_MOCK,
+} from '@core/mock/data/catalog.mock';
+import { AIRPORTS_MOCK, CITIES_MOCK } from '@core/mock/data/locations.mock';
+import { buildLoginResponse, findMockUser, MOCK_PASSWORD } from '@core/mock/data/auth.mock';
+import { MockResource } from '@core/mock/mock-resource';
+import { businessError, duplicate, notFound, ok, paginate, readParams } from '@core/mock/mock-response';
 
 /**
  * Sổ tra cứu mock: ánh xạ (method + đường dẫn) sang dữ liệu giả.
@@ -9,10 +22,98 @@ import { businessError, duplicate, notFound, ok, paginate, readParams } from './
  * Vì sao dùng lớp có trạng thái thay vì hàm thuần: các thao tác ghi (tạo,
  * sửa, xóa mềm) phải thấy được ở lần đọc sau — nếu không thì không thử được
  * luồng CRUD thật. Dữ liệu chỉ nằm trong bộ nhớ, tải lại trang là về ban đầu.
+ *
+ * Airlines giữ handler viết riêng (là màn mẫu, có kiểm tra UNIQUE riêng); các
+ * module master data còn lại chạy qua `MockResource` tổng quát.
  */
 export class MockRegistry {
   private airlines: Airline[] = AIRLINES_MOCK.map((a) => ({ ...a }));
   private nextId = 100;
+
+  private readonly resources = [
+    new MockResource<City>({
+      path: 'cities',
+      seed: CITIES_MOCK,
+      searchFields: ['city_code', 'city_name'],
+      uniqueField: 'city_code',
+      noun: 'thành phố',
+    }),
+    new MockResource<Airport>({
+      path: 'airports',
+      seed: AIRPORTS_MOCK,
+      searchFields: ['airport_code', 'airport_name'],
+      uniqueField: 'airport_code',
+      noun: 'sân bay',
+      validate: (p) =>
+        p.city_id === undefined || p.city_id === null ? 'Thành phố không được để trống' : null,
+    }),
+    new MockResource<Promotion>({
+      path: 'promotions',
+      seed: PROMOTIONS_MOCK,
+      searchFields: ['promotion_code', 'promotion_name'],
+      uniqueField: 'promotion_code',
+      noun: 'khuyến mãi',
+      validate: (p) => {
+        if (p.start_date && p.end_date && p.end_date < p.start_date) {
+          return 'Ngày kết thúc phải sau ngày bắt đầu';
+        }
+        if (p.discount_type === 'PERCENT' && (p.discount_value ?? 0) > 100) {
+          return 'Giảm theo phần trăm không được vượt quá 100';
+        }
+        if (p.discount_value !== undefined && p.discount_value !== null && p.discount_value <= 0) {
+          return 'Giá trị giảm phải lớn hơn 0';
+        }
+        return null;
+      },
+    }),
+    new MockResource<Voucher>({
+      path: 'vouchers',
+      seed: VOUCHERS_MOCK,
+      searchFields: ['voucher_code', 'voucher_name'],
+      uniqueField: 'voucher_code',
+      noun: 'voucher',
+      validate: (p) => {
+        if (p.start_date && p.end_date && p.end_date < p.start_date) {
+          return 'Ngày kết thúc phải sau ngày bắt đầu';
+        }
+        if (p.claim_limit !== undefined && p.claim_limit !== null && p.claim_limit <= 0) {
+          return 'Giới hạn lượt nhận phải lớn hơn 0';
+        }
+        return null;
+      },
+    }),
+    new MockResource<Aircraft>({
+      path: 'aircrafts',
+      seed: AIRCRAFT_MOCK,
+      searchFields: ['aircraft_code', 'model'],
+      uniqueField: 'aircraft_code',
+      noun: 'máy bay',
+      validate: (p) =>
+        p.seat_capacity !== undefined && p.seat_capacity !== null && p.seat_capacity <= 0
+          ? 'Sức chứa phải lớn hơn 0'
+          : null,
+    }),
+    new MockResource<SeatType>({
+      path: 'seat-types',
+      seed: SEAT_TYPES_MOCK,
+      searchFields: ['seat_type_code', 'seat_type_name'],
+      uniqueField: 'seat_type_code',
+      noun: 'loại ghế',
+    }),
+    new MockResource<NewsItem>({
+      path: 'news',
+      seed: NEWS_MOCK,
+      searchFields: ['title'],
+      noun: 'tin tức',
+    }),
+    new MockResource<NewsCategory>({
+      path: 'news-categories',
+      seed: NEWS_CATEGORIES_MOCK,
+      searchFields: ['category_name'],
+      uniqueField: 'category_name',
+      noun: 'danh mục tin',
+    }),
+  ];
 
   /**
    * Rút đường dẫn so sánh được từ URL.
@@ -56,6 +157,14 @@ export class MockRegistry {
       if (m === 'GET') return this.getAirline(id);
       if (m === 'PUT') return this.updateAirline(id, body);
       if (m === 'DELETE') return this.deleteAirline(id);
+    }
+
+    // Các module master data dùng chung một lớp tài nguyên tổng quát.
+    for (const resource of this.resources) {
+      const result = resource.handle(m, url, body);
+      if (result !== undefined) {
+        return result;
+      }
     }
 
     return undefined;

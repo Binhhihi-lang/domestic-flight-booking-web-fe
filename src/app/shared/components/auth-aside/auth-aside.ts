@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { BrandLogo } from '../brand-logo/brand-logo';
+import { BrandLogo } from '@shared/components/brand-logo/brand-logo';
 
 /**
  * Panel giới thiệu bên trái của trang đăng nhập/đăng ký — bám mockup P6.

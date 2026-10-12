@@ -1,4 +1,4 @@
-import { ApiCode, ApiResponse, PageData } from '../models/api-response.model';
+import { ApiCode, ApiResponse, PageData } from '@core/models/api-response.model';
 
 /**
  * Dựng envelope giống hệt Backend thật.

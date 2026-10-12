@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '@core/services/auth.service';
 
 /** Chặn GUEST khỏi khu vực cần đăng nhập (mục 1.5). */
 export const authGuard: CanActivateFn = (_route, state) => {

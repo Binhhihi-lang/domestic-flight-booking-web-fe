@@ -1,9 +1,9 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { MockRegistry } from '../../../../core/mock/mock-registry';
-import { mockInterceptor } from '../../../../core/mock/mock.interceptor';
-import { AdminAirlines } from './airlines';
+import { MockRegistry } from '@core/mock/mock-registry';
+import { mockInterceptor } from '@core/mock/mock.interceptor';
+import { AdminAirlines } from '@features/admin/pages/airlines/airlines';
 
 /**
  * Kiểm chứng luồng thật của màn mẫu: mount component, để nó gọi service,

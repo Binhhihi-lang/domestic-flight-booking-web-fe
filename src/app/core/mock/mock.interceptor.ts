@@ -1,8 +1,8 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { delay, of } from 'rxjs';
-import { ApiCode, ApiResponse } from '../models/api-response.model';
-import { MockRegistry } from './mock-registry';
+import { ApiCode, ApiResponse } from '@core/models/api-response.model';
+import { MockRegistry } from '@core/mock/mock-registry';
 
 /**
  * Chặn request và trả dữ liệu giả khi bật cờ useMock.

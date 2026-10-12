@@ -1,4 +1,4 @@
-import { MockRegistry } from './mock-registry';
+import { MockRegistry } from '@core/mock/mock-registry';
 
 describe('MockRegistry', () => {
   let registry: MockRegistry;
