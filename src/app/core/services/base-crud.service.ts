@@ -35,6 +35,18 @@ export class BaseCrudService<T, P = Partial<T>> {
     return this.http.get<ApiResponse<PageData<T>>>(this.baseUrl, { params });
   }
 
+  /**
+   * Danh sách KHÔNG phân trang — trả MẢNG TRẦN (BR-LIST-05).
+   *
+   * Vì sao tách khỏi `list()` thay vì nới kiểu của nó: 8 module master data đang
+   * dùng `list()` với kiểu `PageData<T>`, nới kiểu sẽ buộc mọi call site phải xử
+   * lý cả hai hình dạng. Chỉ role và permission trả mảng trần, nên để chúng một
+   * đường riêng. Màn dùng nó khai `unpaginated: true` trong `CrudConfig`.
+   */
+  listAll(): Observable<ApiResponse<T[]>> {
+    return this.http.get<ApiResponse<T[]>>(this.baseUrl);
+  }
+
   getById(id: number): Observable<ApiResponse<T>> {
     return this.http.get<ApiResponse<T>>(`${this.baseUrl}/${id}`);
   }

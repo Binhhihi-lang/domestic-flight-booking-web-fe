@@ -11,7 +11,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ListQuery } from '@core/models/api-response.model';
+import { Observable } from 'rxjs';
+import { ListQuery, ApiResponse } from '@core/models/api-response.model';
 import { BaseCrudService } from '@core/services/base-crud.service';
 import { PageHeader } from '@shared/components/page-header/page-header';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
@@ -241,6 +242,14 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
 
   private load(): void {
     this.loading.set(true);
+
+    // Endpoint trả MẢNG TRẦN (BR-LIST-05) — Role, Permission. Không phân trang,
+    // không nhận `page`/`size`, nên đi đường riêng thay vì nhồi vào `list()`.
+    if (this.config().unpaginated) {
+      this.loadUnpaginated();
+      return;
+    }
+
     const query: ListQuery = {
       page: this.pageIndex() + 1, // API dùng trang bắt đầu từ 1
       size: this.pageSize(),
@@ -265,6 +274,47 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
           this.loading.set(false);
         },
       });
+  }
+
+  /**
+   * Nạp danh sách không phân trang.
+   *
+   * Vì sao dùng `searchAll` khi có và không có từ khoá/bộ lọc: `PermissionService`
+   * có bản nhận query (lọc theo `module`), còn `RoleService` chỉ có `listAll()`.
+   * Kiểm tra theo thực tế service cung cấp gì thay vì buộc mọi service phải có
+   * cùng bộ method.
+   */
+  private loadUnpaginated(): void {
+    const query: ListQuery = {};
+    if (this.keyword().trim()) {
+      query['keyword'] = this.keyword();
+    }
+    for (const [key, value] of Object.entries(this.filterValues())) {
+      if (value !== '' && value !== undefined && value !== null) {
+        query[key] = value;
+      }
+    }
+
+    const svc = this.service() as unknown as {
+      searchAll?: (q: ListQuery) => Observable<ApiResponse<unknown[]>>;
+      listAll: () => Observable<ApiResponse<unknown[]>>;
+    };
+    const request$ = Object.keys(query).length > 0 && svc.searchAll
+      ? svc.searchAll(query)
+      : svc.listAll();
+
+    request$.subscribe({
+      next: (res) => {
+        const items = res.data as T[];
+        this.rows.set(items);
+        this.totalItems.set(items.length);
+        this.loading.set(false);
+      },
+      error: (err: Error) => {
+        this.notify(err.message);
+        this.loading.set(false);
+      },
+    });
   }
 
   // =====================================================================

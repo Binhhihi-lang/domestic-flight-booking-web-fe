@@ -15,16 +15,18 @@
     <app-app-card>
       <!-- ===== Thanh công cụ ===== -->
       <div class="toolbar">
-        <div class="search">
-          <mat-icon>search</mat-icon>
-          <input
-            type="search"
-            [placeholder]="config().searchPlaceholder"
-            [attr.aria-label]="config().searchPlaceholder"
-            [ngModel]="keyword()"
-            (ngModelChange)="onKeyword($event)"
-          />
-        </div>
+        @if (config().searchPlaceholder) {
+          <div class="search">
+            <mat-icon>search</mat-icon>
+            <input
+              type="search"
+              [placeholder]="config().searchPlaceholder"
+              [attr.aria-label]="config().searchPlaceholder"
+              [ngModel]="keyword()"
+              (ngModelChange)="onKeyword($event)"
+            />
+          </div>
+        }
 
         @for (f of config().filters ?? []; track f.key) {
           <select
@@ -40,7 +42,9 @@
         }
 
         @if (hasFilters()) {
-          <app-app-button variant="ghost" (clicked)="clearFilters()">
+          <!-- margin-left:auto đẩy nút về sát phải để thanh công cụ cân đối
+               thay vì dồn hết về bên trái. -->
+          <app-app-button class="toolbar__end" variant="ghost" (clicked)="clearFilters()">
             <mat-icon>filter_alt_off</mat-icon>
             Bỏ lọc
           </app-app-button>
@@ -127,7 +131,9 @@
           </table>
         </div>
 
-        <!-- ===== Phân trang ===== -->
+        <!-- ===== Phân trang =====
+             Ẩn với endpoint trả mảng trần (Role, Permission) — không có trang để chuyển. -->
+        @if (!config().unpaginated) {
         <div class="pager">
           <span class="tabular">{{ rangeLabel() }}</span>
           <div class="pager__p">
@@ -167,6 +173,7 @@
             </select>
           </div>
         </div>
+        }
       }
     </app-app-card>
   </div>

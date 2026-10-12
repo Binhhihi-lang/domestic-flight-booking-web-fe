@@ -13,7 +13,10 @@ import { MockRegistry } from '@core/mock/mock-registry';
  */
 export const mockInterceptor: HttpInterceptorFn = (req, next) => {
   const registry = inject(MockRegistry);
-  const result = registry.resolve(req.method, req.url, req.body);
+  // Dùng `urlWithParams`, KHÔNG dùng `url`: `req.url` không chứa query string, nên
+  // mọi bộ lọc/tìm kiếm (`keyword`, `module`, `is_active`…) đều không tới được mock
+  // và màn hình luôn hiện dữ liệu chưa lọc mà không báo lỗi.
+  const result = registry.resolve(req.method, req.urlWithParams, req.body);
 
   // Không có mock cho đường dẫn này -> để request đi tiếp ra mạng thật.
   if (result === undefined) {

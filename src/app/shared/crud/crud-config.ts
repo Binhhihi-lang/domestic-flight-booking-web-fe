@@ -85,6 +85,13 @@ export interface CrudConfig<T, P> {
   fields: CrudField[];
   /** Màn chỉ đọc (Vai trò, Quyền) thì đặt true để ẩn nút thêm/sửa/xóa. */
   readonly?: boolean;
+  /**
+   * Endpoint trả MẢNG TRẦN thay vì `{items, pagination}` (BR-LIST-05) — hiện có
+   * Role và Permission. Bật cờ này thì `CrudPage` gọi `listAll()`/`searchAll()`
+   * thay vì `list()`, ẩn thanh phân trang và ẩn ô tìm kiếm nếu `searchPlaceholder`
+   * rỗng.
+   */
+  unpaginated?: boolean;
   filters?: CrudFilter[];
   emptyIcon: string;
   emptyMessage: string;

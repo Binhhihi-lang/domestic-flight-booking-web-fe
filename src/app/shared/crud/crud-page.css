@@ -39,10 +39,12 @@
   margin-bottom: 14px;
 }
 
+/* Ô tìm kiếm giãn ra chiếm phần trống, các bộ lọc giữ bề rộng vừa đủ. Nhờ vậy
+   thanh công cụ dàn hết bề ngang thay vì dồn cục bên trái. */
 .search {
   position: relative;
-  flex: 1 1 210px;
-  max-width: 330px;
+  flex: 1 1 260px;
+  max-width: 420px;
   min-width: 0;
 }
 
@@ -70,7 +72,12 @@
   outline: none;
 }
 
-.search input:focus {
+.search input:focus,
+.select:focus,
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.imgfield__controls input[type='text']:focus {
   border-color: var(--color-primary-bright);
   box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
 }
@@ -78,13 +85,26 @@
 .select {
   font-family: var(--font-body);
   font-size: 14.5px;
-  padding: 11px 13px;
+  /* Chừa chỗ cho mũi tên dropdown của trình duyệt, nếu không chữ sát mép phải. */
+  padding: 11px 34px 11px 13px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-ink);
   outline: none;
+  /* Rộng tối thiểu đủ chứa nhãn dài nhất trong các bộ lọc ("Tất cả trạng thái",
+     "Tất cả hàng không") mà không hở một khoảng trống lớn bên phải. */
+  min-width: 152px;
   max-width: 100%;
+  /* Mũi tên mặc định của trình duyệt vẽ sát mép — tự vẽ lại cho cân đối. */
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-ink-muted) 50%),
+    linear-gradient(135deg, var(--color-ink-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% + 1px),
+    calc(100% - 13px) calc(50% + 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
 }
 
 /* ---------- Bảng ---------- */
@@ -391,13 +411,6 @@
   resize: vertical;
 }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  border-color: var(--color-primary-bright);
-  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
-}
-
 .field--error input,
 .field--error select,
 .field--error textarea {
@@ -468,11 +481,6 @@
   color: var(--color-ink);
   outline: none;
   width: 100%;
-}
-
-.imgfield__controls input[type='text']:focus {
-  border-color: var(--color-primary-bright);
-  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
 }
 
 .imgfield__row {
@@ -552,4 +560,9 @@
   .form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Đẩy nút "Bỏ lọc" về sát phải thanh công cụ. */
+.toolbar__end {
+  margin-left: auto;
 }
