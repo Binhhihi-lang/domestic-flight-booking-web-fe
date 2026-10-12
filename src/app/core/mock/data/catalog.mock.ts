@@ -25,12 +25,21 @@ export const SEAT_TYPES_MOCK: SeatType[] = [
   { id: 8, seat_type_code: 'EXIT', seat_type_name: 'Ghế thoát hiểm', seat_class: 'ECONOMY', is_active: false, is_deleted: false },
 ];
 
-/** Khuyến mãi — API v0.2 mục 2.7. Phase 1 chỉ quản lý định nghĩa. */
+/**
+ * Khuyến mãi — API v0.2 mục 2.7. Phase 1 chỉ quản lý định nghĩa.
+ *
+ * `image_url` / `description` / `badge_label` chưa có cột trong DB v0.4 — đã đề
+ * xuất thêm ở `be/docs/De_xuat_bo_sung_DB_v0.5_truong_anh.md`.
+ */
 export const PROMOTIONS_MOCK: Promotion[] = [
   {
     id: 1,
     promotion_code: 'HE2026',
     promotion_name: 'Khuyến mãi hè 2026',
+    image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=700&q=80',
+    description:
+      'Nhập mã HE2026 giảm ngay 15% giá vé cho mọi hành trình nội địa. Áp dụng đến hết 31/08.',
+    badge_label: 'Giảm 15%',
     discount_type: 'PERCENT',
     discount_value: 15,
     max_discount_amount: 150000,
@@ -47,6 +56,10 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     id: 2,
     promotion_code: 'DALAT20',
     promotion_name: 'Đà Lạt mùa sương mù',
+    image_url: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=700&q=80',
+    description:
+      'Nhập mã DALAT20 giảm ngay 20% giá vé trực tiếp khi đặt vé khứ hồi. Áp dụng đến hết 15/11.',
+    badge_label: 'Giảm 20%',
     discount_type: 'PERCENT',
     discount_value: 20,
     max_discount_amount: 300000,
@@ -63,6 +76,10 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     id: 3,
     promotion_code: 'HUE100K',
     promotion_name: 'Giảm 100K tuyến Huế',
+    image_url: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=700&q=80',
+    description:
+      'Vé bay Hà Nội – Huế chỉ từ 499K (chưa thuế phí). Số lượng có hạn cho chuyến bay sáng sớm.',
+    badge_label: 'Giá sốc',
     discount_type: 'AMOUNT',
     discount_value: 100000,
     max_discount_amount: null,
@@ -79,6 +96,10 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     id: 4,
     promotion_code: 'TET2027',
     promotion_name: 'Vé Tết 2027',
+    image_url: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=700&q=80',
+    description:
+      'Săn vé Tết sớm, giảm 10% tối đa 200K mỗi dòng vé cho mọi chuyến bay nội địa.',
+    badge_label: 'Săn Tết sớm',
     discount_type: 'PERCENT',
     discount_value: 10,
     max_discount_amount: 200000,
@@ -95,6 +116,10 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     id: 5,
     promotion_code: 'SUMMER99',
     promotion_name: 'Bay đồng giá 99K',
+    image_url: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=700&q=80',
+    description:
+      'Mở bán hàng ngàn vé đồng giá 99K toàn mạng bay nội địa vào mỗi thứ 5 hàng tuần. Đặt ngay kẻo lỡ!',
+    badge_label: 'Đồng giá',
     discount_type: 'AMOUNT',
     discount_value: 99000,
     max_discount_amount: null,
@@ -111,6 +136,9 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     id: 6,
     promotion_code: 'PROMO2025',
     promotion_name: 'Khuyến mãi cũ 2025',
+    image_url: null,
+    description: null,
+    badge_label: null,
     discount_type: 'AMOUNT',
     discount_value: 50000,
     max_discount_amount: null,

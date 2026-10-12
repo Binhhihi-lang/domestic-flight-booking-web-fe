@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { NewsItem } from '@core/models/fleet-news.model';
-import { NewsService } from '@core/services/catalog.service';
+import { Promotion } from '@core/models/promotion.model';
+import { NewsService, PromotionService } from '@core/services/catalog.service';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -19,12 +20,11 @@ interface RouteCard {
   image: string;
 }
 
-interface PromoCard {
-  name: string;
-  description: string;
-  tag: string;
-  tagTone: 'danger' | 'primary' | 'accent';
-  image: string;
+/** Nhãn + màu nhãn của một thẻ khuyến mãi — dẫn xuất để hiển thị. */
+interface PromoView {
+  promo: Promotion;
+  badge: string;
+  tone: 'danger' | 'primary' | 'accent';
 }
 
 /**
@@ -35,8 +35,8 @@ interface PromoCard {
  * phải trang quản trị. Người dùng cần thấy ngay tuyến bay, ưu đãi và lý do tin
  * tưởng trước khi bỏ công nhập thông tin tìm kiếm.
  *
- * Tuyến bay và ưu đãi ở đây là nội dung tĩnh của giai đoạn dựng giao diện; sẽ
- * lấy từ API Promotion/Flight khi Backend xong Phase 2–3.
+ * Tuyến bay ở đây vẫn là nội dung tĩnh của giai đoạn dựng giao diện; sẽ lấy từ
+ * API Flight khi Backend xong Phase 2. Khuyến mãi và tin tức đã đọc từ service.
  */
 @Component({
   selector: 'app-home',
@@ -55,6 +55,7 @@ interface PromoCard {
 export class Home {
   private readonly router = inject(Router);
   private readonly newsService = inject(NewsService);
+  private readonly promotionService = inject(PromotionService);
 
   /**
    * Tin tức mới nhất cho trang chủ.
@@ -68,6 +69,20 @@ export class Home {
   /** id các bài có ảnh tải lỗi — hiện nền thay thế thay vì icon ảnh vỡ. */
   protected readonly brokenThumbs = signal<Set<number>>(new Set());
 
+  /**
+   * Khuyến mãi đang hiệu lực cho khối "Ưu đãi hấp dẫn".
+   *
+   * Cùng lý do lọc như tin tức: API v0.2 mục 2.7 quy định GUEST chỉ thấy
+   * promotion `is_active = true` và đang trong khoảng `start_date`–`end_date`,
+   * nhưng mock trả về tất cả nên phải tự lọc để hai chế độ hành xử như nhau.
+   */
+  protected readonly promos = signal<PromoView[]>([]);
+  protected readonly promosLoading = signal(true);
+  /** id khuyến mãi có ảnh tải lỗi — hiện nền thay thế. */
+  protected readonly brokenPromoImages = signal<Set<number>>(new Set());
+
+  private static readonly money = new Intl.NumberFormat('vi-VN');
+
   constructor() {
     this.newsService.list({ page: 1, size: 3, sort: 'published_at,desc' }).subscribe({
       next: (res) => {
@@ -76,6 +91,56 @@ export class Home {
       },
       error: () => this.newsLoading.set(false),
     });
+
+    this.promotionService.list({ page: 1, size: 20, sort: 'start_date,desc' }).subscribe({
+      next: (res) => {
+        const today = Home.todayIso();
+        const active = res.data.items.filter(
+          (p) => p.is_active && !p.is_deleted && p.start_date <= today && p.end_date >= today,
+        );
+        this.promos.set(active.slice(0, 3).map((p, i) => this.toPromoView(p, i)));
+        this.promosLoading.set(false);
+      },
+      error: () => this.promosLoading.set(false),
+    });
+  }
+
+  /**
+   * Ngày hôm nay dạng `YYYY-MM-DD` theo GIỜ MÁY, không dùng `toISOString()`.
+   *
+   * Vì sao: `toISOString()` trả ngày theo UTC, mà Việt Nam là UTC+7 — nên từ
+   * 00:00 đến 07:00 giờ VN nó vẫn trả về ngày HÔM TRƯỚC. Khuyến mãi bắt đầu
+   * đúng hôm nay sẽ bị coi là chưa hiệu lực suốt 7 giờ đầu ngày.
+   */
+  private static todayIso(): string {
+    const d = new Date();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
+  }
+
+  /**
+   * Nhãn in trên ảnh thẻ: ưu tiên `badge_label` do ADMIN nhập (copy marketing
+   * như "Giá sốc" không suy ra được từ con số nào); nếu trống thì suy ra từ
+   * mức giảm để thẻ không bị trống nhãn.
+   *
+   * Màu nhãn xoay vòng theo thứ tự thẻ — đây thuần là nhịp thị giác của lưới,
+   * không mang thông tin nghiệp vụ, nên không gắn với dữ liệu.
+   */
+  private toPromoView(p: Promotion, index: number): PromoView {
+    const tones: PromoView['tone'][] = ['danger', 'primary', 'accent'];
+    const fallback =
+      p.discount_type === 'PERCENT'
+        ? `Giảm ${p.discount_value}%`
+        : `Giảm ${Home.money.format(p.discount_value)}₫`;
+
+    return { promo: p, badge: p.badge_label?.trim() || fallback, tone: tones[index % 3] };
+  }
+
+  protected markPromoImageBroken(id: number): void {
+    const next = new Set(this.brokenPromoImages());
+    next.add(id);
+    this.brokenPromoImages.set(next);
   }
 
   protected markThumbBroken(id: number): void {
@@ -126,33 +191,6 @@ export class Home {
       duration: '1h 50m',
       price: '1.090.000',
       image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=600&q=80',
-    },
-  ];
-
-  protected readonly promos: PromoCard[] = [
-    {
-      name: 'Đà Lạt Mùa Sương Mù',
-      description:
-        'Nhập mã DALAT20 giảm ngay 20% giá vé trực tiếp khi đặt vé khứ hồi. Áp dụng đến hết 15/11.',
-      tag: 'Giảm 20%',
-      tagTone: 'danger',
-      image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=700&q=80',
-    },
-    {
-      name: 'Hội An Hoài Cổ',
-      description:
-        'Vé bay Hà Nội – Đà Nẵng chỉ từ 499K (chưa thuế phí). Số lượng có hạn cho chuyến bay sáng sớm.',
-      tag: 'Giá sốc',
-      tagTone: 'primary',
-      image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=700&q=80',
-    },
-    {
-      name: 'Bay Đồng Giá 99K',
-      description:
-        'Mở bán hàng ngàn vé đồng giá 99K toàn mạng bay nội địa vào mỗi thứ 5 hàng tuần. Đặt ngay kẻo lỡ!',
-      tag: 'Đồng giá',
-      tagTone: 'accent',
-      image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=700&q=80',
     },
   ];
 

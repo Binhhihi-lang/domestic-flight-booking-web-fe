@@ -52,6 +52,85 @@
           }
         </div>
 
+        <div class="field field--full" [class.field--error]="fieldError('image_url')">
+          <label for="p-img">Ảnh thẻ khuyến mãi</label>
+          <div class="imgfield">
+            <div class="imgfield__preview">
+              @if (draft().image_url && !imageBroken()) {
+                <img
+                  class="thumb thumb--lg"
+                  [src]="draft().image_url"
+                  alt=""
+                  (error)="markImageBroken()"
+                />
+              } @else {
+                <span class="thumb thumb--lg thumb--empty" aria-hidden="true">
+                  <mat-icon>image</mat-icon>
+                </span>
+              }
+            </div>
+
+            <div class="imgfield__controls">
+              <input
+                id="p-img"
+                type="text"
+                maxlength="500"
+                name="image_url"
+                [ngModel]="draft().image_url"
+                (ngModelChange)="setDraft('image_url', $event)"
+                placeholder="Dán đường dẫn ảnh (https://...)"
+              />
+
+              <div class="imgfield__row">
+                <label class="imgfield__pick">
+                  <mat-icon>upload</mat-icon>
+                  Chọn ảnh từ máy
+                  <input type="file" accept="image/*" (change)="onPickImage($event)" />
+                </label>
+                @if (draft().image_url) {
+                  <button class="imgfield__clear" type="button" (click)="clearImage()">
+                    Xóa ảnh
+                  </button>
+                }
+              </div>
+
+              <span class="hint">
+                Ảnh hiển thị trên thẻ khuyến mãi ở trang chủ. Tối đa 2 MB nếu chọn từ máy.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field field--full">
+          <label for="p-desc">Mô tả ngắn</label>
+          <textarea
+            id="p-desc"
+            rows="2"
+            maxlength="500"
+            name="description"
+            [ngModel]="draft().description"
+            (ngModelChange)="setDraft('description', $event)"
+            placeholder="Ví dụ: Nhập mã DALAT20 giảm ngay 20% khi đặt vé khứ hồi. Áp dụng đến hết 15/11."
+          ></textarea>
+          <span class="hint">Dòng mô tả hiện trên thẻ khuyến mãi, tối đa 500 ký tự</span>
+        </div>
+
+        <div class="field">
+          <label for="p-badge">Nhãn nổi bật</label>
+          <input
+            id="p-badge"
+            type="text"
+            maxlength="30"
+            name="badge_label"
+            [ngModel]="draft().badge_label"
+            (ngModelChange)="setDraft('badge_label', $event)"
+            placeholder="Ví dụ Giá sốc, Đồng giá"
+          />
+          <span class="hint">
+            Nhãn ngắn in trên ảnh. Để trống thì hiển thị mức giảm tự động.
+          </span>
+        </div>
+
         <div class="field">
           <label for="p-dtype">Loại giảm <span class="req">*</span></label>
           <select

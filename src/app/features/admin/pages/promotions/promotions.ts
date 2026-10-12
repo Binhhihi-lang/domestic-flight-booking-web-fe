@@ -29,6 +29,12 @@ export class AdminPromotions {
     deleteMessage: (r) =>
       `Bạn có chắc muốn xóa "${r.promotion_name}"? Bản ghi vẫn được giữ lại để tra lịch sử.`,
     columns: [
+      {
+        label: 'Ảnh',
+        value: (r) => r.image_url ?? '',
+        image: (r) => r.image_url,
+        width: '76px',
+      },
       { label: 'Mã', value: (r) => r.promotion_code, kind: 'code', width: '120px' },
       { label: 'Tên chương trình', value: (r) => r.promotion_name },
       {
@@ -52,6 +58,29 @@ export class AdminPromotions {
     fields: [
       { key: 'promotion_code', shownInTable: true, label: 'Mã khuyến mãi', type: 'text', required: true, maxLength: 50, hint: 'Ví dụ HE2026' },
       { key: 'promotion_name', shownInTable: true, label: 'Tên chương trình', type: 'text', required: true, maxLength: 150 },
+      {
+        key: 'image_url', shownInTable: true,
+        label: 'Ảnh thẻ khuyến mãi',
+        type: 'image',
+        maxLength: 500,
+        fullWidth: true,
+        hint: 'Dán đường dẫn ảnh hoặc chọn ảnh từ máy. Hiển thị trên thẻ ở trang chủ.',
+      },
+      {
+        key: 'description',
+        label: 'Mô tả ngắn',
+        type: 'textarea',
+        maxLength: 500,
+        fullWidth: true,
+        hint: 'Dòng mô tả hiện trên thẻ khuyến mãi',
+      },
+      {
+        key: 'badge_label',
+        label: 'Nhãn nổi bật',
+        type: 'text',
+        maxLength: 30,
+        hint: 'Ví dụ Giá sốc, Đồng giá. Để trống thì hiện mức giảm tự động.',
+      },
       {
         key: 'discount_type', shownInTable: true,
         label: 'Loại giảm',

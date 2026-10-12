@@ -86,6 +86,9 @@ export class PromotionForm {
   protected readonly draft = signal({
     promotion_code: '',
     promotion_name: '',
+    image_url: '',
+    description: '',
+    badge_label: '',
     discount_type: 'PERCENT' as 'PERCENT' | 'AMOUNT',
     discount_value: null as number | null,
     max_discount_amount: null as number | null,
@@ -99,6 +102,9 @@ export class PromotionForm {
   protected readonly scopes = signal<ScopeRow[]>([]);
   protected readonly excludedIds = signal<number[]>([]);
   protected readonly errors = signal<Record<string, string>>({});
+
+  /** Ảnh thẻ khuyến mãi tải lỗi → hiện khung nền thay vì icon ảnh vỡ. */
+  protected readonly imageBroken = signal(false);
 
   private scopeKeySeq = 1;
 
@@ -122,6 +128,9 @@ export class PromotionForm {
         this.draft.set({
           promotion_code: p.promotion_code,
           promotion_name: p.promotion_name,
+          image_url: p.image_url ?? '',
+          description: p.description ?? '',
+          badge_label: p.badge_label ?? '',
           discount_type: p.discount_type,
           discount_value: p.discount_value,
           max_discount_amount: p.max_discount_amount,
@@ -222,6 +231,57 @@ export class PromotionForm {
     return this.excludedIds().includes(id);
   }
 
+  // ---------- Ảnh thẻ khuyến mãi ----------
+
+  /** Ảnh tải lỗi → hiện khung nền, không hiện icon ảnh vỡ của trình duyệt. */
+  protected markImageBroken(): void {
+    this.imageBroken.set(true);
+  }
+
+  protected clearImage(): void {
+    this.setDraft('image_url', '');
+    this.imageBroken.set(false);
+  }
+
+  /**
+   * Đọc ảnh chọn từ máy thành data URL và lưu vào `image_url`.
+   *
+   * Cùng cách làm với ô ảnh của form CRUD chung: BE chưa có endpoint upload ảnh
+   * cho master data, nên dùng data URL để xem trước ngay mà vẫn gửi được trong
+   * payload JSON. Khi BE có endpoint, chỉ đổi chỗ này thành gọi upload.
+   */
+  protected onPickImage(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      this.notify('Vui lòng chọn một tệp ảnh');
+      input.value = '';
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      this.notify('Ảnh vượt quá 2 MB. Chọn ảnh nhỏ hơn hoặc dán đường dẫn.');
+      input.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.setDraft('image_url', reader.result as string);
+      this.imageBroken.set(false);
+      // Xoá giá trị input file để chọn lại cùng tệp vẫn kích hoạt (change).
+      input.value = '';
+    };
+    reader.onerror = () => {
+      this.notify('Không đọc được tệp ảnh');
+      input.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
   // ---------- Lưu ----------
 
   protected setDraft<K extends keyof ReturnType<typeof this.draft>>(
@@ -290,6 +350,10 @@ export class PromotionForm {
     const payload: PromotionPayload = {
       promotion_code: d.promotion_code.trim().toUpperCase(),
       promotion_name: d.promotion_name.trim(),
+      // Chuỗi rỗng → null: DB để NULL cho "chưa có", không phải chuỗi rỗng.
+      image_url: d.image_url.trim() || null,
+      description: d.description.trim() || null,
+      badge_label: d.badge_label.trim() || null,
       discount_type: d.discount_type,
       discount_value: discountValue,
       // Trần giảm chỉ có ý nghĩa với PERCENT — DB v0.4 quy định AMOUNT thì NULL.

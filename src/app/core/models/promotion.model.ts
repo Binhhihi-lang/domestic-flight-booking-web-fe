@@ -26,6 +26,23 @@ export interface Promotion {
   id: number;
   promotion_code: string;
   promotion_name: string;
+  /**
+   * Ảnh thẻ khuyến mãi ở trang chủ / danh sách khuyến mãi.
+   * CHỜ BE: DB v0.4 chưa có cột này — đã đề xuất thêm ở
+   * `be/docs/De_xuat_bo_sung_DB_v0.5_truong_anh.md` (migration V5).
+   */
+  image_url: string | null;
+  /**
+   * Dòng mô tả ngắn trên thẻ khuyến mãi (khác `promotion_name`).
+   * CHỜ BE: chưa có cột trong DB v0.4 — cùng đề xuất migration V5.
+   */
+  description: string | null;
+  /**
+   * Nhãn marketing ngắn ("Giá sốc", "Đồng giá"). Phần lớn nhãn FE suy ra được từ
+   * `discount_type` + `discount_value`, nhưng copy thuần marketing thì không.
+   * CHỜ BE: chưa có cột trong DB v0.4 — cùng đề xuất migration V5.
+   */
+  badge_label: string | null;
   discount_type: DiscountType;
   discount_value: number;
   /** Trần giảm cho MỖI DÒNG VÉ; chỉ có ý nghĩa với PERCENT. null = không trần. */

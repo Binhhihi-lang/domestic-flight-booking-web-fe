@@ -62,14 +62,19 @@
   padding: 0 26px;
 }
 
-/* ---------- Tuyến bay ---------- */
+/* ---------- Tuyến bay ----------
+   Ba lưới thẻ của trang (tuyến bay, ưu đãi, tin tức) dùng chung một khuôn thẻ:
+   nền surface, viền mảnh, bo góc lớn, nhấc lên khi rê chuột. Gộp selector để
+   sửa một chỗ áp cho cả ba, thay vì ba khối rule giống nhau. */
 .route-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 16px;
 }
 
-.route {
+.route,
+.promo,
+.news {
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--color-surface);
@@ -80,7 +85,9 @@
     box-shadow var(--dur) var(--ease);
 }
 
-.route:hover {
+.route:hover,
+.promo:hover,
+.news:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
 }
@@ -95,10 +102,16 @@
   padding: 14px 16px 16px;
 }
 
-.route__nm {
+/* Tiêu đề thẻ — dùng chung cho cả ba lưới. */
+.route__nm,
+.promo__nm,
+.news__title {
   font-family: var(--font-heading);
   font-size: 15.5px;
   font-weight: 700;
+}
+
+.route__nm {
   margin-bottom: 4px;
 }
 
@@ -142,27 +155,46 @@
   gap: 16px;
 }
 
-.promo {
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  cursor: pointer;
-  transition:
-    transform var(--dur) var(--ease),
-    box-shadow var(--dur) var(--ease);
-}
-
-.promo:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+/* Thẻ là cả một liên kết tới trang chi tiết khuyến mãi. */
+.promo__link,
+.news__link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
 }
 
 .promo__img {
   height: 158px;
-  background-size: cover;
-  background-position: center;
   position: relative;
+  overflow: hidden;
+  background: var(--color-surface-alt);
+}
+
+.promo__pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Chưa có ảnh / ảnh lỗi: nền + icon, KHÔNG để ảnh vỡ của trình duyệt. */
+.promo__img--ph,
+.news__img--ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.promo__img--ph {
+  background: linear-gradient(135deg, var(--color-primary-soft), var(--color-surface-alt));
+  color: var(--color-primary);
+}
+
+.promo__img--ph mat-icon {
+  font-size: 42px;
+  width: 42px;
+  height: 42px;
+  opacity: 0.55;
 }
 
 .promo__tag {
@@ -194,32 +226,43 @@
 }
 
 .promo__nm {
-  font-family: var(--font-heading);
-  font-size: 15.5px;
-  font-weight: 700;
   margin-bottom: 6px;
 }
 
-.promo__ds {
+.promo__ds,
+.news__excerpt {
   font-size: 12.5px;
   color: var(--color-ink-muted);
   line-height: 1.55;
   margin: 0 0 11px;
 }
 
-.promo__lk {
+.promo__lk,
+.news__lk {
   font-size: 12.5px;
   font-weight: 700;
   color: var(--color-primary-bright);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
-.promo__lk mat-icon {
+.promo__lk mat-icon,
+.news__lk mat-icon {
   font-size: 16px;
   width: 16px;
   height: 16px;
+}
+
+/* Khung xương lúc đang tải: không viền, không hiệu ứng hover để không trông
+   như thẻ thật đang bấm được. */
+.promo--skeleton {
+  pointer-events: none;
+}
+
+.promo--skeleton:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 /* ---------- Vì sao chọn ---------- */
@@ -554,9 +597,6 @@
 
 /* Nền thay thế khi bài chưa có ảnh — DB v0.4 chưa có cột ảnh cho news_items. */
 .news__img--ph {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: linear-gradient(135deg, #0a4d8c, #0770cd 55%, #0194f3);
   color: rgba(255, 255, 255, 0.85);
 }
@@ -578,9 +618,6 @@
 }
 
 .news__title {
-  font-family: var(--font-heading);
-  font-size: 15.5px;
-  font-weight: 700;
   line-height: 1.35;
   margin: 0 0 7px;
   display: -webkit-box;
@@ -588,28 +625,6 @@
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.news__excerpt {
-  font-size: 12.5px;
-  color: var(--color-ink-muted);
-  line-height: 1.55;
-  margin: 0 0 11px;
-}
-
-.news__lk {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--color-primary-bright);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.news__lk mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
 }
 
 .news--skeleton {
