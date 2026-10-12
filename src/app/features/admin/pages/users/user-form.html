@@ -1,0 +1,156 @@
+<div class="wrap wrap--narrow">
+  <nav class="crumbs" aria-label="Đường dẫn">
+    <a routerLink="/admin/users">Người dùng</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>{{ isEdit() ? 'Sửa' : 'Thêm mới' }}</span>
+  </nav>
+
+  <header class="page-h">
+    <div>
+      <h1>{{ isEdit() ? 'Sửa người dùng' : 'Thêm người dùng' }}</h1>
+      <p>Khai báo thông tin tài khoản, vai trò và trạng thái hoạt động.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-app-card><app-loading-state /></app-app-card>
+  } @else {
+    @if (isSelf()) {
+      <app-app-card class="blk">
+        <p class="note">
+          Đây là tài khoản bạn đang đăng nhập. Nếu là ADMIN đang hoạt động cuối cùng, hệ thống
+          sẽ từ chối hạ quyền hoặc ngừng hoạt động.
+        </p>
+      </app-app-card>
+    }
+
+    <app-app-card title="Thông tin tài khoản" class="blk">
+      <div class="form-grid">
+        <div class="field" [class.field--error]="fieldError('email')">
+          <label for="u-email">Email <span class="req">*</span></label>
+          <input
+            id="u-email"
+            type="email"
+            maxlength="255"
+            name="email"
+            [disabled]="isEdit()"
+            [ngModel]="draft().email"
+            (ngModelChange)="setDraft('email', $event)"
+            placeholder="Ví dụ staff01@example.com"
+          />
+          @if (fieldError('email'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else if (isEdit()) {
+            <span class="hint">Email không đổi được sau khi tạo</span>
+          }
+        </div>
+
+        @if (!isEdit()) {
+          <div class="field" [class.field--error]="fieldError('password')">
+            <label for="u-pass">Mật khẩu ban đầu <span class="req">*</span></label>
+            <input
+              id="u-pass"
+              type="password"
+              maxlength="100"
+              name="password"
+              [ngModel]="draft().password"
+              (ngModelChange)="setDraft('password', $event)"
+              placeholder="Ít nhất 8 ký tự"
+            />
+            @if (fieldError('password'); as msg) {
+              <span class="field__err">{{ msg }}</span>
+            } @else {
+              <span class="hint">Nhân viên nên đổi mật khẩu sau lần đăng nhập đầu</span>
+            }
+          </div>
+        }
+
+        <div class="field" [class.field--error]="fieldError('full_name')">
+          <label for="u-name">Họ tên <span class="req">*</span></label>
+          <input
+            id="u-name"
+            type="text"
+            maxlength="150"
+            name="full_name"
+            [ngModel]="draft().full_name"
+            (ngModelChange)="setDraft('full_name', $event)"
+          />
+          @if (fieldError('full_name'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          }
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('phone')">
+          <label for="u-phone">Số điện thoại</label>
+          <input
+            id="u-phone"
+            type="tel"
+            maxlength="20"
+            name="phone"
+            [ngModel]="draft().phone"
+            (ngModelChange)="setDraft('phone', $event)"
+            placeholder="Ví dụ 0912345678"
+          />
+          @if (fieldError('phone'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="u-role">Vai trò <span class="req">*</span></label>
+          <select
+            id="u-role"
+            name="role"
+            [ngModel]="draft().role"
+            (ngModelChange)="setDraft('role', $event)"
+          >
+            <option value="CUSTOMER">Khách hàng</option>
+            <option value="STAFF">Nhân viên vận hành</option>
+            <option value="ADMIN">Quản trị viên</option>
+          </select>
+          <span class="hint">Mỗi tài khoản giữ một vai trò (BR-RBAC-02)</span>
+        </div>
+
+        <div class="field field--full">
+          <label class="toggle">
+            <input
+              type="checkbox"
+              name="is_active"
+              [ngModel]="draft().is_active"
+              (ngModelChange)="setDraft('is_active', $event)"
+            />
+            <span>Đang hoạt động</span>
+          </label>
+        </div>
+      </div>
+    </app-app-card>
+
+    @if (isEdit()) {
+      <app-app-card title="Đặt lại mật khẩu" class="blk">
+        <p class="note">
+          Hệ thống sinh một mật khẩu tạm và hiện ra một lần. Hãy chép lại rồi gửi cho nhân viên —
+          họ nên đổi ngay sau khi đăng nhập.
+        </p>
+
+        @if (tempPassword(); as temp) {
+          <div class="temp-pass">
+            <code>{{ temp }}</code>
+            <span class="hint">Mật khẩu tạm — chỉ hiện trong phiên làm việc này</span>
+          </div>
+        } @else {
+          <app-app-button variant="ghost" (clicked)="resetPassword()">
+            <mat-icon>lock_reset</mat-icon>
+            Đặt lại mật khẩu
+          </app-app-button>
+        }
+      </app-app-card>
+    }
+
+    <div class="form-actions">
+      <app-app-button variant="ghost" (clicked)="cancel()">Hủy</app-app-button>
+      <app-app-button [disabled]="saving()" (clicked)="save()">
+        {{ saving() ? 'Đang lưu…' : 'Lưu người dùng' }}
+      </app-app-button>
+    </div>
+  }
+</div>

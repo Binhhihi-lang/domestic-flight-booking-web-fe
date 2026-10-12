@@ -177,7 +177,15 @@ export const routes: Routes = [
         data: { title: 'Quyền' },
       },
 
-      ...comingSoonAdmin('users', 'Người dùng', true),
+      // ---- Người dùng (ADMIN) ----
+      ...crudRoutes('users', 'Người dùng', () =>
+        import('@features/admin/pages/users/users').then((m) => m.AdminUsers),
+        {
+          adminOnly: true,
+          formLoader: () => import('@features/admin/pages/users/user-form').then((m) => m.UserForm),
+        },
+      ),
+
       ...comingSoonAdmin('seat-configurations', 'Sơ đồ ghế', true),
       ...comingSoonAdmin('flights', 'Chuyến bay'),
       ...comingSoonAdmin('bookings', 'Đặt chỗ'),
