@@ -1,0 +1,339 @@
+<div class="wrap wrap--narrow">
+  <nav class="crumbs" aria-label="Đường dẫn">
+    <a routerLink="/admin/vouchers">Voucher</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>{{ isEdit() ? 'Sửa' : 'Thêm mới' }}</span>
+  </nav>
+
+  <header class="page-h">
+    <div>
+      <h1>{{ isEdit() ? 'Sửa voucher' : 'Thêm voucher' }}</h1>
+      <p>Khai báo mức giảm, cách phát hành, phạm vi áp dụng và chuyến bị loại trừ.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-app-card><app-loading-state /></app-app-card>
+  } @else {
+    <!-- ===== Thông tin voucher ===== -->
+    <app-app-card title="Thông tin voucher" class="blk">
+      <p class="note">
+        Khách <strong>không nhập mã</strong> — họ nhận voucher vào ví rồi chọn khi thanh toán.
+        Mã nội bộ chỉ để ADMIN tra cứu.
+      </p>
+
+      <div class="form-grid">
+        <div class="field" [class.field--error]="fieldError('voucher_code')">
+          <label for="v-code">Mã nội bộ <span class="req">*</span></label>
+          <input
+            id="v-code"
+            type="text"
+            maxlength="50"
+            name="voucher_code"
+            [ngModel]="draft().voucher_code"
+            (ngModelChange)="setDraft('voucher_code', $event)"
+            placeholder="Ví dụ SUMMER50K"
+          />
+          @if (fieldError('voucher_code'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else {
+            <span class="hint">Chỉ ADMIN thấy, khách không dùng mã này</span>
+          }
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('voucher_name')">
+          <label for="v-name">Tên hiển thị <span class="req">*</span></label>
+          <input
+            id="v-name"
+            type="text"
+            maxlength="150"
+            name="voucher_name"
+            [ngModel]="draft().voucher_name"
+            (ngModelChange)="setDraft('voucher_name', $event)"
+            placeholder="Ví dụ Giảm 50K mùa hè"
+          />
+          @if (fieldError('voucher_name'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else {
+            <span class="hint">Tên khách thấy ở Kho voucher và Voucher của tôi</span>
+          }
+        </div>
+
+        <div class="field field--full">
+          <label for="v-desc">Mô tả / điều kiện</label>
+          <textarea
+            id="v-desc"
+            rows="3"
+            maxlength="500"
+            name="description"
+            [ngModel]="draft().description"
+            (ngModelChange)="setDraft('description', $event)"
+            placeholder="Ví dụ: Áp dụng cho mọi chuyến nội địa, đơn từ 500K"
+          ></textarea>
+          <span class="hint">Hiển thị cho khách đọc khi xem voucher</span>
+        </div>
+
+        <div class="field">
+          <label for="v-dist">Cách phát hành <span class="req">*</span></label>
+          <select
+            id="v-dist"
+            name="distribution_type"
+            [ngModel]="draft().distribution_type"
+            (ngModelChange)="setDraft('distribution_type', $event)"
+          >
+            <option value="GLOBAL">Kho chung — khách tự bấm Nhận</option>
+            <option value="ASSIGNED">Tặng riêng — ADMIN chỉ định khách</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="v-limit">Giới hạn lượt nhận</label>
+          <input
+            id="v-limit"
+            type="number"
+            min="1"
+            name="claim_limit"
+            [disabled]="!isGlobal()"
+            [ngModel]="draft().claim_limit"
+            (ngModelChange)="setDraft('claim_limit', $event === '' ? null : +$event)"
+          />
+          @if (fieldError('claim_limit'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else {
+            <span class="hint">
+              @if (isGlobal()) {
+                Tổng số lượt khách được nhận. Để trống = không giới hạn.
+              } @else {
+                Chỉ áp dụng cho voucher phát ở Kho chung.
+              }
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="v-dtype">Loại giảm <span class="req">*</span></label>
+          <select
+            id="v-dtype"
+            name="discount_type"
+            [ngModel]="draft().discount_type"
+            (ngModelChange)="setDraft('discount_type', $event)"
+          >
+            <option value="AMOUNT">Theo số tiền (₫)</option>
+            <option value="PERCENT">Theo phần trăm (%)</option>
+          </select>
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('discount_value')">
+          <label for="v-dval">Giá trị giảm <span class="req">*</span></label>
+          <input
+            id="v-dval"
+            type="number"
+            min="0"
+            name="discount_value"
+            [ngModel]="draft().discount_value"
+            (ngModelChange)="setDraft('discount_value', $event === '' ? null : +$event)"
+            [placeholder]="isPercent() ? 'Ví dụ 10 (nghĩa là 10%)' : 'Ví dụ 50000'"
+          />
+          @if (fieldError('discount_value'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else {
+            <span class="hint">
+              {{ isPercent() ? 'Phần trăm giảm, tối đa 100' : 'Số tiền giảm, đơn vị đồng' }}
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="v-max">Trần giảm cả đơn (₫)</label>
+          <input
+            id="v-max"
+            type="number"
+            min="0"
+            name="max_discount_amount"
+            [disabled]="!isPercent()"
+            [ngModel]="draft().max_discount_amount"
+            (ngModelChange)="setDraft('max_discount_amount', $event === '' ? null : +$event)"
+          />
+          <span class="hint">
+            @if (isPercent()) {
+              Khác khuyến mãi: voucher tính trên <strong>cả đơn</strong>, không phải từng dòng vé.
+            } @else {
+              Chỉ áp dụng khi giảm theo phần trăm.
+            }
+          </span>
+        </div>
+
+        <div class="field">
+          <label for="v-min">Đơn tối thiểu (₫)</label>
+          <input
+            id="v-min"
+            type="number"
+            min="0"
+            name="min_order_amount"
+            [ngModel]="draft().min_order_amount"
+            (ngModelChange)="setDraft('min_order_amount', $event === '' ? null : +$event)"
+          />
+          <span class="hint">Tổng giá vé tối thiểu của cả đơn. Để trống nếu không yêu cầu.</span>
+        </div>
+
+        <div class="field">
+          <label for="v-trip">Loại hành trình</label>
+          <select
+            id="v-trip"
+            name="applicable_trip_type"
+            [ngModel]="draft().applicable_trip_type"
+            (ngModelChange)="setDraft('applicable_trip_type', $event)"
+          >
+            <option value="ANY">Mọi hành trình</option>
+            <option value="ONE_WAY">Chỉ một chiều</option>
+            <option value="ROUND_TRIP">Chỉ khứ hồi</option>
+          </select>
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('start_date')">
+          <label for="v-start">Ngày bắt đầu <span class="req">*</span></label>
+          <input
+            id="v-start"
+            type="date"
+            name="start_date"
+            [ngModel]="draft().start_date"
+            (ngModelChange)="setDraft('start_date', $event)"
+          />
+          @if (fieldError('start_date'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else {
+            <span class="hint">Ngày bắt đầu được nhận và dùng</span>
+          }
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('end_date')">
+          <label for="v-end">Ngày hết hạn <span class="req">*</span></label>
+          <input
+            id="v-end"
+            type="date"
+            name="end_date"
+            [ngModel]="draft().end_date"
+            (ngModelChange)="setDraft('end_date', $event)"
+          />
+          @if (fieldError('end_date'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          }
+        </div>
+
+        <div class="field field--full">
+          <label class="toggle">
+            <input
+              type="checkbox"
+              name="is_active"
+              [ngModel]="draft().is_active"
+              (ngModelChange)="setDraft('is_active', $event)"
+            />
+            <span>Đang phát</span>
+          </label>
+        </div>
+      </div>
+    </app-app-card>
+
+    <!-- ===== Phạm vi áp dụng ===== -->
+    <app-app-card title="Phạm vi áp dụng" class="blk">
+      <app-app-button cardActions size="sm" variant="ghost" (clicked)="addScope()">
+        <mat-icon>add</mat-icon>
+        Thêm dòng
+      </app-app-button>
+
+      <p class="note">
+        Không có dòng nào = áp dụng cho <strong>tất cả chuyến bay</strong>. Nhiều dòng là điều kiện
+        <strong>HOẶC</strong>. Tuyến có hướng: muốn áp cả hai chiều thì thêm một dòng đảo chiều.
+      </p>
+
+      @if (fieldError('scopes'); as msg) {
+        <p class="field__err">{{ msg }}</p>
+      }
+
+      @if (scopes().length === 0) {
+        <p class="empty-line">Chưa có phạm vi nào — voucher sẽ áp cho mọi chuyến bay.</p>
+      } @else {
+        <div class="scope-list">
+          @for (s of scopes(); track s.key) {
+            <div class="scope-row">
+              <select
+                class="scope-row__type"
+                aria-label="Loại phạm vi"
+                [ngModel]="s.target_type"
+                (ngModelChange)="setScopeType(s.key, $event)"
+              >
+                <option value="AIRLINE">Theo hãng bay</option>
+                <option value="FARE_CLASS">Theo hạng vé</option>
+                <option value="ROUTE">Theo tuyến bay</option>
+                <option value="FLIGHT">Theo chuyến bay</option>
+              </select>
+
+              <select
+                class="scope-row__val"
+                aria-label="Giá trị phạm vi"
+                [ngModel]="s.value === null ? '' : s.value"
+                (ngModelChange)="setScopeValue(s.key, 'value', $event)"
+              >
+                <option value="">— Chọn —</option>
+                @for (o of optionsFor(s.target_type); track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
+              </select>
+
+              @if (s.target_type === 'ROUTE') {
+                <select
+                  class="scope-row__val"
+                  aria-label="Sân bay đến"
+                  [ngModel]="s.value2 === null ? '' : s.value2"
+                  (ngModelChange)="setScopeValue(s.key, 'value2', $event)"
+                >
+                  <option value="">— Đến (bỏ trống = mọi điểm đến) —</option>
+                  @for (o of optionsFor('ROUTE'); track o.value) {
+                    <option [value]="o.value">{{ o.label }}</option>
+                  }
+                </select>
+              }
+
+              <button
+                class="scope-row__del"
+                type="button"
+                aria-label="Xoá dòng phạm vi"
+                (click)="removeScope(s.key)"
+              >
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </app-app-card>
+
+    <!-- ===== Loại trừ chuyến bay ===== -->
+    <app-app-card title="Loại trừ chuyến bay" class="blk">
+      <p class="note">
+        Chuyến được chọn ở đây <strong>không bao giờ</strong> được giảm, kể cả khi khớp phạm vi —
+        loại trừ luôn thắng phạm vi.
+      </p>
+
+      <div class="exclude-grid">
+        @for (f of flights; track f.value) {
+          <label class="exclude-item" [class.exclude-item--on]="isExcluded(f.value)">
+            <input
+              type="checkbox"
+              [checked]="isExcluded(f.value)"
+              (change)="toggleExcluded(f.value)"
+            />
+            <span>{{ f.label }}</span>
+          </label>
+        }
+      </div>
+    </app-app-card>
+
+    <div class="form-actions">
+      <app-app-button variant="ghost" (clicked)="cancel()">Hủy</app-app-button>
+      <app-app-button [disabled]="saving()" (clicked)="save()">
+        {{ saving() ? 'Đang lưu…' : 'Lưu voucher' }}
+      </app-app-button>
+    </div>
+  }
+</div>
