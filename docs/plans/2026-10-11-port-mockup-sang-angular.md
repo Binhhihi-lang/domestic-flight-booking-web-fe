@@ -70,7 +70,7 @@ Nguồn: `../design/mockup-6-khuon.html` — mở file này để xem chính xá
 | P6 | Đăng nhập / Đăng ký | A2–A6 | Chia đôi màn hình |
 | P11 | Tài khoản khách | D2–D5, D7–D9, C9 | Ví, vé, voucher, lịch sử |
 
-**15 khuôn còn lại** (P3, P4, P5, P8, P10, P12–P15) là biến thể — xem spec gốc `../specssign-system-va-mock-layer-design.md` mục 4.
+**15 khuôn còn lại** (P3, P4, P5, P8, P10, P12–P15) là biến thể — xem spec gốc `../specs/2026-10-11-design-system-va-mock-layer-design.md` mục 4.
 
 ---
 

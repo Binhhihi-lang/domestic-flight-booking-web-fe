@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '@core/services/auth.service';
 import { AuthAside } from '@shared/components/auth-aside/auth-aside';
+import { BrandLogo } from '@shared/components/brand-logo/brand-logo';
 
 /**
  * AUTH-02 — Đăng nhập (API Design v0.2 mục 2.1), bám mockup P6.
@@ -16,7 +17,7 @@ import { AuthAside } from '@shared/components/auth-aside/auth-aside';
 @Component({
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, MatIconModule, AuthAside],
+  imports: [ReactiveFormsModule, RouterLink, MatIconModule, AuthAside, BrandLogo],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

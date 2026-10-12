@@ -6,6 +6,12 @@
 
   <div class="auth__form">
     <div class="auth__box">
+      <!-- Chỉ hiện ở ≤880px: khi đó panel trái bị ẩn nên đây là lối về trang chủ
+           duy nhất trên màn hình. -->
+      <a class="auth__home" routerLink="/" aria-label="Về trang chủ VinaFly">
+        <app-brand-logo size="md" tone="light" [tagline]="''" />
+      </a>
+
       <h1>Đăng nhập</h1>
       <p>Chào mừng trở lại. Nhập thông tin tài khoản của bạn.</p>
 

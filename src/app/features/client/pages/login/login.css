@@ -207,3 +207,16 @@
     min-height: auto;
   }
 }
+
+/* Logo nhỏ trong form — chỉ hiện khi panel trái bị ẩn (≤880px), vì lúc đó
+   không còn lối nào khác để về trang chủ. */
+.auth__home {
+  display: none;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 880px) {
+  .auth__home {
+    display: inline-flex;
+  }
+}
