@@ -13,6 +13,19 @@ import { crudRoutes } from '@shared/crud/crud-routes';
  * hướng không rơi vào link chết trong lúc chờ sprint tương ứng.
  */
 export const routes: Routes = [
+  // Trang xác thực nằm NGOÀI client-layout: mockup P6 là bố cục chia đôi toàn
+  // màn hình, không có topbar/footer. Để trong layout thì khách vừa đăng nhập
+  // vừa thấy thanh điều hướng và footer của trang chủ — sai thiết kế.
+  {
+    path: 'login',
+    loadComponent: () => import('@features/client/pages/login/login').then((m) => m.Login),
+    data: { title: 'Đăng nhập' },
+  },
+  {
+    path: 'register',
+    loadComponent: () => import('@features/client/pages/register/register').then((m) => m.Register),
+    data: { title: 'Đăng ký' },
+  },
   {
     path: '',
     loadComponent: () =>
@@ -29,15 +42,6 @@ export const routes: Routes = [
             (m) => m.FlightResults,
           ),
         data: { title: 'Kết quả tìm chuyến' },
-      },
-      {
-        path: 'login',
-        loadComponent: () => import('@features/client/pages/login/login').then((m) => m.Login),
-      },
-      {
-        path: 'register',
-        loadComponent: () =>
-          import('@features/client/pages/register/register').then((m) => m.Register),
       },
       {
         path: 'promotions',
@@ -157,9 +161,23 @@ export const routes: Routes = [
 
       // Các màn đã khai trong danh sách UI nhưng chưa làm — dùng coming-soon
       // để sidebar không dẫn vào link chết. Bỏ dần khi tới sprint tương ứng.
+      // ---- RBAC (chỉ đọc) ----
+      {
+        path: 'roles',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('@features/admin/pages/roles/roles').then((m) => m.AdminRoles),
+        data: { title: 'Vai trò' },
+      },
+      {
+        path: 'permissions',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('@features/admin/pages/permissions/permissions').then((m) => m.AdminPermissions),
+        data: { title: 'Quyền' },
+      },
+
       ...comingSoonAdmin('users', 'Người dùng', true),
-      ...comingSoonAdmin('roles', 'Vai trò', true),
-      ...comingSoonAdmin('permissions', 'Quyền', true),
       ...comingSoonAdmin('seat-configurations', 'Sơ đồ ghế', true),
       ...comingSoonAdmin('flights', 'Chuyến bay'),
       ...comingSoonAdmin('bookings', 'Đặt chỗ'),

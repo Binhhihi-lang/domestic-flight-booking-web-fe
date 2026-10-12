@@ -1,5 +1,6 @@
 import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
+import { Permission, Role } from '@core/models/rbac.model';
 
 /** Máy bay — API v0.2 mục 2.6. Chỉ STAFF/ADMIN truy cập. */
 export const AIRCRAFT_MOCK: Aircraft[] = [
@@ -354,4 +355,39 @@ export const NEWS_MOCK: NewsItem[] = [
     is_deleted: true,
     category_ids: [6],
   },
+];
+
+/** Vai trò — API v0.2 mục 2.4. Seed cố định, không CRUD. */
+export const ROLES_MOCK: Role[] = [
+  { id: 1, name: 'CUSTOMER', description: 'Khách hàng đã đăng ký/đăng nhập — nghiệp vụ cá nhân và booking' },
+  { id: 2, name: 'STAFF', description: 'Nhân viên vận hành — quản lý flight, fare, seat, booking' },
+  { id: 3, name: 'ADMIN', description: 'Quản trị hệ thống — user, RBAC, master data, content' },
+];
+
+/**
+ * Quyền — trích từ `V2__seed_rbac.sql` của BE để FE thấy đúng dữ liệu thật.
+ * Chỉ lấy một phần đủ để thử lọc theo `module`; đủ 7 module khác nhau.
+ */
+export const PERMISSIONS_MOCK: Permission[] = [
+  { id: 1, permission_key: 'LOGIN', description: 'Đăng nhập hệ thống', module: 'AUTH' },
+  { id: 2, permission_key: 'LOGOUT', description: 'Đăng xuất', module: 'AUTH' },
+  { id: 3, permission_key: 'PASSWORD_CHANGE_SELF', description: 'Đổi mật khẩu của mình', module: 'AUTH' },
+  { id: 4, permission_key: 'USER_READ', description: 'Xem danh sách người dùng', module: 'USER' },
+  { id: 5, permission_key: 'USER_READ_DETAIL', description: 'Xem chi tiết người dùng', module: 'USER' },
+  { id: 6, permission_key: 'USER_CREATE', description: 'Tạo người dùng', module: 'USER' },
+  { id: 7, permission_key: 'USER_UPDATE', description: 'Cập nhật người dùng', module: 'USER' },
+  { id: 8, permission_key: 'USER_DELETE', description: 'Xóa người dùng', module: 'USER' },
+  { id: 9, permission_key: 'ROLE_READ', description: 'Xem vai trò và quyền', module: 'ROLE' },
+  { id: 10, permission_key: 'AIRLINE_READ', description: 'Xem danh sách hãng hàng không', module: 'AIRLINE' },
+  { id: 11, permission_key: 'AIRLINE_CREATE', description: 'Tạo hãng hàng không', module: 'AIRLINE' },
+  { id: 12, permission_key: 'CITY_READ', description: 'Xem danh sách thành phố', module: 'CITY' },
+  { id: 13, permission_key: 'AIRPORT_READ', description: 'Xem danh sách sân bay', module: 'AIRPORT' },
+  { id: 14, permission_key: 'AIRCRAFT_READ', description: 'Xem danh sách máy bay', module: 'AIRCRAFT' },
+  { id: 15, permission_key: 'SEAT_CONFIG_READ', description: 'Xem danh sách cấu hình ghế', module: 'SEAT_CONFIG' },
+  { id: 16, permission_key: 'SEAT_CONFIG_UPDATE', description: 'Cập nhật cấu hình ghế', module: 'SEAT_CONFIG' },
+  { id: 17, permission_key: 'PROMOTION_READ', description: 'Xem danh sách khuyến mãi', module: 'PROMOTION' },
+  { id: 18, permission_key: 'VOUCHER_READ', description: 'Xem danh sách voucher', module: 'VOUCHER' },
+  { id: 19, permission_key: 'VOUCHER_CLAIM', description: 'Nhận voucher vào ví', module: 'VOUCHER' },
+  { id: 20, permission_key: 'NEWS_READ', description: 'Xem danh sách tin tức', module: 'NEWS' },
+  { id: 21, permission_key: 'NEWS_PUBLISH', description: 'Xuất bản tin tức', module: 'NEWS' },
 ];

@@ -1,4 +1,6 @@
 import { MockRegistry } from '@core/mock/mock-registry';
+import { ApiResponse } from '@core/models/api-response.model';
+import { Permission, Role } from '@core/models/rbac.model';
 
 describe('MockRegistry', () => {
   let registry: MockRegistry;
@@ -73,5 +75,39 @@ describe('MockRegistry', () => {
     registry.resolve('DELETE', '/api/v1/airlines/1');
     const res = registry.resolve('GET', '/api/v1/airlines?size=100') as any;
     expect(res.data.items.some((a: any) => a.id === 1)).toBe(false);
+  });
+});
+
+describe('RBAC mock (chỉ đọc)', () => {
+  it('GET /roles trả mảng trần đúng 3 role cố định', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('GET', 'http://x/api/v1/roles') as ApiResponse<Role[]>;
+
+    expect(res.code).toBe(1000);
+    expect(Array.isArray(res.data)).toBe(true);
+    expect(res.data).toHaveLength(3);
+    expect(res.data.map((r) => r.name)).toEqual(['CUSTOMER', 'STAFF', 'ADMIN']);
+  });
+
+  it('GET /permissions lọc được theo module', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve(
+      'GET',
+      'http://x/api/v1/permissions?module=USER',
+    ) as ApiResponse<Permission[]>;
+
+    expect(res.data.length).toBeGreaterThan(0);
+    // Mọi dòng trả về phải thuộc đúng module đã lọc — không lọt dòng module khác.
+    expect(res.data.every((p) => p.module === 'USER')).toBe(true);
+  });
+
+  it('GET /permissions tìm được theo keyword trong description', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve(
+      'GET',
+      'http://x/api/v1/permissions?keyword=xu%E1%BA%A5t%20b%E1%BA%A3n',
+    ) as ApiResponse<Permission[]>;
+
+    expect(res.data.map((p) => p.permission_key)).toContain('NEWS_PUBLISH');
   });
 });

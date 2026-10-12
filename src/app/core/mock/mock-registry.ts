@@ -7,7 +7,9 @@ import {
   AIRCRAFT_MOCK,
   NEWS_CATEGORIES_MOCK,
   NEWS_MOCK,
+  PERMISSIONS_MOCK,
   PROMOTIONS_MOCK,
+  ROLES_MOCK,
   SEAT_TYPES_MOCK,
   VOUCHERS_MOCK,
 } from '@core/mock/data/catalog.mock';
@@ -159,6 +161,14 @@ export class MockRegistry {
       if (m === 'DELETE') return this.deleteAirline(id);
     }
 
+    // RBAC chỉ đọc — trả mảng trần, không phân trang (BR-LIST-05).
+    if (path === '/api/v1/roles' && m === 'GET') {
+      return ok(ROLES_MOCK);
+    }
+    if (path === '/api/v1/permissions' && m === 'GET') {
+      return this.listPermissions(url);
+    }
+
     // Các module master data dùng chung một lớp tài nguyên tổng quát.
     for (const resource of this.resources) {
       const result = resource.handle(m, url, body);
@@ -184,6 +194,29 @@ export class MockRegistry {
       return { code: 1007, message: 'Email hoặc mật khẩu không đúng', data: null };
     }
     return ok(buildLoginResponse(found), 'Đăng nhập thành công');
+  }
+
+  /**
+   * Quyền — lọc theo `keyword` (permission_key hoặc description) và `module`,
+   * đúng whitelist API v0.2 mục 2.4. Trả mảng trần, không phân trang.
+   */
+  private listPermissions(url: string): unknown {
+    const params = readParams(url);
+    const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
+    const module = params.get('module') ?? '';
+
+    let rows = PERMISSIONS_MOCK;
+    if (keyword) {
+      rows = rows.filter(
+        (p) =>
+          p.permission_key.toLowerCase().includes(keyword) ||
+          (p.description ?? '').toLowerCase().includes(keyword),
+      );
+    }
+    if (module) {
+      rows = rows.filter((p) => p.module === module);
+    }
+    return ok(rows);
   }
 
   private listAirlines(url: string): unknown {
