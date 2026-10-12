@@ -1,0 +1,143 @@
+<div class="shell" [class.shell--collapsed]="collapsed()">
+  <!-- ============ SIDEBAR ============ -->
+  @if (sidebarOpen()) {
+    <div class="scrim" (click)="sidebarOpen.set(false)" aria-hidden="true"></div>
+  }
+
+  <aside class="sidebar" [class.sidebar--collapsed]="collapsed()" [class.sidebar--open]="sidebarOpen()">
+    <div class="sidebar__head">
+      <a class="sidebar__brand" routerLink="/admin/dashboard" (click)="sidebarOpen.set(false)">
+        <app-brand-logo size="md" tone="dark" [markOnly]="collapsed()" />
+      </a>
+
+      <!-- Nút thu gọn: chỉ hiện trên desktop; mobile đã có hamburger. -->
+      <button
+        class="sidebar__collapse"
+        type="button"
+        [attr.aria-label]="collapsed() ? 'Mở rộng menu' : 'Thu gọn menu'"
+        [attr.aria-expanded]="!collapsed()"
+        (click)="toggleCollapse()"
+      >
+        <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
+    </div>
+
+    <nav class="sidebar__nav">
+      @for (group of visibleGroups(); track group.label) {
+        <div class="sidebar__group">
+          @if (!collapsed()) {
+            <div class="sidebar__label">{{ group.label }}</div>
+          } @else {
+            <div class="sidebar__sep" aria-hidden="true"></div>
+          }
+          @for (item of group.items; track item.path) {
+            <a
+              class="sidebar__item"
+              [routerLink]="item.path"
+              routerLinkActive="on"
+              [matTooltip]="collapsed() ? item.label : ''"
+              matTooltipPosition="right"
+              (click)="sidebarOpen.set(false)"
+            >
+              <mat-icon>{{ item.icon }}</mat-icon>
+              @if (!collapsed()) {
+                <span>{{ item.label }}</span>
+              }
+            </a>
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="sidebar__foot">
+      <a
+        class="sidebar__item"
+        routerLink="/"
+        [matTooltip]="collapsed() ? 'Về trang khách hàng' : ''"
+        matTooltipPosition="right"
+        (click)="sidebarOpen.set(false)"
+      >
+        <mat-icon>storefront</mat-icon>
+        @if (!collapsed()) {
+          <span>Về trang khách hàng</span>
+        }
+      </a>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <!-- Ảnh bìa: dải màu thương hiệu có hoạ tiết, tạo chiều sâu cho khu
+         vận hành giống dashboard tham chiếu. Thuần trang trí nên
+         aria-hidden; không chứa thông tin. -->
+    <div class="cover" aria-hidden="true">
+      <span class="cover__blob cover__blob--1"></span>
+      <span class="cover__blob cover__blob--2"></span>
+      <span class="cover__blob cover__blob--3"></span>
+    </div>
+
+    <header class="header">
+      <button
+        class="header__menu"
+        type="button"
+        aria-label="Mở menu"
+        [attr.aria-expanded]="sidebarOpen()"
+        (click)="sidebarOpen.set(!sidebarOpen())"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <nav class="crumbs" aria-label="Đường dẫn">
+        <a routerLink="/admin/dashboard">Vận hành</a>
+        @if (pageTitle()) {
+          <mat-icon>chevron_right</mat-icon>
+          <span class="crumbs__here">{{ pageTitle() }}</span>
+        }
+      </nav>
+
+      <span class="header__sp"></span>
+
+      <span class="header__date">
+        <mat-icon>calendar_month</mat-icon>
+        <span class="tabular">{{ today }}</span>
+      </span>
+
+      <button class="header__icon" type="button" aria-label="Thông báo">
+        <mat-icon>notifications_none</mat-icon>
+      </button>
+
+      <button class="header__user" type="button" [matMenuTriggerFor]="accountMenu">
+        <span class="header__meta">
+          <span class="header__name">{{ authService.currentUser()?.full_name }}</span>
+          <span class="header__role">{{ roleLabel() }}</span>
+        </span>
+        <span class="avatar">{{ initials() }}</span>
+        <mat-icon class="header__caret">expand_more</mat-icon>
+      </button>
+
+      <mat-menu #accountMenu="matMenu">
+        <button mat-menu-item type="button" routerLink="/admin/profile">
+          <mat-icon>person</mat-icon>
+          <span>Hồ sơ cá nhân</span>
+        </button>
+        <button mat-menu-item type="button" (click)="goToClient()">
+          <mat-icon>storefront</mat-icon>
+          <span>Về trang khách hàng</span>
+        </button>
+        <button mat-menu-item type="button" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Đăng xuất</span>
+        </button>
+      </mat-menu>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+
+    <footer class="foot">
+      <span>© 2026 VinaFly — Khu vực vận hành.</span>
+      <span class="foot__v">Phiên bản 0.2 · Phase 1</span>
+    </footer>
+  </div>
+</div>

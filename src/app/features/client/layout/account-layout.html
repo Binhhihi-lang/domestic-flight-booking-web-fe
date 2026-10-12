@@ -1,0 +1,37 @@
+<div class="wrap">
+  <div class="page-h">
+    <div>
+      <h1>Tài khoản của tôi</h1>
+      <p>Quản lý booking, vé điện tử và voucher đã nhận</p>
+    </div>
+  </div>
+
+  <div class="acct">
+    <!-- ===== Menu tài khoản ===== -->
+    <aside class="acct__nav">
+      <div class="acct__me">
+        <div class="acct__av">{{ initials() }}</div>
+        <div class="acct__id">
+          <div class="acct__nm">{{ authService.currentUser()?.full_name }}</div>
+          <div class="acct__em">{{ authService.currentUser()?.email }}</div>
+        </div>
+      </div>
+
+      @for (link of links; track link.path) {
+        <a
+          class="acct__lnk"
+          [routerLink]="link.path"
+          routerLinkActive="on"
+          [routerLinkActiveOptions]="{ exact: !!link.exact }"
+        >
+          <mat-icon>{{ link.icon }}</mat-icon>
+          <span>{{ link.label }}</span>
+        </a>
+      }
+    </aside>
+
+    <div class="acct__body">
+      <router-outlet />
+    </div>
+  </div>
+</div>

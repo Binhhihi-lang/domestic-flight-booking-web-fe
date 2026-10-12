@@ -1,0 +1,172 @@
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <div class="hero__bg"></div>
+  <div class="hero__ov"></div>
+  <div class="hero__in">
+    <h1>Đặt vé máy bay nội địa dễ dàng</h1>
+    <p>Tìm chuyến bay phù hợp với lịch trình và ngân sách của bạn</p>
+  </div>
+</section>
+
+<!-- ===== Widget tìm kiếm đè lên hero ===== -->
+<div class="searchbar">
+  <app-flight-search-card (searched)="onSearch($event)" />
+</div>
+
+<!-- ===== Tuyến bay phổ biến ===== -->
+<section class="home-sec">
+  <h2>Tuyến bay phổ biến</h2>
+  <p>Khám phá các hành trình được lựa chọn nhiều nhất</p>
+  <div class="route-grid">
+    @for (route of routes; track route.name) {
+      <article class="route">
+        <div class="route__img" [style.background-image]="'url(' + route.image + ')'"></div>
+        <div class="route__bd">
+          <div class="route__nm">{{ route.name }}</div>
+          <div class="route__al">{{ route.airlines }}</div>
+          <div class="route__pr">
+            <span>Thời gian: {{ route.duration }}</span>
+            <b>{{ route.price }}<small>₫</small></b>
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+</section>
+
+<!-- ===== Ưu đãi ===== -->
+<section class="home-sec">
+  <h2>Ưu đãi hấp dẫn</h2>
+  <p>Săn ngay vé rẻ với các chương trình khuyến mãi độc quyền</p>
+  <div class="promo-grid">
+    @for (promo of promos; track promo.name) {
+      <article class="promo">
+        <div class="promo__img" [style.background-image]="'url(' + promo.image + ')'">
+          <span class="promo__tag" [class]="'promo__tag--' + promo.tagTone">{{ promo.tag }}</span>
+        </div>
+        <div class="promo__bd">
+          <div class="promo__nm">{{ promo.name }}</div>
+          <p class="promo__ds">{{ promo.description }}</p>
+          <div class="promo__lk">Xem chi tiết <mat-icon>arrow_forward</mat-icon></div>
+        </div>
+      </article>
+    }
+  </div>
+</section>
+
+<!-- ===== Tin tức ===== -->
+<section class="home-sec">
+  <div class="sec-head">
+    <div>
+      <h2>Tin tức &amp; cẩm nang</h2>
+      <p>Thông tin mới nhất từ các hãng bay và kinh nghiệm bay nội địa</p>
+    </div>
+    <a class="sec-more" routerLink="/news">
+      Xem tất cả <mat-icon>arrow_forward</mat-icon>
+    </a>
+  </div>
+
+  @if (newsLoading()) {
+    <div class="news-grid">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="news news--skeleton">
+          <app-skeleton-block height="160px" />
+          <div class="news__bd">
+            <app-skeleton-block width="80%" height="16px" />
+            <div style="height: 9px"></div>
+            <app-skeleton-block width="55%" height="12px" />
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (news().length === 0) {
+    <app-app-card>
+      <app-empty-state
+        icon="feed"
+        message="Chưa có tin tức"
+        hint="Bài viết mới sẽ xuất hiện ở đây"
+      />
+    </app-app-card>
+  } @else {
+    <div class="news-grid">
+      @for (item of news(); track item.id) {
+        <article class="news">
+          <a class="news__link" [routerLink]="['/news', item.id]">
+            @if (item.thumbnail_url && !brokenThumbs().has(item.id)) {
+              <img
+                class="news__img"
+                [src]="item.thumbnail_url"
+                [alt]="item.title"
+                loading="lazy"
+                (error)="markThumbBroken(item.id)"
+              />
+            } @else {
+              <!-- Chưa có ảnh (hoặc ảnh lỗi): dùng nền gradient có icon thay vì
+                   để ảnh vỡ. DB hiện chưa có cột ảnh cho news_items. -->
+              <span class="news__img news__img--ph" aria-hidden="true">
+                <mat-icon>article</mat-icon>
+              </span>
+            }
+
+            <div class="news__bd">
+              @if (item.published_at) {
+                <div class="news__date tabular">{{ formatDate(item.published_at) }}</div>
+              }
+              <h3 class="news__title">{{ item.title }}</h3>
+              <p class="news__excerpt">{{ excerpt(item.content) }}</p>
+              <span class="news__lk">Đọc tiếp <mat-icon>arrow_forward</mat-icon></span>
+            </div>
+          </a>
+        </article>
+      }
+    </div>
+  }
+</section>
+
+<!-- ===== Vì sao chọn ===== -->
+<section class="why">
+  <div class="why__in">
+    <h2 class="why__title">Tại sao chọn chúng tôi?</h2>
+    <p class="why__sub">Cam kết mang lại trải nghiệm đặt vé nội địa tốt nhất cho khách hàng</p>
+    <div class="why__grid">
+      @for (item of reasons; track item.title) {
+        <div class="why__c">
+          <div class="why__ic"><mat-icon>{{ item.icon }}</mat-icon></div>
+          <b>{{ item.title }}</b>
+          <span>{{ item.text }}</span>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ===== Đối tác ===== -->
+<section class="home-sec partners-sec">
+  <h2>Đối tác hàng không</h2>
+  <p>Hợp tác với các hãng bay nội địa lớn nhất Việt Nam</p>
+  <div class="partners">
+    @for (partner of partners; track partner.name) {
+      <div class="partner">
+        <mat-icon [style.color]="partner.color">flight</mat-icon>
+        {{ partner.name }}
+      </div>
+    }
+  </div>
+</section>
+
+<!-- ===== CTA đăng ký nhận ưu đãi ===== -->
+<div class="cta">
+  <div class="cta__in">
+    <div class="cta__tx">
+      <h3>Đăng ký nhận ưu đãi</h3>
+      <p>
+        Nhận thông tin khuyến mãi sớm nhất và mã giảm giá độc quyền qua hộp thư điện tử
+        của bạn hàng tuần.
+      </p>
+    </div>
+    <div class="cta__form">
+      <input type="email" placeholder="Nhập email của bạn..." aria-label="Email nhận ưu đãi" />
+      <button class="cta__btn" type="button">Đăng ký</button>
+    </div>
+  </div>
+</div>

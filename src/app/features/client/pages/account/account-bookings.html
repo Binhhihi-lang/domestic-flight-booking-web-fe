@@ -1,0 +1,107 @@
+<!-- ===== Ví ===== -->
+<div class="wallet">
+  <div class="wallet__in">
+    <div class="wallet__l">Số dư ví</div>
+    <div class="wallet__v tabular">1.848.000₫</div>
+    <div class="wallet__hint">Tiền hoàn từ booking đã hủy · dùng để thanh toán vé mới</div>
+  </div>
+</div>
+
+<!-- ===== Booking sắp tới ===== -->
+<h2 class="sec-t">Booking sắp tới</h2>
+<p class="sec-s">2 booking đang hoạt động</p>
+
+@for (t of tickets; track t.code) {
+  <article class="ticket">
+    <div class="ticket__main">
+      <div class="ticket__code tabular">MÃ ĐẶT CHỖ · {{ t.code }}</div>
+      <div class="ticket__route">
+        <div>
+          <div class="ticket__pt tabular">{{ t.departTime }}</div>
+          <div class="ticket__pn">{{ t.departPlace }}</div>
+        </div>
+        <div class="ticket__arrow"><mat-icon>trending_flat</mat-icon></div>
+        <div>
+          <div class="ticket__pt tabular">{{ t.arriveTime }}</div>
+          <div class="ticket__pn">{{ t.arrivePlace }}</div>
+        </div>
+      </div>
+      <div class="ticket__meta">
+        <span><mat-icon>calendar_month</mat-icon> {{ t.date }}</span>
+        <span><mat-icon>flight</mat-icon> {{ t.flight }}</span>
+        <span><mat-icon>person</mat-icon> {{ t.passengers }}</span>
+        <span><mat-icon>event_seat</mat-icon> {{ t.seat }}</span>
+      </div>
+    </div>
+
+    <div class="ticket__side">
+      <app-status-badge [tone]="t.statusTone" [label]="t.statusLabel" />
+      <div class="ticket__total">
+        <div class="ticket__total-l">Tổng thanh toán</div>
+        <div class="ticket__total-v tabular">{{ t.total }}</div>
+      </div>
+      <button class="btn" [class]="'btn--' + t.action.variant" type="button">
+        {{ t.action.label }}
+      </button>
+      @if (t.note) {
+        <div class="ticket__note">{{ t.note }}</div>
+      }
+    </div>
+  </article>
+}
+
+<!-- ===== Voucher ===== -->
+<h2 class="sec-t spaced">Voucher của tôi</h2>
+<p class="sec-s">3 voucher khả dụng · 1 đã dùng</p>
+
+@for (v of vouchers; track v.name) {
+  <article class="voucher" [class.voucher--dim]="v.dimmed">
+    <div class="voucher__left" [style.background]="v.gradient">
+      <div class="voucher__val">{{ v.value }}<small>{{ v.unit }}</small></div>
+      <div class="voucher__type">{{ v.type }}</div>
+    </div>
+
+    <div class="voucher__bd">
+      <div class="voucher__nm">{{ v.name }}</div>
+      <p class="voucher__ds">{{ v.description }}</p>
+      <div class="voucher__mt">
+        @for (m of v.meta; track m) {
+          <span>{{ m }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="voucher__side">
+      <app-status-badge [tone]="v.statusTone" [label]="v.statusLabel" />
+      @if (v.action) {
+        <button class="btn btn--secondary btn--sm" type="button" [disabled]="v.action.disabled">
+          {{ v.action.label }}
+        </button>
+      }
+    </div>
+  </article>
+}
+
+<!-- ===== Lịch sử ví ===== -->
+<h2 class="sec-t spaced">Lịch sử ví</h2>
+<p class="sec-s">Giao dịch hoàn tiền và thanh toán</p>
+
+<div class="card">
+  @for (tx of walletHistory; track tx.detail) {
+    <div class="tx">
+      <div class="tx__ic" [class]="'tx__ic--' + tx.iconTone">
+        <mat-icon>{{ tx.icon }}</mat-icon>
+      </div>
+      <div class="tx__body">
+        <div class="tx__t">{{ tx.title }}</div>
+        <div class="tx__d tabular">{{ tx.detail }}</div>
+      </div>
+      <div class="tx__a">
+        <b class="tabular" [class.tx--up]="tx.amountTone === 'up'" [class.tx--down]="tx.amountTone === 'down'">
+          {{ tx.amount }}
+        </b>
+        <small class="tabular">{{ tx.balance }}</small>
+      </div>
+    </div>
+  }
+</div>

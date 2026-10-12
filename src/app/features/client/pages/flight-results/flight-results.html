@@ -1,0 +1,167 @@
+<div class="wrap head">
+  <div class="page-h">
+    <div>
+      <h1>Hà Nội → Đà Nẵng</h1>
+      <p>
+        Thứ Bảy, 15/11/2026 · 1 người lớn · Phổ thông ·
+        <b class="page-h__count">24 chuyến bay</b>
+      </p>
+    </div>
+    <button class="btn btn--ghost" type="button">
+      <mat-icon>tune</mat-icon>
+      Sửa tìm kiếm
+    </button>
+  </div>
+</div>
+
+<div class="result-wrap">
+  <!-- ===== Bộ lọc ===== -->
+  <aside class="filters">
+    <div class="filters__hd">
+      Bộ lọc
+      <button class="link-btn" type="button" (click)="clearFilters()">Xóa hết</button>
+    </div>
+
+    <div class="filters__g">
+      <div class="filters__t">Hãng hàng không</div>
+      @for (opt of airlineFilters; track opt.label; let i = $index) {
+        <label class="opt">
+          <input
+            type="checkbox"
+            [(ngModel)]="opt.checked"
+            [name]="'al-' + i"
+            [attr.aria-label]="opt.label"
+          />
+          {{ opt.label }}
+          <span class="opt__n">{{ opt.count }}</span>
+        </label>
+      }
+    </div>
+
+    <div class="filters__g">
+      <div class="filters__t">Giờ khởi hành</div>
+      @for (opt of timeFilters; track opt.label; let i = $index) {
+        <label class="opt">
+          <input
+            type="checkbox"
+            [(ngModel)]="opt.checked"
+            [name]="'tm-' + i"
+            [attr.aria-label]="opt.label"
+          />
+          {{ opt.label }}
+          <span class="opt__n">{{ opt.count }}</span>
+        </label>
+      }
+    </div>
+
+    <div class="filters__g">
+      <div class="filters__t">Tiện ích</div>
+      <label class="opt">
+        <input type="checkbox" name="perk-baggage" aria-label="Có hành lý ký gửi" />
+        Có hành lý ký gửi
+      </label>
+      <label class="opt">
+        <input type="checkbox" name="perk-refund" aria-label="Được hoàn vé" />
+        Được hoàn vé
+      </label>
+      <label class="opt">
+        <input type="checkbox" name="perk-change" aria-label="Được đổi ngày" />
+        Được đổi ngày
+      </label>
+    </div>
+
+    <div class="filters__g">
+      <div class="filters__t">Khoảng giá</div>
+      <input class="range" type="range" min="760000" max="2400000" aria-label="Khoảng giá" />
+      <div class="range__lbl tabular">
+        <span>760.000₫</span><span>2.400.000₫</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== Danh sách ===== -->
+  <div class="list">
+    <div class="sortbar">
+      <span class="sortbar__t">Sắp xếp:</span>
+      @for (sort of sorts; track sort) {
+        <button
+          class="sortbtn"
+          type="button"
+          [class.on]="activeSort() === sort"
+          (click)="activeSort.set(sort)"
+        >
+          {{ sort }}
+        </button>
+      }
+      <div class="sortbar__sp"></div>
+      <span class="sortbar__n tabular">24 kết quả</span>
+    </div>
+
+    @for (f of flights; track f.id) {
+      <article class="fr" [class.fr--out]="f.soldOut">
+        <div class="fr__top">
+          <div class="fr__al">
+            <div class="fr__logo" [style.background]="f.airlineColor">{{ f.code }}</div>
+            <div class="fr__aln">
+              {{ f.airline }}
+              <small>{{ f.aircraft }}</small>
+            </div>
+          </div>
+
+          <div class="fr__times">
+            <div>
+              <div class="fr__t tabular">{{ f.departTime }}</div>
+              <div class="fr__ap">{{ f.departAirport }}</div>
+            </div>
+            <div class="fr__mid">
+              <div class="fr__dur tabular">{{ f.duration }}</div>
+              <div class="fr__line"></div>
+              <div class="fr__stop">Bay thẳng</div>
+            </div>
+            <div class="fr__arr">
+              <div class="fr__t tabular">{{ f.arriveTime }}</div>
+              <div class="fr__ap">{{ f.arriveAirport }}</div>
+            </div>
+          </div>
+
+          <div class="fr__right">
+            @if (f.badge) {
+              <app-status-badge [tone]="f.badge.tone" [label]="f.badge.label" />
+            }
+            @if (f.oldPrice) {
+              <div class="fr__old tabular">{{ f.oldPrice }}₫</div>
+            }
+            <div class="fr__price tabular" [class]="'fr__price--' + f.priceTone">
+              {{ f.price }}<small>₫</small>
+            </div>
+            <div class="fr__per">mỗi khách</div>
+            <button
+              class="btn"
+              type="button"
+              [class.btn--primary]="!f.soldOut"
+              [disabled]="f.soldOut"
+            >
+              {{ f.soldOut ? 'Hết chỗ' : 'Chọn' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="fr__feats">
+          @for (p of f.perks; track p.text) {
+            <span class="fr__f" [class.fr__f--no]="!p.available">
+              <mat-icon>{{ p.available ? 'check_circle' : 'cancel' }}</mat-icon>
+              {{ p.text }}
+            </span>
+          }
+        </div>
+      </article>
+    }
+
+    <div class="more">
+      <button class="btn btn--ghost" type="button">
+        <mat-icon>expand_more</mat-icon>
+        Xem thêm 19 chuyến
+      </button>
+    </div>
+  </div>
+</div>
