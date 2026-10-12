@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import { ApiResponse, ListQuery } from '@core/models/api-response.model';
 import { BaseCrudService } from '@core/services/base-crud.service';
+import {
+  AdminUser,
+  AdminUserCreatePayload,
+  AdminUserUpdatePayload,
+} from '@core/models/auth.model';
 import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
@@ -108,5 +113,38 @@ export class PermissionService extends BaseCrudService<Permission> {
       }
     }
     return this.http.get<ApiResponse<Permission[]>>(this.baseUrl, { params });
+  }
+}
+
+/**
+ * Người dùng (ADMIN) — API v0.2 mục 2.3.
+ *
+ * `create` khai đè kiểu payload: lớp cha dùng `P = AdminUserUpdatePayload` cho
+ * mọi thao tác ghi, nhưng POST /users nhận thêm `email` và `password` (tạo tài
+ * khoản) — hai trường này KHÔNG có ở PUT. Không tách thì hoặc payload tạo thiếu
+ * trường, hoặc payload sửa thừa trường.
+ */
+@Injectable({ providedIn: 'root' })
+export class UserService extends BaseCrudService<AdminUser, AdminUserUpdatePayload> {
+  constructor() {
+    super('users');
+  }
+
+  override create(payload: AdminUserCreatePayload): Observable<ApiResponse<AdminUser>> {
+    return this.http.post<ApiResponse<AdminUser>>(this.baseUrl, payload);
+  }
+
+  /**
+   * Đặt lại mật khẩu — Backend sinh mật khẩu TẠM và trả về.
+   *
+   * Vì sao trả mật khẩu thay vì nhận mật khẩu mới từ ADMIN: nếu ADMIN tự đặt
+   * mật khẩu thì ADMIN biết mật khẩu của người khác — không nên trong hệ thống
+   * có phân quyền. Mật khẩu tạm buộc nhân viên đổi ở lần đăng nhập đầu.
+   */
+  resetPassword(id: number): Observable<ApiResponse<{ temporary_password: string }>> {
+    return this.http.post<ApiResponse<{ temporary_password: string }>>(
+      `${this.baseUrl}/${id}/reset-password`,
+      {},
+    );
   }
 }

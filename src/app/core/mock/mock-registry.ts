@@ -1,4 +1,9 @@
 import { Airline } from '@core/models/airline.model';
+import {
+  AdminUser,
+  AdminUserCreatePayload,
+  AdminUserUpdatePayload,
+} from '@core/models/auth.model';
 import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
@@ -14,7 +19,12 @@ import {
   VOUCHERS_MOCK,
 } from '@core/mock/data/catalog.mock';
 import { AIRPORTS_MOCK, CITIES_MOCK } from '@core/mock/data/locations.mock';
-import { buildLoginResponse, findMockUser, MOCK_PASSWORD } from '@core/mock/data/auth.mock';
+import {
+  buildLoginResponse,
+  findMockUser,
+  MOCK_PASSWORD,
+  USERS_MOCK,
+} from '@core/mock/data/auth.mock';
 import { MockResource } from '@core/mock/mock-resource';
 import { businessError, duplicate, notFound, ok, paginate, readParams } from '@core/mock/mock-response';
 
@@ -31,6 +41,14 @@ import { businessError, duplicate, notFound, ok, paginate, readParams } from '@c
 export class MockRegistry {
   private airlines: Airline[] = AIRLINES_MOCK.map((a) => ({ ...a }));
   private nextId = 100;
+
+  /**
+   * Người dùng cho màn quản trị — viết handler riêng (không dùng `MockResource`)
+   * vì có hai nghiệp vụ mà tài nguyên tổng quát không biểu diễn được: chặn mất
+   * ADMIN đang hoạt động cuối cùng, và endpoint `reset-password` trả mật khẩu tạm.
+   */
+  private users: AdminUser[] = USERS_MOCK.map((u) => ({ ...u }));
+  private temporaryPasswordSeq = 1;
 
   private readonly resources = [
     new MockResource<City>({
@@ -169,6 +187,27 @@ export class MockRegistry {
       return this.listPermissions(url);
     }
 
+    // Người dùng (ADMIN) — API v0.2 mục 2.3.
+    if (path === '/api/v1/users' && m === 'GET') {
+      return this.listUsers(url);
+    }
+    if (path === '/api/v1/users' && m === 'POST') {
+      return this.createUser(body);
+    }
+    // Đặt reset-password TRƯỚC regex `/{id}` — nếu không, `\d+` không khớp
+    // "2/reset-password" nhưng thứ tự rõ ràng giúp đọc code không phải suy luận.
+    const resetMatch = path.match(/^\/api\/v1\/users\/(\d+)\/reset-password$/);
+    if (resetMatch && m === 'POST') {
+      return this.resetPassword(Number(resetMatch[1]));
+    }
+    const userMatch = path.match(/^\/api\/v1\/users\/(\d+)$/);
+    if (userMatch) {
+      const id = Number(userMatch[1]);
+      if (m === 'GET') return this.getUser(id);
+      if (m === 'PUT') return this.updateUser(id, body);
+      if (m === 'DELETE') return this.deleteUser(id);
+    }
+
     // Các module master data dùng chung một lớp tài nguyên tổng quát.
     for (const resource of this.resources) {
       const result = resource.handle(m, url, body);
@@ -219,8 +258,157 @@ export class MockRegistry {
     return ok(rows);
   }
 
-  private listAirlines(url: string): unknown {
+  // ---------- Người dùng (ADMIN) — API v0.2 mục 2.3 ----------
+
+  /** Bản ghi chưa xóa mềm — mọi truy vấn phải lọc qua đây (BR-LIST-04). */
+  private aliveUsers(): AdminUser[] {
+    return this.users.filter((u) => !u.is_deleted);
+  }
+
+  private listUsers(url: string): unknown {
     const params = readParams(url);
+    const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
+    const isActive = params.get('is_active');
+    const role = params.get('role') ?? '';
+
+    let rows = this.aliveUsers();
+    if (keyword) {
+      rows = rows.filter(
+        (u) =>
+          u.email.toLowerCase().includes(keyword) ||
+          u.full_name.toLowerCase().includes(keyword) ||
+          (u.phone ?? '').includes(keyword),
+      );
+    }
+    if (isActive !== null) {
+      rows = rows.filter((u) => u.is_active === (isActive === 'true'));
+    }
+    if (role) {
+      rows = rows.filter((u) => u.roles.includes(role as AdminUser['roles'][number]));
+    }
+
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getUser(id: number): unknown {
+    const found = this.aliveUsers().find((u) => u.id === id);
+    return found ? ok(found) : notFound('Không tìm thấy người dùng');
+  }
+
+  private createUser(body: unknown): unknown {
+    const p = (body ?? {}) as Partial<AdminUserCreatePayload>;
+    const email = (p.email ?? '').trim().toLowerCase();
+    if (!email) {
+      return businessError('Email không được để trống');
+    }
+    if (this.aliveUsers().some((u) => u.email === email)) {
+      return duplicate(`Email "${email}" đã tồn tại`);
+    }
+
+    const now = new Date().toISOString();
+    const created: AdminUser = {
+      id: this.nextId++,
+      email,
+      full_name: p.full_name ?? '',
+      phone: p.phone ?? null,
+      avatar_url: null,
+      is_active: p.is_active ?? true,
+      is_deleted: false,
+      // DB v0.4: một user một role. Payload là mảng nhưng chỉ phần tử đầu có nghĩa.
+      roles: p.roles?.length ? p.roles : ['CUSTOMER'],
+      created_at: now,
+      updated_at: now,
+    };
+    this.users.push(created);
+    return ok(created, 'Tạo người dùng thành công');
+  }
+
+  private updateUser(id: number, body: unknown): unknown {
+    const target = this.aliveUsers().find((u) => u.id === id);
+    if (!target) {
+      return notFound('Không tìm thấy người dùng');
+    }
+
+    const p = (body ?? {}) as Partial<AdminUserUpdatePayload>;
+    const nextRoles = p.roles?.length ? p.roles : target.roles;
+    const nextActive = p.is_active ?? target.is_active;
+
+    if (this.wouldLoseLastAdmin(target, nextRoles, nextActive)) {
+      return businessError(
+        'Không thể hạ quyền hoặc ngừng hoạt động tài khoản ADMIN đang hoạt động cuối cùng',
+      );
+    }
+
+    Object.assign(target, {
+      full_name: p.full_name ?? target.full_name,
+      phone: p.phone ?? target.phone,
+      is_active: nextActive,
+      roles: nextRoles,
+      updated_at: new Date().toISOString(),
+    });
+    return ok(target, 'Cập nhật thành công');
+  }
+
+  /** Xóa mềm (USR-05): đặt `is_deleted`, KHÔNG xóa khỏi mảng — giữ lịch sử. */
+  private deleteUser(id: number): unknown {
+    const target = this.aliveUsers().find((u) => u.id === id);
+    if (!target) {
+      return notFound('Không tìm thấy người dùng');
+    }
+    if (this.wouldLoseLastAdmin(target, ['CUSTOMER'], false)) {
+      return businessError('Không thể xóa tài khoản ADMIN đang hoạt động cuối cùng');
+    }
+
+    target.is_deleted = true;
+    target.is_active = false;
+    return ok(null, 'Đã xóa người dùng');
+  }
+
+  /**
+   * Ràng buộc chống leo thang đặc quyền (API v0.2 mục 2.3): hệ thống phải luôn
+   * còn ít nhất một ADMIN đang hoạt động. Trả `true` nếu thao tác sẽ làm mất
+   * ADMIN cuối cùng.
+   *
+   * Dùng chung cho cả `updateUser` và `deleteUser` vì hai đường khác nhau nhưng
+   * cùng một ràng buộc — viết hai lần thì dễ lệch.
+   */
+  private wouldLoseLastAdmin(
+    target: AdminUser,
+    nextRoles: AdminUser['roles'],
+    nextActive: boolean,
+  ): boolean {
+    const wasActiveAdmin = target.roles.includes('ADMIN') && target.is_active;
+    const stillActiveAdmin = nextRoles.includes('ADMIN') && nextActive;
+    if (!wasActiveAdmin || stillActiveAdmin) {
+      return false;
+    }
+
+    const otherActiveAdmins = this.aliveUsers().filter(
+      (u) => u.id !== target.id && u.is_active && u.roles.includes('ADMIN'),
+    );
+    return otherActiveAdmins.length === 0;
+  }
+
+  /**
+   * Đặt lại mật khẩu — trả mật khẩu TẠM.
+   *
+   * CHỜ BE CHỐT (API v0.2 mục 5, open item #5): "trả mật khẩu tạm hay gửi email?".
+   * Tạm làm theo phần mô tả endpoint ở mục 2.3 ("trả mật khẩu tạm"). Nếu Bình
+   * chốt gửi email thì đổi chỗ này thành `ok(null, ...)` và bỏ khối hiện mật
+   * khẩu trong `user-form.html`.
+   */
+  private resetPassword(id: number): unknown {
+    const target = this.aliveUsers().find((u) => u.id === id);
+    if (!target) {
+      return notFound('Không tìm thấy người dùng');
+    }
+    const temp = `Temp@${String(this.temporaryPasswordSeq++).padStart(5, '0')}`;
+    return ok({ temporary_password: temp }, 'Đã đặt lại mật khẩu');
+  }
+
+  private listAirlines(url: string): unknown {    const params = readParams(url);
     const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
     const isActive = params.get('is_active');
 
