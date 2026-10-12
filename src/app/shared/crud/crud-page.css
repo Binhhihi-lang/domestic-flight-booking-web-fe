@@ -1,0 +1,555 @@
+/* Khung hẹp cho trang form — form dài nên bó bề ngang để dễ đọc, không dàn
+   hết 1240px. */
+.wrap--narrow {
+  max-width: 860px;
+}
+
+/* ---------- Breadcrumb ---------- */
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  margin-bottom: 12px;
+}
+
+.crumbs a {
+  color: var(--color-ink-muted);
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  color: var(--color-primary);
+}
+
+.crumbs mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+  color: var(--color-ink-subtle);
+}
+
+/* ---------- Thanh công cụ ---------- */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.search {
+  position: relative;
+  flex: 1 1 210px;
+  max-width: 330px;
+  min-width: 0;
+}
+
+.search mat-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 19px;
+  width: 19px;
+  height: 19px;
+  color: var(--color-ink-subtle);
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  padding: 11px 13px 11px 38px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+}
+
+.search input:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+.select {
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  max-width: 100%;
+}
+
+/* ---------- Bảng ---------- */
+.tbl-wrap {
+  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  min-width: 620px;
+}
+
+.tbl th {
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  padding: 11px 14px;
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.tbl td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--color-border-soft);
+  vertical-align: middle;
+}
+
+/* Hàng bấm được để xem chi tiết: đổi nền + hiện mũi tên khi rê chuột, để
+   người dùng biết hàng đó mở được chứ không chỉ là chữ tĩnh. */
+.tbl tbody tr.row--clickable {
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.tbl tbody tr.row--clickable:hover,
+.tbl tbody tr.row--clickable:focus-visible {
+  background: var(--color-primary-soft);
+  outline: none;
+}
+
+.tbl tbody tr.row--clickable:focus-visible {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.rowchev {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-ink-subtle);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.tbl tbody tr.row--clickable:hover .rowchev,
+.tbl tbody tr.row--clickable:focus-visible .rowchev {
+  opacity: 1;
+  color: var(--color-primary);
+}
+
+.tbl .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.tbl .code {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
+
+.col-actions {
+  width: 170px;
+}
+
+/* ---------- Ảnh thu nhỏ trong bảng / trang chi tiết ---------- */
+.thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Chưa có ảnh: khung nền + icon, KHÔNG để ảnh vỡ (biểu tượng ảnh hỏng của
+   trình duyệt trông như lỗi hệ thống). */
+.thumb--empty {
+  color: var(--color-ink-subtle);
+}
+
+.thumb--empty mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.thumb--lg {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius);
+  object-fit: cover;
+}
+
+.thumb--lg.thumb--empty mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.rowacts {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.rowbtn {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.rowbtn:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-primary-bright);
+  color: var(--color-primary);
+}
+
+.rowbtn--danger {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-primary);
+}
+
+.rowbtn--danger:hover {
+  background: var(--color-danger-soft);
+  border-color: transparent;
+  color: var(--color-on-danger-soft);
+}
+
+/* ---------- Phân trang ---------- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 18px;
+  border-top: 1px solid var(--color-border);
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  flex-wrap: wrap;
+}
+
+.pager__p {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.pg {
+  min-width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pg mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.pg.on {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.pg:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pager__size {
+  margin-left: 8px;
+  padding: 6px 9px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/* ---------- Trang chi tiết ---------- */
+.detail {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 26px;
+}
+
+.detail__row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+  min-width: 0;
+}
+
+.detail dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.detail dd {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.detail__wrap {
+  white-space: pre-wrap;
+}
+
+.detail dd .code {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
+
+/* ---------- Trang form ---------- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.req {
+  color: var(--color-danger);
+}
+
+.field input,
+.field select,
+.field textarea {
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  width: 100%;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+.field--error input,
+.field--error select,
+.field--error textarea {
+  border-color: var(--color-danger);
+}
+
+.field .hint {
+  font-size: 11.5px;
+  color: var(--color-ink-subtle);
+}
+
+.field__err {
+  font-size: 11.5px;
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--color-ink);
+  cursor: pointer;
+  padding: 7px 0;
+}
+
+.toggle input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+/* ---------- Ô nhập ảnh (dán URL hoặc chọn từ máy) ---------- */
+.imgfield {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.imgfield__preview {
+  flex: 0 0 auto;
+}
+
+.imgfield__controls {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.imgfield__controls input[type='text'] {
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  width: 100%;
+}
+
+.imgfield__controls input[type='text']:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+.imgfield__row {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.imgfield__pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  background: var(--color-surface-alt);
+}
+
+.imgfield__pick:hover {
+  border-color: var(--color-primary-bright);
+  color: var(--color-primary);
+}
+
+.imgfield__pick mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Input file ẩn nhưng vẫn nhận được click từ label bao ngoài. */
+.imgfield__pick input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.imgfield__clear {
+  border: 0;
+  background: transparent;
+  color: var(--color-danger);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+.imgfield__clear:hover {
+  text-decoration: underline;
+}
+
+/* =====================================================================
+   Media query đặt SAU tất cả rule gốc.
+   ===================================================================== */
+@media (max-width: 860px) {
+  .detail {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .pager {
+    justify-content: center;
+  }
+
+  .search {
+    max-width: none;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

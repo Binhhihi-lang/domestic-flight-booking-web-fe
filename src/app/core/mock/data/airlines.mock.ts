@@ -1,4 +1,4 @@
-import { Airline } from '../../models/airline.model';
+import { Airline } from '@core/models/airline.model';
 
 /**
  * Dữ liệu giả cho hãng hàng không.
@@ -12,7 +12,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_code: 'VN',
     airline_name: 'Vietnam Airlines',
     country: 'Việt Nam',
-    logo_url: null,
+    logo_url: 'https://picsum.photos/seed/vietnamairlines/160/160',
     is_active: true,
     is_deleted: false,
   },
@@ -21,7 +21,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_code: 'VJ',
     airline_name: 'Vietjet Air',
     country: 'Việt Nam',
-    logo_url: null,
+    logo_url: 'https://picsum.photos/seed/vietjetair/160/160',
     is_active: true,
     is_deleted: false,
   },
@@ -30,7 +30,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_code: 'QH',
     airline_name: 'Bamboo Airways',
     country: 'Việt Nam',
-    logo_url: null,
+    logo_url: 'https://picsum.photos/seed/bambooairways/160/160',
     is_active: true,
     is_deleted: false,
   },
@@ -39,7 +39,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_code: 'VU',
     airline_name: 'Vietravel Airlines',
     country: 'Việt Nam',
-    logo_url: null,
+    logo_url: 'https://picsum.photos/seed/vietravel/160/160',
     is_active: true,
     is_deleted: false,
   },
