@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiResponse } from '../models/api-response.model';
+import { environment } from '@env/environment';
+import { ApiResponse } from '@core/models/api-response.model';
 import {
   AuthenticatedUser,
   ChangePasswordRequest,
@@ -11,8 +11,8 @@ import {
   RegisterRequest,
   UpdateProfileRequest,
   User,
-} from '../models/auth.model';
-import { TokenService } from './token.service';
+} from '@core/models/auth.model';
+import { TokenService } from '@core/services/token.service';
 
 /**
  * Xác thực và hồ sơ người dùng — API Design v0.1 mục 2.1, 2.2.

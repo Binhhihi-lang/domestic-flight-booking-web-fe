@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiResponse, ListQuery, PageData } from '../models/api-response.model';
+import { environment } from '@env/environment';
+import { ApiResponse, ListQuery, PageData } from '@core/models/api-response.model';
 
 /**
  * Service CRUD tổng quát cho các module master data.

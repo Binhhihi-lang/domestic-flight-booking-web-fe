@@ -1,8 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Airline } from '../models/airline.model';
-import { BaseCrudService } from './base-crud.service';
+import { Airline } from '@core/models/airline.model';
+import { BaseCrudService } from '@core/services/base-crud.service';
 
 class AirlineService extends BaseCrudService<Airline> {
   constructor() {
