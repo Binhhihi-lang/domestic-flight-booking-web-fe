@@ -120,6 +120,171 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     return url.replace(/\/(new|\d+(\/edit)?)$/, '');
   });
 
+  // =====================================================================
+  // Chọn nhiều dòng để thao tác hàng loạt
+  // =====================================================================
+
+  /**
+   * Id các hàng đang được chọn.
+   *
+   * Vì sao lưu theo ID chứ không theo chỉ số hàng: sau khi tải lại danh sách
+   * (đổi trang, lọc, xóa xong) thì chỉ số đổi hết, còn id vẫn định danh đúng
+   * bản ghi. Lưu chỉ số sẽ chọn nhầm hàng sau mỗi lần tải lại.
+   */
+  protected readonly selectedIds = signal<Set<number>>(new Set());
+
+  protected readonly selectedCount = computed(() => this.selectedIds().size);
+
+  /** Chọn-tất-cả chỉ áp cho TRANG HIỆN TẠI — không chọn xuyên trang. */
+  protected readonly allOnPageSelected = computed(() => {
+    const rows = this.rows();
+    return rows.length > 0 && rows.every((r) => this.selectedIds().has(r.id));
+  });
+
+  /** Có hàng được chọn VÀ có hàng chưa chọn — để hiện trạng thái nửa chọn. */
+  protected readonly someOnPageSelected = computed(() => {
+    const rows = this.rows();
+    const n = rows.filter((r) => this.selectedIds().has(r.id)).length;
+    return n > 0 && n < rows.length;
+  });
+
+  protected isSelected(id: number): boolean {
+    return this.selectedIds().has(id);
+  }
+
+  protected toggleRow(id: number, event: Event): void {
+    // Checkbox nằm trong hàng có handler mở chi tiết — chặn nổi bọt để bấm ô
+    // chọn không mở luôn trang chi tiết.
+    event.stopPropagation();
+    const next = new Set(this.selectedIds());
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    this.selectedIds.set(next);
+  }
+
+  protected toggleAllOnPage(event: Event): void {
+    event.stopPropagation();
+    const next = new Set(this.selectedIds());
+    if (this.allOnPageSelected()) {
+      for (const r of this.rows()) {
+        next.delete(r.id);
+      }
+    } else {
+      for (const r of this.rows()) {
+        next.add(r.id);
+      }
+    }
+    this.selectedIds.set(next);
+  }
+
+  protected clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  /** Bỏ chọn những id không còn trong danh sách — tránh giữ id đã bị xóa. */
+  private pruneSelection(): void {
+    const alive = new Set(this.rows().map((r) => r.id));
+    const kept = [...this.selectedIds()].filter((id) => alive.has(id));
+    if (kept.length !== this.selectedIds().size) {
+      this.selectedIds.set(new Set(kept));
+    }
+  }
+
+  /**
+   * Bật/tắt `is_active` cho các hàng đang chọn.
+   *
+   * Gọi TUẦN TỰ từng bản ghi qua `update()` sẵn có thay vì endpoint bulk.
+   * Vì sao: API v0.2 hiện CHƯA có endpoint bulk (đã đề xuất ở
+   * `be/docs/De_xuat_bo_sung_DB_v0.5_mau_loai_ghe_va_bulk.md`). Khi BE có, chỉ
+   * cần đổi thân hàm này thành một lời gọi — phần giao diện giữ nguyên.
+   */
+  protected bulkSetActive(isActive: boolean): void {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) {
+      return;
+    }
+    this.runBulk(
+      ids,
+      (id) => this.service().update(id, { is_active: isActive } as unknown as P),
+      isActive ? 'Đã kích hoạt' : 'Đã ngừng hoạt động',
+    );
+  }
+
+  /** Xóa mềm hàng loạt — phải qua hộp thoại xác nhận vì là hành động phá hủy. */
+  protected bulkDelete(): void {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) {
+      return;
+    }
+    this.dialog
+      .open(ConfirmDialog, {
+        data: {
+          title: `Xóa ${ids.length} bản ghi?`,
+          message: `Bạn có chắc muốn xóa ${ids.length} bản ghi đang chọn? Dữ liệu vẫn được giữ lại để tra lịch sử nhưng sẽ không hiện trong danh sách.`,
+          confirmText: 'Xóa',
+          tone: 'warn',
+        },
+      })
+      .afterClosed()
+      .subscribe((confirmed: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+        this.runBulk(
+          ids,
+          (id) => this.service().remove(id),
+          'Đã xóa',
+        );
+      });
+  }
+
+  /**
+   * Chạy một thao tác trên nhiều id, đếm thành công/thất bại.
+   *
+   * Vì sao chạy tuần tự (`concatMap`-kiểu) chứ không song song: endpoint đơn lẻ
+   * không đảm bảo tính nguyên tử, và bắn 15 request cùng lúc dễ vượt giới hạn
+   * của server. Tuần tự cũng cho phép dừng sớm và báo lỗi rõ từng bản ghi.
+   */
+  private runBulk(
+    ids: number[],
+    op: (id: number) => Observable<unknown>,
+    verb: string,
+  ): void {
+    this.saving.set(true);
+    const failed: string[] = [];
+    let done = 0;
+
+    const step = (index: number): void => {
+      if (index >= ids.length) {
+        this.saving.set(false);
+        this.clearSelection();
+        this.load();
+        this.notify(
+          failed.length === 0
+            ? `${verb} ${ids.length} bản ghi`
+            : `${verb} ${done}/${ids.length} bản ghi. Không xử lý được ${failed.length}: ${failed.join('; ')}`,
+        );
+        return;
+      }
+
+      op(ids[index]).subscribe({
+        next: () => {
+          done++;
+          step(index + 1);
+        },
+        error: (err: Error) => {
+          failed.push(`#${ids[index]} (${err.message})`);
+          step(index + 1);
+        },
+      });
+    };
+
+    step(0);
+  }
+
   ngOnInit(): void {
     this.pageSize.set(this.config().pageSize ?? 10);
     this.initFilters();
@@ -267,6 +432,7 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
         next: (res) => {
           this.rows.set(res.data.items);
           this.totalItems.set(res.data.pagination.total_items);
+          this.pruneSelection();
           this.loading.set(false);
         },
         error: (err: Error) => {
@@ -308,6 +474,7 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
         const items = res.data as T[];
         this.rows.set(items);
         this.totalItems.set(items.length);
+        this.pruneSelection();
         this.loading.set(false);
       },
       error: (err: Error) => {
