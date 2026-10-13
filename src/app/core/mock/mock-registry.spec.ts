@@ -1,6 +1,7 @@
 import { MockRegistry } from '@core/mock/mock-registry';
 import { ApiResponse, PageData } from '@core/models/api-response.model';
 import { AdminUser } from '@core/models/auth.model';
+import { SeatMap } from '@core/models/fleet-news.model';
 import { Permission, Role } from '@core/models/rbac.model';
 
 describe('MockRegistry', () => {
@@ -225,5 +226,94 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
       'http://x/api/v1/users?is_active=false',
     ) as ApiResponse<PageData<AdminUser>>;
     expect(inactive.data.items.every((u) => !u.is_active)).toBe(true);
+  });
+});
+
+describe('Seat map mock — ràng buộc khi lưu', () => {
+  /** Sinh sơ đồ đúng `count` ghế, hàng 1..n, cột A..F. */
+  function seatsOf(count: number, seatTypeId = 1) {
+    const cols = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const out: { seat_row: number; seat_column: string; seat_type_id: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      out.push({
+        seat_row: Math.floor(i / cols.length) + 1,
+        seat_column: cols[i % cols.length],
+        seat_type_id: seatTypeId,
+      });
+    }
+    return out;
+  }
+
+  it('từ chối sơ đồ LỆCH sức chứa', () => {
+    const registry = new MockRegistry();
+    // Máy bay id 3 có seat_capacity = 180.
+    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+      seats: seatsOf(179),
+    }) as ApiResponse<null>;
+
+    expect(res.code).toBe(1006);
+  });
+
+  it('từ chối sơ đồ có 2 ghế trùng hàng+cột', () => {
+    const registry = new MockRegistry();
+    const seats = seatsOf(180);
+    seats[1] = { ...seats[0] }; // nhân bản ghế đầu -> trùng khoá
+    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+      seats,
+    }) as ApiResponse<null>;
+
+    expect(res.code).toBe(1006);
+  });
+
+  it('từ chối dùng loại ghế đang TẮT (EXIT, id 8)', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+      seats: seatsOf(180, 8),
+    }) as ApiResponse<null>;
+
+    expect(res.code).toBe(1006);
+  });
+
+  it('từ chối loại ghế KHÔNG tồn tại (1004)', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+      seats: seatsOf(180, 9999),
+    }) as ApiResponse<null>;
+
+    expect(res.code).toBe(1004);
+  });
+
+  it('CHẤP NHẬN sơ đồ khớp đúng sức chứa, loại ghế đang bật', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+      seats: seatsOf(180, 1),
+    }) as ApiResponse<SeatMap>;
+
+    expect(res.code).toBe(1000);
+    expect(res.data.configured_seats).toBe(180);
+  });
+
+  it('sau khi lưu, GET trả đúng sơ đồ kèm loại ghế lồng', () => {
+    const registry = new MockRegistry();
+    registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', { seats: seatsOf(180, 1) });
+
+    const res = registry.resolve('GET', 'http://x/api/v1/aircrafts/3/seat-map') as ApiResponse<SeatMap>;
+    expect(res.data.configured_seats).toBe(180);
+    expect(res.data.seats[0].seat_type?.seat_type_code).toBe('ECO');
+  });
+
+  it('GET máy bay chưa cấu hình trả sức chứa và 0 ghế', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('GET', 'http://x/api/v1/aircrafts/1/seat-map') as ApiResponse<SeatMap>;
+
+    expect(res.data.seat_capacity).toBe(305);
+    expect(res.data.configured_seats).toBe(0);
+  });
+
+  it('máy bay không tồn tại trả 1004', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('GET', 'http://x/api/v1/aircrafts/9999/seat-map') as ApiResponse<null>;
+
+    expect(res.code).toBe(1004);
   });
 });

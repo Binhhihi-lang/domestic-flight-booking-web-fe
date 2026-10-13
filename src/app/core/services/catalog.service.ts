@@ -9,7 +9,14 @@ import {
   AdminUserCreatePayload,
   AdminUserUpdatePayload,
 } from '@core/models/auth.model';
-import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
+import {
+  Aircraft,
+  AircraftSeat,
+  NewsCategory,
+  NewsItem,
+  SeatMap,
+  SeatType,
+} from '@core/models/fleet-news.model';
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
 import { Permission, Role } from '@core/models/rbac.model';
@@ -146,5 +153,34 @@ export class UserService extends BaseCrudService<AdminUser, AdminUserUpdatePaylo
       `${this.baseUrl}/${id}/reset-password`,
       {},
     );
+  }
+}
+
+/**
+ * Sơ đồ ghế của máy bay — API v0.2 mục 2.6.
+ *
+ * Vì sao KHÔNG kế thừa `BaseCrudService`: sơ đồ ghế không CRUD từng ghế. Có
+ * đúng hai thao tác — đọc cả sơ đồ, và lưu cả sơ đồ (Backend thay thế toàn bộ
+ * trong một transaction). Không có endpoint tạo/sửa/xóa một ghế riêng lẻ.
+ */
+@Injectable({ providedIn: 'root' })
+export class SeatMapService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiBaseUrl}/aircrafts`;
+
+  getMap(aircraftId: number): Observable<ApiResponse<SeatMap>> {
+    return this.http.get<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`);
+  }
+
+  /**
+   * Gửi TOÀN BỘ danh sách ghế, không phải phần chênh lệch.
+   *
+   * Vì sao gửi cả sơ đồ thay vì diff: Backend thay thế trong một transaction nên
+   * không có trạng thái trung gian — hoặc sơ đồ cũ còn nguyên, hoặc sơ đồ mới đã
+   * đủ. Gửi diff thì phải tin client tính đúng phần chênh, mà sai một ô là lệch
+   * cả sơ đồ.
+   */
+  saveMap(aircraftId: number, seats: AircraftSeat[]): Observable<ApiResponse<SeatMap>> {
+    return this.http.put<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`, { seats });
   }
 }

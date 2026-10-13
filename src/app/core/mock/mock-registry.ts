@@ -4,7 +4,14 @@ import {
   AdminUserCreatePayload,
   AdminUserUpdatePayload,
 } from '@core/models/auth.model';
-import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
+import {
+  Aircraft,
+  AircraftSeat,
+  NewsCategory,
+  NewsItem,
+  SeatMap,
+  SeatType,
+} from '@core/models/fleet-news.model';
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
 import { AIRLINES_MOCK } from '@core/mock/data/airlines.mock';
@@ -49,6 +56,13 @@ export class MockRegistry {
    */
   private users: AdminUser[] = USERS_MOCK.map((u) => ({ ...u }));
   private temporaryPasswordSeq = 1;
+
+  /**
+   * Sơ đồ ghế theo `aircraft_id`. Khởi tạo RỖNG — máy bay chưa cấu hình ghế nào,
+   * đúng trạng thái ban đầu của hệ thống thật (chưa ai khai sơ đồ).
+   */
+  private seatMaps = new Map<number, AircraftSeat[]>();
+  private seatIdSeq = 1000;
 
   private readonly resources = [
     new MockResource<City>({
@@ -206,6 +220,14 @@ export class MockRegistry {
       if (m === 'GET') return this.getUser(id);
       if (m === 'PUT') return this.updateUser(id, body);
       if (m === 'DELETE') return this.deleteUser(id);
+    }
+
+    // Sơ đồ ghế của máy bay — API v0.2 mục 2.6.
+    const seatMapMatch = path.match(/^\/api\/v1\/aircrafts\/(\d+)\/seat-map$/);
+    if (seatMapMatch) {
+      const aircraftId = Number(seatMapMatch[1]);
+      if (m === 'GET') return this.getSeatMap(aircraftId);
+      if (m === 'PUT') return this.saveSeatMap(aircraftId, body);
     }
 
     // Các module master data dùng chung một lớp tài nguyên tổng quát.
@@ -406,6 +428,88 @@ export class MockRegistry {
     }
     const temp = `Temp@${String(this.temporaryPasswordSeq++).padStart(5, '0')}`;
     return ok({ temporary_password: temp }, 'Đã đặt lại mật khẩu');
+  }
+
+  // ---------- Sơ đồ ghế — API v0.2 mục 2.6 ----------
+
+  /** Máy bay theo id, chỉ tính bản ghi chưa xóa mềm. */
+  private aircraftById(id: number): Aircraft | undefined {
+    return AIRCRAFT_MOCK.find((a) => a.id === id && !a.is_deleted);
+  }
+
+  private getSeatMap(aircraftId: number): unknown {
+    const aircraft = this.aircraftById(aircraftId);
+    if (!aircraft) {
+      return notFound('Không tìm thấy máy bay');
+    }
+    return ok(this.seatMapPayload(aircraftId, aircraft));
+  }
+
+  /**
+   * Dựng `data` của seat-map — tách khỏi `getSeatMap` vì `saveSeatMap` cũng cần
+   * phần này để trả về sơ đồ vừa lưu. Nếu `saveSeatMap` gọi thẳng `getSeatMap`
+   * thì envelope bị bọc hai lớp (`data.code`, `data.data`), và client đọc
+   * `res.data.configured_seats` sẽ ra `undefined`.
+   */
+  private seatMapPayload(aircraftId: number, aircraft: Aircraft): SeatMap {
+    const seats = this.seatMaps.get(aircraftId) ?? [];
+    return {
+      aircraft_id: aircraftId,
+      seat_capacity: aircraft.seat_capacity,
+      configured_seats: seats.length,
+      // API trả kèm loại ghế lồng trong từng ghế — màn cấu hình cần tên loại để
+      // hiện, không chỉ id. Dùng `undefined` khi không tìm thấy (không phải
+      // `null`) vì `AircraftSeat.seat_type` khai `SeatType | undefined`.
+      seats: seats.map((s) => ({
+        ...s,
+        seat_type: SEAT_TYPES_MOCK.find((t) => t.id === s.seat_type_id),
+      })),
+    };
+  }
+
+  private saveSeatMap(aircraftId: number, body: unknown): unknown {
+    const aircraft = this.aircraftById(aircraftId);
+    if (!aircraft) {
+      return notFound('Không tìm thấy máy bay');
+    }
+
+    const seats = ((body ?? {}) as { seats?: AircraftSeat[] }).seats ?? [];
+
+    // Ràng buộc 1: không trùng (seat_row, seat_column) — UNIQUE trong DB v0.4.
+    const seen = new Set<string>();
+    for (const s of seats) {
+      const key = `${s.seat_row}-${s.seat_column}`;
+      if (seen.has(key)) {
+        return businessError(`Ghế ${s.seat_row}${s.seat_column} bị lặp trong sơ đồ`);
+      }
+      seen.add(key);
+    }
+
+    // Ràng buộc 2: loại ghế phải tồn tại VÀ đang bật. Loại ghế đã tắt vẫn còn
+    // trong danh mục nên phải kiểm tra `is_active`, không chỉ tồn tại.
+    for (const s of seats) {
+      const type = SEAT_TYPES_MOCK.find((t) => t.id === s.seat_type_id);
+      if (!type) {
+        return notFound(`Loại ghế id ${s.seat_type_id} không tồn tại`);
+      }
+      if (!type.is_active) {
+        return businessError(`Loại ghế "${type.seat_type_name}" đang tắt, không dùng được`);
+      }
+    }
+
+    // Ràng buộc 3: tổng số ghế phải KHỚP CHÍNH XÁC sức chứa. DB v0.4 yêu cầu khớp
+    // đúng, không phải "không vượt" — thiếu ghế cũng là sơ đồ sai.
+    if (seats.length !== aircraft.seat_capacity) {
+      return businessError(
+        `Sơ đồ có ${seats.length} ghế nhưng máy bay cần đúng ${aircraft.seat_capacity} ghế`,
+      );
+    }
+
+    this.seatMaps.set(
+      aircraftId,
+      seats.map((s) => ({ ...s, id: s.id ?? this.seatIdSeq++ })),
+    );
+    return ok(this.seatMapPayload(aircraftId, aircraft), 'Đã lưu sơ đồ ghế');
   }
 
   private listAirlines(url: string): unknown {    const params = readParams(url);
