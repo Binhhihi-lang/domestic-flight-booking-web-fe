@@ -105,6 +105,16 @@
                         }
                       } @else if (c.tone) {
                         <app-status-badge [tone]="c.tone(row)" [label]="c.value(row)" />
+                      } @else if (c.link) {
+                        <!-- Cột dẫn sang màn con. Chặn nổi bọt để bấm link không
+                             mở luôn trang chi tiết của hàng. -->
+                        <a
+                          class="rowlink"
+                          [routerLink]="c.link(row)"
+                          (click)="$event.stopPropagation()"
+                        >
+                          {{ c.value(row) }}
+                        </a>
                       } @else {
                         {{ c.value(row) }}
                       }

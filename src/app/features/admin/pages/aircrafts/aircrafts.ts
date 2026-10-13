@@ -39,6 +39,12 @@ export class AdminAircrafts {
         value: (r) => (r.is_active ? 'Hoạt động' : 'Tạm dừng'),
         tone: (r) => (r.is_active ? 'success' : 'neutral'),
       },
+      {
+        label: 'Sơ đồ ghế',
+        value: () => 'Cấu hình',
+        link: (r) => `/admin/seat-configurations/${r.id}`,
+        width: '120px',
+      },
     ],
     fields: [
       { key: 'aircraft_code', shownInTable: true, label: 'Mã máy bay', type: 'text', required: true, maxLength: 50, hint: 'Ví dụ VN-A350-01' },

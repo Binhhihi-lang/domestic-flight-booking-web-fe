@@ -1,0 +1,156 @@
+<div class="wrap">
+  <nav class="crumbs" aria-label="Đường dẫn">
+    <a routerLink="/admin/aircrafts">Máy bay</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>Sơ đồ ghế</span>
+  </nav>
+
+  @if (loading()) {
+    <app-app-card><app-loading-state /></app-app-card>
+  } @else if (aircraft(); as ac) {
+    <header class="page-h">
+      <div>
+        <h1>Sơ đồ ghế — {{ ac.aircraft_code }}</h1>
+        <p>{{ ac.model }} · sức chứa {{ ac.seat_capacity }} ghế</p>
+      </div>
+      <app-app-button variant="ghost" (clicked)="back()">
+        <mat-icon>arrow_back</mat-icon>
+        Về danh sách máy bay
+      </app-app-button>
+    </header>
+
+    @if (errorMessage(); as msg) {
+      <div class="blk">
+        <app-alert tone="error" title="Chưa lưu được" [message]="msg" />
+      </div>
+    }
+
+    <!-- ===== Bước 1: khai theo khối ===== -->
+    <app-app-card title="1. Khai báo theo khối" class="blk">
+      <app-app-button cardActions size="sm" variant="ghost" (clicked)="addBlock()">
+        <mat-icon>add</mat-icon>
+        Thêm khối
+      </app-app-button>
+
+      <p class="note">
+        Mỗi khối là một dải ghế: <strong>hàng từ–đến</strong> × <strong>danh sách cột</strong> ×
+        <strong>loại ghế</strong>. Cột gõ cách nhau bằng dấu phẩy, ví dụ <code>A,B,C,D,E,F</code>.
+        Khối khai sau sẽ <strong>đè</strong> khối trước ở cùng hàng và cột.
+      </p>
+
+      @if (blocks().length === 0) {
+        <p class="empty-line">Chưa có khối nào — bấm "Thêm khối" để bắt đầu.</p>
+      } @else {
+        <div class="block-list">
+          @for (b of blocks(); track b.key) {
+            <div class="block-row">
+              <label class="block-row__f">
+                <span>Từ hàng</span>
+                <input
+                  type="number"
+                  min="1"
+                  [ngModel]="b.fromRow"
+                  (ngModelChange)="setBlock(b.key, 'fromRow', +$event)"
+                />
+              </label>
+              <label class="block-row__f">
+                <span>Đến hàng</span>
+                <input
+                  type="number"
+                  min="1"
+                  [ngModel]="b.toRow"
+                  (ngModelChange)="setBlock(b.key, 'toRow', +$event)"
+                />
+              </label>
+              <label class="block-row__f block-row__f--wide">
+                <span>Cột</span>
+                <input
+                  type="text"
+                  [ngModel]="b.columns"
+                  (ngModelChange)="setBlock(b.key, 'columns', $event)"
+                  placeholder="A,B,C,D,E,F"
+                />
+              </label>
+              <label class="block-row__f block-row__f--wide">
+                <span>Loại ghế</span>
+                <select
+                  [ngModel]="b.seatTypeId"
+                  (ngModelChange)="setBlock(b.key, 'seatTypeId', +$event)"
+                >
+                  @for (t of usableSeatTypes(); track t.id) {
+                    <option [value]="t.id">{{ t.seat_type_name }}</option>
+                  }
+                </select>
+              </label>
+              <button
+                class="block-row__del"
+                type="button"
+                aria-label="Xoá khối"
+                (click)="removeBlock(b.key)"
+              >
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="block-actions">
+          <app-app-button (clicked)="generate()">
+            <mat-icon>grid_on</mat-icon>
+            Sinh lưới xem trước
+          </app-app-button>
+          <app-app-button variant="ghost" (clicked)="clearAll()">Xoá hết</app-app-button>
+        </div>
+      }
+    </app-app-card>
+
+    <!-- ===== Bước 2: xem trước + sửa lẻ ===== -->
+    <app-app-card title="2. Xem trước và chỉnh lẻ" class="blk">
+      <p class="note">Bấm vào một ô để đổi loại ghế cho riêng ô đó.</p>
+
+      @if (seats().length === 0) {
+        <p class="empty-line">Chưa có ghế nào — khai khối ở bước 1 rồi bấm "Sinh lưới xem trước".</p>
+      } @else {
+        <app-seat-grid
+          [seats]="seats()"
+          [seatTypes]="seatTypes()"
+          (cellClicked)="onCellClicked($event)"
+        />
+      }
+
+      @if (editingCell(); as cell) {
+        <div class="cell-editor">
+          <span class="cell-editor__title">Ghế {{ cell.row }}{{ cell.column }} — chọn loại ghế:</span>
+          <div class="cell-editor__opts">
+            @for (t of usableSeatTypes(); track t.id) {
+              <app-app-button size="sm" variant="ghost" (clicked)="applyCellType(t.id)">
+                {{ t.seat_type_name }}
+              </app-app-button>
+            }
+            <app-app-button size="sm" variant="ghost" (clicked)="cancelCellEdit()">Huỷ</app-app-button>
+          </div>
+        </div>
+      }
+    </app-app-card>
+
+    <!-- ===== Bước 3: lưu ===== -->
+    <app-app-card title="3. Kiểm tra và lưu" class="blk">
+      <div class="counter" [class.counter--bad]="diff() !== 0">
+        <div class="counter__n">{{ configuredCount() }} / {{ capacity() }}</div>
+        <div class="counter__l">ghế đã cấu hình trên sức chứa máy bay</div>
+        @if (diff() !== 0) {
+          <div class="counter__d">
+            Lệch {{ diff() > 0 ? '+' : '' }}{{ diff() }} ghế — phải khớp đúng mới lưu được
+          </div>
+        }
+      </div>
+
+      <div class="form-actions">
+        <app-app-button variant="ghost" (clicked)="back()">Huỷ</app-app-button>
+        <app-app-button [disabled]="!canSave()" (clicked)="save()">
+          {{ saving() ? 'Đang lưu…' : 'Lưu sơ đồ ghế' }}
+        </app-app-button>
+      </div>
+    </app-app-card>
+  }
+</div>

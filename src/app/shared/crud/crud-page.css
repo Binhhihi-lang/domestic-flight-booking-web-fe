@@ -232,17 +232,21 @@
   white-space: nowrap;
 }
 
-.rowbtn {
+.rowbtn,
+.rowlink {
   font-family: var(--font-body);
   font-size: 12.5px;
   font-weight: 600;
+  text-decoration: none;
+}
+
+.rowbtn {
   padding: 6px 11px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-ink);
   cursor: pointer;
-  text-decoration: none;
 }
 
 .rowbtn:hover {
@@ -263,8 +267,15 @@
   color: var(--color-on-danger-soft);
 }
 
-/* ---------- Phân trang ---------- */
-.pager {
+/* Cột dẫn sang màn con (vd "Cấu hình sơ đồ ghế"). */
+.rowlink {
+  color: var(--color-primary-bright);
+  white-space: nowrap;
+}
+
+.rowlink:hover {
+  text-decoration: underline;
+}.pager {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -566,3 +577,4 @@
 .toolbar__end {
   margin-left: auto;
 }
+

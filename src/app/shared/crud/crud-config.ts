@@ -19,6 +19,12 @@ export interface CrudColumn<T> {
    * Trả `null`/rỗng thì hiện khung nền có icon thay vì ảnh vỡ.
    */
   image?: (row: T) => string | null;
+  /**
+   * Có `link` thì ô render thành thẻ `<a>` tới đường dẫn này, thay vì chữ thường.
+   * Dùng cho cột dẫn sang màn con của bản ghi (ví dụ "Cấu hình sơ đồ ghế" ở
+   * danh sách máy bay).
+   */
+  link?: (row: T) => string;
   /** `code`: chữ đậm, số thẳng cột. `num`: canh phải. */
   kind?: 'code' | 'num';
   width?: string;

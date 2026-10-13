@@ -186,7 +186,18 @@ export const routes: Routes = [
         },
       ),
 
-      ...comingSoonAdmin('seat-configurations', 'Sơ đồ ghế', true),
+      // ---- Sơ đồ ghế (theo máy bay) ----
+      // Không phải màn danh sách: sơ đồ thuộc về MỘT máy bay, nên vào bằng
+      // /admin/seat-configurations/:id (từ cột "Cấu hình" ở danh sách máy bay).
+      {
+        path: 'seat-configurations/:id',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('@features/admin/pages/seat-configurations/seat-configurations').then(
+            (m) => m.AdminSeatConfigurations,
+          ),
+        data: { title: 'Sơ đồ ghế' },
+      },
       ...comingSoonAdmin('flights', 'Chuyến bay'),
       ...comingSoonAdmin('bookings', 'Đặt chỗ'),
       ...comingSoonAdmin('profile', 'Hồ sơ cá nhân'),
