@@ -21,6 +21,22 @@ export interface MockResourceOptions<T extends MockRecord> {
   noun: string;
   /** Kiểm tra ràng buộc nghiệp vụ trước khi ghi; trả chuỗi lỗi nếu vi phạm. */
   validate?: (payload: Partial<T>, existing: T[]) => string | null;
+  /**
+   * Filter trên trường MẢNG: tên query → tên trường mảng.
+   *
+   * Vì sao cần riêng: filter chung bên dưới so khớp chuỗi với một trường vô
+   * hướng. Với `category_id` của news thì giá trị nằm trong mảng `category_ids`,
+   * so kiểu `String(array) === value` không bao giờ khớp.
+   */
+  arrayFilters?: Record<string, keyof T>;
+  /**
+   * Làm giàu bản ghi trước khi trả — ví dụ gắn `categories` lồng vào news item.
+   *
+   * Vì sao cần: API trả kèm dữ liệu liên quan (news kèm danh mục) để client không
+   * phải gọi thêm endpoint. Mock phải trả cùng hình dạng, nếu không thì code viết
+   * theo mock sẽ vỡ khi gặp dữ liệu thật.
+   */
+  enrich?: (row: T) => T;
 }
 
 /**
@@ -95,10 +111,23 @@ export class MockResource<T extends MockRecord> {
       rows = rows.filter((r) => r.is_active === (isActive === 'true'));
     }
 
+    // Filter trên trường MẢNG (vd news theo `category_id` khớp `category_ids`).
+    for (const [param, field] of Object.entries(this.options.arrayFilters ?? {})) {
+      const value = params.get(param);
+      if (value === null || value === '') continue;
+      rows = rows.filter((r) => {
+        const arr = r[field];
+        return Array.isArray(arr) && arr.map(String).includes(value);
+      });
+    }
+
     // Các filter khác (status, country, city_id…) so khớp theo giá trị chuỗi.
     const reserved = new Set(['page', 'size', 'keyword', 'sort', 'is_active']);
     for (const [key, value] of params.entries()) {
       if (reserved.has(key)) continue;
+      // Bỏ qua filter đã xử lý ở nhánh mảng, nếu không nó sẽ lọc lần hai và
+      // luôn ra rỗng (vì so chuỗi với mảng).
+      if (key in (this.options.arrayFilters ?? {})) continue;
       rows = rows.filter((r) => {
         const v = (r as Record<string, unknown>)[key];
         return v === undefined || String(v) === value;
@@ -107,12 +136,18 @@ export class MockResource<T extends MockRecord> {
 
     const page = Number(params.get('page') ?? 1);
     const size = Number(params.get('size') ?? 20);
-    return ok(paginate(rows, page, size));
+    const enriched = this.options.enrich ? rows.map((r) => this.options.enrich!(r)) : rows;
+    return ok(paginate(enriched, page, size));
   }
 
   private getById(id: number): unknown {
     const found = this.alive().find((r) => r.id === id);
-    return found ? ok(found) : notFound(`Không tìm thấy ${this.options.noun}`);
+    if (!found) {
+      return notFound(`Không tìm thấy ${this.options.noun}`);
+    }
+    // Làm giàu cả ở đây: trang chi tiết cần dữ liệu liên quan (danh mục của bài
+    // viết) giống như ở danh sách.
+    return ok(this.options.enrich ? this.options.enrich(found) : found);
   }
 
   private create(body: unknown): unknown {

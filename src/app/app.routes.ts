@@ -43,17 +43,37 @@ export const routes: Routes = [
           ),
         data: { title: 'Kết quả tìm chuyến' },
       },
+      // `promotions` phải đứng TRƯỚC `promotions/:id`, nếu không Angular khớp
+      // chuỗi rỗng vào `:id` và trang danh sách không bao giờ mở được.
       {
         path: 'promotions',
         loadComponent: () =>
-          import('@shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('@features/client/pages/promotions/promotion-list').then(
+            (m) => m.ClientPromotionList,
+          ),
         data: { title: 'Khuyến mãi' },
       },
       {
+        path: 'promotions/:id',
+        loadComponent: () =>
+          import('@features/client/pages/promotions/promotion-detail').then(
+            (m) => m.ClientPromotionDetail,
+          ),
+        data: { title: 'Chi tiết khuyến mãi' },
+      },
+      // `news` phải đứng TRƯỚC `news/:id`, nếu không Angular khớp chuỗi rỗng
+      // vào `:id` và trang danh sách không bao giờ mở được.
+      {
         path: 'news',
         loadComponent: () =>
-          import('@shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
+          import('@features/client/pages/news/news-list').then((m) => m.ClientNewsList),
         data: { title: 'Tin tức' },
+      },
+      {
+        path: 'news/:id',
+        loadComponent: () =>
+          import('@features/client/pages/news/news-detail').then((m) => m.ClientNewsDetail),
+        data: { title: 'Chi tiết tin tức' },
       },
       {
         path: 'account',

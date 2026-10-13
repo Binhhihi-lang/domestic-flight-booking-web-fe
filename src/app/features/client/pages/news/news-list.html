@@ -1,0 +1,89 @@
+<div class="wrap">
+  <header class="page-h">
+    <div>
+      <h1>Tin tức &amp; cẩm nang</h1>
+      <p>Thông tin mới nhất từ các hãng bay và kinh nghiệm bay nội địa</p>
+    </div>
+  </header>
+
+  <!-- Lọc theo danh mục. Danh sách suy từ bài đã tải (endpoint danh mục là
+       quyền ADMIN) — xem ghi chú trong news-list.ts. -->
+  @if (!loading() && categories().length > 0) {
+    <div class="cat-filter">
+      <label class="cat-filter__lbl" for="news-cat">Danh mục</label>
+      <select
+        id="news-cat"
+        class="cat-filter__sel"
+        [value]="activeCategory() === null ? '' : activeCategory()"
+        (change)="onCategoryChange($any($event.target).value)"
+      >
+        <option value="">Tất cả danh mục</option>
+        @for (c of categories(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="news-grid">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <div class="news news--skeleton">
+          <app-skeleton-block height="160px" />
+          <div class="news__bd">
+            <app-skeleton-block width="80%" height="16px" />
+            <div style="height: 9px"></div>
+            <app-skeleton-block width="55%" height="12px" />
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (visibleNews().length === 0) {
+    <app-app-card>
+      <app-empty-state
+        icon="feed"
+        [message]="activeCategory() === null ? 'Chưa có tin tức' : 'Danh mục này chưa có bài viết'"
+        [hint]="activeCategory() === null ? 'Bài viết mới sẽ xuất hiện ở đây' : 'Thử chọn danh mục khác'"
+      />
+    </app-app-card>
+  } @else {
+    <div class="news-grid">
+      @for (item of visibleNews(); track item.id) {
+        <article class="news">
+          <a class="news__link" [routerLink]="['/news', item.id]">
+            @if (item.thumbnail_url && !brokenThumbs().has(item.id)) {
+              <img
+                class="news__img"
+                [src]="item.thumbnail_url"
+                [alt]="item.title"
+                loading="lazy"
+                (error)="markBroken(item.id)"
+              />
+            } @else {
+              <!-- Chưa có ảnh (hoặc ảnh lỗi): nền + icon thay vì icon ảnh vỡ. -->
+              <span class="news__img news__img--ph" aria-hidden="true">
+                <mat-icon>article</mat-icon>
+              </span>
+            }
+
+            <div class="news__bd">
+              @if (item.categories?.length) {
+                <div class="news__cats">
+                  @for (c of item.categories; track c.id) {
+                    <span class="news__cat">{{ c.category_name }}</span>
+                  }
+                </div>
+              }
+              @if (item.published_at) {
+                <div class="news__date">{{ formatDate(item.published_at) }}</div>
+              }
+              <h3 class="news__title">{{ item.title }}</h3>
+              <p class="news__excerpt">{{ excerpt(item.content) }}</p>
+              <span class="news__lk">Đọc tiếp <mat-icon>arrow_forward</mat-icon></span>
+            </div>
+          </a>
+        </article>
+      }
+    </div>
+  }
+</div>

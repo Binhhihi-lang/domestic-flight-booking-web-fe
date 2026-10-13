@@ -139,6 +139,17 @@ export class MockRegistry {
       seed: NEWS_MOCK,
       searchFields: ['title'],
       noun: 'tin tức',
+      // `category_id` khớp phần tử trong `category_ids` — filter thường so chuỗi
+      // với một trường vô hướng nên không dùng được cho trường mảng.
+      arrayFilters: { category_id: 'category_ids' },
+      // API trả kèm `categories` lồng để client không phải gọi thêm endpoint;
+      // trang khách dùng nó cho dropdown danh mục và nhãn ở bài viết.
+      enrich: (n) => ({
+        ...n,
+        categories: (n.category_ids ?? [])
+          .map((cid) => NEWS_CATEGORIES_MOCK.find((c) => c.id === cid))
+          .filter((c): c is NewsCategory => c !== undefined && !c.is_deleted),
+      }),
     }),
     new MockResource<NewsCategory>({
       path: 'news-categories',

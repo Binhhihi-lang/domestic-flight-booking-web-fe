@@ -1,0 +1,65 @@
+<div class="wrap wrap--narrow">
+  <nav class="crumbs" aria-label="Đường dẫn">
+    <a routerLink="/promotions">Khuyến mãi</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>Chi tiết</span>
+  </nav>
+
+  @if (loading()) {
+    <app-app-card><app-loading-state /></app-app-card>
+  } @else if (promo(); as p) {
+    <app-app-card>
+      @if (p.image_url) {
+        <img class="hero-img" [src]="p.image_url" [alt]="p.promotion_name" />
+      }
+
+      <h1 class="title">{{ p.promotion_name }}</h1>
+
+      @if (p.badge_label) {
+        <span class="badge">{{ p.badge_label }}</span>
+      }
+
+      @if (p.description) {
+        <p class="desc">{{ p.description }}</p>
+      }
+
+      <dl class="facts">
+        <div class="fact">
+          <dt>Mức giảm</dt>
+          <dd>{{ discountText() }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Điều kiện giá vé</dt>
+          <dd>
+            @if (p.min_fare_amount) {
+              Vé từ {{ formatMoney(p.min_fare_amount) }}₫ trở lên
+            } @else {
+              Không yêu cầu giá vé tối thiểu
+            }
+          </dd>
+        </div>
+        <div class="fact">
+          <dt>Hành trình</dt>
+          <dd>{{ tripTypeText() }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Thời gian áp dụng</dt>
+          <dd>{{ formatDate(p.start_date) }} – {{ formatDate(p.end_date) }}</dd>
+        </div>
+        <div class="fact">
+          <dt>Mã chương trình</dt>
+          <dd class="code">{{ p.promotion_code }}</dd>
+        </div>
+      </dl>
+
+      <p class="note">
+        Mức giảm được áp tự động khi bạn tìm chuyến bay phù hợp — không cần nhập mã.
+      </p>
+
+      <div class="actions">
+        <app-app-button variant="ghost" (clicked)="back()">Quay lại</app-app-button>
+        <a class="cta" routerLink="/flights">Tìm chuyến bay <mat-icon>arrow_forward</mat-icon></a>
+      </div>
+    </app-app-card>
+  }
+</div>
