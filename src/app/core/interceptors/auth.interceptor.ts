@@ -1,9 +1,9 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
-import { ApiCode, ApiResponse, FieldError } from '../models/api-response.model';
-import { AuthService } from '../services/auth.service';
-import { TokenService } from '../services/token.service';
+import { ApiCode, ApiResponse, FieldError } from '@core/models/api-response.model';
+import { AuthService } from '@core/services/auth.service';
+import { TokenService } from '@core/services/token.service';
 
 /**
  * Gắn access token vào mọi request và xử lý lỗi tập trung.

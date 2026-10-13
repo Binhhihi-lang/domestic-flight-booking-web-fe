@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { EmptyState } from './empty-state';
+import { EmptyState } from '@shared/components/empty-state/empty-state';
 
 describe('EmptyState', () => {
   beforeEach(async () => {

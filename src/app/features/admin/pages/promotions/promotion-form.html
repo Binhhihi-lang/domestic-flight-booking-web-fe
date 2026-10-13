@@ -1,0 +1,360 @@
+<div class="wrap wrap--narrow">
+  <nav class="crumbs" aria-label="Đường dẫn">
+    <a routerLink="/admin/promotions">Khuyến mãi</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>{{ isEdit() ? 'Sửa' : 'Thêm mới' }}</span>
+  </nav>
+
+  <header class="page-h">
+    <div>
+      <h1>{{ isEdit() ? 'Sửa khuyến mãi' : 'Thêm khuyến mãi' }}</h1>
+      <p>Khai báo mức giảm, thời gian hiệu lực, phạm vi áp dụng và chuyến bị loại trừ.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-app-card><app-loading-state /></app-app-card>
+  } @else {
+    <!-- ===== Thông tin chung ===== -->
+    <app-app-card title="Thông tin chương trình" class="blk">
+      <div class="form-grid">
+        <div class="field" [class.field--error]="fieldError('promotion_code')">
+          <label for="p-code">Mã khuyến mãi <span class="req">*</span></label>
+          <input
+            id="p-code"
+            type="text"
+            maxlength="50"
+            name="promotion_code"
+            [ngModel]="draft().promotion_code"
+            (ngModelChange)="setDraft('promotion_code', $event)"
+            placeholder="Ví dụ HE2026"
+          />
+          @if (fieldError('promotion_code'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else {
+            <span class="hint">Mã để ADMIN tra cứu, khách không nhập mã này</span>
+          }
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('promotion_name')">
+          <label for="p-name">Tên chương trình <span class="req">*</span></label>
+          <input
+            id="p-name"
+            type="text"
+            maxlength="150"
+            name="promotion_name"
+            [ngModel]="draft().promotion_name"
+            (ngModelChange)="setDraft('promotion_name', $event)"
+            placeholder="Ví dụ Khuyến mãi hè 2026"
+          />
+          @if (fieldError('promotion_name'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          }
+        </div>
+
+        <div class="field field--full" [class.field--error]="fieldError('image_url')">
+          <label for="p-img">Ảnh thẻ khuyến mãi</label>
+          <div class="imgfield">
+            <div class="imgfield__preview">
+              @if (draft().image_url && !imageBroken()) {
+                <img
+                  class="thumb thumb--lg"
+                  [src]="draft().image_url"
+                  alt=""
+                  (error)="markImageBroken()"
+                />
+              } @else {
+                <span class="thumb thumb--lg thumb--empty" aria-hidden="true">
+                  <mat-icon>image</mat-icon>
+                </span>
+              }
+            </div>
+
+            <div class="imgfield__controls">
+              <input
+                id="p-img"
+                type="text"
+                maxlength="500"
+                name="image_url"
+                [ngModel]="draft().image_url"
+                (ngModelChange)="setDraft('image_url', $event)"
+                placeholder="Dán đường dẫn ảnh (https://...)"
+              />
+
+              <div class="imgfield__row">
+                <label class="imgfield__pick">
+                  <mat-icon>upload</mat-icon>
+                  Chọn ảnh từ máy
+                  <input type="file" accept="image/*" (change)="onPickImage($event)" />
+                </label>
+                @if (draft().image_url) {
+                  <button class="imgfield__clear" type="button" (click)="clearImage()">
+                    Xóa ảnh
+                  </button>
+                }
+              </div>
+
+              <span class="hint">
+                Ảnh hiển thị trên thẻ khuyến mãi ở trang chủ. Tối đa 2 MB nếu chọn từ máy.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field field--full">
+          <label for="p-desc">Mô tả ngắn</label>
+          <textarea
+            id="p-desc"
+            rows="2"
+            maxlength="500"
+            name="description"
+            [ngModel]="draft().description"
+            (ngModelChange)="setDraft('description', $event)"
+            placeholder="Ví dụ: Nhập mã DALAT20 giảm ngay 20% khi đặt vé khứ hồi. Áp dụng đến hết 15/11."
+          ></textarea>
+          <span class="hint">Dòng mô tả hiện trên thẻ khuyến mãi, tối đa 500 ký tự</span>
+        </div>
+
+        <div class="field">
+          <label for="p-badge">Nhãn nổi bật</label>
+          <input
+            id="p-badge"
+            type="text"
+            maxlength="30"
+            name="badge_label"
+            [ngModel]="draft().badge_label"
+            (ngModelChange)="setDraft('badge_label', $event)"
+            placeholder="Ví dụ Giá sốc, Đồng giá"
+          />
+          <span class="hint">
+            Nhãn ngắn in trên ảnh. Để trống thì hiển thị mức giảm tự động.
+          </span>
+        </div>
+
+        <div class="field">
+          <label for="p-dtype">Loại giảm <span class="req">*</span></label>
+          <select
+            id="p-dtype"
+            name="discount_type"
+            [ngModel]="draft().discount_type"
+            (ngModelChange)="setDraft('discount_type', $event)"
+          >
+            <option value="PERCENT">Theo phần trăm (%)</option>
+            <option value="AMOUNT">Theo số tiền (₫)</option>
+          </select>
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('discount_value')">
+          <label for="p-dval">Giá trị giảm <span class="req">*</span></label>
+          <input
+            id="p-dval"
+            type="number"
+            min="0"
+            name="discount_value"
+            [ngModel]="draft().discount_value"
+            (ngModelChange)="setDraft('discount_value', $event === '' ? null : +$event)"
+            [placeholder]="isPercent() ? 'Ví dụ 15 (nghĩa là 15%)' : 'Ví dụ 100000'"
+          />
+          @if (fieldError('discount_value'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else {
+            <span class="hint">
+              {{ isPercent() ? 'Phần trăm giảm, tối đa 100' : 'Số tiền giảm, đơn vị đồng' }}
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="p-max">Trần giảm mỗi dòng vé (₫)</label>
+          <input
+            id="p-max"
+            type="number"
+            min="0"
+            name="max_discount_amount"
+            [disabled]="!isPercent()"
+            [ngModel]="draft().max_discount_amount"
+            (ngModelChange)="setDraft('max_discount_amount', $event === '' ? null : +$event)"
+          />
+          <span class="hint">
+            @if (isPercent()) {
+              Giới hạn số tiền giảm tối đa cho một dòng vé. Để trống nếu không giới hạn.
+            } @else {
+              Chỉ áp dụng khi giảm theo phần trăm.
+            }
+          </span>
+        </div>
+
+        <div class="field">
+          <label for="p-min">Giá dòng vé tối thiểu (₫)</label>
+          <input
+            id="p-min"
+            type="number"
+            min="0"
+            name="min_fare_amount"
+            [ngModel]="draft().min_fare_amount"
+            (ngModelChange)="setDraft('min_fare_amount', $event === '' ? null : +$event)"
+          />
+          <span class="hint">Dòng vé phải đạt mức này mới được giảm. Để trống nếu không yêu cầu.</span>
+        </div>
+
+        <div class="field">
+          <label for="p-trip">Loại hành trình</label>
+          <select
+            id="p-trip"
+            name="applicable_trip_type"
+            [ngModel]="draft().applicable_trip_type"
+            (ngModelChange)="setDraft('applicable_trip_type', $event)"
+          >
+            <option value="ANY">Mọi hành trình</option>
+            <option value="ONE_WAY">Chỉ một chiều</option>
+            <option value="ROUND_TRIP">Chỉ khứ hồi</option>
+          </select>
+          <span class="hint">Điều kiện của cả booking, không phải từng dòng vé</span>
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('start_date')">
+          <label for="p-start">Ngày bắt đầu <span class="req">*</span></label>
+          <input
+            id="p-start"
+            type="date"
+            name="start_date"
+            [ngModel]="draft().start_date"
+            (ngModelChange)="setDraft('start_date', $event)"
+          />
+          @if (fieldError('start_date'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          }
+        </div>
+
+        <div class="field" [class.field--error]="fieldError('end_date')">
+          <label for="p-end">Ngày kết thúc <span class="req">*</span></label>
+          <input
+            id="p-end"
+            type="date"
+            name="end_date"
+            [ngModel]="draft().end_date"
+            (ngModelChange)="setDraft('end_date', $event)"
+          />
+          @if (fieldError('end_date'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          }
+        </div>
+
+        <div class="field field--full">
+          <label class="toggle">
+            <input
+              type="checkbox"
+              name="is_active"
+              [ngModel]="draft().is_active"
+              (ngModelChange)="setDraft('is_active', $event)"
+            />
+            <span>Đang chạy</span>
+          </label>
+        </div>
+      </div>
+    </app-app-card>
+
+    <!-- ===== Phạm vi áp dụng ===== -->
+    <app-app-card title="Phạm vi áp dụng" class="blk">
+      <app-app-button cardActions size="sm" variant="ghost" (clicked)="addScope()">
+        <mat-icon>add</mat-icon>
+        Thêm dòng
+      </app-app-button>
+
+      <p class="note">
+        Không có dòng nào = áp dụng cho <strong>tất cả chuyến bay</strong>. Nhiều dòng là điều kiện
+        <strong>HOẶC</strong> — vé khớp bất kỳ dòng nào là được giảm. Tuyến có hướng: muốn áp cả hai
+        chiều thì thêm một dòng đảo chiều.
+      </p>
+
+      @if (fieldError('scopes'); as msg) {
+        <p class="field__err">{{ msg }}</p>
+      }
+
+      @if (scopes().length === 0) {
+        <p class="empty-line">Chưa có phạm vi nào — khuyến mãi sẽ áp cho mọi chuyến bay.</p>
+      } @else {
+        <div class="scope-list">
+          @for (s of scopes(); track s.key) {
+            <div class="scope-row">
+              <select
+                class="scope-row__type"
+                aria-label="Loại phạm vi"
+                [ngModel]="s.target_type"
+                (ngModelChange)="setScopeType(s.key, $event)"
+              >
+                <option value="AIRLINE">Theo hãng bay</option>
+                <option value="FARE_CLASS">Theo hạng vé</option>
+                <option value="ROUTE">Theo tuyến bay</option>
+                <option value="FLIGHT">Theo chuyến bay</option>
+              </select>
+
+              <select
+                class="scope-row__val"
+                aria-label="Giá trị phạm vi"
+                [ngModel]="s.value === null ? '' : s.value"
+                (ngModelChange)="setScopeValue(s.key, 'value', $event)"
+              >
+                <option value="">— Chọn —</option>
+                @for (o of optionsFor(s.target_type); track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
+              </select>
+
+              @if (s.target_type === 'ROUTE') {
+                <select
+                  class="scope-row__val"
+                  aria-label="Sân bay đến"
+                  [ngModel]="s.value2 === null ? '' : s.value2"
+                  (ngModelChange)="setScopeValue(s.key, 'value2', $event)"
+                >
+                  <option value="">— Đến (bỏ trống = mọi điểm đến) —</option>
+                  @for (o of optionsFor('ROUTE'); track o.value) {
+                    <option [value]="o.value">{{ o.label }}</option>
+                  }
+                </select>
+              }
+
+              <button
+                class="scope-row__del"
+                type="button"
+                aria-label="Xoá dòng phạm vi"
+                (click)="removeScope(s.key)"
+              >
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </app-app-card>
+
+    <!-- ===== Loại trừ chuyến bay ===== -->
+    <app-app-card title="Loại trừ chuyến bay" class="blk">
+      <p class="note">
+        Chuyến được chọn ở đây <strong>không bao giờ</strong> được giảm, kể cả khi khớp phạm vi —
+        loại trừ luôn thắng phạm vi.
+      </p>
+
+      <div class="exclude-grid">
+        @for (f of flights; track f.value) {
+          <label class="exclude-item" [class.exclude-item--on]="isExcluded(f.value)">
+            <input
+              type="checkbox"
+              [checked]="isExcluded(f.value)"
+              (change)="toggleExcluded(f.value)"
+            />
+            <span>{{ f.label }}</span>
+          </label>
+        }
+      </div>
+    </app-app-card>
+
+    <div class="form-actions">
+      <app-app-button variant="ghost" (clicked)="cancel()">Hủy</app-app-button>
+      <app-app-button [disabled]="saving()" (clicked)="save()">
+        {{ saving() ? 'Đang lưu…' : 'Lưu khuyến mãi' }}
+      </app-app-button>
+    </div>
+  }
+</div>

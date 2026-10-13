@@ -1,0 +1,283 @@
+/* Khung hẹp cho form dài — dễ đọc hơn khi dàn hết bề ngang. */
+.wrap--narrow {
+  max-width: 920px;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  margin-bottom: 12px;
+}
+
+.crumbs a {
+  color: var(--color-ink-muted);
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  color: var(--color-primary);
+}
+
+.crumbs mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+  color: var(--color-ink-subtle);
+}
+
+.page-h {
+  margin-bottom: 18px;
+}
+
+.page-h h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.page-h p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--color-ink-muted);
+}
+
+.blk {
+  display: block;
+  margin-bottom: 16px;
+}
+
+/* ---------- Lưới form ---------- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.req {
+  color: var(--color-danger);
+}
+
+.field input,
+.field select {
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  width: 100%;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+.field input:disabled {
+  background: var(--color-surface-alt);
+  color: var(--color-ink-subtle);
+  cursor: not-allowed;
+}
+
+.field--error input,
+.field--error select {
+  border-color: var(--color-danger);
+}
+
+.field .hint {
+  font-size: 11.5px;
+  color: var(--color-ink-subtle);
+}
+
+.field__err {
+  font-size: 11.5px;
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.toggle input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* ---------- Ghi chú nghiệp vụ ---------- */
+.note {
+  margin: 0 0 12px;
+  padding: 11px 13px;
+  background: var(--color-info-soft);
+  color: var(--color-on-info-soft);
+  border-left: 3px solid var(--color-primary-bright);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.empty-line {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
+/* ---------- Dòng phạm vi ---------- */
+.scope-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.scope-row {
+  display: grid;
+  grid-template-columns: 190px 1fr 1fr 40px;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Khi chỉ có một dropdown giá trị (không phải ROUTE) thì cột thứ ba trống —
+   để nó co lại thay vì chiếm chỗ. */
+.scope-row:not(:has(select:nth-of-type(3))) {
+  grid-template-columns: 190px 1fr 40px;
+}
+
+.scope-row select {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  min-width: 0;
+  width: 100%;
+}
+
+.scope-row select:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+.scope-row__del {
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-ink-muted);
+}
+
+.scope-row__del:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.scope-row__del mat-icon {
+  font-size: 19px;
+  width: 19px;
+  height: 19px;
+}
+
+/* ---------- Loại trừ chuyến bay ---------- */
+.exclude-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 9px;
+}
+
+.exclude-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.exclude-item:hover {
+  border-color: var(--color-primary-bright);
+}
+
+.exclude-item--on {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-on-danger-soft);
+  font-weight: 600;
+}
+
+.exclude-item input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-danger);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+/* ---------- Nút cuối form ---------- */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+/* =====================================================================
+   Media query đặt SAU tất cả rule gốc.
+   ===================================================================== */
+@media (max-width: 760px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Mỗi dòng phạm vi xếp dọc để dropdown không bị bóp quá hẹp. */
+  .scope-row,
+  .scope-row:not(:has(select:nth-of-type(3))) {
+    grid-template-columns: 1fr;
+  }
+
+  .scope-row__del {
+    width: 100%;
+  }
+}

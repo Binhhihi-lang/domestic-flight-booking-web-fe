@@ -1,0 +1,109 @@
+<div class="wrap">
+  <app-page-header
+    title="Dashboard"
+    subtitle="Tổng quan hoạt động · cập nhật lúc 14:32, 11/10/2026"
+  >
+    <app-app-button variant="ghost">
+      <mat-icon>calendar_month</mat-icon>
+      30 ngày qua
+    </app-app-button>
+    <app-app-button>
+      <mat-icon>download</mat-icon>
+      Xuất báo cáo
+    </app-app-button>
+  </app-page-header>
+
+  <!-- ===== Thẻ số liệu ===== -->
+  <div class="stats">
+    @for (s of stats; track s.label) {
+      <div class="stat">
+        <div class="stat__ic" [class]="'stat__ic--' + s.tone">
+          <mat-icon>{{ s.icon }}</mat-icon>
+        </div>
+        <div class="stat__l">{{ s.label }}</div>
+        <div class="stat__v tabular">
+          {{ s.value }}@if (s.unit) {<span class="stat__u">{{ s.unit }}</span>}
+        </div>
+        <div class="stat__d" [class.up]="s.deltaTone === 'up'" [class.down]="s.deltaTone === 'down'">
+          <mat-icon>{{ s.deltaIcon }}</mat-icon>
+          {{ s.delta }}
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="dash-grid">
+    <!-- ===== Biểu đồ cột ===== -->
+    <app-app-card title="Booking theo ngày">
+      <span cardActions class="muted-sm">7 ngày gần nhất</span>
+      <div class="bars">
+        @for (b of bars; track b.label) {
+          <div class="bar" [title]="b.value + ' booking · ' + b.label">
+            <span class="bar__v tabular">{{ b.value }}</span>
+            <div class="bar__b" [style.height.%]="b.height"></div>
+            <span class="bar__l">{{ b.label }}</span>
+          </div>
+        }
+      </div>
+    </app-app-card>
+
+    <!-- ===== Xếp hạng đường bay ===== -->
+    <app-app-card title="Đường bay bán chạy">
+      <app-app-button cardActions size="sm" variant="text">Xem tất cả</app-app-button>
+      <div class="rank-list">
+        @for (r of ranks; track r.code; let i = $index) {
+          <div class="rank">
+            <div class="rank__i">{{ i + 1 }}</div>
+            <div>
+              <div class="rank__n">{{ r.code }}</div>
+              <div class="rank__m">{{ r.name }}</div>
+            </div>
+            <div class="rank__v">
+              <b class="tabular">{{ r.bookings }}</b>
+              <small>booking</small>
+            </div>
+          </div>
+        }
+      </div>
+    </app-app-card>
+  </div>
+
+  <!-- ===== Bảng chuyến cần chú ý ===== -->
+  <div class="attention">
+    <app-app-card title="Chuyến bay cần chú ý">
+      <app-status-badge cardActions tone="warning" label="17 chuyến" />
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Chuyến</th>
+              <th>Tuyến</th>
+              <th>Khởi hành</th>
+              <th class="num">Ghế trống</th>
+              <th class="num">Tổng ghế</th>
+              <th>Lấp đầy</th>
+              <th>Trạng thái</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of attention; track f.code) {
+              <tr>
+                <td class="code">{{ f.code }}</td>
+                <td>{{ f.route }}</td>
+                <td class="tabular">{{ f.depart }}</td>
+                <td class="num">{{ f.freeSeats }}</td>
+                <td class="num">{{ f.totalSeats }}</td>
+                <td><app-status-badge [tone]="f.fillTone" [label]="f.fillRate" /></td>
+                <td><app-status-badge [tone]="f.statusTone" [label]="f.statusLabel" /></td>
+                <td class="rowacts">
+                  <app-app-button size="sm" variant="text">{{ f.action }}</app-app-button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-app-card>
+  </div>
+</div>

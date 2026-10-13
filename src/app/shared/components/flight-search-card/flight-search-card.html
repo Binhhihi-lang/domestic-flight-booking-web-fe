@@ -1,0 +1,50 @@
+<div class="searchbar__card">
+  <div class="trip">
+    <button
+      class="chip"
+      type="button"
+      [class.on]="tripType() === 'round'"
+      (click)="tripType.set('round')"
+    >
+      Khứ hồi
+    </button>
+    <button
+      class="chip"
+      type="button"
+      [class.on]="tripType() === 'oneway'"
+      (click)="tripType.set('oneway')"
+    >
+      Một chiều
+    </button>
+  </div>
+
+  <div class="searchform">
+    <div class="field">
+      <label for="fs-from">Điểm đi</label>
+      <input id="fs-from" name="from" [(ngModel)]="from" placeholder="Chọn điểm khởi hành" />
+    </div>
+
+    <div class="field swap">
+      <label for="fs-to">Điểm đến</label>
+      <input id="fs-to" name="to" [(ngModel)]="to" placeholder="Chọn điểm đến" />
+      <button class="swap__btn" type="button" title="Đổi chiều" (click)="swap()">
+        <mat-icon>swap_horiz</mat-icon>
+      </button>
+    </div>
+
+    <div class="field">
+      <label for="fs-depart">Ngày đi</label>
+      <input id="fs-depart" name="departDate" type="date" [(ngModel)]="departDate" />
+    </div>
+
+    <div class="field" [class.field--hidden]="tripType() === 'oneway'">
+      <label for="fs-return">Ngày về</label>
+      <input id="fs-return" name="returnDate" type="date" [(ngModel)]="returnDate" />
+    </div>
+
+    <button class="submit" type="button" (click)="submit()">
+      <mat-icon>search</mat-icon>
+      Tìm chuyến bay
+    </button>
+  </div>
+</div>

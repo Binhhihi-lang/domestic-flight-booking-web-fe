@@ -1,0 +1,408 @@
+<!-- =====================================================================
+     CHẾ ĐỘ DANH SÁCH
+     ===================================================================== -->
+@if (mode() === 'list') {
+  <div class="wrap">
+    <app-page-header [title]="config().title" [subtitle]="config().subtitle">
+      @if (!config().readonly) {
+        <app-app-button (clicked)="goCreate()">
+          <mat-icon>add</mat-icon>
+          {{ config().createLabel }}
+        </app-app-button>
+      }
+    </app-page-header>
+
+    <app-app-card>
+      <!-- ===== Thanh công cụ ===== -->
+      <div class="toolbar">
+        @if (config().searchPlaceholder) {
+          <div class="search">
+            <mat-icon>search</mat-icon>
+            <input
+              type="search"
+              [placeholder]="config().searchPlaceholder"
+              [attr.aria-label]="config().searchPlaceholder"
+              [ngModel]="keyword()"
+              (ngModelChange)="onKeyword($event)"
+            />
+          </div>
+        }
+
+        @for (f of config().filters ?? []; track f.key) {
+          <select
+            class="select"
+            [attr.aria-label]="f.label"
+            [ngModel]="filterValue(f.key)"
+            (ngModelChange)="onFilter(f.key, $event)"
+          >
+            @for (o of f.options; track o.label) {
+              <option [value]="o.value === null ? '' : o.value">{{ o.label }}</option>
+            }
+          </select>
+        }
+
+        @if (hasFilters()) {
+          <!-- margin-left:auto đẩy nút về sát phải để thanh công cụ cân đối
+               thay vì dồn hết về bên trái. -->
+          <app-app-button class="toolbar__end" variant="ghost" (clicked)="clearFilters()">
+            <mat-icon>filter_alt_off</mat-icon>
+            Bỏ lọc
+          </app-app-button>
+        }
+      </div>
+
+      @if (loading()) {
+        <app-loading-state />
+      } @else if (rows().length === 0) {
+        <app-empty-state
+          [icon]="config().emptyIcon"
+          [message]="hasFilters() ? 'Không tìm thấy kết quả phù hợp' : config().emptyMessage"
+          [hint]="hasFilters() ? 'Thử từ khoá khác hoặc bỏ bộ lọc' : config().emptyHint"
+          [actionLabel]="hasFilters() || config().readonly ? '' : config().createLabel"
+          (actionClicked)="cancel()"
+        />
+      } @else {
+        <!-- Khung cuộn ngang: bảng rộng hơn màn hình thì tự cuộn, không đẩy cả
+             trang tràn ngang và không cắt mất cột. -->
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                @for (c of config().columns; track c.label) {
+                  <th [class.num]="c.kind === 'num'" [style.width]="c.width">{{ c.label }}</th>
+                }
+                @if (!config().readonly) {
+                  <th class="col-actions"></th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.id) {
+                <!-- Hàng bấm được để xem chi tiết. tabindex + keydown để dùng
+                     được bằng bàn phím, không chỉ bằng chuột. -->
+                <tr
+                  [class.row--clickable]="!config().readonly"
+                  [attr.tabindex]="config().readonly ? null : 0"
+                  [attr.role]="config().readonly ? null : 'link'"
+                  (click)="openDetail(row)"
+                  (keydown)="onRowKey($event, row)"
+                >
+                  @for (c of config().columns; track c.label) {
+                    <td [class.num]="c.kind === 'num'" [class.code]="c.kind === 'code'">
+                      @if (c.image) {
+                        @if (!isImageBroken(c.image(row))) {
+                          <img
+                            class="thumb"
+                            [src]="c.image(row)"
+                            [alt]="c.value(row)"
+                            loading="lazy"
+                            (error)="markImageBroken(c.image(row) ?? '')"
+                          />
+                        } @else {
+                          <span class="thumb thumb--empty" aria-hidden="true">
+                            <mat-icon>image</mat-icon>
+                          </span>
+                        }
+                      } @else if (c.tone) {
+                        <app-status-badge [tone]="c.tone(row)" [label]="c.value(row)" />
+                      } @else {
+                        {{ c.value(row) }}
+                      }
+                    </td>
+                  }
+                  @if (!config().readonly) {
+                    <td class="rowacts">
+                      <a
+                        class="rowbtn"
+                        [routerLink]="[basePath(), row.id, 'edit']"
+                        (click)="$event.stopPropagation()"
+                      >
+                        Sửa
+                      </a>
+                      <button class="rowbtn rowbtn--danger" type="button" (click)="confirmDelete(row, $event)">
+                        Xóa
+                      </button>
+                      <mat-icon class="rowchev" aria-hidden="true">chevron_right</mat-icon>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ===== Phân trang =====
+             Ẩn với endpoint trả mảng trần (Role, Permission) — không có trang để chuyển. -->
+        @if (!config().unpaginated) {
+        <div class="pager">
+          <span class="tabular">{{ rangeLabel() }}</span>
+          <div class="pager__p">
+            <button
+              class="pg"
+              type="button"
+              aria-label="Trang trước"
+              [disabled]="pageIndex() === 0"
+              (click)="goTo(pageIndex() - 1)"
+            >
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            @for (p of pageNumbers(); track p) {
+              <button class="pg" type="button" [class.on]="p === pageIndex() + 1" (click)="goTo(p - 1)">
+                {{ p }}
+              </button>
+            }
+            <button
+              class="pg"
+              type="button"
+              aria-label="Trang sau"
+              [disabled]="pageIndex() >= totalPages() - 1"
+              (click)="goTo(pageIndex() + 1)"
+            >
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+
+            <select
+              class="pager__size"
+              aria-label="Số dòng mỗi trang"
+              [ngModel]="pageSize()"
+              (ngModelChange)="onPageSize($event)"
+            >
+              <option [ngValue]="10">10 / trang</option>
+              <option [ngValue]="20">20 / trang</option>
+              <option [ngValue]="50">50 / trang</option>
+            </select>
+          </div>
+        </div>
+        }
+      }
+    </app-app-card>
+  </div>
+}
+
+<!-- =====================================================================
+     CHẾ ĐỘ CHI TIẾT
+     ===================================================================== -->
+@if (mode() === 'detail') {
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Đường dẫn">
+      <a [routerLink]="basePath()">{{ config().title }}</a>
+      <mat-icon>chevron_right</mat-icon>
+      <span>Chi tiết</span>
+    </nav>
+
+    @if (loading()) {
+      <app-loading-state />
+    } @else if (current(); as row) {
+      <app-page-header [title]="detailHeading(row)">
+        <app-app-button variant="ghost" (clicked)="cancel()">Quay lại</app-app-button>
+        @if (!config().readonly) {
+          <app-app-button (clicked)="goEdit(row)">
+            <mat-icon>edit</mat-icon>
+            Sửa
+          </app-app-button>
+        }
+      </app-page-header>
+
+      <app-app-card>
+        <dl class="detail">
+          @for (c of config().columns; track c.label) {
+            <div class="detail__row">
+              <dt>{{ c.label }}</dt>
+              <dd>
+                @if (c.image) {
+                  @if (!isImageBroken(c.image(row))) {
+                    <img
+                      class="thumb thumb--lg"
+                      [src]="c.image(row)"
+                      [alt]="c.value(row)"
+                      loading="lazy"
+                      (error)="markImageBroken(c.image(row) ?? '')"
+                    />
+                  } @else {
+                    <span class="thumb thumb--lg thumb--empty" aria-hidden="true">
+                      <mat-icon>image</mat-icon>
+                    </span>
+                  }
+                } @else if (c.tone) {
+                  <app-status-badge [tone]="c.tone(row)" [label]="c.value(row)" />
+                } @else if (c.kind === 'code') {
+                  <span class="code">{{ c.value(row) }}</span>
+                } @else {
+                  {{ c.value(row) }}
+                }
+              </dd>
+            </div>
+          }
+
+          <!-- Các trường có trong form nhưng không phải cột bảng vẫn hiện ở đây,
+               nếu không người dùng bấm vào chi tiết mà không thấy đủ dữ liệu. -->
+          @for (f of config().fields; track f.key) {
+            @if (detailExtra(f, row); as value) {
+              <div class="detail__row">
+                <dt>{{ f.label }}</dt>
+                <dd class="detail__wrap">{{ value }}</dd>
+              </div>
+            }
+          }
+        </dl>
+      </app-app-card>
+    }
+  </div>
+}
+
+<!-- =====================================================================
+     CHẾ ĐỘ FORM (thêm mới / sửa) — trang riêng, không phải hộp thoại
+     ===================================================================== -->
+@if (mode() === 'form') {
+  <div class="wrap wrap--narrow">
+    <nav class="crumbs" aria-label="Đường dẫn">
+      <a [routerLink]="basePath()">{{ config().title }}</a>
+      <mat-icon>chevron_right</mat-icon>
+      <span>{{ isEdit() ? 'Sửa' : 'Thêm mới' }}</span>
+    </nav>
+
+    <app-page-header
+      [title]="isEdit() ? config().editTitle : config().createLabel"
+      [subtitle]="config().formSubtitle ?? ''"
+    />
+
+    <app-app-card [hasFooter]="true">
+      @if (loading()) {
+        <app-loading-state />
+      } @else {
+        <form class="form-grid" (submit)="$event.preventDefault(); save()">
+          @for (f of visibleFields(); track f.key) {
+            <div class="field" [class.field--full]="f.fullWidth" [class.field--error]="fieldErrors()[f.key]">
+              <label [attr.for]="'cf-' + f.key">
+                {{ f.label }}
+                @if (f.required) {
+                  <span class="req" aria-hidden="true">*</span>
+                }
+              </label>
+
+              @switch (f.type) {
+                @case ('textarea') {
+                  <textarea
+                    [id]="'cf-' + f.key"
+                    rows="6"
+                    [attr.maxlength]="f.maxLength ?? null"
+                    [attr.aria-invalid]="fieldErrors()[f.key] ? true : null"
+                    [ngModel]="asString(fieldValue(f.key))"
+                    (ngModelChange)="setField(f.key, $event)"
+                    [name]="f.key"
+                  ></textarea>
+                }
+                @case ('select') {
+                  <select
+                    [id]="'cf-' + f.key"
+                    [ngModel]="fieldValue(f.key)"
+                    (ngModelChange)="setField(f.key, $event)"
+                    [name]="f.key"
+                  >
+                    @for (o of f.options ?? []; track o.label) {
+                      <option [ngValue]="o.value">{{ o.label }}</option>
+                    }
+                  </select>
+                }
+                @case ('toggle') {
+                  <label class="toggle">
+                    <input
+                      [id]="'cf-' + f.key"
+                      type="checkbox"
+                      [ngModel]="!!fieldValue(f.key)"
+                      (ngModelChange)="setField(f.key, $event)"
+                      [name]="f.key"
+                    />
+                    <span>{{ f.hint || 'Bật' }}</span>
+                  </label>
+                }
+                @case ('image') {
+                  <!-- Ô ảnh: hai cách nhập — dán URL, hoặc chọn file từ máy.
+                       File từ máy được đọc thành data URL (base64) và lưu thẳng
+                       vào trường, nên xem trước được ngay mà không cần upload.
+                       Khi BE có endpoint upload thì chỉ cần thay chỗ đọc file. -->
+                  <div class="imgfield">
+                    <div class="imgfield__preview">
+                      @if (!isImageBroken(asString(fieldValue(f.key)))) {
+                        <img
+                          class="thumb thumb--lg"
+                          [src]="asString(fieldValue(f.key))"
+                          alt=""
+                          (error)="markImageBroken(asString(fieldValue(f.key)))"
+                        />
+                      } @else {
+                        <span class="thumb thumb--lg thumb--empty" aria-hidden="true">
+                          <mat-icon>image</mat-icon>
+                        </span>
+                      }
+                    </div>
+
+                    <div class="imgfield__controls">
+                      <input
+                        [id]="'cf-' + f.key"
+                        type="text"
+                        [attr.maxlength]="f.maxLength ?? null"
+                        [ngModel]="asString(fieldValue(f.key))"
+                        (ngModelChange)="setField(f.key, $event)"
+                        [name]="f.key"
+                        placeholder="Dán đường dẫn ảnh (https://...)"
+                        [attr.aria-label]="f.label + ' — đường dẫn'"
+                      />
+
+                      <div class="imgfield__row">
+                        <label class="imgfield__pick">
+                          <mat-icon>upload</mat-icon>
+                          Chọn ảnh từ máy
+                          <input
+                            type="file"
+                            accept="image/*"
+                            (change)="onPickImage($event, f.key)"
+                          />
+                        </label>
+                        @if (asString(fieldValue(f.key))) {
+                          <button
+                            class="imgfield__clear"
+                            type="button"
+                            (click)="setField(f.key, '')"
+                          >
+                            Xóa ảnh
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+                @default {
+                  <input
+                    [id]="'cf-' + f.key"
+                    [type]="f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'"
+                    [attr.maxlength]="f.maxLength ?? null"
+                    [attr.min]="f.min ?? null"
+                    [attr.max]="f.max ?? null"
+                    [attr.aria-invalid]="fieldErrors()[f.key] ? true : null"
+                    [ngModel]="asString(fieldValue(f.key))"
+                    (ngModelChange)="setField(f.key, $event)"
+                    [name]="f.key"
+                  />
+                }
+              }
+
+              @if (fieldErrors()[f.key]; as msg) {
+                <span class="field__err">{{ msg }}</span>
+              } @else if (f.hint && f.type !== 'toggle') {
+                <span class="hint">{{ f.hint }}</span>
+              }
+            </div>
+          }
+        </form>
+      }
+
+      <div cardFooter class="form-actions">
+        <app-app-button variant="ghost" (clicked)="cancel()">Hủy</app-app-button>
+        <app-app-button [disabled]="saving()" (clicked)="save()">
+          {{ saving() ? 'Đang lưu…' : 'Lưu' }}
+        </app-app-button>
+      </div>
+    </app-app-card>
+  </div>
+}

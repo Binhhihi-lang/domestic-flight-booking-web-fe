@@ -1,0 +1,129 @@
+<header class="topbar">
+  <button
+    class="topbar__menu"
+    type="button"
+    aria-label="Mở menu"
+    [attr.aria-expanded]="menuOpen()"
+    (click)="menuOpen.set(!menuOpen())"
+  >
+    <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+  </button>
+
+  <a class="topbar__brand" routerLink="/">
+    <app-brand-logo size="md" tone="light" [tagline]="brandTagline" />
+  </a>
+
+  <nav class="topbar__nav">
+    <a routerLink="/" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }">
+      Trang chủ
+    </a>
+    <a routerLink="/flights" routerLinkActive="on">Đặt vé</a>
+    <a routerLink="/promotions" routerLinkActive="on">Khuyến mãi</a>
+    <a routerLink="/news" routerLinkActive="on">Tin tức</a>
+  </nav>
+
+  <span class="topbar__sp"></span>
+
+  @if (authService.isLoggedIn()) {
+    <button class="topbar__user" type="button" [matMenuTriggerFor]="accountMenu">
+      <span class="avatar">{{ initials() }}</span>
+      <span class="topbar__user-name">{{ authService.currentUser()?.full_name }}</span>
+      <mat-icon>expand_more</mat-icon>
+    </button>
+    <mat-menu #accountMenu="matMenu">
+      <button mat-menu-item type="button" routerLink="/account">
+        <mat-icon>confirmation_number</mat-icon>
+        <span>Vé của tôi</span>
+      </button>
+      <button mat-menu-item type="button" routerLink="/account/profile">
+        <mat-icon>person</mat-icon>
+        <span>Hồ sơ cá nhân</span>
+      </button>
+      @if (authService.isStaff()) {
+        <button mat-menu-item type="button" (click)="goToAdmin()">
+          <mat-icon>dashboard</mat-icon>
+          <span>Khu vực vận hành</span>
+        </button>
+      }
+      <button mat-menu-item type="button" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Đăng xuất</span>
+      </button>
+    </mat-menu>
+  } @else {
+    <a class="btn btn--ghost" routerLink="/login">
+      <mat-icon>person</mat-icon>
+      <span class="btn--hide-sm">Đăng nhập</span>
+    </a>
+    <a class="btn btn--primary" routerLink="/register">Đăng ký</a>
+  }
+</header>
+
+@if (menuOpen()) {
+  <nav class="drawer" aria-label="Menu di động">
+    <a routerLink="/" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }" (click)="menuOpen.set(false)">Trang chủ</a>
+    <a routerLink="/flights" routerLinkActive="on" (click)="menuOpen.set(false)">Đặt vé</a>
+    <a routerLink="/promotions" routerLinkActive="on" (click)="menuOpen.set(false)">Khuyến mãi</a>
+    <a routerLink="/news" routerLinkActive="on" (click)="menuOpen.set(false)">Tin tức</a>
+  </nav>
+}
+
+<main class="content">
+  <router-outlet />
+</main>
+
+<footer class="foot">
+  <div class="foot__in">
+    <div>
+      <div class="foot__brand">
+        <app-brand-logo size="md" tone="dark" />
+      </div>
+      <p>
+        Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành
+        cùng bạn trên mọi nẻo đường bay nội địa.
+      </p>
+      <div class="foot__soc">
+        <span class="foot__s"><mat-icon>facebook</mat-icon></span>
+        <span class="foot__s"><mat-icon>photo_camera</mat-icon></span>
+        <span class="foot__s"><mat-icon>play_circle</mat-icon></span>
+        <span class="foot__s"><mat-icon>chat</mat-icon></span>
+      </div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li>Hướng dẫn đặt vé</li>
+        <li>Chính sách hoàn vé</li>
+        <li>Câu hỏi thường gặp</li>
+        <li>Liên hệ hỗ trợ</li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li>Điểm đến phổ biến</li>
+        <li>Cẩm nang du lịch</li>
+        <li>Ứng dụng di động</li>
+        <li>Khách hàng thân thiết</li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><mat-icon>call</mat-icon> 1900 1234</li>
+        <li><mat-icon>mail</mat-icon> support&#64;vedi.local</li>
+        <li><mat-icon>place</mat-icon> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot__pay">
+      <span>VISA</span><span>Napas</span><span>MoMo</span>
+    </div>
+  </div>
+</footer>

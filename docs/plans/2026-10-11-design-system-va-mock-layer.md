@@ -8,7 +8,7 @@
 
 **Tech Stack:** Angular 22.1.5 (standalone, OnPush, template inline) · Angular Material 22.1.7 (M3) · Tailwind CSS 3.4.19 · TypeScript 6.0.2 · Vitest 4.1.11 · Sass
 
-**Spec:** `../specssign-system-va-mock-layer-design.md`
+**Spec:** `../specs/2026-10-11-design-system-va-mock-layer-design.md`
 
 ## Global Constraints
 

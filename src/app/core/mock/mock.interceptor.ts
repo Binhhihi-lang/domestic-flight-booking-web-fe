@@ -1,8 +1,8 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { delay, of } from 'rxjs';
-import { ApiCode, ApiResponse } from '../models/api-response.model';
-import { MockRegistry } from './mock-registry';
+import { ApiCode, ApiResponse } from '@core/models/api-response.model';
+import { MockRegistry } from '@core/mock/mock-registry';
 
 /**
  * Chặn request và trả dữ liệu giả khi bật cờ useMock.
@@ -13,7 +13,10 @@ import { MockRegistry } from './mock-registry';
  */
 export const mockInterceptor: HttpInterceptorFn = (req, next) => {
   const registry = inject(MockRegistry);
-  const result = registry.resolve(req.method, req.url, req.body);
+  // Dùng `urlWithParams`, KHÔNG dùng `url`: `req.url` không chứa query string, nên
+  // mọi bộ lọc/tìm kiếm (`keyword`, `module`, `is_active`…) đều không tới được mock
+  // và màn hình luôn hiện dữ liệu chưa lọc mà không báo lỗi.
+  const result = registry.resolve(req.method, req.urlWithParams, req.body);
 
   // Không có mock cho đường dẫn này -> để request đi tiếp ra mạng thật.
   if (result === undefined) {

@@ -1,0 +1,90 @@
+<div class="auth">
+  <app-auth-aside
+    heading="Tạo tài khoản để đặt vé chỉ trong vài phút"
+    subheading="Lưu thông tin hành khách, chọn ghế và nhận vé điện tử ngay sau khi thanh toán."
+  />
+
+  <div class="auth__form">
+    <div class="auth__box">
+      <!-- Chỉ hiện ở ≤880px: khi đó panel trái bị ẩn nên đây là lối về trang chủ
+           duy nhất trên màn hình. -->
+      <a class="auth__home" routerLink="/" aria-label="Về trang chủ VinaFly">
+        <app-brand-logo size="md" tone="light" [tagline]="''" />
+      </a>
+
+      <h1>Tạo tài khoản</h1>
+      <p>Điền thông tin bên dưới để bắt đầu đặt vé.</p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth__fields">
+        <div class="field" [class.err]="showError('full_name')">
+          <label for="rg-name">Họ và tên</label>
+          <input id="rg-name" formControlName="full_name" autocomplete="name" placeholder="Nguyễn Minh Anh" />
+          @if (showError('full_name')) {
+            <span class="hint">Họ và tên không được để trống</span>
+          }
+        </div>
+
+        <div class="field" [class.err]="showError('email')">
+          <label for="rg-email">Email</label>
+          <input
+            id="rg-email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="ten@example.com"
+          />
+          @if (showError('email')) {
+            <span class="hint">Email không đúng định dạng</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="rg-phone">Số điện thoại</label>
+          <input id="rg-phone" formControlName="phone" autocomplete="tel" placeholder="0912 345 678" />
+          <span class="hint">Không bắt buộc</span>
+        </div>
+
+        <div class="field" [class.err]="showError('password')">
+          <label for="rg-pass">Mật khẩu</label>
+          <input
+            id="rg-pass"
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+            placeholder="••••••••"
+          />
+          @if (showError('password')) {
+            <span class="hint">Mật khẩu phải có ít nhất 8 ký tự</span>
+          } @else {
+            <span class="hint">Tối thiểu 8 ký tự, gồm chữ và số</span>
+          }
+        </div>
+
+        <div class="auth__row">
+          <label>
+            <input type="checkbox" formControlName="terms" />
+            Tôi đồng ý với Điều khoản và Chính sách bảo mật
+          </label>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="auth__alert" role="alert">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <button class="btn btn--primary btn--block" type="submit" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner" aria-hidden="true"></span>
+            Đang tạo tài khoản…
+          } @else {
+            Tạo tài khoản
+          }
+        </button>
+      </form>
+
+      <p class="auth__foot">Đã có tài khoản? <a routerLink="/login">Đăng nhập</a></p>
+    </div>
+  </div>
+</div>

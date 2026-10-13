@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Airline } from '../models/airline.model';
-import { BaseCrudService } from './base-crud.service';
+import { Airline } from '@core/models/airline.model';
+import { BaseCrudService } from '@core/services/base-crud.service';
 
 /**
  * Hãng hàng không — kế thừa toàn bộ CRUD từ BaseCrudService.

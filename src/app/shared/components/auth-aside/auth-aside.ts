@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { BrandLogo } from '../brand-logo/brand-logo';
+import { RouterLink } from '@angular/router';
+import { BrandLogo } from '@shared/components/brand-logo/brand-logo';
 
 /**
  * Panel giới thiệu bên trái của trang đăng nhập/đăng ký — bám mockup P6.
@@ -13,12 +14,14 @@ import { BrandLogo } from '../brand-logo/brand-logo';
 @Component({
   selector: 'app-auth-aside',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BrandLogo],
+  imports: [BrandLogo, RouterLink],
   template: `
     <aside class="auth__aside">
-      <div class="auth__brand">
+      <!-- Logo là lối thoát về trang chủ: trang đăng nhập không có topbar nên
+           đây là chỗ duy nhất khách bấm được để rời màn này. -->
+      <a class="auth__brand" routerLink="/" aria-label="Về trang chủ VinaFly">
         <app-brand-logo size="lg" tone="dark" [tagline]="brandTagline" />
-      </div>
+      </a>
 
       <div class="auth__quote">
         <h2>{{ heading() }}</h2>

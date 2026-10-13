@@ -1,0 +1,80 @@
+<div class="auth">
+  <app-auth-aside
+    heading="Đăng nhập để đặt vé và quản lý chuyến đi của bạn"
+    subheading="Theo dõi booking, nhận vé điện tử, và dùng voucher đã nhận ngay khi thanh toán."
+  />
+
+  <div class="auth__form">
+    <div class="auth__box">
+      <!-- Chỉ hiện ở ≤880px: khi đó panel trái bị ẩn nên đây là lối về trang chủ
+           duy nhất trên màn hình. -->
+      <a class="auth__home" routerLink="/" aria-label="Về trang chủ VinaFly">
+        <app-brand-logo size="md" tone="light" [tagline]="''" />
+      </a>
+
+      <h1>Đăng nhập</h1>
+      <p>Chào mừng trở lại. Nhập thông tin tài khoản của bạn.</p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="auth__fields">
+        <div class="field" [class.err]="showError('email')">
+          <label for="lg-email">Email</label>
+          <input
+            id="lg-email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="ten@example.com"
+          />
+          @if (showError('email')) {
+            <span class="hint">Email không đúng định dạng</span>
+          }
+        </div>
+
+        <div class="field" [class.err]="showError('password')">
+          <label for="lg-pass">Mật khẩu</label>
+          <input
+            id="lg-pass"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+          />
+          @if (showError('password')) {
+            <span class="hint">Mật khẩu không được để trống</span>
+          }
+        </div>
+
+        <div class="auth__row">
+          <label><input type="checkbox" formControlName="remember" /> Ghi nhớ đăng nhập</label>
+          <a routerLink="/forgot-password">Quên mật khẩu?</a>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="auth__alert" role="alert">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <button class="btn btn--primary btn--block" type="submit" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner" aria-hidden="true"></span>
+            Đang đăng nhập…
+          } @else {
+            Đăng nhập
+          }
+        </button>
+      </form>
+
+      <p class="auth__foot">Chưa có tài khoản? <a routerLink="/register">Đăng ký ngay</a></p>
+
+      <div class="auth__demo">
+        <div class="auth__demo-t">Tài khoản demo (mock)</div>
+        <div class="auth__demo-b tabular">
+          admin&#64;demo.local · staff&#64;demo.local · customer&#64;demo.local<br />
+          Mật khẩu: <b>12345678</b>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
