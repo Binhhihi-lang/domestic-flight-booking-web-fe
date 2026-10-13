@@ -1,37 +1,6 @@
-.crumbs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-ink-muted);
-  margin-bottom: 12px;
-}
-
-.crumbs a {
-  color: var(--color-ink-muted);
-  text-decoration: none;
-}
-
-.crumbs a:hover {
-  color: var(--color-primary);
-}
-
-.crumbs mat-icon {
-  font-size: 17px;
-  width: 17px;
-  height: 17px;
-  color: var(--color-ink-subtle);
-}
-
-.page-h {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-}
-
+/* Override tiêu đề trang: màn này dùng cỡ lớn hơn và font heading, khác
+   chuẩn 24px/600 ở src/styles/_page.scss. Cố ý — trang có 3 bước nên tiêu đề
+   cần nổi hơn. */
 .page-h h1 {
   font-family: var(--font-heading);
   font-size: 23px;
@@ -39,26 +8,9 @@
   margin: 0;
 }
 
-.page-h p {
-  margin: 4px 0 0;
-  font-size: 13.5px;
-  color: var(--color-ink-muted);
-}
-
 .blk {
   display: block;
   margin-bottom: 16px;
-}
-
-.note {
-  margin: 0 0 12px;
-  padding: 11px 13px;
-  background: var(--color-info-soft);
-  color: var(--color-on-info-soft);
-  border-left: 3px solid var(--color-primary-bright);
-  border-radius: var(--radius);
-  font-size: 12.5px;
-  line-height: 1.55;
 }
 
 .note code {
@@ -67,13 +19,6 @@
   padding: 1px 5px;
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-}
-
-.empty-line {
-  margin: 0;
-  font-size: 13px;
-  color: var(--color-ink-muted);
-  font-style: italic;
 }
 
 /* ---------- Danh sách khối ---------- */

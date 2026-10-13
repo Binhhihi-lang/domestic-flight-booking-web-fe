@@ -8,7 +8,8 @@
   @if (loading()) {
     <app-app-card><app-loading-state /></app-app-card>
   } @else if (aircraft(); as ac) {
-    <header class="page-h">
+    <!-- page-h--split: có nút "Về danh sách máy bay" ở góc phải. -->
+    <header class="page-h page-h--split">
       <div>
         <h1>Sơ đồ ghế — {{ ac.aircraft_code }}</h1>
         <p>{{ ac.model }} · sức chứa {{ ac.seat_capacity }} ghế</p>

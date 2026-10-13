@@ -1,0 +1,131 @@
+/* =====================================================================
+   Form dùng chung — ô nhập, lưới form, nút cuối form.
+
+   Vì sao ở đây chứ không ở từng component: 7 màn đều khai lại `.field`,
+   `.form-grid`, `.form-actions` với nội dung gần như y hệt. Đo được 11 KB
+   CSS (11% tổng) nằm trong các rule lặp, và đã có drift thật —
+   `.wrap--narrow` ra 860px ở một nơi và 920px ở ba nơi khác mà không ai
+   biết đó là cố ý hay lỗi. Gộp về một chỗ thì sửa một lần là mọi màn theo.
+
+   Vì sao dùng class thường chứ không phải component: đây là CSS cho thẻ
+   HTML gốc (input, label) nằm rải trong template của nhiều màn. Bọc thành
+   component sẽ phải viết lại template của 7 màn — đổi nhiều mà không được gì.
+
+   LƯU Ý: các rule ở đây là bản CHUẨN. Component nào cần khác thì override
+   bằng modifier (`.field--inline`) chứ đừng khai lại `.field`.
+   ===================================================================== */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.field input,
+.field select,
+.field textarea {
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  width: 100%;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 62px;
+  line-height: 1.5;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+.field input:disabled {
+  background: var(--color-surface-alt);
+  color: var(--color-ink-subtle);
+  cursor: not-allowed;
+}
+
+/* Ô nhập sai — viền đỏ, áp cho cả ba loại điều khiển. */
+.field--error input,
+.field--error select,
+.field--error textarea {
+  border-color: var(--color-danger);
+}
+
+/* Dòng gợi ý dưới ô nhập. */
+.field .hint {
+  font-size: 11.5px;
+  color: var(--color-ink-subtle);
+}
+
+/* Dòng báo lỗi dưới ô nhập. */
+.field__err {
+  font-size: 11.5px;
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* Nhãn bắt buộc — dấu sao đỏ cạnh nhãn. */
+.field .req {
+  color: var(--color-danger);
+}
+
+/* Lưới hai cột cho form; màn hẹp thì về một cột. */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Ô chiếm cả hàng trong lưới form (textarea, ô ảnh). */
+.field--full {
+  grid-column: 1 / -1;
+}
+
+/* Hàng nút cuối form, canh phải. */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+/* Công tắc bật/tắt dạng checkbox kèm nhãn. */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--color-ink);
+  cursor: pointer;
+  padding: 7px 0;
+}
+
+.toggle input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 760px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

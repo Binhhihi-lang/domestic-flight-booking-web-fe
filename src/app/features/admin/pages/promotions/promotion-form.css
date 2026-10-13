@@ -1,49 +1,4 @@
 /* Khung hẹp cho form dài — dễ đọc hơn khi dàn hết bề ngang. */
-.wrap--narrow {
-  max-width: 920px;
-}
-
-.crumbs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-ink-muted);
-  margin-bottom: 12px;
-}
-
-.crumbs a {
-  color: var(--color-ink-muted);
-  text-decoration: none;
-}
-
-.crumbs a:hover {
-  color: var(--color-primary);
-}
-
-.crumbs mat-icon {
-  font-size: 17px;
-  width: 17px;
-  height: 17px;
-  color: var(--color-ink-subtle);
-}
-
-.page-h {
-  margin-bottom: 18px;
-}
-
-.page-h h1 {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.page-h p {
-  margin: 4px 0 0;
-  font-size: 13.5px;
-  color: var(--color-ink-muted);
-}
-
 .blk {
   display: block;
   margin-bottom: 16px;
@@ -258,24 +213,6 @@
 }
 
 /* ---------- Ghi chú nghiệp vụ ---------- */
-.note {
-  margin: 0 0 12px;
-  padding: 11px 13px;
-  background: var(--color-info-soft);
-  color: var(--color-on-info-soft);
-  border-left: 3px solid var(--color-primary-bright);
-  border-radius: var(--radius);
-  font-size: 12.5px;
-  line-height: 1.55;
-}
-
-.empty-line {
-  margin: 0;
-  font-size: 13px;
-  color: var(--color-ink-muted);
-  font-style: italic;
-}
-
 /* ---------- Dòng phạm vi ---------- */
 .scope-list {
   display: flex;
