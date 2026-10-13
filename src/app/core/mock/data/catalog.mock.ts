@@ -355,6 +355,32 @@ export const NEWS_MOCK: NewsItem[] = [
     is_deleted: true,
     category_ids: [6],
   },
+  {
+    /**
+     * Bài CHỨA NỘI DUNG ĐỘC HẠI — cố ý, để thử chống XSS qua đường thật.
+     *
+     * Vì sao để trong dữ liệu mẫu: test `sanitize.service.spec.ts` kiểm tra
+     * service, nhưng nó không chứng minh được TRANG có gọi service hay không.
+     * Bài này đi qua đúng đường mà ADMIN nhập liệu sẽ đi, nên test
+     * `news-detail.spec.ts` mới chứng minh được cả chuỗi.
+     *
+     * Nếu trang chi tiết bind `content` thẳng mà quên sanitize, test sẽ thấy
+     * `<script>` trong DOM và fail.
+     */
+    id: 99,
+    thumbnail_url: null,
+    title: 'Bài kiểm tra chống XSS',
+    content:
+      '<p>Đoạn văn bình thường</p>' +
+      '<script>window.__xss_ran = true;</script>' +
+      '<img src=x onerror="window.__xss_ran = true">' +
+      '<a href="javascript:window.__xss_ran=true">bấm</a>',
+    status: 'PUBLISHED',
+    published_at: '2026-10-01T02:00:00Z',
+    is_active: true,
+    is_deleted: false,
+    category_ids: [5],
+  },
 ];
 
 /** Vai trò — API v0.2 mục 2.4. Seed cố định, không CRUD. */
