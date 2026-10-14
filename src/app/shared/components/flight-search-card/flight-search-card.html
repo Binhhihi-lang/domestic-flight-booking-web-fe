@@ -42,6 +42,117 @@
       <input id="fs-return" name="returnDate" type="date" [(ngModel)]="returnDate" />
     </div>
 
+    <!-- Bộ chọn hành khách. Dùng nút + popup thay vì <select> vì mỗi loại hành
+         khách cần bộ đếm riêng, không phải chọn một giá trị. -->
+    <div class="field pax">
+      <label for="fs-pax">Hành khách</label>
+      <button
+        id="fs-pax"
+        class="pax__btn"
+        type="button"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="paxOpen()"
+        (click)="togglePax()"
+      >
+        <mat-icon>person_outline</mat-icon>
+        <span class="pax__sum">{{ summary() }}</span>
+        <mat-icon class="pax__caret">expand_more</mat-icon>
+      </button>
+
+      @if (paxOpen()) {
+        <!-- Lớp phủ bắt click ra ngoài để đóng popup. -->
+        <div class="pax__scrim" (click)="closePax()" aria-hidden="true"></div>
+
+        <div class="pax__pop" role="dialog" aria-label="Chọn số hành khách">
+          <div class="pax__row">
+            <div class="pax__info">
+              <b>Người lớn</b>
+              <span>Từ 13 tuổi trở lên</span>
+            </div>
+            <div class="pax__ctl">
+              <button
+                type="button"
+                aria-label="Giảm số người lớn"
+                [disabled]="!canRemoveAdult()"
+                (click)="changeCount('adults', -1)"
+              >
+                <mat-icon>remove</mat-icon>
+              </button>
+              <span class="pax__n">{{ adults() }}</span>
+              <button
+                type="button"
+                aria-label="Tăng số người lớn"
+                [disabled]="!canAddAdult()"
+                (click)="changeCount('adults', 1)"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="pax__row">
+            <div class="pax__info">
+              <b>Trẻ em</b>
+              <span>2 – 12 tuổi</span>
+            </div>
+            <div class="pax__ctl">
+              <button
+                type="button"
+                aria-label="Giảm số trẻ em"
+                [disabled]="!canRemoveChild()"
+                (click)="changeCount('children', -1)"
+              >
+                <mat-icon>remove</mat-icon>
+              </button>
+              <span class="pax__n">{{ children() }}</span>
+              <button
+                type="button"
+                aria-label="Tăng số trẻ em"
+                [disabled]="!canAddChild()"
+                (click)="changeCount('children', 1)"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="pax__row">
+            <div class="pax__info">
+              <b>Em bé</b>
+              <span>Dưới 2 tuổi</span>
+            </div>
+            <div class="pax__ctl">
+              <button
+                type="button"
+                aria-label="Giảm số em bé"
+                [disabled]="!canRemoveInfant()"
+                (click)="changeCount('infants', -1)"
+              >
+                <mat-icon>remove</mat-icon>
+              </button>
+              <span class="pax__n">{{ infants() }}</span>
+              <button
+                type="button"
+                aria-label="Tăng số em bé"
+                [disabled]="!canAddInfant()"
+                (click)="changeCount('infants', 1)"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <p class="pax__note">
+            Tối đa {{ maxTotal }} hành khách mỗi lần đặt. Mỗi em bé phải đi cùng một người lớn.
+          </p>
+
+          <div class="pax__done">
+            <button type="button" (click)="closePax()">Xong</button>
+          </div>
+        </div>
+      }
+    </div>
+
     <button class="submit" type="button" (click)="submit()">
       <mat-icon>search</mat-icon>
       Tìm chuyến bay

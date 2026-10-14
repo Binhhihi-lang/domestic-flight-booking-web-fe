@@ -2,13 +2,18 @@
   background: var(--color-surface);
   border-radius: var(--radius-xl);
   box-shadow: 0 14px 40px rgba(3, 18, 26, 0.18);
-  overflow: hidden;
+  /* KHÔNG dùng `overflow: hidden` ở đây dù nó là cách gọn để bo góc: nó cắt
+     luôn popup chọn hành khách (popup phải tràn ra ngoài thẻ). Bo góc cho
+     `.trip` và bọc đáy cho `.searchform` — xem hai rule dưới. */
 }
 
 .trip {
   display: flex;
   gap: 8px;
   padding: 18px 20px 0;
+  /* Bo góc trên: thay cho `overflow: hidden` ở .searchbar__card (rule đó bị bỏ
+     vì cắt mất popup hành khách). */
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .chip {
@@ -39,8 +44,10 @@
 }
 
 .searchform {
+  /* Bo góc dưới — cùng lý do với .trip. */
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1.3fr auto;
   gap: 10px;
   padding: 14px 20px 20px;
   align-items: end;
@@ -156,6 +163,176 @@
   visibility: hidden;
 }
 
+
+/* ===== Bộ chọn hành khách ===== */
+
+.pax {
+  position: relative;
+}
+
+/* Nút mở popup — trông như ô nhập để hàng form đồng đều. */
+.pax__btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.pax__btn:hover {
+  border-color: var(--color-primary-bright);
+}
+
+.pax__btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.pax__btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-ink-muted);
+  flex: 0 0 auto;
+}
+
+/* Nhãn tóm tắt co giãn, cắt bằng ellipsis khi hẹp thay vì đẩy nút mũi tên ra. */
+.pax__sum {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pax__caret {
+  margin-left: auto;
+}
+
+/* Lớp phủ trong suốt bắt click ra ngoài để đóng popup. */
+.pax__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.pax__pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 41;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  padding: 14px 16px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.pax__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+}
+
+.pax__info b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.pax__info span {
+  font-size: 11.5px;
+  color: var(--color-ink-muted);
+}
+
+.pax__ctl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.pax__ctl button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pax__ctl button:hover:not(:disabled) {
+  border-color: var(--color-primary-bright);
+  color: var(--color-primary);
+}
+
+.pax__ctl button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pax__ctl button mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
+/* Số lượng: bề rộng cố định để nút +/- không nhảy khi số đổi 1 -> 2 chữ số. */
+.pax__n {
+  min-width: 26px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pax__note {
+  margin: 8px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-soft);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--color-ink-muted);
+}
+
+.pax__done {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.pax__done button {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 0;
+  background: var(--color-primary-bright);
+  color: #fff;
+  cursor: pointer;
+}
+
+.pax__done button:hover {
+  background: var(--color-primary);
+}
+
 @media (max-width: 1100px) {
   .searchform {
     grid-template-columns: 1fr 1fr;
@@ -180,5 +357,13 @@
   .searchform {
     grid-template-columns: 1fr;
     gap: 11px;
+  }
+
+  /* Popup rộng bằng ô chứa thay vì 320px cố định — 320px trên màn 375px sẽ
+     tràn ra ngoài lề. */
+  .pax__pop {
+    width: 100%;
+    left: 0;
+    right: 0;
   }
 }

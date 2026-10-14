@@ -225,12 +225,23 @@ export class Home {
   ];
 
   /** Flight Search thuộc Phase 2 — hiện chuyển sang trang kết quả để xem khuôn. */
+  /**
+   * Flight Search thuộc Phase 2 — hiện chuyển sang trang kết quả để xem khuôn.
+   *
+   * Truyền cả số hành khách qua query param: API `GET /flights/search` nhận
+   * `passengers` (API v0.2 mục 3) và giá vé phụ thuộc số lượng + loại hành khách
+   * (trẻ em 75%, em bé 10% giá người lớn). Để sẵn trên URL thì khi nối API chỉ
+   * cần đọc lại, không phải sửa luồng điều hướng.
+   */
   protected onSearch(value: FlightSearchValue): void {
     this.router.navigate(['/flights'], {
       queryParams: {
         from: value.from || null,
         to: value.to || null,
         depart: value.departDate || null,
+        adults: value.passengers.adults,
+        children: value.passengers.children || null,
+        infants: value.passengers.infants || null,
       },
     });
   }
