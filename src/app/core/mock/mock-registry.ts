@@ -21,6 +21,7 @@ import {
   NEWS_MOCK,
   PERMISSIONS_MOCK,
   PROMOTIONS_MOCK,
+  USER_VOUCHERS_MOCK,
   ROLES_MOCK,
   SEAT_TYPES_MOCK,
   VOUCHERS_MOCK,
@@ -32,6 +33,7 @@ import {
   MOCK_PASSWORD,
   USERS_MOCK,
 } from '@core/mock/data/auth.mock';
+import { UserVoucher, VoucherStoreItem } from '@core/models/user-voucher.model';
 import { MockResource } from '@core/mock/mock-resource';
 import { businessError, duplicate, notFound, ok, paginate, readParams } from '@core/mock/mock-response';
 
@@ -63,6 +65,10 @@ export class MockRegistry {
    */
   private seatMaps = new Map<number, AircraftSeat[]>();
   private seatIdSeq = 1000;
+
+  /** Ví voucher của khách đang đăng nhập (mock chỉ có một khách). */
+  private userVouchers: UserVoucher[] = USER_VOUCHERS_MOCK.map((v) => ({ ...v }));
+  private userVoucherIdSeq = 100;
 
   private readonly resources = [
     new MockResource<City>({
@@ -239,6 +245,18 @@ export class MockRegistry {
       const aircraftId = Number(seatMapMatch[1]);
       if (m === 'GET') return this.getSeatMap(aircraftId);
       if (m === 'PUT') return this.saveSeatMap(aircraftId, body);
+    }
+
+    // Ví voucher của khách — API v0.2 mục 2.8.
+    if (path === '/api/v1/voucher-store' && m === 'GET') {
+      return this.voucherStore();
+    }
+    if (path === '/api/v1/my-vouchers' && m === 'GET') {
+      return this.myVouchers(url);
+    }
+    const claimMatch = path.match(/^\/api\/v1\/vouchers\/(\d+)\/claim$/);
+    if (claimMatch && m === 'POST') {
+      return this.claimVoucher(Number(claimMatch[1]));
     }
 
     // Các module master data dùng chung một lớp tài nguyên tổng quát.
@@ -439,6 +457,84 @@ export class MockRegistry {
     }
     const temp = `Temp@${String(this.temporaryPasswordSeq++).padStart(5, '0')}`;
     return ok({ temporary_password: temp }, 'Đã đặt lại mật khẩu');
+  }
+
+  // ---------- Ví voucher của khách — API v0.2 mục 2.8 ----------
+
+  /**
+   * Kho voucher — chỉ GLOBAL, đang hiệu lực, còn lượt nhận (API v0.2 mục 2.8).
+   *
+   * Voucher ASSIGNED KHÔNG vào kho: loại đó ADMIN tặng riêng, khách không tự
+   * nhận. Kèm cờ `claimed` để FE chọn hiện nút Nhận hay nhãn Đã nhận.
+   */
+  private voucherStore(): unknown {
+    const today = new Date().toISOString().slice(0, 10);
+    const claimedIds = new Set(this.userVouchers.map((uv) => uv.voucher.id));
+
+    const items: VoucherStoreItem[] = VOUCHERS_MOCK.filter(
+      (v) =>
+        v.distribution_type === 'GLOBAL' &&
+        v.is_active &&
+        !v.is_deleted &&
+        v.start_date <= today &&
+        v.end_date >= today &&
+        (v.claim_limit === null || v.claimed_count < v.claim_limit),
+    ).map((v) => ({ ...v, claimed: claimedIds.has(v.id) }));
+
+    return ok({
+      items,
+      pagination: { page: 1, size: 20, total_items: items.length, total_pages: 1 },
+    });
+  }
+
+  private myVouchers(url: string): unknown {
+    const params = readParams(url);
+    const status = params.get('status') ?? '';
+    const rows = status ? this.userVouchers.filter((v) => v.status === status) : this.userVouchers;
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  /**
+   * Nhận voucher — mô phỏng đúng ràng buộc Backend (API v0.2 mục 2.8):
+   *   - voucher ASSIGNED không nhận được → `1006`
+   *   - hết lượt → `1006`
+   *   - đã nhận rồi → `1005` (UNIQUE `user_id` + `voucher_id`)
+   *
+   * Thứ tự kiểm tra quan trọng: kiểm ASSIGNED trước hết lượt, vì voucher
+   * ASSIGNED thường `claim_limit = null` (không giới hạn) — nếu kiểm lượt trước
+   * thì nó lọt qua và khách nhận được voucher lẽ ra chỉ ADMIN tặng.
+   */
+  private claimVoucher(voucherId: number): unknown {
+    const voucher = VOUCHERS_MOCK.find((v) => v.id === voucherId && !v.is_deleted);
+    if (!voucher) {
+      return notFound('Không tìm thấy voucher');
+    }
+    if (voucher.distribution_type !== 'GLOBAL') {
+      return businessError('Voucher này do hệ thống tặng riêng, không tự nhận được');
+    }
+    if (this.userVouchers.some((uv) => uv.voucher.id === voucherId)) {
+      return duplicate('Bạn đã nhận voucher này rồi');
+    }
+    if (voucher.claim_limit !== null && voucher.claimed_count >= voucher.claim_limit) {
+      return businessError('Voucher đã hết lượt nhận');
+    }
+
+    voucher.claimed_count += 1;
+    const created: UserVoucher = {
+      id: this.userVoucherIdSeq++,
+      status: 'AVAILABLE',
+      source: 'CLAIMED',
+      received_at: new Date().toISOString(),
+      // Chép hạn của voucher lúc nhận (DB v0.4 ghi rõ lý do).
+      expires_at: `${voucher.end_date}T16:59:59Z`,
+      used_at: null,
+      discount_amount: null,
+      voucher,
+    };
+    this.userVouchers.push(created);
+    return ok({ user_voucher_id: created.id, status: created.status }, 'Đã nhận voucher');
   }
 
   // ---------- Sơ đồ ghế — API v0.2 mục 2.6 ----------

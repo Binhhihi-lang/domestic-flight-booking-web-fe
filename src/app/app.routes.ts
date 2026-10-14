@@ -89,8 +89,19 @@ export const routes: Routes = [
               ),
             data: { title: 'Vé của tôi' },
           },
-          ...comingSoonAccount('vouchers', 'Voucher của tôi'),
           ...comingSoonAccount('wallet', 'Ví của tôi'),
+          {
+            path: 'vouchers',
+            loadComponent: () =>
+              import('@features/client/pages/account/my-vouchers').then((m) => m.MyVouchers),
+            data: { title: 'Voucher của tôi' },
+          },
+          {
+            path: 'voucher-store',
+            loadComponent: () =>
+              import('@features/client/pages/account/voucher-store').then((m) => m.VoucherStore),
+            data: { title: 'Kho voucher' },
+          },
           ...comingSoonAccount('profile', 'Hồ sơ cá nhân'),
           ...comingSoonAccount('security', 'Đổi mật khẩu'),
         ],

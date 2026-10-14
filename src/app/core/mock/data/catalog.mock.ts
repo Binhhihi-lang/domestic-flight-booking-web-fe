@@ -1,6 +1,7 @@
 import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
 import { Permission, Role } from '@core/models/rbac.model';
+import { UserVoucher } from '@core/models/user-voucher.model';
 
 /** Máy bay — API v0.2 mục 2.6. Chỉ STAFF/ADMIN truy cập. */
 export const AIRCRAFT_MOCK: Aircraft[] = [
@@ -240,6 +241,26 @@ export const VOUCHERS_MOCK: Voucher[] = [
     excluded_flight_ids: [],
   },
   {
+    id: 6,
+    voucher_code: 'BAYHE2027',
+    voucher_name: 'Bay hè 2027 giảm 150K',
+    description: 'Áp dụng mọi chuyến nội địa, đơn từ 700K.',
+    distribution_type: 'GLOBAL',
+    discount_type: 'AMOUNT',
+    discount_value: 150000,
+    max_discount_amount: null,
+    min_order_amount: 700000,
+    applicable_trip_type: 'ANY',
+    start_date: '2026-10-01',
+    end_date: '2027-12-31',
+    claim_limit: 300,
+    claimed_count: 45,
+    is_active: true,
+    is_deleted: false,
+    scopes: [],
+    excluded_flight_ids: [],
+  },
+  {
     id: 5,
     voucher_code: 'TET100K',
     voucher_name: 'Giảm 100K Tết 2026',
@@ -416,4 +437,38 @@ export const PERMISSIONS_MOCK: Permission[] = [
   { id: 19, permission_key: 'VOUCHER_CLAIM', description: 'Nhận voucher vào ví', module: 'VOUCHER' },
   { id: 20, permission_key: 'NEWS_READ', description: 'Xem danh sách tin tức', module: 'NEWS' },
   { id: 21, permission_key: 'NEWS_PUBLISH', description: 'Xuất bản tin tức', module: 'NEWS' },
+];
+
+/**
+ * Ví voucher của khách — API v0.2 mục 2.8.
+ *
+ * Cố ý có đủ 4 trạng thái để thử giao diện: AVAILABLE (dùng được), RESERVED
+ * (đang giữ cho booking chờ thanh toán), USED (đã dùng), EXPIRED (quá hạn).
+ * Và đủ 2 nguồn: CLAIMED / GIFTED.
+ *
+ * `expires_at` KHÁC `voucher.end_date` ở vài dòng — cố ý, để thấy rõ màn hình
+ * phải đọc hạn của DÒNG VÍ chứ không phải hạn voucher gốc (DB v0.4 ghi rõ:
+ * hạn được chép lúc nhận, ADMIN sửa voucher sau đó không ảnh hưởng).
+ */
+export const USER_VOUCHERS_MOCK: UserVoucher[] = [
+  {
+    id: 1, status: 'AVAILABLE', source: 'CLAIMED',
+    received_at: '2026-09-01T02:00:00Z', expires_at: '2027-12-31T16:59:59Z',
+    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[0],
+  },
+  {
+    id: 2, status: 'RESERVED', source: 'CLAIMED',
+    received_at: '2026-09-15T02:00:00Z', expires_at: '2027-10-31T16:59:59Z',
+    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[1],
+  },
+  {
+    id: 3, status: 'USED', source: 'GIFTED',
+    received_at: '2026-08-01T02:00:00Z', expires_at: '2026-12-31T16:59:59Z',
+    used_at: '2026-08-20T09:30:00Z', discount_amount: 100000, voucher: VOUCHERS_MOCK[2],
+  },
+  {
+    id: 4, status: 'EXPIRED', source: 'GIFTED',
+    received_at: '2026-01-05T02:00:00Z', expires_at: '2026-06-30T16:59:59Z',
+    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[3],
+  },
 ];

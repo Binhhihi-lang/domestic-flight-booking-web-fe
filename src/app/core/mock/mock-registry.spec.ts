@@ -2,6 +2,7 @@ import { MockRegistry } from '@core/mock/mock-registry';
 import { ApiResponse, PageData } from '@core/models/api-response.model';
 import { AdminUser } from '@core/models/auth.model';
 import { SeatMap } from '@core/models/fleet-news.model';
+import { UserVoucher, VoucherStoreItem } from '@core/models/user-voucher.model';
 import { Permission, Role } from '@core/models/rbac.model';
 
 describe('MockRegistry', () => {
@@ -315,5 +316,117 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
     const res = registry.resolve('GET', 'http://x/api/v1/aircrafts/9999/seat-map') as ApiResponse<null>;
 
     expect(res.code).toBe(1004);
+  });
+});
+
+describe('Voucher store mock', () => {
+  it('kho chỉ trả voucher GLOBAL đang hiệu lực và còn lượt', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('GET', 'http://x/api/v1/voucher-store') as ApiResponse<
+      PageData<VoucherStoreItem>
+    >;
+
+    expect(res.data.items.length).toBeGreaterThan(0);
+    expect(res.data.items.every((v) => v.distribution_type === 'GLOBAL')).toBe(true);
+    expect(res.data.items.every((v) => v.is_active)).toBe(true);
+    expect(res.data.items.every((v) => v.claimed_count < (v.claim_limit ?? Infinity))).toBe(true);
+  });
+
+  it('kho KHÔNG chứa voucher ASSIGNED (chỉ ADMIN tặng riêng)', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('GET', 'http://x/api/v1/voucher-store') as ApiResponse<
+      PageData<VoucherStoreItem>
+    >;
+
+    // Voucher id 4 (VIP500K) là ASSIGNED -> không được xuất hiện trong kho.
+    expect(res.data.items.some((v) => v.id === 4)).toBe(false);
+  });
+
+  it('kho KHÔNG chứa voucher đã tắt hoặc hết lượt', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('GET', 'http://x/api/v1/voucher-store') as ApiResponse<
+      PageData<VoucherStoreItem>
+    >;
+
+    // id 5 (TET100K): is_active = false và claimed_count = claim_limit.
+    expect(res.data.items.some((v) => v.id === 5)).toBe(false);
+  });
+
+  it('nhận voucher GLOBAL thành công thì ví tăng thêm một', () => {
+    const registry = new MockRegistry();
+    const before = (
+      registry.resolve('GET', 'http://x/api/v1/my-vouchers') as ApiResponse<PageData<UserVoucher>>
+    ).data.pagination.total_items;
+
+    // id 6 (BAYHE2027) là GLOBAL và khách CHƯA nhận (ví mẫu chỉ có id 1-4).
+    const claim = registry.resolve('POST', 'http://x/api/v1/vouchers/6/claim') as ApiResponse<{
+      status: string;
+    }>;
+    expect(claim.code).toBe(1000);
+    expect(claim.data.status).toBe('AVAILABLE');
+
+    const after = (
+      registry.resolve('GET', 'http://x/api/v1/my-vouchers') as ApiResponse<PageData<UserVoucher>>
+    ).data.pagination.total_items;
+    expect(after).toBe(before + 1);
+  });
+
+  it('nhận LẦN HAI cùng voucher trả 1005', () => {
+    const registry = new MockRegistry();
+    registry.resolve('POST', 'http://x/api/v1/vouchers/6/claim');
+    const again = registry.resolve('POST', 'http://x/api/v1/vouchers/3/claim') as ApiResponse<null>;
+
+    expect(again.code).toBe(1005);
+  });
+
+  it('KHÔNG nhận được voucher ASSIGNED (1006)', () => {
+    const registry = new MockRegistry();
+    // id 4 (VIP500K) là ASSIGNED — khách không tự nhận.
+    const res = registry.resolve('POST', 'http://x/api/v1/vouchers/4/claim') as ApiResponse<null>;
+
+    expect(res.code).toBe(1006);
+  });
+
+  it('sau khi nhận, kho đánh dấu claimed = true', () => {
+    const registry = new MockRegistry();
+    registry.resolve('POST', 'http://x/api/v1/vouchers/6/claim');
+
+    const store = registry.resolve('GET', 'http://x/api/v1/voucher-store') as ApiResponse<
+      PageData<VoucherStoreItem>
+    >;
+    expect(store.data.items.find((v) => v.id === 6)?.claimed).toBe(true);
+  });
+
+  it('ví có đủ 4 trạng thái trong dữ liệu mẫu', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve('GET', 'http://x/api/v1/my-vouchers') as ApiResponse<
+      PageData<UserVoucher>
+    >;
+
+    const statuses = new Set(res.data.items.map((v) => v.status));
+    expect(statuses).toEqual(new Set(['AVAILABLE', 'RESERVED', 'USED', 'EXPIRED']));
+  });
+
+  it('lọc ví theo status', () => {
+    const registry = new MockRegistry();
+    const res = registry.resolve(
+      'GET',
+      'http://x/api/v1/my-vouchers?status=USED',
+    ) as ApiResponse<PageData<UserVoucher>>;
+
+    expect(res.data.items.every((v) => v.status === 'USED')).toBe(true);
+    expect(res.data.items.length).toBeGreaterThan(0);
+  });
+
+  it('voucher mới nhận chép hạn từ voucher gốc', () => {
+    const registry = new MockRegistry();
+    registry.resolve('POST', 'http://x/api/v1/vouchers/6/claim');
+
+    const res = registry.resolve('GET', 'http://x/api/v1/my-vouchers') as ApiResponse<
+      PageData<UserVoucher>
+    >;
+    const claimed = res.data.items.find((v) => v.voucher.id === 6)!;
+    // Voucher id 6 có end_date = 2027-12-31.
+    expect(claimed.expires_at).toContain('2027-12-31');
   });
 });

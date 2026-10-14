@@ -1,0 +1,184 @@
+.mv__h {
+  margin-bottom: 14px;
+}
+
+.mv__h h1 {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.mv__h p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
+.mv__stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
+.stat b {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  color: var(--color-ink);
+  margin-right: 3px;
+}
+
+.mv__filters {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.chip {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--color-primary-bright);
+  color: var(--color-primary);
+}
+
+.chip--on {
+  background: var(--color-primary-bright);
+  border-color: var(--color-primary-bright);
+  color: #fff;
+}
+
+.mv__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* Voucher đã dùng / hết hạn: làm mờ vì không còn hành động nào. */
+.card--dim {
+  opacity: 0.6;
+}
+
+.card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 13px 16px;
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+/* Mức giảm dài được phép xuống dòng, nhường chỗ cho nhãn trạng thái. */
+.card__val {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-primary);
+  min-width: 0;
+}
+
+/* Nhãn trạng thái KHÔNG co, KHÔNG xuống dòng — cùng lý do như nhãn "Đã nhận"
+   ở màn Kho voucher: là flex item nên mặc định bị bóp khi bên kia dài. */
+.card__st {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.card__st--success {
+  background: var(--color-success-soft);
+  color: var(--color-on-success-soft);
+}
+
+.card__st--info {
+  background: var(--color-info-soft);
+  color: var(--color-on-info-soft);
+}
+
+.card__st--neutral {
+  background: var(--color-border-soft);
+  color: var(--color-ink-muted);
+}
+
+.card__st--danger {
+  background: var(--color-danger-soft);
+  color: var(--color-on-danger-soft);
+}
+
+.card__bd {
+  padding: 14px 16px;
+}
+
+.card__nm {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.card__ds {
+  font-size: 12.5px;
+  color: var(--color-ink-muted);
+  line-height: 1.55;
+  margin: 0 0 10px;
+}
+
+.card__meta {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--color-ink-subtle);
+}
+
+.card__meta li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.card__meta mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.to-store {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary-bright);
+}
+
+.card--skeleton {
+  pointer-events: none;
+}
