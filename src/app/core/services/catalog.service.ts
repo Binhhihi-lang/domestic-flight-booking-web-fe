@@ -36,56 +36,56 @@ import {
 @Injectable({ providedIn: 'root' })
 export class CityService extends BaseCrudService<City> {
   constructor() {
-    super('cities');
+    super('admin/cities');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class AirportService extends BaseCrudService<Airport> {
   constructor() {
-    super('airports');
+    super('admin/airports');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class PromotionService extends BaseCrudService<Promotion> {
   constructor() {
-    super('promotions');
+    super('admin/promotions');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class VoucherService extends BaseCrudService<Voucher> {
   constructor() {
-    super('vouchers');
+    super('admin/vouchers');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class AircraftService extends BaseCrudService<Aircraft> {
   constructor() {
-    super('aircrafts');
+    super('admin/aircrafts');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class SeatTypeService extends BaseCrudService<SeatType> {
   constructor() {
-    super('seat-types');
+    super('admin/seat-types');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class NewsService extends BaseCrudService<NewsItem> {
   constructor() {
-    super('news');
+    super('admin/news');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class NewsCategoryService extends BaseCrudService<NewsCategory> {
   constructor() {
-    super('news-categories');
+    super('admin/news-categories');
   }
 }
 
@@ -103,14 +103,14 @@ export class NewsCategoryService extends BaseCrudService<NewsCategory> {
 @Injectable({ providedIn: 'root' })
 export class RoleService extends BaseCrudService<Role> {
   constructor() {
-    super('roles');
+    super('admin/roles');
   }
 }
 
 @Injectable({ providedIn: 'root' })
 export class PermissionService extends BaseCrudService<Permission> {
   constructor() {
-    super('permissions');
+    super('admin/permissions');
   }
 
   /**
@@ -139,7 +139,7 @@ export class PermissionService extends BaseCrudService<Permission> {
 @Injectable({ providedIn: 'root' })
 export class UserService extends BaseCrudService<AdminUser, AdminUserUpdatePayload> {
   constructor() {
-    super('users');
+    super('admin/users');
   }
 
   override create(payload: AdminUserCreatePayload): Observable<ApiResponse<AdminUser>> {
@@ -171,7 +171,7 @@ export class UserService extends BaseCrudService<AdminUser, AdminUserUpdatePaylo
 @Injectable({ providedIn: 'root' })
 export class SeatMapService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiBaseUrl}/aircrafts`;
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/aircrafts`;
 
   getMap(aircraftId: number): Observable<ApiResponse<SeatMap>> {
     return this.http.get<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`);

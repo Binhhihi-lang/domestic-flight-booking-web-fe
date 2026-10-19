@@ -39,6 +39,18 @@ export interface ListQuery {
   [filter: string]: string | number | boolean | undefined;
 }
 
+/** Kết quả TỪNG PHẦN của thao tác hàng loạt (API v0.4 mục 2.10). */
+export interface BulkFailure {
+  id: number;
+  code: number;
+  message: string;
+}
+
+export interface BulkResult {
+  succeeded: number[];
+  failed: BulkFailure[];
+}
+
 /** Mã kết quả nghiệp vụ — mục 1.4. */
 export const ApiCode = {
   SUCCESS: 1000,

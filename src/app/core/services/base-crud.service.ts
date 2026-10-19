@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { ApiResponse, ListQuery, PageData } from '@core/models/api-response.model';
+import { ApiResponse, BulkResult, ListQuery, PageData } from '@core/models/api-response.model';
 
 /**
  * Service CRUD tổng quát cho các module master data.
@@ -62,5 +62,23 @@ export class BaseCrudService<T, P = Partial<T>> {
   /** Xóa mềm — DB v0.4 giữ bản ghi lại để tra lịch sử. */
   remove(id: number): Observable<ApiResponse<null>> {
     return this.http.delete<ApiResponse<null>>(`${this.baseUrl}/${id}`);
+  }
+
+  /**
+   * Bật/tắt trạng thái nhiều bản ghi — `PATCH /admin/{resource}/bulk` (API v0.4 mục 2.10).
+   *
+   * Backend trả kết quả TỪNG PHẦN: bản ghi vi phạm ràng buộc vào `failed` kèm mã
+   * lỗi, không chặn cả lô. Client phải đọc `failed` chứ không coi 200 là tất cả
+   * thành công.
+   */
+  bulkToggle(ids: number[], status: string): Observable<ApiResponse<BulkResult>> {
+    return this.http.patch<ApiResponse<BulkResult>>(`${this.baseUrl}/bulk`, { ids, status });
+  }
+
+  /** Xóa mềm nhiều bản ghi — `DELETE /admin/{resource}/bulk`, kết quả từng phần. */
+  bulkRemove(ids: number[]): Observable<ApiResponse<BulkResult>> {
+    return this.http.delete<ApiResponse<BulkResult>>(`${this.baseUrl}/bulk`, {
+      body: { ids },
+    });
   }
 }

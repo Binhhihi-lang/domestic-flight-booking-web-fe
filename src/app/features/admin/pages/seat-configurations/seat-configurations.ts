@@ -65,7 +65,7 @@ export class AdminSeatConfigurations {
 
   /** Loại ghế chọn được: chỉ loại đang bật (DB v0.4: tắt thì không chọn được). */
   protected readonly usableSeatTypes = computed(() =>
-    this.seatTypes().filter((t) => t.is_active && !t.is_deleted),
+    this.seatTypes().filter((t) => t.status === 'ACTIVE'),
   );
 
   protected readonly capacity = computed(() => this.aircraft()?.seat_capacity ?? 0);

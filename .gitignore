@@ -43,7 +43,9 @@ __screenshots__/
 .superpowers/
 
 # Env
+# Chặn MỌI biến thể của file env chứa bí mật — không chỉ đúng tên ".env".
 .env
+.env.*
 !.env.example
 
 # Office temp (Word/Excel lock files)

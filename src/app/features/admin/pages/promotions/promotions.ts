@@ -51,8 +51,8 @@ export class AdminPromotions {
       },
       {
         label: 'Trạng thái',
-        value: (r) => (r.is_active ? 'Đang chạy' : 'Tạm dừng'),
-        tone: (r) => (r.is_active ? 'success' : 'neutral'),
+        value: (r) => (r.status === 'ACTIVE' ? 'Đang chạy' : 'Tạm dừng'),
+        tone: (r) => (r.status === 'ACTIVE' ? 'success' : 'neutral'),
       },
     ],
     fields: [
@@ -106,7 +106,12 @@ export class AdminPromotions {
       },
       { key: 'start_date', shownInTable: true, label: 'Ngày bắt đầu', type: 'date', required: true },
       { key: 'end_date', shownInTable: true, label: 'Ngày kết thúc', type: 'date', required: true },
-      { key: 'is_active', shownInTable: true, label: 'Trạng thái', type: 'toggle', hint: 'Đang chạy' },
+      {
+        key: 'is_active', shownInTable: true,
+        label: 'Trạng thái',
+        type: 'toggle',
+        hint: 'Đang chạy',
+      },
     ],
     filters: [
       {

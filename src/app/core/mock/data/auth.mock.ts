@@ -83,32 +83,32 @@ export function buildLoginResponse(found: AuthenticatedUser): LoginResponse {
 export const USERS_MOCK: AdminUser[] = [
   {
     id: 1, email: 'admin@demo.local', full_name: 'Quản trị viên', phone: '0901234567',
-    avatar_url: null, is_active: true, is_deleted: false, roles: ['ADMIN'],
-    created_at: '2026-01-05T02:00:00Z', updated_at: '2026-09-20T03:00:00Z',
+    avatar_url: null, status: 'ACTIVE', roles: ['ADMIN'],
+    created_at: '2026-01-05T02:00:00Z',
   },
   {
     id: 2, email: 'staff@demo.local', full_name: 'Nhân viên vận hành', phone: '0912345678',
-    avatar_url: null, is_active: true, is_deleted: false, roles: ['STAFF'],
-    created_at: '2026-02-11T02:00:00Z', updated_at: '2026-09-18T03:00:00Z',
+    avatar_url: null, status: 'ACTIVE', roles: ['STAFF'],
+    created_at: '2026-02-11T02:00:00Z',
   },
   {
     id: 3, email: 'staff02@demo.local', full_name: 'Trần Đức Anh', phone: '0987654321',
-    avatar_url: null, is_active: false, is_deleted: false, roles: ['STAFF'],
-    created_at: '2026-03-02T02:00:00Z', updated_at: '2026-08-30T03:00:00Z',
+    avatar_url: null, status: 'INACTIVE', roles: ['STAFF'],
+    created_at: '2026-03-02T02:00:00Z',
   },
   {
     id: 10, email: 'customer@demo.local', full_name: 'Khách hàng', phone: null,
-    avatar_url: null, is_active: true, is_deleted: false, roles: ['CUSTOMER'],
-    created_at: '2026-04-15T02:00:00Z', updated_at: '2026-09-01T03:00:00Z',
+    avatar_url: null, status: 'ACTIVE', roles: ['CUSTOMER'],
+    created_at: '2026-04-15T02:00:00Z',
   },
   {
     id: 11, email: 'khach02@demo.local', full_name: 'Nguyễn Thị Mai', phone: '0905556677',
-    avatar_url: null, is_active: true, is_deleted: false, roles: ['CUSTOMER'],
-    created_at: '2026-05-20T02:00:00Z', updated_at: '2026-09-10T03:00:00Z',
+    avatar_url: null, status: 'ACTIVE', roles: ['CUSTOMER'],
+    created_at: '2026-05-20T02:00:00Z',
   },
   {
     id: 12, email: 'cu@demo.local', full_name: 'Tài khoản đã xóa', phone: null,
-    avatar_url: null, is_active: false, is_deleted: true, roles: ['CUSTOMER'],
-    created_at: '2026-01-01T02:00:00Z', updated_at: '2026-06-01T03:00:00Z',
+    avatar_url: null, status: 'INACTIVE', roles: ['CUSTOMER'],
+    created_at: '2026-01-01T02:00:00Z',
   },
 ];

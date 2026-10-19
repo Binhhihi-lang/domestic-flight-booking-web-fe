@@ -38,7 +38,7 @@ describe('ClientPromotionList — lọc đang hiệu lực', () => {
     expect(text).toContain('Khuyến mãi hè 2026');
     expect(text).toContain('Đà Lạt mùa sương mù');
 
-    // TET2027 có is_active = false -> không được hiện.
+    // TET2027 có status = INACTIVE -> không được hiện.
     expect(text).not.toContain('Vé Tết 2027');
     // SUMMER99 bắt đầu 2026-11-01, hôm nay 2026-10-13 -> chưa tới ngày.
     expect(text).not.toContain('Bay đồng giá 99K');

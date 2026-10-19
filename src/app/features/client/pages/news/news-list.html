@@ -70,7 +70,7 @@
               @if (item.categories?.length) {
                 <div class="news__cats">
                   @for (c of item.categories; track c.id) {
-                    <span class="news__cat">{{ c.category_name }}</span>
+                    <span class="news__cat">{{ c.name }}</span>
                   }
                 </div>
               }

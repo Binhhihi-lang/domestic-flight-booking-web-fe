@@ -36,8 +36,8 @@ export class AdminAircrafts {
       { label: 'Sức chứa', value: (r) => String(r.seat_capacity), kind: 'num', width: '110px' },
       {
         label: 'Trạng thái',
-        value: (r) => (r.is_active ? 'Hoạt động' : 'Tạm dừng'),
-        tone: (r) => (r.is_active ? 'success' : 'neutral'),
+        value: (r) => (r.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'),
+        tone: (r) => (r.status === 'ACTIVE' ? 'success' : 'neutral'),
       },
       {
         label: 'Sơ đồ ghế',
@@ -51,17 +51,26 @@ export class AdminAircrafts {
       { key: 'model', shownInTable: true, label: 'Dòng máy bay', type: 'text', required: true, maxLength: 100, hint: 'Ví dụ Airbus A350-900' },
       { key: 'manufacturer', shownInTable: true, label: 'Hãng sản xuất', type: 'text', maxLength: 100 },
       { key: 'seat_capacity', shownInTable: true, label: 'Sức chứa (ghế)', type: 'number', required: true, min: 1 },
-      { key: 'is_active', shownInTable: true, label: 'Trạng thái', type: 'toggle', hint: 'Đang hoạt động' },
+      {
+        key: 'status', shownInTable: true,
+        label: 'Trạng thái',
+        type: 'select',
+        hint: 'Đang hoạt động',
+        options: [
+          { value: 'ACTIVE', label: 'Hoạt động' },
+          { value: 'INACTIVE', label: 'Tạm dừng' },
+        ],
+      },
     ],
     filters: [
       {
-        key: 'is_active',
+        key: 'status',
         label: 'Lọc theo trạng thái',
         defaultValue: '',
         options: [
           { value: '', label: 'Tất cả trạng thái' },
-          { value: 'true', label: 'Đang hoạt động' },
-          { value: 'false', label: 'Tạm dừng' },
+          { value: 'ACTIVE', label: 'Đang hoạt động' },
+          { value: 'INACTIVE', label: 'Tạm dừng' },
         ],
       },
     ],

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { NewsItem } from '@core/models/fleet-news.model';
-import { NewsService } from '@core/services/catalog.service';
+import { PublicNewsService } from '@core/services/public-catalog.service';
 import { SanitizeService } from '@core/services/sanitize.service';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { AppButton } from '@shared/ui/app-button/app-button';
@@ -24,7 +24,7 @@ import { LoadingState } from '@shared/ui/loading-state/loading-state';
   styleUrl: './news-detail.css',
 })
 export class ClientNewsDetail {
-  private readonly newsService = inject(NewsService);
+  private readonly newsService = inject(PublicNewsService);
   private readonly sanitizeService = inject(SanitizeService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -43,7 +43,7 @@ export class ClientNewsDetail {
 
   /** Tên danh mục để hiện nhãn — API trả kèm `categories` ở endpoint chi tiết. */
   protected readonly categoryNames = computed(
-    () => this.article()?.categories?.map((c) => c.category_name) ?? [],
+    () => this.article()?.categories?.map((c) => c.name) ?? [],
   );
 
   /**
@@ -108,7 +108,7 @@ export class ClientNewsDetail {
    * GUEST — lọc ở đây để hai chế độ giống nhau.
    */
   private loadRelated(current: NewsItem): void {
-    const categoryIds = current.category_ids ?? [];
+    const categoryIds = current.categories?.map((c) => c.id) ?? [];
     if (categoryIds.length === 0) {
       return;
     }
