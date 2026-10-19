@@ -12,7 +12,7 @@ describe('MockRegistry', () => {
   });
 
   it('trả undefined cho đường dẫn không có mock', () => {
-    expect(registry.resolve('GET', '/api/v1/khong-ton-tai')).toBeUndefined();
+    expect(registry.resolve('GET', '/api/admin/khong-ton-tai')).toBeUndefined();
   });
 
   it('khớp được cả URL tuyệt đối mà HttpClient thực sự gửi', () => {
@@ -21,7 +21,7 @@ describe('MockRegistry', () => {
     // và rơi ra mạng thật — lỗi này đã từng xảy ra và bị unit test bỏ lọt.
     const absolute = registry.resolve(
       'GET',
-      'http://localhost:8080/api/v1/airlines?page=1&size=20',
+      'http://localhost:8080/api/admin/airlines?page=1&size=20',
     ) as any;
     expect(absolute).toBeDefined();
     expect(absolute.code).toBe(1000);
@@ -29,7 +29,7 @@ describe('MockRegistry', () => {
   });
 
   it('trả danh sách hãng hàng không theo đúng envelope', () => {
-    const res = registry.resolve('GET', '/api/v1/airlines?page=1&size=20') as any;
+    const res = registry.resolve('GET', '/api/admin/airlines?page=1&size=20') as any;
     expect(res.code).toBe(1000);
     expect(Array.isArray(res.data.items)).toBe(true);
     expect(res.data.pagination).toEqual(
@@ -38,7 +38,7 @@ describe('MockRegistry', () => {
   });
 
   it('dùng snake_case cho trường dữ liệu', () => {
-    const res = registry.resolve('GET', '/api/v1/airlines') as any;
+    const res = registry.resolve('GET', '/api/admin/airlines') as any;
     const first = res.data.items[0];
     expect(first).toHaveProperty('airline_code');
     expect(first).toHaveProperty('airline_name');
@@ -46,7 +46,7 @@ describe('MockRegistry', () => {
   });
 
   it('lọc theo keyword', () => {
-    const res = registry.resolve('GET', '/api/v1/airlines?keyword=Vietjet') as any;
+    const res = registry.resolve('GET', '/api/admin/airlines?keyword=Vietjet') as any;
     expect(res.data.items.length).toBeGreaterThan(0);
     expect(
       res.data.items.every((a: any) => a.airline_name.toLowerCase().includes('vietjet')),
@@ -54,19 +54,19 @@ describe('MockRegistry', () => {
   });
 
   it('phân trang đúng — trang 2 khác trang 1', () => {
-    const p1 = registry.resolve('GET', '/api/v1/airlines?page=1&size=2') as any;
-    const p2 = registry.resolve('GET', '/api/v1/airlines?page=2&size=2') as any;
+    const p1 = registry.resolve('GET', '/api/admin/airlines?page=1&size=2') as any;
+    const p2 = registry.resolve('GET', '/api/admin/airlines?page=2&size=2') as any;
     expect(p1.data.items[0].id).not.toBe(p2.data.items[0].id);
     expect(p1.data.pagination.total_pages).toBeGreaterThan(1);
   });
 
   it('trả 1004 khi lấy id không tồn tại', () => {
-    const res = registry.resolve('GET', '/api/v1/airlines/99999') as any;
+    const res = registry.resolve('GET', '/api/admin/airlines/99999') as any;
     expect(res.code).toBe(1004);
   });
 
   it('trả 1005 khi tạo trùng mã hãng', () => {
-    const res = registry.resolve('POST', '/api/v1/airlines', {
+    const res = registry.resolve('POST', '/api/admin/airlines', {
       airline_code: 'VN',
       airline_name: 'Trùng mã',
     }) as any;
@@ -74,8 +74,8 @@ describe('MockRegistry', () => {
   });
 
   it('xóa mềm rồi thì không còn thấy trong danh sách', () => {
-    registry.resolve('DELETE', '/api/v1/airlines/1');
-    const res = registry.resolve('GET', '/api/v1/airlines?size=100') as any;
+    registry.resolve('DELETE', '/api/admin/airlines/1');
+    const res = registry.resolve('GET', '/api/admin/airlines?size=100') as any;
     expect(res.data.items.some((a: any) => a.id === 1)).toBe(false);
   });
 });
@@ -83,7 +83,7 @@ describe('MockRegistry', () => {
 describe('RBAC mock (chỉ đọc)', () => {
   it('GET /roles trả mảng trần đúng 3 role cố định', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/v1/roles') as ApiResponse<Role[]>;
+    const res = registry.resolve('GET', 'http://x/api/admin/roles') as ApiResponse<Role[]>;
 
     expect(res.code).toBe(1000);
     expect(Array.isArray(res.data)).toBe(true);
@@ -95,7 +95,7 @@ describe('RBAC mock (chỉ đọc)', () => {
     const registry = new MockRegistry();
     const res = registry.resolve(
       'GET',
-      'http://x/api/v1/permissions?module=USER',
+      'http://x/api/admin/permissions?module=USER',
     ) as ApiResponse<Permission[]>;
 
     expect(res.data.length).toBeGreaterThan(0);
@@ -107,7 +107,7 @@ describe('RBAC mock (chỉ đọc)', () => {
     const registry = new MockRegistry();
     const res = registry.resolve(
       'GET',
-      'http://x/api/v1/permissions?keyword=xu%E1%BA%A5t%20b%E1%BA%A3n',
+      'http://x/api/admin/permissions?keyword=xu%E1%BA%A5t%20b%E1%BA%A3n',
     ) as ApiResponse<Permission[]>;
 
     expect(res.data.map((p) => p.permission_key)).toContain('NEWS_PUBLISH');
@@ -117,10 +117,10 @@ describe('RBAC mock (chỉ đọc)', () => {
 describe('User mock — chặn mất ADMIN cuối cùng', () => {
   it('từ chối hạ quyền ADMIN ACTIVE cuối cùng xuống CUSTOMER', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('PUT', 'http://x/api/v1/users/1', {
+    const res = registry.resolve('PUT', 'http://x/api/admin/users/1', {
       full_name: 'Quản trị viên',
       phone: '0901234567',
-      is_active: true,
+      status: 'ACTIVE',
       roles: ['CUSTOMER'],
     }) as ApiResponse<null>;
 
@@ -129,10 +129,10 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
 
   it('từ chối ngừng hoạt động ADMIN ACTIVE cuối cùng', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('PUT', 'http://x/api/v1/users/1', {
+    const res = registry.resolve('PUT', 'http://x/api/admin/users/1', {
       full_name: 'Quản trị viên',
       phone: '0901234567',
-      is_active: false,
+      status: 'INACTIVE',
       roles: ['ADMIN'],
     }) as ApiResponse<null>;
 
@@ -142,19 +142,19 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
   it('CHO PHÉP hạ quyền khi còn ADMIN ACTIVE khác', () => {
     const registry = new MockRegistry();
     // Tạo thêm một ADMIN đang hoạt động.
-    registry.resolve('POST', 'http://x/api/v1/users', {
+    registry.resolve('POST', 'http://x/api/admin/users', {
       email: 'admin2@demo.local',
       password: 'Temp@12345',
       full_name: 'Quản trị viên 2',
       phone: null,
-      is_active: true,
+      status: 'ACTIVE',
       roles: ['ADMIN'],
     });
 
-    const res = registry.resolve('PUT', 'http://x/api/v1/users/1', {
+    const res = registry.resolve('PUT', 'http://x/api/admin/users/1', {
       full_name: 'Quản trị viên',
       phone: '0901234567',
-      is_active: true,
+      status: 'ACTIVE',
       roles: ['CUSTOMER'],
     }) as ApiResponse<AdminUser>;
 
@@ -164,7 +164,7 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
 
   it('từ chối XÓA ADMIN ACTIVE cuối cùng', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('DELETE', 'http://x/api/v1/users/1') as ApiResponse<null>;
+    const res = registry.resolve('DELETE', 'http://x/api/admin/users/1') as ApiResponse<null>;
 
     expect(res.code).toBe(1006);
   });
@@ -173,7 +173,7 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
     const registry = new MockRegistry();
     const res = registry.resolve(
       'POST',
-      'http://x/api/v1/users/2/reset-password',
+      'http://x/api/admin/users/2/reset-password',
     ) as ApiResponse<{ temporary_password: string }>;
 
     expect(res.code).toBe(1000);
@@ -184,7 +184,7 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
     const registry = new MockRegistry();
     const res = registry.resolve(
       'POST',
-      'http://x/api/v1/users/9999/reset-password',
+      'http://x/api/admin/users/9999/reset-password',
     ) as ApiResponse<null>;
 
     expect(res.code).toBe(1004);
@@ -192,7 +192,7 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
 
   it('danh sách KHÔNG lộ bản ghi đã xóa mềm', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/v1/users') as ApiResponse<
+    const res = registry.resolve('GET', 'http://x/api/admin/users') as ApiResponse<
       PageData<AdminUser>
     >;
 
@@ -201,12 +201,12 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
 
   it('tạo user trùng email trả 1005', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('POST', 'http://x/api/v1/users', {
+    const res = registry.resolve('POST', 'http://x/api/admin/users', {
       email: 'admin@demo.local',
       password: 'Temp@12345',
       full_name: 'Trùng',
       phone: null,
-      is_active: true,
+      status: 'ACTIVE',
       roles: ['STAFF'],
     }) as ApiResponse<null>;
 
@@ -216,16 +216,16 @@ describe('User mock — chặn mất ADMIN cuối cùng', () => {
   it('lọc theo role và theo trạng thái hoạt động', () => {
     const registry = new MockRegistry();
 
-    const staff = registry.resolve('GET', 'http://x/api/v1/users?role=STAFF') as ApiResponse<
+    const staff = registry.resolve('GET', 'http://x/api/admin/users?role=STAFF') as ApiResponse<
       PageData<AdminUser>
     >;
     expect(staff.data.items.every((u) => u.roles.includes('STAFF'))).toBe(true);
 
     const inactive = registry.resolve(
       'GET',
-      'http://x/api/v1/users?is_active=false',
+      'http://x/api/admin/users?status=INACTIVE',
     ) as ApiResponse<PageData<AdminUser>>;
-    expect(inactive.data.items.every((u) => !u.is_active)).toBe(true);
+    expect(inactive.data.items.every((u) => u.status === 'INACTIVE')).toBe(true);
   });
 });
 
@@ -247,7 +247,7 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
   it('từ chối sơ đồ LỆCH sức chứa', () => {
     const registry = new MockRegistry();
     // Máy bay id 3 có seat_capacity = 180.
-    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+    const res = registry.resolve('PUT', 'http://x/api/admin/aircrafts/3/seat-map', {
       seats: seatsOf(179),
     }) as ApiResponse<null>;
 
@@ -258,7 +258,7 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
     const registry = new MockRegistry();
     const seats = seatsOf(180);
     seats[1] = { ...seats[0] }; // nhân bản ghế đầu -> trùng khoá
-    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+    const res = registry.resolve('PUT', 'http://x/api/admin/aircrafts/3/seat-map', {
       seats,
     }) as ApiResponse<null>;
 
@@ -267,7 +267,7 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
 
   it('từ chối dùng loại ghế đang TẮT (EXIT, id 8)', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+    const res = registry.resolve('PUT', 'http://x/api/admin/aircrafts/3/seat-map', {
       seats: seatsOf(180, 8),
     }) as ApiResponse<null>;
 
@@ -276,7 +276,7 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
 
   it('từ chối loại ghế KHÔNG tồn tại (1004)', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+    const res = registry.resolve('PUT', 'http://x/api/admin/aircrafts/3/seat-map', {
       seats: seatsOf(180, 9999),
     }) as ApiResponse<null>;
 
@@ -285,7 +285,7 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
 
   it('CHẤP NHẬN sơ đồ khớp đúng sức chứa, loại ghế đang bật', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', {
+    const res = registry.resolve('PUT', 'http://x/api/admin/aircrafts/3/seat-map', {
       seats: seatsOf(180, 1),
     }) as ApiResponse<SeatMap>;
 
@@ -295,16 +295,16 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
 
   it('sau khi lưu, GET trả đúng sơ đồ kèm loại ghế lồng', () => {
     const registry = new MockRegistry();
-    registry.resolve('PUT', 'http://x/api/v1/aircrafts/3/seat-map', { seats: seatsOf(180, 1) });
+    registry.resolve('PUT', 'http://x/api/admin/aircrafts/3/seat-map', { seats: seatsOf(180, 1) });
 
-    const res = registry.resolve('GET', 'http://x/api/v1/aircrafts/3/seat-map') as ApiResponse<SeatMap>;
+    const res = registry.resolve('GET', 'http://x/api/admin/aircrafts/3/seat-map') as ApiResponse<SeatMap>;
     expect(res.data.configured_seats).toBe(180);
     expect(res.data.seats[0].seat_type?.seat_type_code).toBe('ECO');
   });
 
   it('GET máy bay chưa cấu hình trả sức chứa và 0 ghế', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/v1/aircrafts/1/seat-map') as ApiResponse<SeatMap>;
+    const res = registry.resolve('GET', 'http://x/api/admin/aircrafts/1/seat-map') as ApiResponse<SeatMap>;
 
     expect(res.data.seat_capacity).toBe(305);
     expect(res.data.configured_seats).toBe(0);
@@ -312,7 +312,7 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
 
   it('máy bay không tồn tại trả 1004', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/v1/aircrafts/9999/seat-map') as ApiResponse<null>;
+    const res = registry.resolve('GET', 'http://x/api/admin/aircrafts/9999/seat-map') as ApiResponse<null>;
 
     expect(res.code).toBe(1004);
   });

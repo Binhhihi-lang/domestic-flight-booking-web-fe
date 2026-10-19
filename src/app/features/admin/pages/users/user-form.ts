@@ -74,7 +74,7 @@ export class UserForm {
           password: '',
           full_name: u.full_name,
           phone: u.phone ?? '',
-          is_active: u.is_active,
+          is_active: u.status === 'ACTIVE',
           role: u.roles[0] ?? 'CUSTOMER',
         });
         this.loading.set(false);
@@ -147,8 +147,8 @@ export class UserForm {
       ? this.service.update(id, {
           full_name: d.full_name.trim(),
           phone: d.phone.trim() || null,
-          is_active: d.is_active,
-          // DB v0.4: một user một role. API v0.2 vẫn nhận mảng nên gửi 1 phần tử.
+          status: d.is_active ? 'ACTIVE' : 'INACTIVE',
+          // DB v0.4: một user một role. API vẫn nhận mảng nên gửi 1 phần tử.
           roles: [d.role],
         } satisfies AdminUserUpdatePayload)
       : this.service.create({
@@ -156,7 +156,7 @@ export class UserForm {
           password: d.password,
           full_name: d.full_name.trim(),
           phone: d.phone.trim() || null,
-          is_active: d.is_active,
+          status: d.is_active ? 'ACTIVE' : 'INACTIVE',
           roles: [d.role],
         } satisfies AdminUserCreatePayload);
 

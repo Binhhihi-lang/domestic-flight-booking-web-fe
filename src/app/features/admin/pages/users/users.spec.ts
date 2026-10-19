@@ -47,7 +47,7 @@ describe('AdminUsers (tích hợp mock)', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Quản trị');
     expect(text).toContain('Nhân viên');
-    // staff02 có is_active = false -> phải hiện "Ngừng".
+    // staff02 có status = INACTIVE -> phải hiện "Ngừng".
     expect(text).toContain('Ngừng');
   });
 });

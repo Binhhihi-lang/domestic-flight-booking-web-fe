@@ -138,7 +138,7 @@ export class PromotionForm {
           applicable_trip_type: p.applicable_trip_type,
           start_date: p.start_date,
           end_date: p.end_date,
-          is_active: p.is_active,
+          is_active: p.status === 'ACTIVE',
         });
         this.scopes.set((p.scopes ?? []).map((s) => this.toScopeRow(s)));
         this.excludedIds.set(p.excluded_flight_ids ?? []);

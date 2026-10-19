@@ -38,8 +38,8 @@ export class AdminUsers {
       },
       {
         label: 'Trạng thái',
-        value: (r) => (r.is_active ? 'Hoạt động' : 'Ngừng'),
-        tone: (r) => (r.is_active ? 'success' : 'neutral'),
+        value: (r) => (r.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng'),
+        tone: (r) => (r.status === 'ACTIVE' ? 'success' : 'neutral'),
         width: '120px',
       },
       {
@@ -51,13 +51,13 @@ export class AdminUsers {
     fields: [],
     filters: [
       {
-        key: 'is_active',
+        key: 'status',
         label: 'Lọc theo trạng thái',
         defaultValue: '',
         options: [
           { value: '', label: 'Tất cả trạng thái' },
-          { value: 'true', label: 'Hoạt động' },
-          { value: 'false', label: 'Ngừng' },
+          { value: 'ACTIVE', label: 'Hoạt động' },
+          { value: 'INACTIVE', label: 'Ngừng' },
         ],
       },
       {

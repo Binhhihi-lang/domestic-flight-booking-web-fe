@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { NewsItem } from '@core/models/fleet-news.model';
-import { NewsService } from '@core/services/catalog.service';
+import { PublicNewsService } from '@core/services/public-catalog.service';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -35,7 +35,7 @@ interface CategoryOption {
   styleUrl: './news-list.css',
 })
 export class ClientNewsList {
-  private readonly newsService = inject(NewsService);
+  private readonly newsService = inject(PublicNewsService);
 
   protected readonly loading = signal(true);
   protected readonly news = signal<NewsItem[]>([]);
@@ -71,7 +71,7 @@ export class ClientNewsList {
     const map = new Map<number, string>();
     for (const item of this.news()) {
       for (const c of item.categories ?? []) {
-        map.set(c.id, c.category_name);
+        map.set(c.id, c.name);
       }
     }
     return [...map.entries()]
@@ -85,7 +85,7 @@ export class ClientNewsList {
     if (cat === null) {
       return this.news();
     }
-    return this.news().filter((n) => (n.category_ids ?? []).includes(cat));
+    return this.news().filter((n) => (n.categories ?? []).some((c) => c.id === cat));
   });
 
   protected onCategoryChange(value: string): void {

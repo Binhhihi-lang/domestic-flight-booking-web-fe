@@ -39,14 +39,14 @@ describe('AdminAirlines (tích hợp với mock layer)', () => {
     expect(text).toContain('Bamboo Airways');
   });
 
-  it('hiển thị badge trạng thái đúng theo is_active', async () => {
+  it('hiển thị badge trạng thái đúng theo status', async () => {
     const fixture = TestBed.createComponent(AdminAirlines);
     fixture.detectChanges();
     await new Promise((resolve) => setTimeout(resolve, 600));
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    // Pacific Airlines có is_active = false trong dữ liệu giả.
+    // Pacific Airlines có status = INACTIVE trong dữ liệu giả.
     expect(text).toContain('Tạm dừng');
     expect(text).toContain('Hoạt động');
   });

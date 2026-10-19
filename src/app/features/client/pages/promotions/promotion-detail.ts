@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { Promotion } from '@core/models/promotion.model';
-import { PromotionService } from '@core/services/catalog.service';
+import { PublicPromotionService } from '@core/services/public-catalog.service';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { LoadingState } from '@shared/ui/loading-state/loading-state';
@@ -22,7 +22,7 @@ import { LoadingState } from '@shared/ui/loading-state/loading-state';
   styleUrl: './promotion-detail.css',
 })
 export class ClientPromotionDetail {
-  private readonly service = inject(PromotionService);
+  private readonly service = inject(PublicPromotionService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 

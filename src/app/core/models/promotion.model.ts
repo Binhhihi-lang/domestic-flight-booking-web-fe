@@ -1,4 +1,6 @@
 /** Loại giảm giá — dùng chung cho Promotion và Voucher (API v0.2 mục 2.7, 2.8). */
+import { ActiveStatus } from '@core/models/airline.model';
+
 export type DiscountType = 'PERCENT' | 'AMOUNT';
 
 /** Loại hành trình mà khuyến mãi/voucher áp dụng. */
@@ -52,13 +54,16 @@ export interface Promotion {
   applicable_trip_type: TripType;
   start_date: string;
   end_date: string;
-  is_active: boolean;
-  is_deleted: boolean;
+  status: ActiveStatus;
   scopes?: PromotionScope[];
   excluded_flight_ids?: number[];
 }
 
-export type PromotionPayload = Omit<Promotion, 'id' | 'is_deleted'>;
+/**
+ * Payload gửi lên — backend nhận `is_active` boolean (không nhận `status`),
+ * xem `PromotionRequest.isActive`.
+ */
+export type PromotionPayload = Omit<Promotion, 'id' | 'status'> & { is_active: boolean };
 
 /** Kiểu phát hành voucher (API v0.2 mục 2.8). */
 export type VoucherDistributionType = 'GLOBAL' | 'ASSIGNED';
@@ -87,10 +92,10 @@ export interface Voucher {
   /** Tổng số lượt được NHẬN; chỉ áp cho GLOBAL. null = không giới hạn. */
   claim_limit: number | null;
   claimed_count: number;
-  is_active: boolean;
-  is_deleted: boolean;
+  status: ActiveStatus;
   scopes?: PromotionScope[];
   excluded_flight_ids?: number[];
 }
 
-export type VoucherPayload = Omit<Voucher, 'id' | 'is_deleted' | 'claimed_count'>;
+/** Payload gửi lên — backend nhận `is_active` boolean (xem `VoucherRequest.isActive`). */
+export type VoucherPayload = Omit<Voucher, 'id' | 'claimed_count' | 'status'> & { is_active: boolean };

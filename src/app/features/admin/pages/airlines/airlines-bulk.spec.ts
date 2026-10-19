@@ -86,7 +86,7 @@ describe('AdminAirlines — thao tác hàng loạt', () => {
     expect(crud.allOnPageSelected()).toBe(true);
   });
 
-  it('bulkSetActive(false) đổi is_active của các hàng đã chọn', async () => {
+  it('bulkSetActive(false) đổi status của các hàng đã chọn', async () => {
     const fixture = await mount();
     const crud = crudOf(fixture);
     const ids = crud.rows().slice(0, 2).map((r: any) => r.id);
@@ -97,7 +97,7 @@ describe('AdminAirlines — thao tác hàng loạt', () => {
     fixture.detectChanges();
 
     const updated = crud.rows().filter((r: any) => ids.includes(r.id));
-    expect(updated.every((r: any) => r.is_active === false)).toBe(true);
+    expect(updated.every((r: any) => r.status === 'INACTIVE')).toBe(true);
     // Chọn xong thì phải bỏ chọn, không giữ trạng thái chọn cũ.
     expect(crud.selectedIds().size).toBe(0);
   });

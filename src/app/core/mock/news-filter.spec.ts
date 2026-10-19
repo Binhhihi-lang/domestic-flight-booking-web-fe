@@ -15,7 +15,7 @@ describe('News mock — filter danh mục và categories lồng', () => {
     // Danh mục 1 = "Khuyến mãi" — bài 2 (đã đăng) và bài 6 (nháp) cùng thuộc.
     // Mock KHÔNG lọc `status`: backend mới lọc cho GUEST, mock trả hết để trang
     // tự lọc — đúng như hai chế độ đang hành xử.
-    const res = reg.resolve('GET', 'http://x/api/v1/news?category_id=1') as ApiResponse<
+    const res = reg.resolve('GET', 'http://x/api/admin/news?category_id=1') as ApiResponse<
       PageData<NewsItem>
     >;
 
@@ -25,7 +25,7 @@ describe('News mock — filter danh mục và categories lồng', () => {
   it('lọc danh mục có NHIỀU bài trả đủ', () => {
     const reg = new MockRegistry();
     // Danh mục 5 = "Thông báo" — bài 1, 5 và 99 cùng thuộc.
-    const res = reg.resolve('GET', 'http://x/api/v1/news?category_id=5') as ApiResponse<
+    const res = reg.resolve('GET', 'http://x/api/admin/news?category_id=5') as ApiResponse<
       PageData<NewsItem>
     >;
 
@@ -34,7 +34,7 @@ describe('News mock — filter danh mục và categories lồng', () => {
 
   it('danh mục không có bài trả rỗng, không lỗi', () => {
     const reg = new MockRegistry();
-    const res = reg.resolve('GET', 'http://x/api/v1/news?category_id=999') as ApiResponse<
+    const res = reg.resolve('GET', 'http://x/api/admin/news?category_id=999') as ApiResponse<
       PageData<NewsItem>
     >;
 
@@ -44,12 +44,12 @@ describe('News mock — filter danh mục và categories lồng', () => {
 
   it('danh sách trả kèm categories lồng (không chỉ category_ids)', () => {
     const reg = new MockRegistry();
-    const res = reg.resolve('GET', 'http://x/api/v1/news?size=50') as ApiResponse<
+    const res = reg.resolve('GET', 'http://x/api/admin/news?size=50') as ApiResponse<
       PageData<NewsItem>
     >;
 
     const first = res.data.items.find((n) => n.id === 1)!;
-    expect(first.categories?.map((c) => c.category_name)).toEqual([
+    expect(first.categories?.map((c) => c.name)).toEqual([
       'Hãng hàng không',
       'Thông báo',
     ]);
@@ -57,7 +57,7 @@ describe('News mock — filter danh mục và categories lồng', () => {
 
   it('chi tiết CŨNG trả kèm categories (trang chi tiết cần)', () => {
     const reg = new MockRegistry();
-    const res = reg.resolve('GET', 'http://x/api/v1/news/1') as ApiResponse<NewsItem>;
+    const res = reg.resolve('GET', 'http://x/api/admin/news/1') as ApiResponse<NewsItem>;
 
     expect(res.data.categories?.length).toBe(2);
   });
@@ -65,7 +65,7 @@ describe('News mock — filter danh mục và categories lồng', () => {
   it('không gắn danh mục đã xóa mềm', () => {
     const reg = new MockRegistry();
     // Danh mục 6 ("Tin cũ 2025") có is_deleted = true.
-    const res = reg.resolve('GET', 'http://x/api/v1/news?size=50') as ApiResponse<
+    const res = reg.resolve('GET', 'http://x/api/admin/news?size=50') as ApiResponse<
       PageData<NewsItem>
     >;
 

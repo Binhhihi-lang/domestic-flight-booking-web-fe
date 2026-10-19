@@ -12,7 +12,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
-import { ListQuery, ApiResponse } from '@core/models/api-response.model';
+import { ApiResponse, BulkResult, ListQuery } from '@core/models/api-response.model';
 import { BaseCrudService } from '@core/services/base-crud.service';
 import { PageHeader } from '@shared/components/page-header/page-header';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
@@ -194,22 +194,22 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   }
 
   /**
-   * Bật/tắt `is_active` cho các hàng đang chọn.
+   * Bật/tắt trạng thái cho các hàng đang chọn — gọi endpoint bulk thật
+   * (`PATCH /admin/{resource}/bulk`, API v0.4 mục 2.10).
    *
-   * Gọi TUẦN TỰ từng bản ghi qua `update()` sẵn có thay vì endpoint bulk.
-   * Vì sao: API v0.2 hiện CHƯA có endpoint bulk (đã đề xuất ở
-   * `be/docs/De_xuat_bo_sung_DB_v0.5_mau_loai_ghe_va_bulk.md`). Khi BE có, chỉ
-   * cần đổi thân hàm này thành một lời gọi — phần giao diện giữ nguyên.
+   * Trước đây gọi tuần tự từng `PUT /{id}` vì BE chưa có bulk; nay BE đã có nên
+   * dùng bulk: một request, kết quả TỪNG PHẦN (`succeeded`/`failed`) thay vì
+   * phải tự đếm.
    */
   protected bulkSetActive(isActive: boolean): void {
     const ids = [...this.selectedIds()];
     if (ids.length === 0) {
       return;
     }
-    this.runBulk(
-      ids,
-      (id) => this.service().update(id, { is_active: isActive } as unknown as P),
+    this.runBulkRequest(
+      (svc) => svc.bulkToggle(ids, isActive ? 'ACTIVE' : 'INACTIVE'),
       isActive ? 'Đã kích hoạt' : 'Đã ngừng hoạt động',
+      ids.length,
     );
   }
 
@@ -233,56 +233,47 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
         if (!confirmed) {
           return;
         }
-        this.runBulk(
-          ids,
-          (id) => this.service().remove(id),
+        this.runBulkRequest(
+          (svc) => svc.bulkRemove(ids),
           'Đã xóa',
+          ids.length,
         );
       });
   }
 
   /**
-   * Chạy một thao tác trên nhiều id, đếm thành công/thất bại.
+   * Chạy một lời gọi bulk và báo kết quả từng phần.
    *
-   * Vì sao chạy tuần tự (`concatMap`-kiểu) chứ không song song: endpoint đơn lẻ
-   * không đảm bảo tính nguyên tử, và bắn 15 request cùng lúc dễ vượt giới hạn
-   * của server. Tuần tự cũng cho phép dừng sớm và báo lỗi rõ từng bản ghi.
+   * Backend không chặn cả lô khi một bản ghi vi phạm — nó trả `failed` kèm mã
+   * lỗi. Vì vậy phải đọc `failed` chứ không coi HTTP 200 là tất cả thành công.
    */
-  private runBulk(
-    ids: number[],
-    op: (id: number) => Observable<unknown>,
+  private runBulkRequest(
+    request: (svc: BaseCrudService<T, P>) => Observable<ApiResponse<BulkResult>>,
     verb: string,
+    total: number,
   ): void {
     this.saving.set(true);
-    const failed: string[] = [];
-    let done = 0;
-
-    const step = (index: number): void => {
-      if (index >= ids.length) {
+    request(this.service()).subscribe({
+      next: (res) => {
         this.saving.set(false);
         this.clearSelection();
         this.load();
+
+        const failed = res.data?.failed ?? [];
+        if (failed.length === 0) {
+          this.notify(`${verb} ${total} bản ghi`);
+          return;
+        }
+        const detail = failed.map((f) => `#${f.id} (${f.message})`).join('; ');
         this.notify(
-          failed.length === 0
-            ? `${verb} ${ids.length} bản ghi`
-            : `${verb} ${done}/${ids.length} bản ghi. Không xử lý được ${failed.length}: ${failed.join('; ')}`,
+          `${verb} ${total - failed.length}/${total} bản ghi. Không xử lý được ${failed.length}: ${detail}`,
         );
-        return;
-      }
-
-      op(ids[index]).subscribe({
-        next: () => {
-          done++;
-          step(index + 1);
-        },
-        error: (err: Error) => {
-          failed.push(`#${ids[index]} (${err.message})`);
-          step(index + 1);
-        },
-      });
-    };
-
-    step(0);
+      },
+      error: (err: Error) => {
+        this.saving.set(false);
+        this.notify(err.message);
+      },
+    });
   }
 
   ngOnInit(): void {

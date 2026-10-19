@@ -27,29 +27,29 @@ describe('mockInterceptor — query params tới được mock', () => {
   }
 
   it('lọc permission theo module', async () => {
-    const res = await get('http://x/api/v1/permissions', { module: 'USER' });
+    const res = await get('http://x/api/admin/permissions', { module: 'USER' });
     expect(res.data.length).toBe(5);
     expect(res.data.every((p: any) => p.module === 'USER')).toBe(true);
   });
 
   it('tìm permission theo keyword', async () => {
-    const res = await get('http://x/api/v1/permissions', { keyword: 'xuất bản' });
+    const res = await get('http://x/api/admin/permissions', { keyword: 'xuất bản' });
     expect(res.data.map((p: any) => p.permission_key)).toContain('NEWS_PUBLISH');
   });
 
   it('tìm airline theo keyword', async () => {
-    const res = await get('http://x/api/v1/airlines', { keyword: 'bamboo' });
+    const res = await get('http://x/api/admin/airlines', { keyword: 'bamboo' });
     expect(res.data.items.length).toBe(1);
     expect(res.data.items[0].airline_code).toBe('QH');
   });
 
   it('lọc city theo keyword', async () => {
-    const res = await get('http://x/api/v1/cities', { keyword: 'Đà' });
+    const res = await get('http://x/api/admin/cities', { keyword: 'Đà' });
     expect(res.data.items.length).toBeGreaterThan(0);
   });
 
   it('phân trang vẫn hoạt động (page/size tới được mock)', async () => {
-    const res = await get('http://x/api/v1/cities', { page: '1', size: '2' });
+    const res = await get('http://x/api/admin/cities', { page: '1', size: '2' });
     expect(res.data.items.length).toBe(2);
     expect(res.data.pagination.size).toBe(2);
   });

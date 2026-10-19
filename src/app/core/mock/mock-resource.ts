@@ -5,12 +5,12 @@ import { businessError, duplicate, notFound, ok, paginate, readParams } from '@c
  */
 export interface MockRecord {
   id: number;
-  is_active: boolean;
-  is_deleted: boolean;
+  /** API v0.4 trả chuỗi `ACTIVE | INACTIVE`, không trả cờ boolean. */
+  status?: string;
 }
 
 export interface MockResourceOptions<T extends MockRecord> {
-  /** Đoạn đường dẫn, ví dụ 'cities' → khớp /api/v1/cities và /api/v1/cities/{id}. */
+  /** Đoạn đường dẫn, ví dụ 'admin/cities' → khớp /api/admin/cities và /api/admin/cities/{id}. */
   path: string;
   seed: T[];
   /** Trường dùng cho `keyword` (tìm kiếm). */
@@ -52,6 +52,8 @@ export interface MockResourceOptions<T extends MockRecord> {
  */
 export class MockResource<T extends MockRecord> {
   private readonly rows: T[];
+  /** Id đã xóa mềm — ẩn khỏi mọi truy vấn nhưng giữ bản ghi để tra lịch sử. */
+  private readonly deleted = new Set<number>();
   private nextId: number;
 
   constructor(private readonly options: MockResourceOptions<T>) {
@@ -61,12 +63,17 @@ export class MockResource<T extends MockRecord> {
 
   /** Bản ghi chưa xóa mềm — mọi truy vấn phải lọc qua đây (BR-LIST-04). */
   private alive(): T[] {
-    return this.rows.filter((r) => !r.is_deleted);
+    return this.rows.filter((r) => !this.deleted.has(r.id));
   }
 
-  /** Khớp /path và /path/{id}; trả `undefined` nếu không phải đường dẫn của mình. */
+  /** Đường dẫn gốc của tài nguyên này (vd 'admin/cities'). */
+  matchesPath(path: string): boolean {
+    return this.options.path === path;
+  }
+
+  /** Khớp /path và /path/{id}; trả `null` nếu không phải đường dẫn của mình. */
   matches(path: string): { id: number | null } | null {
-    const base = `/api/v1/${this.options.path}`;
+    const base = `/api/${this.options.path}`;
     if (path === base) {
       return { id: null };
     }
@@ -96,7 +103,7 @@ export class MockResource<T extends MockRecord> {
   private list(url: string): unknown {
     const params = readParams(url);
     const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
-    const isActive = params.get('is_active');
+    const status = params.get('status');
 
     let rows = this.alive();
     if (keyword) {
@@ -107,8 +114,8 @@ export class MockResource<T extends MockRecord> {
         }),
       );
     }
-    if (isActive !== null) {
-      rows = rows.filter((r) => r.is_active === (isActive === 'true'));
+    if (status !== null) {
+      rows = rows.filter((r) => r.status === status);
     }
 
     // Filter trên trường MẢNG (vd news theo `category_id` khớp `category_ids`).
@@ -122,7 +129,7 @@ export class MockResource<T extends MockRecord> {
     }
 
     // Các filter khác (status, country, city_id…) so khớp theo giá trị chuỗi.
-    const reserved = new Set(['page', 'size', 'keyword', 'sort', 'is_active']);
+    const reserved = new Set(['page', 'size', 'keyword', 'sort', 'status']);
     for (const [key, value] of params.entries()) {
       if (reserved.has(key)) continue;
       // Bỏ qua filter đã xử lý ở nhánh mảng, nếu không nó sẽ lọc lần hai và
@@ -165,8 +172,7 @@ export class MockResource<T extends MockRecord> {
     const created = {
       ...payload,
       id: this.nextId++,
-      is_active: payload.is_active ?? true,
-      is_deleted: false,
+      status: payload.status ?? 'ACTIVE',
     } as T;
     this.rows.push(created);
     return ok(created, `Tạo ${this.options.noun} thành công`);
@@ -200,7 +206,7 @@ export class MockResource<T extends MockRecord> {
       return notFound(`Không tìm thấy ${this.options.noun}`);
     }
     // DB v0.4: xóa mềm giữ bản ghi để tra lịch sử.
-    target.is_deleted = true;
+    this.deleted.add(id);
     return ok(null, `Đã xóa ${this.options.noun}`);
   }
 

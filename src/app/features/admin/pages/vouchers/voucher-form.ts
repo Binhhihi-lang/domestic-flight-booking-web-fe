@@ -135,7 +135,7 @@ export class VoucherForm {
           start_date: v.start_date,
           end_date: v.end_date,
           claim_limit: v.claim_limit,
-          is_active: v.is_active,
+          is_active: v.status === 'ACTIVE',
         });
         this.scopes.set((v.scopes ?? []).map((s) => this.toScopeRow(s)));
         this.excludedIds.set(v.excluded_flight_ids ?? []);

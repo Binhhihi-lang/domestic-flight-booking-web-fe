@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { Promotion } from '@core/models/promotion.model';
-import { PromotionService } from '@core/services/catalog.service';
+import { PublicPromotionService } from '@core/services/public-catalog.service';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -31,7 +31,7 @@ interface PromoCard {
   styleUrl: './promotion-list.css',
 })
 export class ClientPromotionList {
-  private readonly promotionService = inject(PromotionService);
+  private readonly promotionService = inject(PublicPromotionService);
 
   protected readonly loading = signal(true);
   protected readonly promos = signal<PromoCard[]>([]);
@@ -43,7 +43,7 @@ export class ClientPromotionList {
       next: (res) => {
         const today = ClientPromotionList.todayIso();
         const active = res.data.items.filter(
-          (p) => p.is_active && !p.is_deleted && p.start_date <= today && p.end_date >= today,
+          (p) => p.status === 'ACTIVE' && p.start_date <= today && p.end_date >= today,
         );
         this.promos.set(active.map((p, i) => this.toCard(p, i)));
         this.loading.set(false);
