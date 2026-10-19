@@ -1,0 +1,98 @@
+/* =====================================================================
+   Khối trang dùng chung — tiêu đề trang, breadcrumb, ghi chú, khung hẹp.
+
+   Vì sao ở đây: `.crumbs` từng có 6 bản sao, `.page-h p` 6 bản, `.note` 3 bản.
+   Gộp về một chỗ để sửa một lần là mọi màn theo.
+
+   NGUYÊN TẮC: chỉ gộp phần GIỐNG NHAU. Chỗ nào các màn khác nhau thật thì tách
+   thành base + modifier, và component giữ override riêng — KHÔNG ép về một giá
+   trị, vì như vậy là đổi giao diện chứ không phải dọn dẹp.
+
+   Override ở component vẫn thắng các rule ở đây vì CSS component nạp SAU CSS
+   toàn cục (thứ tự trong angular.json).
+   ===================================================================== */
+
+/* ---------- Tiêu đề trang ---------- */
+
+/* Bản mặc định: khối tiêu đề đơn giản, chỉ cần khoảng cách dưới. */
+.page-h {
+  margin-bottom: 18px;
+}
+
+/* Biến thể có nút/nội dung phụ bên phải (màn có hành động ở góc phải). */
+.page-h--split {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-h h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.page-h p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--color-ink-muted);
+}
+
+/* ---------- Breadcrumb ---------- */
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  margin-bottom: 12px;
+}
+
+.crumbs a {
+  color: var(--color-ink-muted);
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  color: var(--color-primary);
+}
+
+.crumbs mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+  color: var(--color-ink-subtle);
+}
+
+/* ---------- Khung hẹp cho form dài ---------- */
+
+/* Một giá trị duy nhất cho mọi form. Trước đây có hai cỡ (860px ở màn CRUD,
+   920px ở ba form nghiệp vụ) mà không rõ bên nào cố ý — thống nhất về 920px. */
+.wrap--narrow {
+  max-width: 920px;
+}
+
+/* ---------- Ghi chú nghiệp vụ ---------- */
+
+.note {
+  margin: 0 0 12px;
+  padding: 11px 13px;
+  background: var(--color-info-soft);
+  color: var(--color-on-info-soft);
+  border-left: 3px solid var(--color-primary-bright);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* ---------- Dòng trống có chủ đích ---------- */
+
+.empty-line {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  font-style: italic;
+}

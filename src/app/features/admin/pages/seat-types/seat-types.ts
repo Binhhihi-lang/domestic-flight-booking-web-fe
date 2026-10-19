@@ -43,8 +43,8 @@ export class AdminSeatTypes {
       },
       {
         label: 'Trạng thái',
-        value: (r) => (r.is_active ? 'Hoạt động' : 'Tạm dừng'),
-        tone: (r) => (r.is_active ? 'success' : 'neutral'),
+        value: (r) => (r.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'),
+        tone: (r) => (r.status === 'ACTIVE' ? 'success' : 'neutral'),
       },
     ],
     fields: [
@@ -61,17 +61,30 @@ export class AdminSeatTypes {
           { value: 'FIRST', label: 'Hạng nhất' },
         ],
       },
-      { key: 'is_active', shownInTable: true, label: 'Trạng thái', type: 'toggle', hint: 'Đang hoạt động' },
+      {
+        key: 'color_hex', label: 'Màu hiển thị', type: 'text', maxLength: 7,
+        hint: 'Mã màu hex, ví dụ #1E88E5. Dùng để tô ô trên sơ đồ ghế.',
+      },
+      {
+        key: 'status', shownInTable: true,
+        label: 'Trạng thái',
+        type: 'select',
+        hint: 'Đang hoạt động',
+        options: [
+          { value: 'ACTIVE', label: 'Hoạt động' },
+          { value: 'INACTIVE', label: 'Tạm dừng' },
+        ],
+      },
     ],
     filters: [
       {
-        key: 'is_active',
+        key: 'status',
         label: 'Lọc theo trạng thái',
         defaultValue: '',
         options: [
           { value: '', label: 'Tất cả trạng thái' },
-          { value: 'true', label: 'Đang hoạt động' },
-          { value: 'false', label: 'Tạm dừng' },
+          { value: 'ACTIVE', label: 'Đang hoạt động' },
+          { value: 'INACTIVE', label: 'Tạm dừng' },
         ],
       },
     ],

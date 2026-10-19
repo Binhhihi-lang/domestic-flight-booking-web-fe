@@ -32,6 +32,7 @@ export class AccountLayout {
 
   protected readonly links: AccountLink[] = [
     { path: '/account', label: 'Vé của tôi', icon: 'confirmation_number', exact: true },
+    { path: '/account/voucher-store', label: 'Kho voucher', icon: 'redeem' },
     { path: '/account/vouchers', label: 'Voucher của tôi', icon: 'card_membership' },
     { path: '/account/wallet', label: 'Ví của tôi', icon: 'account_balance_wallet' },
     { path: '/account/profile', label: 'Hồ sơ cá nhân', icon: 'person' },

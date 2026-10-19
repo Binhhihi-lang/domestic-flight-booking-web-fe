@@ -1,8 +1,10 @@
-/** Hạng ghế — API v0.2 mục 2.6. */
+/** Hạng ghế — API v0.4 mục 2.6. */
+import { ActiveStatus } from '@core/models/airline.model';
+
 export type SeatClass = 'ECONOMY' | 'BUSINESS' | 'FIRST';
 
 /**
- * Máy bay — API v0.2 mục 2.6, bảng aircrafts (DB v0.4).
+ * Máy bay — API v0.4 mục 2.6, bảng aircrafts (DB v0.4).
  * KHÁC master data ở chỗ: aircraft KHÔNG public, chỉ STAFF/ADMIN.
  */
 export interface Aircraft {
@@ -11,28 +13,32 @@ export interface Aircraft {
   model: string;
   manufacturer: string | null;
   seat_capacity: number;
-  is_active: boolean;
-  is_deleted: boolean;
+  status: ActiveStatus;
 }
 
-export type AircraftPayload = Omit<Aircraft, 'id' | 'is_deleted'>;
+export type AircraftPayload = Omit<Aircraft, 'id'>;
 
 /**
- * Loại ghế — API v0.2 mục 2.6.
- * v0.4 nâng thành CRUD đầy đủ (trước chỉ read-only ở Phase 1).
+ * Loại ghế — API v0.4 mục 2.6.
+ * v0.4 thêm `color_hex` để sơ đồ ghế tô màu theo hạng.
  */
 export interface SeatType {
   id: number;
   seat_type_code: string;
   seat_type_name: string;
   seat_class: SeatClass;
-  is_active: boolean;
-  is_deleted: boolean;
+  color_hex: string | null;
+  status: ActiveStatus;
 }
 
-export type SeatTypePayload = Omit<SeatType, 'id' | 'is_deleted'>;
+export type SeatTypePayload = Omit<SeatType, 'id'>;
 
-/** Một ghế vật lý trong sơ đồ máy bay (API v0.2 mục 2.6). */
+/**
+ * Một ghế vật lý trong sơ đồ máy bay (API v0.4 mục 2.6).
+ *
+ * Khi GỬI lên dùng `seat_type_id`; khi NHẬN về backend trả loại ghế LỒNG
+ * (`seat_type`) thay vì id trần — xem `SeatMapService`.
+ */
 export interface AircraftSeat {
   id?: number;
   seat_row: number;
@@ -42,7 +48,7 @@ export interface AircraftSeat {
   seat_type?: SeatType;
 }
 
-/** `data` của GET /aircrafts/{id}/seat-map. */
+/** `data` của GET /admin/aircrafts/{id}/seat-map. */
 export interface SeatMap {
   aircraft_id: number;
   seat_capacity: number;
@@ -51,45 +57,48 @@ export interface SeatMap {
 }
 
 /**
- * Tin tức — API v0.2 mục 2.9, bảng news_items (DB v0.4).
+ * Tin tức — API v0.4 mục 2.9, bảng news_items.
  *
- * `content` là HTML (đã chốt) — khi render phải sanitize chống XSS, không dùng
+ * `content` là HTML — khi render phải sanitize chống XSS, không dùng
  * `[innerHTML]` trực tiếp lên dữ liệu thô.
+ *
+ * Backend trả `categories` lồng (mỗi phần tử chỉ có `id` + `name`) và KHÔNG
+ * trả `category_ids`; khi gửi lên thì dùng `category_ids`.
  */
-export type NewsStatus = 'DRAFT' | 'PUBLISHED';
+export type NewsStatus = 'DRAFT' | 'PUBLISHED' | 'UNPUBLISHED';
 
 export interface NewsItem {
   id: number;
   title: string;
   content: string;
-  /**
-   * Ảnh đại diện cho thẻ tin.
-   *
-   * LƯU Ý: DB v0.4 hiện CHƯA có cột này — cần BE thêm
-   * `ALTER TABLE news_items ADD COLUMN thumbnail_url VARCHAR(500) NULL;`
-   * Trước khi có, trường này luôn null và thẻ tin dùng nền màu thay thế.
-   */
   thumbnail_url: string | null;
   status: NewsStatus;
   published_at: string | null;
-  is_active: boolean;
-  is_deleted: boolean;
-  /** Danh mục gắn qua bảng news_category_mapping. */
+  created_at: string;
+  categories?: NewsCategoryBrief[];
+  /** Chỉ có ở phía gửi lên / mock; response thật trả `categories`. */
   category_ids?: number[];
-  categories?: NewsCategory[];
 }
 
-export type NewsPayload = Omit<NewsItem, 'id' | 'is_deleted' | 'published_at' | 'categories'>;
+/** Danh mục rút gọn lồng trong bài viết. */
+export interface NewsCategoryBrief {
+  id: number;
+  name: string;
+}
 
-/** Danh mục tin — API v0.2 mục 2.9. */
+export interface NewsPayload {
+  title: string;
+  content: string;
+  thumbnail_url: string | null;
+  category_ids: number[];
+}
+
+/** Danh mục tin — API v0.4 mục 2.9 (vùng quản trị). */
 export interface NewsCategory {
   id: number;
-  category_name: string;
+  name: string;
   description: string | null;
-  is_active: boolean;
-  is_deleted: boolean;
-  /** Chỉ có trong response chi tiết — API trả kèm danh sách tin thuộc danh mục. */
-  news_items?: NewsItem[];
+  status: ActiveStatus;
 }
 
-export type NewsCategoryPayload = Omit<NewsCategory, 'id' | 'is_deleted' | 'news_items'>;
+export type NewsCategoryPayload = Omit<NewsCategory, 'id'>;

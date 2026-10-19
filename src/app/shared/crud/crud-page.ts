@@ -12,7 +12,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
-import { ListQuery, ApiResponse } from '@core/models/api-response.model';
+import { ApiResponse, BulkResult, ListQuery } from '@core/models/api-response.model';
 import { BaseCrudService } from '@core/services/base-crud.service';
 import { PageHeader } from '@shared/components/page-header/page-header';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
@@ -119,6 +119,162 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     const url = this.router.url.split('?')[0];
     return url.replace(/\/(new|\d+(\/edit)?)$/, '');
   });
+
+  // =====================================================================
+  // Chọn nhiều dòng để thao tác hàng loạt
+  // =====================================================================
+
+  /**
+   * Id các hàng đang được chọn.
+   *
+   * Vì sao lưu theo ID chứ không theo chỉ số hàng: sau khi tải lại danh sách
+   * (đổi trang, lọc, xóa xong) thì chỉ số đổi hết, còn id vẫn định danh đúng
+   * bản ghi. Lưu chỉ số sẽ chọn nhầm hàng sau mỗi lần tải lại.
+   */
+  protected readonly selectedIds = signal<Set<number>>(new Set());
+
+  protected readonly selectedCount = computed(() => this.selectedIds().size);
+
+  /** Chọn-tất-cả chỉ áp cho TRANG HIỆN TẠI — không chọn xuyên trang. */
+  protected readonly allOnPageSelected = computed(() => {
+    const rows = this.rows();
+    return rows.length > 0 && rows.every((r) => this.selectedIds().has(r.id));
+  });
+
+  /** Có hàng được chọn VÀ có hàng chưa chọn — để hiện trạng thái nửa chọn. */
+  protected readonly someOnPageSelected = computed(() => {
+    const rows = this.rows();
+    const n = rows.filter((r) => this.selectedIds().has(r.id)).length;
+    return n > 0 && n < rows.length;
+  });
+
+  protected isSelected(id: number): boolean {
+    return this.selectedIds().has(id);
+  }
+
+  protected toggleRow(id: number, event: Event): void {
+    // Checkbox nằm trong hàng có handler mở chi tiết — chặn nổi bọt để bấm ô
+    // chọn không mở luôn trang chi tiết.
+    event.stopPropagation();
+    const next = new Set(this.selectedIds());
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    this.selectedIds.set(next);
+  }
+
+  protected toggleAllOnPage(event: Event): void {
+    event.stopPropagation();
+    const next = new Set(this.selectedIds());
+    if (this.allOnPageSelected()) {
+      for (const r of this.rows()) {
+        next.delete(r.id);
+      }
+    } else {
+      for (const r of this.rows()) {
+        next.add(r.id);
+      }
+    }
+    this.selectedIds.set(next);
+  }
+
+  protected clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  /** Bỏ chọn những id không còn trong danh sách — tránh giữ id đã bị xóa. */
+  private pruneSelection(): void {
+    const alive = new Set(this.rows().map((r) => r.id));
+    const kept = [...this.selectedIds()].filter((id) => alive.has(id));
+    if (kept.length !== this.selectedIds().size) {
+      this.selectedIds.set(new Set(kept));
+    }
+  }
+
+  /**
+   * Bật/tắt trạng thái cho các hàng đang chọn — gọi endpoint bulk thật
+   * (`PATCH /admin/{resource}/bulk`, API v0.4 mục 2.10).
+   *
+   * Trước đây gọi tuần tự từng `PUT /{id}` vì BE chưa có bulk; nay BE đã có nên
+   * dùng bulk: một request, kết quả TỪNG PHẦN (`succeeded`/`failed`) thay vì
+   * phải tự đếm.
+   */
+  protected bulkSetActive(isActive: boolean): void {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) {
+      return;
+    }
+    this.runBulkRequest(
+      (svc) => svc.bulkToggle(ids, isActive ? 'ACTIVE' : 'INACTIVE'),
+      isActive ? 'Đã kích hoạt' : 'Đã ngừng hoạt động',
+      ids.length,
+    );
+  }
+
+  /** Xóa mềm hàng loạt — phải qua hộp thoại xác nhận vì là hành động phá hủy. */
+  protected bulkDelete(): void {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) {
+      return;
+    }
+    this.dialog
+      .open(ConfirmDialog, {
+        data: {
+          title: `Xóa ${ids.length} bản ghi?`,
+          message: `Bạn có chắc muốn xóa ${ids.length} bản ghi đang chọn? Dữ liệu vẫn được giữ lại để tra lịch sử nhưng sẽ không hiện trong danh sách.`,
+          confirmText: 'Xóa',
+          tone: 'warn',
+        },
+      })
+      .afterClosed()
+      .subscribe((confirmed: boolean) => {
+        if (!confirmed) {
+          return;
+        }
+        this.runBulkRequest(
+          (svc) => svc.bulkRemove(ids),
+          'Đã xóa',
+          ids.length,
+        );
+      });
+  }
+
+  /**
+   * Chạy một lời gọi bulk và báo kết quả từng phần.
+   *
+   * Backend không chặn cả lô khi một bản ghi vi phạm — nó trả `failed` kèm mã
+   * lỗi. Vì vậy phải đọc `failed` chứ không coi HTTP 200 là tất cả thành công.
+   */
+  private runBulkRequest(
+    request: (svc: BaseCrudService<T, P>) => Observable<ApiResponse<BulkResult>>,
+    verb: string,
+    total: number,
+  ): void {
+    this.saving.set(true);
+    request(this.service()).subscribe({
+      next: (res) => {
+        this.saving.set(false);
+        this.clearSelection();
+        this.load();
+
+        const failed = res.data?.failed ?? [];
+        if (failed.length === 0) {
+          this.notify(`${verb} ${total} bản ghi`);
+          return;
+        }
+        const detail = failed.map((f) => `#${f.id} (${f.message})`).join('; ');
+        this.notify(
+          `${verb} ${total - failed.length}/${total} bản ghi. Không xử lý được ${failed.length}: ${detail}`,
+        );
+      },
+      error: (err: Error) => {
+        this.saving.set(false);
+        this.notify(err.message);
+      },
+    });
+  }
 
   ngOnInit(): void {
     this.pageSize.set(this.config().pageSize ?? 10);
@@ -267,6 +423,7 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
         next: (res) => {
           this.rows.set(res.data.items);
           this.totalItems.set(res.data.pagination.total_items);
+          this.pruneSelection();
           this.loading.set(false);
         },
         error: (err: Error) => {
@@ -308,6 +465,7 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
         const items = res.data as T[];
         this.rows.set(items);
         this.totalItems.set(items.length);
+        this.pruneSelection();
         this.loading.set(false);
       },
       error: (err: Error) => {

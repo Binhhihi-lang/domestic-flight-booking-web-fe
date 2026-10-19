@@ -62,12 +62,54 @@
           (actionClicked)="cancel()"
         />
       } @else {
+        <!-- Thanh hành động hàng loạt: chỉ hiện khi có hàng được chọn, để bảng
+             không bị thêm một dải trống lúc bình thường.
+
+             Phân cấp nút: Xóa dùng variant="danger" vì là hành động phá hủy —
+             để nó khác ba nút còn lại, tránh bấm nhầm. Ba nút kia dùng "ghost"
+             (có viền) để cùng một kiểu khung; "Bỏ chọn" không phải hành động
+             nghiệp vụ nên đứng cuối, tách khỏi nhóm hành động. -->
+        @if (selectedCount() > 0) {
+          <div class="bulkbar" role="region" aria-label="Thao tác hàng loạt">
+            <span class="bulkbar__n">Đã chọn <b>{{ selectedCount() }}</b> bản ghi</span>
+            <div class="bulkbar__acts">
+              <app-app-button size="sm" variant="ghost" [disabled]="saving()" (clicked)="bulkSetActive(true)">
+                <mat-icon>check_circle</mat-icon>
+                Kích hoạt
+              </app-app-button>
+              <app-app-button size="sm" variant="ghost" [disabled]="saving()" (clicked)="bulkSetActive(false)">
+                <mat-icon>pause_circle</mat-icon>
+                Ngừng
+              </app-app-button>
+              <app-app-button size="sm" variant="danger" [disabled]="saving()" (clicked)="bulkDelete()">
+                <mat-icon>delete_outline</mat-icon>
+                Xóa
+              </app-app-button>
+              <app-app-button size="sm" variant="ghost" [disabled]="saving()" (clicked)="clearSelection()">
+                <mat-icon>close</mat-icon>
+                Bỏ chọn
+              </app-app-button>
+            </div>
+          </div>
+        }
+
         <!-- Khung cuộn ngang: bảng rộng hơn màn hình thì tự cuộn, không đẩy cả
              trang tràn ngang và không cắt mất cột. -->
         <div class="tbl-wrap">
           <table class="tbl">
             <thead>
               <tr>
+                @if (!config().readonly) {
+                  <th class="col-check">
+                    <input
+                      type="checkbox"
+                      aria-label="Chọn tất cả trên trang này"
+                      [checked]="allOnPageSelected()"
+                      [indeterminate]="someOnPageSelected()"
+                      (change)="toggleAllOnPage($event)"
+                    />
+                  </th>
+                }
                 @for (c of config().columns; track c.label) {
                   <th [class.num]="c.kind === 'num'" [style.width]="c.width">{{ c.label }}</th>
                 }
@@ -82,11 +124,23 @@
                      được bằng bàn phím, không chỉ bằng chuột. -->
                 <tr
                   [class.row--clickable]="!config().readonly"
+                  [class.row--selected]="isSelected(row.id)"
                   [attr.tabindex]="config().readonly ? null : 0"
                   [attr.role]="config().readonly ? null : 'link'"
                   (click)="openDetail(row)"
                   (keydown)="onRowKey($event, row)"
                 >
+                  @if (!config().readonly) {
+                    <td class="col-check">
+                      <input
+                        type="checkbox"
+                        [attr.aria-label]="'Chọn ' + config().title + ' này'"
+                        [checked]="isSelected(row.id)"
+                        (change)="toggleRow(row.id, $event)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </td>
+                  }
                   @for (c of config().columns; track c.label) {
                     <td [class.num]="c.kind === 'num'" [class.code]="c.kind === 'code'">
                       @if (c.image) {
@@ -105,6 +159,16 @@
                         }
                       } @else if (c.tone) {
                         <app-status-badge [tone]="c.tone(row)" [label]="c.value(row)" />
+                      } @else if (c.link) {
+                        <!-- Cột dẫn sang màn con. Chặn nổi bọt để bấm link không
+                             mở luôn trang chi tiết của hàng. -->
+                        <a
+                          class="rowlink"
+                          [routerLink]="c.link(row)"
+                          (click)="$event.stopPropagation()"
+                        >
+                          {{ c.value(row) }}
+                        </a>
                       } @else {
                         {{ c.value(row) }}
                       }

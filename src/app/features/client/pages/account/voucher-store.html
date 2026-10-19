@@ -1,0 +1,66 @@
+<div class="store">
+  <header class="store__h">
+    <h1>Kho voucher</h1>
+    <p>Nhận voucher vào ví rồi chọn khi thanh toán — không cần nhập mã</p>
+  </header>
+
+  @if (loading()) {
+    <div class="v-grid">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="v v--skeleton">
+          <app-skeleton-block height="86px" />
+          <div class="v__bd">
+            <app-skeleton-block width="70%" height="15px" />
+            <div style="height: 8px"></div>
+            <app-skeleton-block width="90%" height="12px" />
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (items().length === 0) {
+    <app-app-card>
+      <app-empty-state
+        icon="redeem"
+        message="Kho voucher đang trống"
+        hint="Ưu đãi mới sẽ xuất hiện ở đây"
+      />
+    </app-app-card>
+  } @else {
+    <div class="v-grid">
+      @for (v of items(); track v.id) {
+        <article class="v" [class.v--claimed]="v.claimed">
+          <div class="v__top">
+            <div class="v__val">{{ discountText(v) }}</div>
+            @if (v.claimed) {
+              <span class="v__flag"><mat-icon>check_circle</mat-icon> Đã nhận</span>
+            }
+          </div>
+
+          <div class="v__bd">
+            <h3 class="v__nm">{{ v.voucher_name }}</h3>
+            @if (v.description) {
+              <p class="v__ds">{{ v.description }}</p>
+            }
+            <ul class="v__meta">
+              <li>{{ minOrderText(v) }}</li>
+              <li>HSD: {{ formatDate(v.end_date) }}</li>
+              @if (v.claim_limit !== null) {
+                <li>Còn {{ v.claim_limit - v.claimed_count }} lượt</li>
+              }
+            </ul>
+          </div>
+
+          <div class="v__act">
+            @if (v.claimed) {
+              <app-app-button variant="ghost" [disabled]="true">Đã nhận</app-app-button>
+            } @else {
+              <app-app-button [disabled]="isClaiming(v.id)" (clicked)="claim(v)">
+                {{ isClaiming(v.id) ? 'Đang nhận…' : 'Nhận voucher' }}
+              </app-app-button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

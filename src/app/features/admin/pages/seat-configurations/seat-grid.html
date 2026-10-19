@@ -1,0 +1,39 @@
+<!-- Bảng cuộn ngang: máy bay 6 cột vẫn vừa, nhưng để chắc chắn không đẩy cả
+     trang tràn ngang trên màn hẹp. -->
+<div class="grid-wrap">
+  <table class="grid">
+    <caption class="sr-only">Lưới ghế xem trước</caption>
+    <thead>
+      <tr>
+        <th class="grid__corner" scope="col"></th>
+        @for (col of columns(); track col) {
+          <th class="grid__colhead" scope="col">{{ col }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row) {
+        <tr>
+          <th class="grid__rowhead" scope="row">{{ row }}</th>
+          @for (col of columns(); track col) {
+            @if (seatAt(row, col); as seat) {
+              <td>
+                <button
+                  type="button"
+                  [class]="classOf(seat)"
+                  [attr.aria-label]="'Ghế ' + row + col + ', loại ' + typeCode(seat.seat_type_id)"
+                  (click)="onCell(seat)"
+                >
+                  {{ typeCode(seat.seat_type_id) }}
+                </button>
+              </td>
+            } @else {
+              <!-- Hàng khuyết ô (lối đi, khoang trống) — để trống có chủ đích. -->
+              <td class="grid__gap" aria-hidden="true"></td>
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

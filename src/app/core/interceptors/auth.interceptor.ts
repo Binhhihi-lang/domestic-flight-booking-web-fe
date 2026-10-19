@@ -6,18 +6,25 @@ import { AuthService } from '@core/services/auth.service';
 import { TokenService } from '@core/services/token.service';
 
 /**
- * Gắn access token vào mọi request và xử lý lỗi tập trung.
+ * Gắn access token vào request và xử lý lỗi tập trung.
  *
  * - 401 (1002): token thiếu/hết hạn → xóa phiên để guard đưa về trang đăng nhập.
  * - Các mã lỗi khác: chuyển envelope của Backend thành `Error` với message
  *   hiển thị được, để component chỉ cần `error.message`.
+ *
+ * KHÔNG gắn token vào endpoint công khai của `/auth`: token cũ/còn rác trong
+ * localStorage sẽ bị `BearerTokenAuthenticationFilter` giải mã thất bại và trả
+ * 401 NGAY, chặn luôn chính request đăng nhập — kể cả khi endpoint đó permitAll.
  */
+const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/password-reset'];
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const tokenService = inject(TokenService);
   const token = tokenService.getToken();
+  const isPublicAuth = PUBLIC_AUTH_PATHS.some((path) => req.url.includes(path));
 
-  const authorizedReq = token
+  const authorizedReq = token && !isPublicAuth
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 

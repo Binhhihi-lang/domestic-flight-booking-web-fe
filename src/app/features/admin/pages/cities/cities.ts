@@ -32,25 +32,34 @@ export class AdminCities {
       { label: 'Quốc gia', value: (r) => r.country ?? '—' },
       {
         label: 'Trạng thái',
-        value: (r) => (r.is_active ? 'Hoạt động' : 'Tạm dừng'),
-        tone: (r) => (r.is_active ? 'success' : 'neutral'),
+        value: (r) => (r.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'),
+        tone: (r) => (r.status === 'ACTIVE' ? 'success' : 'neutral'),
       },
     ],
     fields: [
       { key: 'city_code', shownInTable: true, label: 'Mã thành phố', type: 'text', required: true, maxLength: 10, hint: 'Tối đa 10 ký tự, ví dụ HAN' },
       { key: 'city_name', shownInTable: true, label: 'Tên thành phố', type: 'text', required: true, maxLength: 100 },
       { key: 'country', shownInTable: true, label: 'Quốc gia', type: 'text', maxLength: 100 },
-      { key: 'is_active', shownInTable: true, label: 'Trạng thái', type: 'toggle', hint: 'Đang hoạt động' },
+      {
+        key: 'status', shownInTable: true,
+        label: 'Trạng thái',
+        type: 'select',
+        hint: 'Đang hoạt động',
+        options: [
+          { value: 'ACTIVE', label: 'Hoạt động' },
+          { value: 'INACTIVE', label: 'Tạm dừng' },
+        ],
+      },
     ],
     filters: [
       {
-        key: 'is_active',
+        key: 'status',
         label: 'Lọc theo trạng thái',
         defaultValue: '',
         options: [
           { value: '', label: 'Tất cả trạng thái' },
-          { value: 'true', label: 'Đang hoạt động' },
-          { value: 'false', label: 'Tạm dừng' },
+          { value: 'ACTIVE', label: 'Đang hoạt động' },
+          { value: 'INACTIVE', label: 'Tạm dừng' },
         ],
       },
     ],

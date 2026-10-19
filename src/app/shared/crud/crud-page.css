@@ -1,35 +1,6 @@
 /* Khung hẹp cho trang form — form dài nên bó bề ngang để dễ đọc, không dàn
    hết 1240px. */
-.wrap--narrow {
-  max-width: 860px;
-}
-
 /* ---------- Breadcrumb ---------- */
-.crumbs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-ink-muted);
-  margin-bottom: 12px;
-}
-
-.crumbs a {
-  color: var(--color-ink-muted);
-  text-decoration: none;
-}
-
-.crumbs a:hover {
-  color: var(--color-primary);
-}
-
-.crumbs mat-icon {
-  font-size: 17px;
-  width: 17px;
-  height: 17px;
-  color: var(--color-ink-subtle);
-}
-
 /* ---------- Thanh công cụ ---------- */
 .toolbar {
   display: flex;
@@ -72,15 +43,7 @@
   outline: none;
 }
 
-.search input:focus,
-.select:focus,
-.field input:focus,
-.field select:focus,
-.field textarea:focus,
-.imgfield__controls input[type='text']:focus {
-  border-color: var(--color-primary-bright);
-  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
-}
+
 
 .select {
   font-family: var(--font-body);
@@ -105,6 +68,15 @@
     calc(100% - 13px) calc(50% + 1px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
+}
+
+/* Focus cho ô nhập riêng của màn này (search, select, ô ảnh). Phần .field
+   đã chuyển sang src/styles/_forms.scss. */
+.search input:focus,
+.select:focus,
+.imgfield__controls input[type='text']:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
 }
 
 /* ---------- Bảng ---------- */
@@ -232,17 +204,21 @@
   white-space: nowrap;
 }
 
-.rowbtn {
+.rowbtn,
+.rowlink {
   font-family: var(--font-body);
   font-size: 12.5px;
   font-weight: 600;
+  text-decoration: none;
+}
+
+.rowbtn {
   padding: 6px 11px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-ink);
   cursor: pointer;
-  text-decoration: none;
 }
 
 .rowbtn:hover {
@@ -263,8 +239,15 @@
   color: var(--color-on-danger-soft);
 }
 
-/* ---------- Phân trang ---------- */
-.pager {
+/* Cột dẫn sang màn con (vd "Cấu hình sơ đồ ghế"). */
+.rowlink {
+  color: var(--color-primary-bright);
+  white-space: nowrap;
+}
+
+.rowlink:hover {
+  text-decoration: underline;
+}.pager {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -369,89 +352,6 @@
 }
 
 /* ---------- Trang form ---------- */
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.field--full {
-  grid-column: 1 / -1;
-}
-
-.field label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-ink);
-}
-
-.req {
-  color: var(--color-danger);
-}
-
-.field input,
-.field select,
-.field textarea {
-  font-family: var(--font-body);
-  font-size: 14.5px;
-  padding: 11px 13px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-ink);
-  outline: none;
-  width: 100%;
-  resize: vertical;
-}
-
-.field--error input,
-.field--error select,
-.field--error textarea {
-  border-color: var(--color-danger);
-}
-
-.field .hint {
-  font-size: 11.5px;
-  color: var(--color-ink-subtle);
-}
-
-.field__err {
-  font-size: 11.5px;
-  color: var(--color-danger);
-  font-weight: 600;
-}
-
-.toggle {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 13.5px;
-  color: var(--color-ink);
-  cursor: pointer;
-  padding: 7px 0;
-}
-
-.toggle input {
-  width: 17px;
-  height: 17px;
-  accent-color: var(--color-primary);
-  cursor: pointer;
-  flex: 0 0 auto;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 9px;
-}
-
 /* ---------- Ô nhập ảnh (dán URL hoặc chọn từ máy) ---------- */
 .imgfield {
   display: flex;
@@ -565,4 +465,61 @@
 /* Đẩy nút "Bỏ lọc" về sát phải thanh công cụ. */
 .toolbar__end {
   margin-left: auto;
+}
+
+
+/* ===== Chọn nhiều dòng & thao tác hàng loạt ===== */
+
+/* Cột checkbox: hẹp, canh giữa, không cho hàng bấm mở chi tiết khi bấm vào. */
+.col-check {
+  width: 40px;
+  text-align: center;
+  padding-left: 14px;
+  padding-right: 0;
+}
+
+.col-check input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* Hàng đang được chọn — nền nhạt để thấy ngay mình đã chọn gì. */
+.row--selected {
+  background: var(--color-primary-soft);
+}
+
+.row--selected:hover {
+  background: var(--color-primary-soft);
+}
+
+/* Thanh hành động hàng loạt, hiện phía trên bảng khi có hàng được chọn. */
+.bulkbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--color-primary-bright);
+  border-radius: var(--radius);
+  background: var(--color-primary-soft);
+}
+
+.bulkbar__n {
+  font-size: 13px;
+  color: var(--color-ink);
+}
+
+.bulkbar__n b {
+  font-variant-numeric: tabular-nums;
+}
+
+.bulkbar__acts {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
 }

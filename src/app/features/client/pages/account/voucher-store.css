@@ -1,0 +1,123 @@
+.store__h {
+  margin-bottom: 18px;
+}
+
+.store__h h1 {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.store__h p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
+.v-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+
+.v {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* Voucher đã nhận: làm mờ để mắt bỏ qua, nhưng vẫn đọc được. */
+.v--claimed {
+  opacity: 0.62;
+}
+
+.v__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-bright));
+  color: #fff;
+}
+
+/* Tiêu đề dài ("Giảm 10%, tối đa 200.000₫") được phép xuống dòng và co lại,
+   nhường chỗ cho nhãn. `min-width: 0` cần thiết vì flex item mặc định không co
+   xuống dưới kích thước nội dung. */
+.v__val {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 0;
+}
+
+/* Nhãn "Đã nhận" KHÔNG được co và KHÔNG được xuống dòng.
+   Vì sao cần cả hai: trước đây nhãn là flex item mặc định `flex-shrink: 1`, nên
+   khi tiêu đề dài chiếm chỗ thì nhãn bị bóp còn 67px và chữ "Đã nhận" xuống 2
+   dòng, icon lệch khỏi chữ. */
+.v__flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.v__flag mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+/* Phần thân co giãn để nút Nhận luôn nằm sát đáy, các thẻ trong lưới cao đều. */
+.v__bd {
+  flex: 1 1 auto;
+  padding: 14px 16px;
+}
+
+.v__nm {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.v__ds {
+  font-size: 12.5px;
+  color: var(--color-ink-muted);
+  line-height: 1.55;
+  margin: 0 0 10px;
+}
+
+.v__meta {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11.5px;
+  color: var(--color-ink-subtle);
+}
+
+.v__act {
+  padding: 0 16px 15px;
+}
+
+.v__act app-app-button {
+  display: block;
+}
+
+.v--skeleton {
+  pointer-events: none;
+}

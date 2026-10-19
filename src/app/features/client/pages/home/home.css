@@ -530,12 +530,22 @@
 /* =====================================================================
    Khối Tin tức trên trang chủ
    ===================================================================== */
+/* Đầu khối có tiêu đề + nút "Xem tất cả" bên phải.
+   margin-bottom khớp `.home-sec > p` (18px) để khối có nút và khối không nút
+   cách card như nhau — trước đây khối này 0px nên chữ dính sát card. */
 .sec-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+/* Dòng mô tả trong .sec-head: bỏ margin đáy vì khoảng cách đã do .sec-head lo,
+   nếu để lại thì thành 18 + 18 = 36px, hở hơn khối không có nút. */
+.sec-head p {
+  margin-bottom: 0;
 }
 
 .sec-more {

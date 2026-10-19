@@ -1,0 +1,153 @@
+/* Lưới thẻ khuyến mãi — cùng khuôn với lưới thẻ ở trang chủ. */
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  gap: 16px;
+}
+
+.promo {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.promo:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Cả thẻ là một liên kết tới trang chi tiết. */
+.promo__link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.promo__img {
+  height: 158px;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-alt);
+}
+
+.promo__pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Chưa có ảnh: nền + icon, KHÔNG để ảnh vỡ của trình duyệt. */
+.promo__img--ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-primary-soft), var(--color-surface-alt));
+  color: var(--color-primary);
+}
+
+.promo__img--ph mat-icon {
+  font-size: 42px;
+  width: 42px;
+  height: 42px;
+  opacity: 0.55;
+}
+
+.promo__tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 11px;
+  border-radius: var(--radius-sm);
+  color: #fff;
+}
+
+.promo__tag--danger {
+  background: var(--color-danger);
+}
+
+.promo__tag--primary {
+  background: var(--color-primary-bright);
+}
+
+.promo__tag--accent {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.promo__bd {
+  padding: 15px 16px 16px;
+}
+
+.promo__nm {
+  font-family: var(--font-heading);
+  font-size: 15.5px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.promo__ds {
+  font-size: 12.5px;
+  color: var(--color-ink-muted);
+  line-height: 1.55;
+  margin: 0 0 11px;
+}
+
+/* Hàng meta: hạn dùng + cảnh báo sắp hết. */
+.promo__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--color-ink-muted);
+  margin-bottom: 9px;
+}
+
+.promo__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.promo__meta mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.promo__soon {
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+.promo__lk {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-primary-bright);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.promo__lk mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.promo--skeleton {
+  pointer-events: none;
+}
+
+.promo--skeleton:hover {
+  transform: none;
+  box-shadow: none;
+}

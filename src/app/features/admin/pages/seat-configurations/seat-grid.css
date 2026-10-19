@@ -1,0 +1,71 @@
+.grid-wrap {
+  overflow-x: auto;
+}
+
+.grid {
+  border-collapse: separate;
+  border-spacing: 4px;
+  margin: 0 auto;
+}
+
+.grid__corner,
+.grid__colhead,
+.grid__rowhead {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-ink-subtle);
+  text-align: center;
+}
+
+.grid__colhead {
+  width: 38px;
+}
+
+.grid__rowhead {
+  width: 26px;
+}
+
+.cell {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.cell:hover {
+  transform: scale(1.08);
+}
+
+/* Màu theo hạng ghế — khớp bảng Seat UI của tài liệu UI. */
+.cell--economy {
+  background: var(--color-primary-bright);
+}
+
+.cell--business {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.cell--first {
+  background: var(--color-danger);
+}
+
+.grid__gap {
+  width: 38px;
+  height: 38px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}

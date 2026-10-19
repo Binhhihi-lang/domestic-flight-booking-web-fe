@@ -1,0 +1,111 @@
+<div class="mv">
+  <header class="mv__h">
+    <h1>Voucher của tôi</h1>
+    <p>Voucher đã nhận — chọn từ ví khi thanh toán, không cần nhập mã</p>
+  </header>
+
+  <div class="mv__stats">
+    <span class="stat"><b>{{ counts().AVAILABLE }}</b> dùng được</span>
+    <span class="stat"><b>{{ counts().USED }}</b> đã dùng</span>
+    <span class="stat"><b>{{ counts().EXPIRED }}</b> hết hạn</span>
+  </div>
+
+  <div class="mv__filters">
+    <button type="button" class="chip" [class.chip--on]="filter() === ''" (click)="setFilter('')">
+      Tất cả
+    </button>
+    <button
+      type="button"
+      class="chip"
+      [class.chip--on]="filter() === 'AVAILABLE'"
+      (click)="setFilter('AVAILABLE')"
+    >
+      Dùng được
+    </button>
+    <button
+      type="button"
+      class="chip"
+      [class.chip--on]="filter() === 'RESERVED'"
+      (click)="setFilter('RESERVED')"
+    >
+      Đang giữ
+    </button>
+    <button
+      type="button"
+      class="chip"
+      [class.chip--on]="filter() === 'USED'"
+      (click)="setFilter('USED')"
+    >
+      Đã dùng
+    </button>
+    <button
+      type="button"
+      class="chip"
+      [class.chip--on]="filter() === 'EXPIRED'"
+      (click)="setFilter('EXPIRED')"
+    >
+      Hết hạn
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="mv__grid">
+      @for (i of [1, 2]; track i) {
+        <div class="card card--skeleton">
+          <app-skeleton-block height="80px" />
+          <div class="card__bd">
+            <app-skeleton-block width="70%" height="15px" />
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (filtered().length === 0) {
+    <app-app-card>
+      <app-empty-state
+        icon="card_membership"
+        [message]="filter() === '' ? 'Ví chưa có voucher nào' : 'Không có voucher ở trạng thái này'"
+        [hint]="filter() === '' ? 'Vào Kho voucher để nhận ưu đãi' : 'Thử chọn trạng thái khác'"
+      />
+      <a class="to-store" routerLink="/account/voucher-store">Đến kho voucher</a>
+    </app-app-card>
+  } @else {
+    <div class="mv__grid">
+      @for (v of filtered(); track v.id) {
+        <article class="card" [class.card--dim]="isDimmed(v)">
+          <div class="card__top">
+            <span class="card__val">{{ discountText(v) }}</span>
+            <span class="card__st" [class]="'card__st--' + statusTone(v.status)">
+              {{ statusLabel(v.status) }}
+            </span>
+          </div>
+
+          <div class="card__bd">
+            <h3 class="card__nm">{{ v.voucher.voucher_name }}</h3>
+            @if (v.voucher.description) {
+              <p class="card__ds">{{ v.voucher.description }}</p>
+            }
+            <ul class="card__meta">
+              <li>
+                <mat-icon>event</mat-icon>
+                HSD: {{ formatDate(v.expires_at) }}
+              </li>
+              <li>
+                <mat-icon>card_giftcard</mat-icon>
+                {{ v.source === 'CLAIMED' ? 'Tự nhận từ kho' : 'Được tặng' }}
+              </li>
+              @if (v.used_at) {
+                <li>
+                  <mat-icon>check</mat-icon>
+                  Dùng lúc {{ formatDate(v.used_at) }}
+                  @if (v.discount_amount) {
+                    — giảm {{ formatMoney(v.discount_amount) }}₫
+                  }
+                </li>
+              }
+            </ul>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

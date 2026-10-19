@@ -1,0 +1,176 @@
+/* Bộ lọc danh mục — đặt trên lưới, canh trái. */
+.cat-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.cat-filter__lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.cat-filter__sel {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 34px 9px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  min-width: 200px;
+  max-width: 100%;
+  /* Mũi tên tự vẽ cho cân đối — mũi tên mặc định của trình duyệt vẽ sát mép. */
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-ink-muted) 50%),
+    linear-gradient(135deg, var(--color-ink-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% + 1px),
+    calc(100% - 13px) calc(50% + 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.cat-filter__sel:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+/* Nhãn danh mục trên thẻ tin. */
+.news__cats {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.news__cat {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Lưới thẻ tin — cùng khuôn với lưới thẻ ở trang chủ và trang khuyến mãi. */
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  gap: 16px;
+}
+
+.news {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.news:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.news__link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.news__img {
+  display: block;
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  background: var(--color-surface-alt);
+}
+
+/* Nền thay thế khi bài chưa có ảnh. */
+.news__img--ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0a4d8c, #0770cd 55%, #0194f3);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.news__img--ph mat-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+}
+
+.news__bd {
+  padding: 15px 16px 16px;
+}
+
+.news__date {
+  font-size: 11.5px;
+  color: var(--color-ink-muted);
+  margin-bottom: 6px;
+}
+
+.news__title {
+  font-family: var(--font-heading);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 7px;
+  /* Tối đa 2 dòng để các thẻ trong lưới cao đều nhau. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news__excerpt {
+  font-size: 12.5px;
+  color: var(--color-ink-muted);
+  line-height: 1.55;
+  margin: 0 0 11px;
+}
+
+.news__lk {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-primary-bright);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.news__lk mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.news--skeleton {
+  padding: 0 0 16px;
+  pointer-events: none;
+}
+
+.news--skeleton .news__bd {
+  padding-top: 14px;
+}
+
+.news--skeleton:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .news-grid {
+    grid-template-columns: 1fr;
+  }
+}

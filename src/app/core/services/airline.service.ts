@@ -11,6 +11,6 @@ import { BaseCrudService } from '@core/services/base-crud.service';
 @Injectable({ providedIn: 'root' })
 export class AirlineService extends BaseCrudService<Airline> {
   constructor() {
-    super('airlines');
+    super('admin/airlines');
   }
 }

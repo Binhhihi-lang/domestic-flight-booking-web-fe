@@ -13,8 +13,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_name: 'Vietnam Airlines',
     country: 'Việt Nam',
     logo_url: 'https://picsum.photos/seed/vietnamairlines/160/160',
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
   },
   {
     id: 2,
@@ -22,8 +21,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_name: 'Vietjet Air',
     country: 'Việt Nam',
     logo_url: 'https://picsum.photos/seed/vietjetair/160/160',
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
   },
   {
     id: 3,
@@ -31,8 +29,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_name: 'Bamboo Airways',
     country: 'Việt Nam',
     logo_url: 'https://picsum.photos/seed/bambooairways/160/160',
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
   },
   {
     id: 4,
@@ -40,8 +37,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_name: 'Vietravel Airlines',
     country: 'Việt Nam',
     logo_url: 'https://picsum.photos/seed/vietravel/160/160',
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
   },
   {
     id: 5,
@@ -49,8 +45,7 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_name: 'Pacific Airlines',
     country: 'Việt Nam',
     logo_url: null,
-    is_active: false,
-    is_deleted: false,
+    status: 'INACTIVE',
   },
   {
     id: 6,
@@ -58,7 +53,6 @@ export const AIRLINES_MOCK: Airline[] = [
     airline_name: 'Thai Vietjet Air',
     country: 'Thái Lan',
     logo_url: null,
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
   },
 ];

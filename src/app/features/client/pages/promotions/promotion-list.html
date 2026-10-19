@@ -1,0 +1,69 @@
+<div class="wrap">
+  <header class="page-h">
+    <div>
+      <h1>Khuyến mãi</h1>
+      <p>Các chương trình ưu đãi đang áp dụng cho chuyến bay nội địa</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="promo-grid">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="promo promo--skeleton">
+          <app-skeleton-block height="150px" />
+          <div class="promo__bd">
+            <app-skeleton-block width="70%" height="16px" />
+            <div style="height: 9px"></div>
+            <app-skeleton-block width="90%" height="12px" />
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (promos().length === 0) {
+    <app-app-card>
+      <app-empty-state
+        icon="local_offer"
+        message="Hiện chưa có chương trình khuyến mãi"
+        hint="Ưu đãi mới sẽ xuất hiện ở đây"
+      />
+    </app-app-card>
+  } @else {
+    <div class="promo-grid">
+      @for (item of promos(); track item.promo.id) {
+        <article class="promo">
+          <a class="promo__link" [routerLink]="['/promotions', item.promo.id]">
+            @if (item.promo.image_url) {
+              <div class="promo__img">
+                <img
+                  class="promo__pic"
+                  [src]="item.promo.image_url"
+                  [alt]="item.promo.promotion_name"
+                  loading="lazy"
+                />
+                <span class="promo__tag" [class]="'promo__tag--' + item.tone">{{ item.badge }}</span>
+              </div>
+            } @else {
+              <!-- Chưa có ảnh: nền + icon, KHÔNG để ảnh vỡ. -->
+              <div class="promo__img promo__img--ph">
+                <mat-icon>local_offer</mat-icon>
+                <span class="promo__tag" [class]="'promo__tag--' + item.tone">{{ item.badge }}</span>
+              </div>
+            }
+
+            <div class="promo__bd">
+              <div class="promo__nm">{{ item.promo.promotion_name }}</div>
+              <p class="promo__ds">{{ item.summary }}</p>
+              <div class="promo__meta">
+                <span><mat-icon>event</mat-icon> Đến {{ formatDate(item.promo.end_date) }}</span>
+                @if (daysLeft(item.promo.end_date) <= 7) {
+                  <span class="promo__soon">Còn {{ daysLeft(item.promo.end_date) }} ngày</span>
+                }
+              </div>
+              <div class="promo__lk">Xem chi tiết <mat-icon>arrow_forward</mat-icon></div>
+            </div>
+          </a>
+        </article>
+      }
+    </div>
+  }
+</div>

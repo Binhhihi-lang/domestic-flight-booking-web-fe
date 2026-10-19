@@ -5,11 +5,14 @@ import { CrudConfig } from '@shared/crud/crud-config';
 import { CrudPage } from '@shared/crud/crud-page';
 
 /**
- * Quản lý tin tức — NEWS-01→07 (API v0.2 mục 2.9).
+ * Quản lý tin tức — NEWS-01→07 (API v0.4 mục 2.9).
  *
  * Lưu ý: `content` là HTML. Màn này chỉ soạn nội dung; khi HIỂN THỊ ở trang
  * khách phải sanitize chống XSS, không dùng [innerHTML] lên dữ liệu thô.
- * Publish/unpublish là hành động riêng (có permission riêng) nên tách khỏi PUT.
+ *
+ * Publish/unpublish là endpoint RIÊNG (`POST /{id}/publish`), không đi qua PUT —
+ * nên `status` không có trong form; đổi trạng thái bằng thao tác hàng loạt.
+ * Bài mới luôn tạo ở `DRAFT`.
  */
 @Component({
   selector: 'app-admin-news',
@@ -42,8 +45,10 @@ export class AdminNews {
       { label: 'Tiêu đề', value: (r) => r.title },
       {
         label: 'Trạng thái',
-        value: (r) => (r.status === 'PUBLISHED' ? 'Đã đăng' : 'Bản nháp'),
-        tone: (r) => (r.status === 'PUBLISHED' ? 'success' : 'warning'),
+        value: (r) =>
+          r.status === 'PUBLISHED' ? 'Đã đăng' : r.status === 'UNPUBLISHED' ? 'Đã ẩn' : 'Bản nháp',
+        tone: (r) =>
+          r.status === 'PUBLISHED' ? 'success' : r.status === 'UNPUBLISHED' ? 'neutral' : 'warning',
       },
       {
         label: 'Ngày đăng',
@@ -78,6 +83,7 @@ export class AdminNews {
         options: [
           { value: '', label: 'Tất cả trạng thái' },
           { value: 'PUBLISHED', label: 'Đã đăng' },
+          { value: 'UNPUBLISHED', label: 'Đã ẩn' },
           { value: 'DRAFT', label: 'Bản nháp' },
         ],
       },

@@ -56,8 +56,8 @@ export class AdminVouchers {
       },
       {
         label: 'Trạng thái',
-        value: (r) => (r.is_active ? 'Đang phát' : 'Tạm dừng'),
-        tone: (r) => (r.is_active ? 'success' : 'neutral'),
+        value: (r) => (r.status === 'ACTIVE' ? 'Đang phát' : 'Tạm dừng'),
+        tone: (r) => (r.status === 'ACTIVE' ? 'success' : 'neutral'),
       },
     ],
     fields: [

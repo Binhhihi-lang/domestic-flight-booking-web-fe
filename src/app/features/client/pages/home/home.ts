@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { NewsItem } from '@core/models/fleet-news.model';
 import { Promotion } from '@core/models/promotion.model';
-import { NewsService, PromotionService } from '@core/services/catalog.service';
+import { PublicNewsService, PublicPromotionService } from '@core/services/public-catalog.service';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -54,8 +54,8 @@ interface PromoView {
 })
 export class Home {
   private readonly router = inject(Router);
-  private readonly newsService = inject(NewsService);
-  private readonly promotionService = inject(PromotionService);
+  private readonly newsService = inject(PublicNewsService);
+  private readonly promotionService = inject(PublicPromotionService);
 
   /**
    * Tin tức mới nhất cho trang chủ.
@@ -96,7 +96,7 @@ export class Home {
       next: (res) => {
         const today = Home.todayIso();
         const active = res.data.items.filter(
-          (p) => p.is_active && !p.is_deleted && p.start_date <= today && p.end_date >= today,
+          (p) => p.status === 'ACTIVE' && p.start_date <= today && p.end_date >= today,
         );
         this.promos.set(active.slice(0, 3).map((p, i) => this.toPromoView(p, i)));
         this.promosLoading.set(false);
@@ -225,12 +225,23 @@ export class Home {
   ];
 
   /** Flight Search thuộc Phase 2 — hiện chuyển sang trang kết quả để xem khuôn. */
+  /**
+   * Flight Search thuộc Phase 2 — hiện chuyển sang trang kết quả để xem khuôn.
+   *
+   * Truyền cả số hành khách qua query param: API `GET /flights/search` nhận
+   * `passengers` (API v0.2 mục 3) và giá vé phụ thuộc số lượng + loại hành khách
+   * (trẻ em 75%, em bé 10% giá người lớn). Để sẵn trên URL thì khi nối API chỉ
+   * cần đọc lại, không phải sửa luồng điều hướng.
+   */
   protected onSearch(value: FlightSearchValue): void {
     this.router.navigate(['/flights'], {
       queryParams: {
         from: value.from || null,
         to: value.to || null,
         depart: value.departDate || null,
+        adults: value.passengers.adults,
+        children: value.passengers.children || null,
+        infants: value.passengers.infants || null,
       },
     });
   }

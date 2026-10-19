@@ -1,29 +1,30 @@
 import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
 import { Permission, Role } from '@core/models/rbac.model';
+import { UserVoucher } from '@core/models/user-voucher.model';
 
 /** Máy bay — API v0.2 mục 2.6. Chỉ STAFF/ADMIN truy cập. */
 export const AIRCRAFT_MOCK: Aircraft[] = [
-  { id: 1, aircraft_code: 'VN-A350-01', model: 'Airbus A350-900', manufacturer: 'Airbus', seat_capacity: 305, is_active: true, is_deleted: false },
-  { id: 2, aircraft_code: 'VN-A321-05', model: 'Airbus A321neo', manufacturer: 'Airbus', seat_capacity: 203, is_active: true, is_deleted: false },
-  { id: 3, aircraft_code: 'VJ-A320-12', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, is_active: true, is_deleted: false },
-  { id: 4, aircraft_code: 'VJ-A321-08', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 220, is_active: true, is_deleted: false },
-  { id: 5, aircraft_code: 'QH-B787-02', model: 'Boeing 787-9', manufacturer: 'Boeing', seat_capacity: 274, is_active: true, is_deleted: false },
-  { id: 6, aircraft_code: 'QH-A321-04', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 203, is_active: true, is_deleted: false },
-  { id: 7, aircraft_code: 'VU-A321-01', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 220, is_active: true, is_deleted: false },
-  { id: 8, aircraft_code: 'BL-A320-03', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, is_active: false, is_deleted: false },
+  { id: 1, aircraft_code: 'VN-A350-01', model: 'Airbus A350-900', manufacturer: 'Airbus', seat_capacity: 305, status: 'ACTIVE' },
+  { id: 2, aircraft_code: 'VN-A321-05', model: 'Airbus A321neo', manufacturer: 'Airbus', seat_capacity: 203, status: 'ACTIVE' },
+  { id: 3, aircraft_code: 'VJ-A320-12', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, status: 'ACTIVE' },
+  { id: 4, aircraft_code: 'VJ-A321-08', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 220, status: 'ACTIVE' },
+  { id: 5, aircraft_code: 'QH-B787-02', model: 'Boeing 787-9', manufacturer: 'Boeing', seat_capacity: 274, status: 'ACTIVE' },
+  { id: 6, aircraft_code: 'QH-A321-04', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 203, status: 'ACTIVE' },
+  { id: 7, aircraft_code: 'VU-A321-01', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 220, status: 'ACTIVE' },
+  { id: 8, aircraft_code: 'BL-A320-03', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, status: 'INACTIVE' },
 ];
 
 /** Loại ghế — API v0.2 mục 2.6. v0.4 nâng thành CRUD đầy đủ. */
 export const SEAT_TYPES_MOCK: SeatType[] = [
-  { id: 1, seat_type_code: 'ECO', seat_type_name: 'Phổ thông', seat_class: 'ECONOMY', is_active: true, is_deleted: false },
-  { id: 2, seat_type_code: 'ECO_WIN', seat_type_name: 'Phổ thông - cửa sổ', seat_class: 'ECONOMY', is_active: true, is_deleted: false },
-  { id: 3, seat_type_code: 'ECO_AIS', seat_type_name: 'Phổ thông - lối đi', seat_class: 'ECONOMY', is_active: true, is_deleted: false },
-  { id: 4, seat_type_code: 'PREM_ECO', seat_type_name: 'Phổ thông ưu tiên', seat_class: 'ECONOMY', is_active: true, is_deleted: false },
-  { id: 5, seat_type_code: 'BUS', seat_type_name: 'Ghế thương gia', seat_class: 'BUSINESS', is_active: true, is_deleted: false },
-  { id: 6, seat_type_code: 'BUS_WIN', seat_type_name: 'Thương gia - cửa sổ', seat_class: 'BUSINESS', is_active: true, is_deleted: false },
-  { id: 7, seat_type_code: 'FIRST', seat_type_name: 'Hạng nhất', seat_class: 'FIRST', is_active: true, is_deleted: false },
-  { id: 8, seat_type_code: 'EXIT', seat_type_name: 'Ghế thoát hiểm', seat_class: 'ECONOMY', is_active: false, is_deleted: false },
+  { id: 1, seat_type_code: 'ECO', seat_type_name: 'Phổ thông', color_hex: '#90CAF9', seat_class: 'ECONOMY', status: 'ACTIVE' },
+  { id: 2, seat_type_code: 'ECO_WIN', seat_type_name: 'Phổ thông - cửa sổ', color_hex: '#64B5F6', seat_class: 'ECONOMY', status: 'ACTIVE' },
+  { id: 3, seat_type_code: 'ECO_AIS', seat_type_name: 'Phổ thông - lối đi', color_hex: '#42A5F5', seat_class: 'ECONOMY', status: 'ACTIVE' },
+  { id: 4, seat_type_code: 'PREM_ECO', seat_type_name: 'Phổ thông ưu tiên', color_hex: '#1E88E5', seat_class: 'ECONOMY', status: 'ACTIVE' },
+  { id: 5, seat_type_code: 'BUS', seat_type_name: 'Ghế thương gia', color_hex: '#F9A825', seat_class: 'BUSINESS', status: 'ACTIVE' },
+  { id: 6, seat_type_code: 'BUS_WIN', seat_type_name: 'Thương gia - cửa sổ', color_hex: '#FBC02D', seat_class: 'BUSINESS', status: 'ACTIVE' },
+  { id: 7, seat_type_code: 'FIRST', seat_type_name: 'Hạng nhất', color_hex: '#6A1B9A', seat_class: 'FIRST', status: 'ACTIVE' },
+  { id: 8, seat_type_code: 'EXIT', seat_type_name: 'Ghế thoát hiểm', color_hex: '#9E9E9E', seat_class: 'ECONOMY', status: 'INACTIVE' },
 ];
 
 /**
@@ -48,8 +49,7 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     applicable_trip_type: 'ANY',
     start_date: '2026-06-01',
     end_date: '2027-08-31',
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
     scopes: [],
     excluded_flight_ids: [],
   },
@@ -68,8 +68,7 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     applicable_trip_type: 'ROUND_TRIP',
     start_date: '2026-10-01',
     end_date: '2027-11-15',
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
     scopes: [{ target_type: 'ROUTE', departure_airport_id: 1, arrival_airport_id: 6 }],
     excluded_flight_ids: [],
   },
@@ -88,8 +87,7 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     applicable_trip_type: 'ONE_WAY',
     start_date: '2026-09-01',
     end_date: '2027-12-31',
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
     scopes: [{ target_type: 'ROUTE', departure_airport_id: 1, arrival_airport_id: 7 }],
     excluded_flight_ids: [101],
   },
@@ -108,8 +106,7 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     applicable_trip_type: 'ANY',
     start_date: '2027-01-10',
     end_date: '2027-02-20',
-    is_active: false,
-    is_deleted: false,
+    status: 'INACTIVE',
     scopes: [],
     excluded_flight_ids: [],
   },
@@ -128,8 +125,7 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     applicable_trip_type: 'ANY',
     start_date: '2026-11-01',
     end_date: '2027-01-31',
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
     scopes: [],
     excluded_flight_ids: [],
   },
@@ -147,8 +143,7 @@ export const PROMOTIONS_MOCK: Promotion[] = [
     applicable_trip_type: 'ANY',
     start_date: '2025-01-01',
     end_date: '2025-12-31',
-    is_active: false,
-    is_deleted: true,
+    status: 'INACTIVE',
     scopes: [],
     excluded_flight_ids: [],
   },
@@ -174,8 +169,7 @@ export const VOUCHERS_MOCK: Voucher[] = [
     end_date: '2027-12-31',
     claim_limit: 1000,
     claimed_count: 342,
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
     scopes: [],
     excluded_flight_ids: [],
   },
@@ -194,8 +188,7 @@ export const VOUCHERS_MOCK: Voucher[] = [
     end_date: '2027-12-20',
     claim_limit: 500,
     claimed_count: 128,
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
     scopes: [{ target_type: 'AIRLINE', airline_id: 1 }],
     excluded_flight_ids: [],
   },
@@ -214,8 +207,7 @@ export const VOUCHERS_MOCK: Voucher[] = [
     end_date: '2027-12-31',
     claim_limit: null,
     claimed_count: 89,
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
     scopes: [],
     excluded_flight_ids: [],
   },
@@ -234,6 +226,25 @@ export const VOUCHERS_MOCK: Voucher[] = [
     end_date: '2027-12-31',
     claim_limit: null,
     claimed_count: 0,
+    status: 'ACTIVE',
+    scopes: [],
+    excluded_flight_ids: [],
+  },
+  {
+    id: 6,
+    voucher_code: 'BAYHE2027',
+    voucher_name: 'Bay hè 2027 giảm 150K',
+    description: 'Áp dụng mọi chuyến nội địa, đơn từ 700K.',
+    distribution_type: 'GLOBAL',
+    discount_type: 'AMOUNT',
+    discount_value: 150000,
+    max_discount_amount: null,
+    min_order_amount: 700000,
+    applicable_trip_type: 'ANY',
+    start_date: '2026-10-01',
+    end_date: '2027-12-31',
+    claim_limit: 300,
+    claimed_count: 45,
     is_active: true,
     is_deleted: false,
     scopes: [],
@@ -254,8 +265,7 @@ export const VOUCHERS_MOCK: Voucher[] = [
     end_date: '2026-02-28',
     claim_limit: 2000,
     claimed_count: 2000,
-    is_active: false,
-    is_deleted: false,
+    status: 'INACTIVE',
     scopes: [],
     excluded_flight_ids: [],
   },
@@ -263,12 +273,12 @@ export const VOUCHERS_MOCK: Voucher[] = [
 
 /** Danh mục tin — API v0.2 mục 2.9. */
 export const NEWS_CATEGORIES_MOCK: NewsCategory[] = [
-  { id: 1, category_name: 'Khuyến mãi', description: 'Thông tin ưu đãi, giảm giá vé', is_active: true, is_deleted: false },
-  { id: 2, category_name: 'Hãng hàng không', description: 'Tin tức về các hãng bay nội địa', is_active: true, is_deleted: false },
-  { id: 3, category_name: 'Cẩm nang du lịch', description: 'Kinh nghiệm bay và du lịch', is_active: true, is_deleted: false },
-  { id: 4, category_name: 'Điểm đến', description: 'Giới thiệu điểm đến trong nước', is_active: true, is_deleted: false },
-  { id: 5, category_name: 'Thông báo', description: 'Thay đổi quy định, lịch bay', is_active: true, is_deleted: false },
-  { id: 6, category_name: 'Tin cũ 2025', description: 'Không còn dùng', is_active: false, is_deleted: false },
+  { id: 1, name: 'Khuyến mãi', description: 'Thông tin ưu đãi, giảm giá vé', status: 'ACTIVE' },
+  { id: 2, name: 'Hãng hàng không', description: 'Tin tức về các hãng bay nội địa', status: 'ACTIVE' },
+  { id: 3, name: 'Cẩm nang du lịch', description: 'Kinh nghiệm bay và du lịch', status: 'ACTIVE' },
+  { id: 4, name: 'Điểm đến', description: 'Giới thiệu điểm đến trong nước', status: 'ACTIVE' },
+  { id: 5, name: 'Thông báo', description: 'Thay đổi quy định, lịch bay', status: 'ACTIVE' },
+  { id: 6, name: 'Tin cũ 2025', description: 'Không còn dùng', status: 'INACTIVE' },
 ];
 
 /**
@@ -284,8 +294,7 @@ export const NEWS_MOCK: NewsItem[] = [
       '<p>Hãng mở bán vé Tết Nguyên đán 2027 cho toàn bộ đường bay nội địa, áp dụng từ ngày 10/01/2027.</p>',
     status: 'PUBLISHED',
     published_at: '2026-10-05T02:00:00Z',
-    is_active: true,
-    is_deleted: false,
+    created_at: '2026-10-05T02:00:00Z',
     category_ids: [2, 5],
   },
   {
@@ -296,8 +305,7 @@ export const NEWS_MOCK: NewsItem[] = [
       '<p>Mở bán hàng ngàn vé đồng giá 99K toàn mạng bay nội địa vào mỗi thứ 5 hàng tuần.</p>',
     status: 'PUBLISHED',
     published_at: '2026-10-08T01:30:00Z',
-    is_active: true,
-    is_deleted: false,
+    created_at: '2026-10-08T01:30:00Z',
     category_ids: [1],
   },
   {
@@ -307,8 +315,7 @@ export const NEWS_MOCK: NewsItem[] = [
     content: '<p>Chọn ghế cửa sổ giúp bạn có tầm nhìn đẹp, nhưng cần lưu ý vài điều sau…</p>',
     status: 'PUBLISHED',
     published_at: '2026-09-28T03:15:00Z',
-    is_active: true,
-    is_deleted: false,
+    created_at: '2026-09-28T03:15:00Z',
     category_ids: [3],
   },
   {
@@ -318,8 +325,7 @@ export const NEWS_MOCK: NewsItem[] = [
     content: '<p>Từ tháng 11 đến tháng 3 là thời điểm lý tưởng để du lịch Phú Quốc.</p>',
     status: 'PUBLISHED',
     published_at: '2026-09-20T00:00:00Z',
-    is_active: true,
-    is_deleted: false,
+    created_at: '2026-09-20T00:00:00Z',
     category_ids: [4],
   },
   {
@@ -329,8 +335,7 @@ export const NEWS_MOCK: NewsItem[] = [
     content: '<p>Từ 01/12/2026, khối lượng hành lý xách tay được điều chỉnh…</p>',
     status: 'DRAFT',
     published_at: null,
-    is_active: true,
-    is_deleted: false,
+    created_at: '2026-09-01T00:00:00Z',
     category_ids: [5],
   },
   {
@@ -340,8 +345,7 @@ export const NEWS_MOCK: NewsItem[] = [
     content: '<p>Nội dung đang soạn.</p>',
     status: 'DRAFT',
     published_at: null,
-    is_active: true,
-    is_deleted: false,
+    created_at: '2026-09-01T00:00:00Z',
     category_ids: [1],
   },
   {
@@ -351,9 +355,33 @@ export const NEWS_MOCK: NewsItem[] = [
     content: '<p>Đã ẩn.</p>',
     status: 'DRAFT',
     published_at: null,
-    is_active: false,
-    is_deleted: true,
+    created_at: '2026-09-01T00:00:00Z',
     category_ids: [6],
+  },
+  {
+    /**
+     * Bài CHỨA NỘI DUNG ĐỘC HẠI — cố ý, để thử chống XSS qua đường thật.
+     *
+     * Vì sao để trong dữ liệu mẫu: test `sanitize.service.spec.ts` kiểm tra
+     * service, nhưng nó không chứng minh được TRANG có gọi service hay không.
+     * Bài này đi qua đúng đường mà ADMIN nhập liệu sẽ đi, nên test
+     * `news-detail.spec.ts` mới chứng minh được cả chuỗi.
+     *
+     * Nếu trang chi tiết bind `content` thẳng mà quên sanitize, test sẽ thấy
+     * `<script>` trong DOM và fail.
+     */
+    id: 99,
+    thumbnail_url: null,
+    title: 'Bài kiểm tra chống XSS',
+    content:
+      '<p>Đoạn văn bình thường</p>' +
+      '<script>window.__xss_ran = true;</script>' +
+      '<img src=x onerror="window.__xss_ran = true">' +
+      '<a href="javascript:window.__xss_ran=true">bấm</a>',
+    status: 'PUBLISHED',
+    published_at: '2026-10-01T02:00:00Z',
+    created_at: '2026-10-01T02:00:00Z',
+    category_ids: [5],
   },
 ];
 
@@ -390,4 +418,38 @@ export const PERMISSIONS_MOCK: Permission[] = [
   { id: 19, permission_key: 'VOUCHER_CLAIM', description: 'Nhận voucher vào ví', module: 'VOUCHER' },
   { id: 20, permission_key: 'NEWS_READ', description: 'Xem danh sách tin tức', module: 'NEWS' },
   { id: 21, permission_key: 'NEWS_PUBLISH', description: 'Xuất bản tin tức', module: 'NEWS' },
+];
+
+/**
+ * Ví voucher của khách — API v0.2 mục 2.8.
+ *
+ * Cố ý có đủ 4 trạng thái để thử giao diện: AVAILABLE (dùng được), RESERVED
+ * (đang giữ cho booking chờ thanh toán), USED (đã dùng), EXPIRED (quá hạn).
+ * Và đủ 2 nguồn: CLAIMED / GIFTED.
+ *
+ * `expires_at` KHÁC `voucher.end_date` ở vài dòng — cố ý, để thấy rõ màn hình
+ * phải đọc hạn của DÒNG VÍ chứ không phải hạn voucher gốc (DB v0.4 ghi rõ:
+ * hạn được chép lúc nhận, ADMIN sửa voucher sau đó không ảnh hưởng).
+ */
+export const USER_VOUCHERS_MOCK: UserVoucher[] = [
+  {
+    id: 1, status: 'AVAILABLE', source: 'CLAIMED',
+    received_at: '2026-09-01T02:00:00Z', expires_at: '2027-12-31T16:59:59Z',
+    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[0],
+  },
+  {
+    id: 2, status: 'RESERVED', source: 'CLAIMED',
+    received_at: '2026-09-15T02:00:00Z', expires_at: '2027-10-31T16:59:59Z',
+    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[1],
+  },
+  {
+    id: 3, status: 'USED', source: 'GIFTED',
+    received_at: '2026-08-01T02:00:00Z', expires_at: '2026-12-31T16:59:59Z',
+    used_at: '2026-08-20T09:30:00Z', discount_amount: 100000, voucher: VOUCHERS_MOCK[2],
+  },
+  {
+    id: 4, status: 'EXPIRED', source: 'GIFTED',
+    received_at: '2026-01-05T02:00:00Z', expires_at: '2026-06-30T16:59:59Z',
+    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[3],
+  },
 ];
