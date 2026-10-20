@@ -25,12 +25,23 @@ export interface CrudColumn<T> {
    * danh sách máy bay).
    */
   link?: (row: T) => string;
-  /** `code`: chữ đậm, số thẳng cột. `num`: canh phải. */
-  kind?: 'code' | 'num';
+  /**
+   * `code`: chữ đậm, số thẳng cột. `num`: canh phải. `color`: ô vuông màu.
+   * `color` dùng `value(row)` làm mã hex; rỗng → hiện "Mặc định".
+   */
+  kind?: 'code' | 'num' | 'color';
   width?: string;
 }
 
-export type CrudFieldType = 'text' | 'number' | 'date' | 'select' | 'textarea' | 'toggle' | 'image';
+export type CrudFieldType =
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'select'
+  | 'textarea'
+  | 'toggle'
+  | 'image'
+  | 'color';
 
 export interface CrudFieldOption {
   value: string | number | boolean | null;

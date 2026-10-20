@@ -529,11 +529,21 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
         return true;
       case 'number':
         return null;
+      case 'color':
+        // `null` chứ không phải '': BE validate `@Pattern` hex nên chuỗi rỗng
+        // sẽ trượt. `null` = chưa đặt màu, hợp lệ.
+        return null;
       case 'select':
         return field.options?.length ? field.options[0].value : null;
       default:
         return '';
     }
+  }
+
+  /** Chuẩn hoá giá trị ô màu: rỗng → null, ngược lại chữ HOA. */
+  protected asColor(value: string): string | null {
+    const v = (value ?? '').trim();
+    return v.length === 0 ? null : v.toUpperCase();
   }
 
   protected setField(key: string, value: unknown): void {

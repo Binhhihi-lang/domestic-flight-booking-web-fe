@@ -14,6 +14,7 @@ import {
 } from '@core/models/fleet-news.model';
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
+import { SeatClassSurcharge } from '@core/models/seat-surcharge.model';
 import { AIRLINES_MOCK } from '@core/mock/data/airlines.mock';
 import {
   AIRCRAFT_MOCK,
@@ -27,6 +28,7 @@ import {
   VOUCHERS_MOCK,
 } from '@core/mock/data/catalog.mock';
 import { AIRPORTS_MOCK, CITIES_MOCK } from '@core/mock/data/locations.mock';
+import { SEAT_CLASS_SURCHARGES_MOCK } from '@core/mock/data/seat-surcharge.mock';
 import {
   buildLoginResponse,
   findMockUser,
@@ -145,6 +147,26 @@ export class MockRegistry {
       uniqueField: 'seat_type_code',
       noun: 'loại ghế',
     }),
+    new MockResource<SeatClassSurcharge>({
+      path: 'admin/seat-class-surcharges',
+      seed: SEAT_CLASS_SURCHARGES_MOCK,
+      searchFields: ['from_class', 'to_class'],
+      noun: 'phụ thu nâng hạng',
+      // UNIQUE là CẶP (from_class, to_class) nên không dùng được `uniqueField`.
+      // `update()` gọi validate với `merged` đã chứa `id`, nên `r.id !== payload.id`
+      // phân biệt đúng "trùng bản ghi khác" với "giữ nguyên cặp của chính nó".
+      validate: (payload, existing) => {
+        const from = payload.from_class;
+        const to = payload.to_class;
+        if (!from || !to) {
+          return 'Hạng vé và hạng ghế không được để trống';
+        }
+        const clash = existing.some(
+          (r) => r.id !== payload.id && r.from_class === from && r.to_class === to,
+        );
+        return clash ? `Đã có phụ thu cho cặp ${from} → ${to}` : null;
+      },
+    }),
     new MockResource<NewsItem>({
       path: 'admin/news',
       seed: NEWS_MOCK,
@@ -260,13 +282,13 @@ export class MockRegistry {
     }
 
     // Ví voucher của khách — API v0.2 mục 2.8.
-    if (path === '/api/v1/voucher-store' && m === 'GET') {
+    if (path === '/api/voucher-store' && m === 'GET') {
       return this.voucherStore();
     }
-    if (path === '/api/v1/my-vouchers' && m === 'GET') {
+    if (path === '/api/my-vouchers' && m === 'GET') {
       return this.myVouchers(url);
     }
-    const claimMatch = path.match(/^\/api\/v1\/vouchers\/(\d+)\/claim$/);
+    const claimMatch = path.match(/^\/api\/vouchers\/(\d+)\/claim$/);
     if (claimMatch && m === 'POST') {
       return this.claimVoucher(Number(claimMatch[1]));
     }
@@ -525,17 +547,13 @@ export class MockRegistry {
     const items: VoucherStoreItem[] = VOUCHERS_MOCK.filter(
       (v) =>
         v.distribution_type === 'GLOBAL' &&
-        v.is_active &&
-        !v.is_deleted &&
+        v.status === 'ACTIVE' &&
         v.start_date <= today &&
         v.end_date >= today &&
         (v.claim_limit === null || v.claimed_count < v.claim_limit),
     ).map((v) => ({ ...v, claimed: claimedIds.has(v.id) }));
 
-    return ok({
-      items,
-      pagination: { page: 1, size: 20, total_items: items.length, total_pages: 1 },
-    });
+    return ok(items);
   }
 
   private myVouchers(url: string): unknown {
@@ -558,7 +576,7 @@ export class MockRegistry {
    * thì nó lọt qua và khách nhận được voucher lẽ ra chỉ ADMIN tặng.
    */
   private claimVoucher(voucherId: number): unknown {
-    const voucher = VOUCHERS_MOCK.find((v) => v.id === voucherId && !v.is_deleted);
+    const voucher = VOUCHERS_MOCK.find((v) => v.id === voucherId);
     if (!voucher) {
       return notFound('Không tìm thấy voucher');
     }

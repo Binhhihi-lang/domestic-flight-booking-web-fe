@@ -5,14 +5,14 @@ import { UserVoucher } from '@core/models/user-voucher.model';
 
 /** Máy bay — API v0.2 mục 2.6. Chỉ STAFF/ADMIN truy cập. */
 export const AIRCRAFT_MOCK: Aircraft[] = [
-  { id: 1, aircraft_code: 'VN-A350-01', model: 'Airbus A350-900', manufacturer: 'Airbus', seat_capacity: 305, status: 'ACTIVE' },
-  { id: 2, aircraft_code: 'VN-A321-05', model: 'Airbus A321neo', manufacturer: 'Airbus', seat_capacity: 203, status: 'ACTIVE' },
-  { id: 3, aircraft_code: 'VJ-A320-12', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, status: 'ACTIVE' },
-  { id: 4, aircraft_code: 'VJ-A321-08', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 220, status: 'ACTIVE' },
-  { id: 5, aircraft_code: 'QH-B787-02', model: 'Boeing 787-9', manufacturer: 'Boeing', seat_capacity: 274, status: 'ACTIVE' },
-  { id: 6, aircraft_code: 'QH-A321-04', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 203, status: 'ACTIVE' },
-  { id: 7, aircraft_code: 'VU-A321-01', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 220, status: 'ACTIVE' },
-  { id: 8, aircraft_code: 'BL-A320-03', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, status: 'INACTIVE' },
+  { id: 1, aircraft_code: 'VN-A350-01', model: 'Airbus A350-900', manufacturer: 'Airbus', seat_capacity: 305, aisle_after: 'C,E', status: 'ACTIVE' },
+  { id: 2, aircraft_code: 'VN-A321-05', model: 'Airbus A321neo', manufacturer: 'Airbus', seat_capacity: 203, aisle_after: 'C', status: 'ACTIVE' },
+  { id: 3, aircraft_code: 'VJ-A320-12', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, aisle_after: 'C', status: 'ACTIVE' },
+  { id: 4, aircraft_code: 'VJ-A321-08', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 220, aisle_after: 'C', status: 'ACTIVE' },
+  { id: 5, aircraft_code: 'QH-B787-02', model: 'Boeing 787-9', manufacturer: 'Boeing', seat_capacity: 274, aisle_after: 'C,E', status: 'ACTIVE' },
+  { id: 6, aircraft_code: 'QH-A321-04', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 203, aisle_after: 'C', status: 'ACTIVE' },
+  { id: 7, aircraft_code: 'VU-A321-01', model: 'Airbus A321', manufacturer: 'Airbus', seat_capacity: 220, aisle_after: 'C', status: 'ACTIVE' },
+  { id: 8, aircraft_code: 'BL-A320-03', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, aisle_after: 'C', status: 'INACTIVE' },
 ];
 
 /** Loại ghế — API v0.2 mục 2.6. v0.4 nâng thành CRUD đầy đủ. */
@@ -245,8 +245,7 @@ export const VOUCHERS_MOCK: Voucher[] = [
     end_date: '2027-12-31',
     claim_limit: 300,
     claimed_count: 45,
-    is_active: true,
-    is_deleted: false,
+    status: 'ACTIVE',
     scopes: [],
     excluded_flight_ids: [],
   },

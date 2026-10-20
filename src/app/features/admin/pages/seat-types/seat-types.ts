@@ -42,6 +42,12 @@ export class AdminSeatTypes {
               : 'Hạng nhất',
       },
       {
+        label: 'Màu',
+        value: (r) => r.color_hex ?? '',
+        kind: 'color',
+        width: '140px',
+      },
+      {
         label: 'Trạng thái',
         value: (r) => (r.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm dừng'),
         tone: (r) => (r.status === 'ACTIVE' ? 'success' : 'neutral'),
@@ -62,8 +68,10 @@ export class AdminSeatTypes {
         ],
       },
       {
-        key: 'color_hex', label: 'Màu hiển thị', type: 'text', maxLength: 7,
-        hint: 'Mã màu hex, ví dụ #1E88E5. Dùng để tô ô trên sơ đồ ghế.',
+        key: 'color_hex',
+        label: 'Màu hiển thị',
+        type: 'color',
+        hint: 'Dùng để tô ô trên sơ đồ ghế. Để trống thì dùng màu mặc định theo hạng.',
       },
       {
         key: 'status', shownInTable: true,

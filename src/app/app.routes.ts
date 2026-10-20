@@ -161,6 +161,12 @@ export const routes: Routes = [
         import('@features/admin/pages/seat-types/seat-types').then((m) => m.AdminSeatTypes),
         { adminOnly: true },
       ),
+      ...crudRoutes('seat-class-surcharges', 'Phụ thu nâng hạng', () =>
+        import('@features/admin/pages/seat-class-surcharges/seat-class-surcharges').then(
+          (m) => m.AdminSeatClassSurcharges,
+        ),
+        { adminOnly: true },
+      ),
       ...crudRoutes('promotions', 'Khuyến mãi', () =>
         import('@features/admin/pages/promotions/promotions').then((m) => m.AdminPromotions),
         {

@@ -39,9 +39,9 @@ export class VoucherStore {
 
   private load(): void {
     this.loading.set(true);
-    this.service.store({ page: 1, size: 30 }).subscribe({
+    this.service.store().subscribe({
       next: (res) => {
-        this.items.set(res.data.items);
+        this.items.set(res.data);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

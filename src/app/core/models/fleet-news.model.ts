@@ -13,6 +13,11 @@ export interface Aircraft {
   model: string;
   manufacturer: string | null;
   seat_capacity: number;
+  /**
+   * Cột mà SAU ĐÓ là lối đi, phân tách bằng dấu phẩy — "C" (3-3), "C,E" (3-2-2).
+   * `null` = cabin không có lối đi giữa.
+   */
+  aisle_after: string | null;
   status: ActiveStatus;
 }
 

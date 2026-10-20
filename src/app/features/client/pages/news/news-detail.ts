@@ -73,11 +73,10 @@ export class ClientNewsDetail {
     }
     this.newsService.getById(Number(id)).subscribe({
       next: (res) => {
-        // Chặn bài CHƯA ĐĂNG: NEWS-01 quy định GUEST chỉ thấy `PUBLISHED`.
-        // Backend cũng phải chặn, nhưng mock trả cả bản nháp nên FE phải tự lọc —
-        // và nếu backend quên thì đây là lớp chặn thứ hai. Không có nhánh này thì
-        // khách đọc được bài nháp bằng cách đoán URL.
-        if (res.data.status !== 'PUBLISHED') {
+        // BE trả `1004` (data = null) cho bài DRAFT/UNPUBLISHED/không tồn tại —
+        // mục 2.9 API v0.4: không xác nhận id có tồn tại hay không. Kiểm `res.data`
+        // trước khi đọc `status`, nếu không sẽ ném TypeError và trang trắng.
+        if (!res.data || res.data.status !== 'PUBLISHED') {
           this.loading.set(false);
           this.router.navigate(['/news']);
           return;

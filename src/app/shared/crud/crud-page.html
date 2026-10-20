@@ -157,6 +157,16 @@
                             <mat-icon>image</mat-icon>
                           </span>
                         }
+                      } @else if (c.kind === 'color') {
+                        <!-- Cột màu: ô vuông + mã hex; rỗng → "Mặc định" để ADMIN
+                             phân biệt "chưa đặt màu" với "lỗi render". -->
+                        @if (c.value(row)) {
+                          <span class="swatch" [style.background]="c.value(row)"></span>
+                          <span class="swatch__hex">{{ c.value(row) }}</span>
+                        } @else {
+                          <span class="swatch swatch--none" aria-hidden="true"></span>
+                          <span class="swatch__hex">Mặc định</span>
+                        }
                       } @else if (c.tone) {
                         <app-status-badge [tone]="c.tone(row)" [label]="c.value(row)" />
                       } @else if (c.link) {
@@ -434,6 +444,39 @@
                         }
                       </div>
                     </div>
+                  </div>
+                }
+                @case ('color') {
+                  <!-- Ô màu: color picker + ô hex đồng bộ 2 chiều + nút bỏ màu.
+                       `<input type="color">` không biểu diễn được "không có màu"
+                       (luôn trả #000000), nên phải có nút Bỏ màu riêng. -->
+                  <div class="colorfield">
+                    <input
+                      [id]="'cf-' + f.key"
+                      type="color"
+                      [value]="asString(fieldValue(f.key)) || '#000000'"
+                      (input)="setField(f.key, asColor($any($event.target).value))"
+                      [name]="f.key"
+                      aria-label="Chọn màu"
+                    />
+                    <input
+                      type="text"
+                      class="colorfield__hex"
+                      [value]="asString(fieldValue(f.key))"
+                      (input)="setField(f.key, asColor($any($event.target).value))"
+                      maxlength="7"
+                      placeholder="#RRGGBB"
+                      [attr.aria-label]="f.label + ' — mã màu'"
+                    />
+                    @if (fieldValue(f.key)) {
+                      <button
+                        class="colorfield__clear"
+                        type="button"
+                        (click)="setField(f.key, null)"
+                      >
+                        Bỏ màu
+                      </button>
+                    }
                   </div>
                 }
                 @default {
