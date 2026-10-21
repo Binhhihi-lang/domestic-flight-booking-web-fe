@@ -75,11 +75,11 @@
             <div class="bulkbar__acts">
               <app-app-button size="sm" variant="ghost" [disabled]="saving()" (clicked)="bulkSetActive(true)">
                 <mat-icon>check_circle</mat-icon>
-                Kích hoạt
+                {{ bulkLabels().activeLabel }}
               </app-app-button>
               <app-app-button size="sm" variant="ghost" [disabled]="saving()" (clicked)="bulkSetActive(false)">
                 <mat-icon>pause_circle</mat-icon>
-                Ngừng
+                {{ bulkLabels().inactiveLabel }}
               </app-app-button>
               <app-app-button size="sm" variant="danger" [disabled]="saving()" (clicked)="bulkDelete()">
                 <mat-icon>delete_outline</mat-icon>

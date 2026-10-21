@@ -44,7 +44,6 @@ function buildPermissions(role: 'ADMIN' | 'STAFF' | 'CUSTOMER'): string[] {
     'PROMOTION_READ',
     'VOUCHER_READ',
     'VOUCHER_CLAIM',
-    'WALLET_READ_SELF',
     'USER_READ',
     'DASHBOARD_READ',
   ];

@@ -86,6 +86,20 @@ export interface CrudFilter {
 }
 
 /**
+ * Nhãn và giá trị trạng thái cho thanh thao tác hàng loạt.
+ *
+ * Vì sao cần khai báo: mặc định là ACTIVE/INACTIVE ("Kích hoạt"/"Ngừng"), nhưng
+ * News dùng PUBLISHED/UNPUBLISHED và backend TỪ CHỐI ACTIVE — gửi sai giá trị
+ * thì cả lô vào `failed`. Nhãn cũng phải đổi theo ("Xuất bản"/"Ngừng xuất bản").
+ */
+export interface CrudBulkConfig {
+  activeLabel: string;
+  inactiveLabel: string;
+  activeStatus: string;
+  inactiveStatus: string;
+}
+
+/**
  * Toàn bộ khai báo của một màn CRUD.
  *
  * Vì sao gom vào một object: 8 module master data dùng chung đúng một khuôn màn
@@ -110,6 +124,8 @@ export interface CrudConfig<T, P> {
    */
   unpaginated?: boolean;
   filters?: CrudFilter[];
+  /** Nhãn + giá trị trạng thái cho thao tác hàng loạt; mặc định ACTIVE/INACTIVE. */
+  bulk?: CrudBulkConfig;
   emptyIcon: string;
   emptyMessage: string;
   emptyHint: string;

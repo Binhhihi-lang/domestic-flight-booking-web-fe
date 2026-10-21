@@ -49,3 +49,21 @@ export function readParams(url: string): URLSearchParams {
   const q = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
   return new URLSearchParams(q);
 }
+
+/**
+ * User đã đăng nhập, đọc từ localStorage.
+ *
+ * Mock là state trong bộ nhớ nên mất sạch khi tải lại trang, còn phiên đăng nhập
+ * thì vẫn nằm ở localStorage. Không đọc lại thì sau mỗi lần F5, mock tưởng chưa
+ * ai đăng nhập và trả sai hồ sơ.
+ *
+ * Trả `null` khi chưa đăng nhập, dữ liệu hỏng, hoặc localStorage bị chặn.
+ */
+export function readStoredUser<T>(): T | null {
+  try {
+    const raw = localStorage.getItem('fb_current_user');
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}

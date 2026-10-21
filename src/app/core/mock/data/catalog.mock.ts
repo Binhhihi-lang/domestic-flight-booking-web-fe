@@ -1,7 +1,7 @@
 import { Aircraft, NewsCategory, NewsItem, SeatType } from '@core/models/fleet-news.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
 import { Permission, Role } from '@core/models/rbac.model';
-import { UserVoucher } from '@core/models/user-voucher.model';
+import { UserVoucher, UserVoucherBrief } from '@core/models/user-voucher.model';
 
 /** Máy bay — API v0.2 mục 2.6. Chỉ STAFF/ADMIN truy cập. */
 export const AIRCRAFT_MOCK: Aircraft[] = [
@@ -430,25 +430,45 @@ export const PERMISSIONS_MOCK: Permission[] = [
  * phải đọc hạn của DÒNG VÍ chứ không phải hạn voucher gốc (DB v0.4 ghi rõ:
  * hạn được chép lúc nhận, ADMIN sửa voucher sau đó không ảnh hưởng).
  */
+/**
+ * Rút gọn một voucher về hình dạng `VoucherBrief` mà BE trả kèm trong ví.
+ * Mock phải cắt bớt chứ không trả nguyên object: nếu trả thừa trường thì code
+ * đọc nhầm `voucher.max_discount_amount` sẽ chạy được trên mock và vỡ với API thật.
+ */
+export function toVoucherBrief(v: Voucher): UserVoucherBrief {
+  return {
+    id: v.id,
+    voucher_code: v.voucher_code,
+    voucher_name: v.voucher_name,
+    description: v.description,
+    discount_type: v.discount_type,
+    discount_value: v.discount_value,
+    min_order_amount: v.min_order_amount,
+    applicable_trip_type: v.applicable_trip_type,
+    start_date: v.start_date,
+    end_date: v.end_date,
+  };
+}
+
 export const USER_VOUCHERS_MOCK: UserVoucher[] = [
   {
     id: 1, status: 'AVAILABLE', source: 'CLAIMED',
     received_at: '2026-09-01T02:00:00Z', expires_at: '2027-12-31T16:59:59Z',
-    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[0],
+    used_at: null, voucher: toVoucherBrief(VOUCHERS_MOCK[0]),
   },
   {
     id: 2, status: 'RESERVED', source: 'CLAIMED',
     received_at: '2026-09-15T02:00:00Z', expires_at: '2027-10-31T16:59:59Z',
-    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[1],
+    used_at: null, voucher: toVoucherBrief(VOUCHERS_MOCK[1]),
   },
   {
     id: 3, status: 'USED', source: 'GIFTED',
     received_at: '2026-08-01T02:00:00Z', expires_at: '2026-12-31T16:59:59Z',
-    used_at: '2026-08-20T09:30:00Z', discount_amount: 100000, voucher: VOUCHERS_MOCK[2],
+    used_at: '2026-08-20T09:30:00Z', voucher: toVoucherBrief(VOUCHERS_MOCK[2]),
   },
   {
     id: 4, status: 'EXPIRED', source: 'GIFTED',
     received_at: '2026-01-05T02:00:00Z', expires_at: '2026-06-30T16:59:59Z',
-    used_at: null, discount_amount: null, voucher: VOUCHERS_MOCK[3],
+    used_at: null, voucher: toVoucherBrief(VOUCHERS_MOCK[3]),
   },
 ];

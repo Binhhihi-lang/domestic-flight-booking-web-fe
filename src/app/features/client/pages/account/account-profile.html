@@ -1,0 +1,115 @@
+@if (loading()) {
+  <app-loading-state message="Đang tải hồ sơ…" />
+} @else {
+  @if (!hideHeading()) {
+    <header class="pf__h">
+      <h1>Hồ sơ cá nhân</h1>
+      <p>Thông tin này dùng để liên hệ và in trên vé điện tử.</p>
+    </header>
+  }
+
+  <app-app-card title="Ảnh đại diện" class="blk">
+    <div class="pf__avatar">
+      <div class="pf__av-img">
+        @if (draft().avatar_url && !brokenAvatar()) {
+          <img
+            [src]="draft().avatar_url"
+            alt="Ảnh đại diện"
+            (error)="brokenAvatar.set(true)"
+          />
+        } @else {
+          <span class="pf__av-empty" aria-hidden="true">
+            <mat-icon>person</mat-icon>
+          </span>
+        }
+      </div>
+
+      <div class="pf__av-ctl">
+        <input
+          id="pf-avatar"
+          type="text"
+          maxlength="500"
+          [ngModel]="draft().avatar_url"
+          (ngModelChange)="setField('avatar_url', $event)"
+          placeholder="Dán đường dẫn ảnh (https://...)"
+          aria-label="Đường dẫn ảnh đại diện"
+        />
+        <div class="pf__av-row">
+          <label class="pf__pick">
+            <mat-icon>upload</mat-icon>
+            Chọn ảnh từ máy
+            <input type="file" accept="image/*" (change)="onPickAvatar($event)" />
+          </label>
+          @if (draft().avatar_url) {
+            <button class="pf__clear" type="button" (click)="setField('avatar_url', '')">
+              Xóa ảnh
+            </button>
+          }
+        </div>
+        @if (fieldError('avatar_url'); as msg) {
+          <span class="field__err">{{ msg }}</span>
+        } @else {
+          <span class="hint">Ảnh vuông, nhỏ hơn 2 MB sẽ hiển thị đẹp nhất.</span>
+        }
+      </div>
+    </div>
+  </app-app-card>
+
+  <app-app-card title="Thông tin liên hệ" class="blk">
+    <div class="form-grid">
+      <div class="field" [class.field--error]="fieldError('full_name')">
+        <label for="pf-name">Họ và tên <span class="req">*</span></label>
+        <input
+          id="pf-name"
+          type="text"
+          maxlength="150"
+          [ngModel]="draft().full_name"
+          (ngModelChange)="setField('full_name', $event)"
+          placeholder="Nguyễn Minh Anh"
+        />
+        @if (fieldError('full_name'); as msg) {
+          <span class="field__err">{{ msg }}</span>
+        }
+      </div>
+
+      <div class="field" [class.field--error]="fieldError('phone')">
+        <label for="pf-phone">Số điện thoại</label>
+        <input
+          id="pf-phone"
+          type="tel"
+          maxlength="20"
+          [ngModel]="draft().phone"
+          (ngModelChange)="setField('phone', $event)"
+          placeholder="0912 345 678"
+        />
+        @if (fieldError('phone'); as msg) {
+          <span class="field__err">{{ msg }}</span>
+        } @else {
+          <span class="hint">Dùng để liên hệ khi chuyến bay thay đổi.</span>
+        }
+      </div>
+    </div>
+  </app-app-card>
+
+  <app-app-card title="Thông tin tài khoản" class="blk">
+    <dl class="pf__ro">
+      <div>
+        <dt>Email</dt>
+        <dd>{{ account()?.email }}</dd>
+      </div>
+      <div>
+        <dt>Vai trò</dt>
+        <dd>{{ account()?.roles?.join(', ') }}</dd>
+      </div>
+    </dl>
+    <p class="hint">
+      Email và vai trò do hệ thống quản lý. Liên hệ bộ phận hỗ trợ nếu cần thay đổi.
+    </p>
+  </app-app-card>
+
+  <div class="form-actions">
+    <app-app-button [disabled]="saving()" (clicked)="save()">
+      {{ saving() ? 'Đang lưu…' : 'Lưu thay đổi' }}
+    </app-app-button>
+  </div>
+}

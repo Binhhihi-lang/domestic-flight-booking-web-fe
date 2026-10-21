@@ -33,26 +33,16 @@ interface Voucher {
   dimmed: boolean;
 }
 
-interface WalletTx {
-  title: string;
-  detail: string;
-  amount: string;
-  amountTone: 'up' | 'down';
-  balance: string;
-  icon: string;
-  iconTone: 'success' | 'danger';
-}
-
 /**
  * Vé của tôi — bám mockup P11 (khuôn "Tài khoản khách").
  *
- * Vì sao gom ví + vé + voucher + lịch sử vào một trang: đây là thứ khách hàng
- * mở ra thường xuyên nhất và luôn muốn thấy cùng nhau — "chuyến tới của tôi,
- * còn voucher nào dùng được, ví còn bao nhiêu". Tách thành 4 trang riêng thì
- * mỗi lần kiểm tra phải đi 4 chỗ.
+ * Vì sao gom vé + voucher vào một trang: đây là thứ khách hàng mở ra thường
+ * xuyên nhất và luôn muốn thấy cùng nhau — "chuyến tới của tôi, còn voucher
+ * nào dùng được". Ví đã bị bỏ khỏi hợp đồng API v0.4 nên trang không còn khối
+ * số dư hay lịch sử giao dịch.
  *
- * Dữ liệu tĩnh: BOOKING_READ_SELF, VOUCHER_READ, WALLET_READ_SELF thuộc
- * Phase 1/3. Khi có API, thay nguồn dữ liệu, giữ nguyên bố cục và trạng thái.
+ * Dữ liệu tĩnh: BOOKING_READ_SELF, VOUCHER_READ thuộc Phase 1/3. Khi có API,
+ * thay nguồn dữ liệu, giữ nguyên bố cục và trạng thái.
  */
 @Component({
   selector: 'app-account-bookings',
@@ -137,36 +127,6 @@ export class AccountBookings {
       statusTone: 'neutral',
       action: null,
       dimmed: true,
-    },
-  ];
-
-  protected readonly walletHistory: WalletTx[] = [
-    {
-      title: 'Hoàn tiền hủy vé',
-      detail: 'Booking ABC100 · 09/10/2026 14:22',
-      amount: '+1.848.000₫',
-      amountTone: 'up',
-      balance: 'Số dư: 1.848.000₫',
-      icon: 'south_west',
-      iconTone: 'success',
-    },
-    {
-      title: 'Thanh toán vé',
-      detail: 'Booking ABC123 · 05/10/2026 09:41',
-      amount: '−890.000₫',
-      amountTone: 'down',
-      balance: 'Số dư: 0₫',
-      icon: 'north_east',
-      iconTone: 'danger',
-    },
-    {
-      title: 'Hoàn tiền hủy vé',
-      detail: 'Booking ABC099 · 28/09/2026 16:05',
-      amount: '+890.000₫',
-      amountTone: 'up',
-      balance: 'Số dư: 890.000₫',
-      icon: 'south_west',
-      iconTone: 'success',
     },
   ];
 }

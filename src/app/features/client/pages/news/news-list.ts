@@ -1,31 +1,25 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { NewsItem } from '@core/models/fleet-news.model';
-import { PublicNewsService } from '@core/services/public-catalog.service';
+import { NewsCategoryBrief, NewsItem } from '@core/models/fleet-news.model';
+import {
+  PublicNewsCategoryService,
+  PublicNewsService,
+} from '@core/services/public-catalog.service';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
 
-/** Một mục trong dropdown lọc danh mục. */
-interface CategoryOption {
-  id: number;
-  name: string;
-}
-
 /**
- * Tin tức cho khách — NEWS-01 (API v0.2 mục 2.9).
+ * Tin tức cho khách — NEWS-01 (API v0.4 mục 2.9 + 2.11).
  *
  * Chỉ hiện bài ĐÃ ĐĂNG. Backend lọc `status = PUBLISHED` cho GUEST, nhưng mock
  * trả cả bản nháp nên phải tự lọc để hai chế độ hành xử như nhau.
  *
- * VỀ DROPDOWN DANH MỤC: danh sách danh mục được SUY TỪ CHÍNH các bài trả về,
- * không gọi `GET /news-categories` — endpoint đó là quyền ADMIN (API v0.2 mục
- * 2.9 ghi rõ "category không public"), khách gọi sẽ bị chặn. Đã nêu trong đề xuất
- * gửi BE để Bình chốt có mở public hay không.
- *
- * Hệ quả của cách suy: dropdown chỉ liệt kê danh mục CÓ bài đã đăng. Với một bộ
- * lọc thì đó là hành vi hợp lý — lọc theo danh mục rỗng thì luôn ra 0 bài.
+ * VỀ DROPDOWN DANH MỤC: lấy từ `GET /public/news-categories` (API v0.4 mục 2.11)
+ * — mảng trần chỉ `{id, name}`, chỉ danh mục đang hoạt động. Trước đây danh sách
+ * được suy từ chính các bài đã tải vì endpoint cũ là quyền ADMIN; nay BE đã mở
+ * vùng public nên dropdown hiện đủ danh mục, kể cả danh mục chưa có bài.
  */
 @Component({
   selector: 'app-news-list',
@@ -36,22 +30,36 @@ interface CategoryOption {
 })
 export class ClientNewsList {
   private readonly newsService = inject(PublicNewsService);
+  private readonly categoryService = inject(PublicNewsCategoryService);
 
   protected readonly loading = signal(true);
   protected readonly news = signal<NewsItem[]>([]);
+  protected readonly categories = signal<NewsCategoryBrief[]>([]);
   protected readonly brokenThumbs = signal<Set<number>>(new Set());
 
   /** Danh mục đang lọc; `null` = tất cả. */
   protected readonly activeCategory = signal<number | null>(null);
 
   constructor() {
+    this.loadCategories();
     this.load();
+  }
+
+  /**
+   * Danh mục cho dropdown — không chặn việc tải bài.
+   *
+   * Lỗi ở đây thì dropdown rỗng và trang vẫn hiện đủ bài; chặn cả trang vì
+   * một bộ lọc phụ là đánh đổi sai.
+   */
+  private loadCategories(): void {
+    this.categoryService.listAll().subscribe({
+      next: (res) => this.categories.set(res.data ?? []),
+      error: () => this.categories.set([]),
+    });
   }
 
   private load(): void {
     this.loading.set(true);
-    // Lấy rộng rồi lọc ở client: cần TOÀN BỘ bài đã đăng để suy ra danh mục, mà
-    // gọi hai lần (một để lấy danh mục, một để lọc) thì thừa.
     this.newsService.list({ page: 1, size: 50, sort: 'published_at,desc' }).subscribe({
       next: (res) => {
         this.news.set(res.data.items.filter((n) => n.status === 'PUBLISHED'));
@@ -60,24 +68,6 @@ export class ClientNewsList {
       error: () => this.loading.set(false),
     });
   }
-
-  /**
-   * Danh mục suy từ các bài đã tải — gom id duy nhất, giữ tên.
-   *
-   * Sắp theo tên để dropdown có thứ tự ổn định; nếu để theo thứ tự bài thì mỗi
-   * lần bài mới lên đầu là danh mục nhảy vị trí.
-   */
-  protected readonly categories = computed<CategoryOption[]>(() => {
-    const map = new Map<number, string>();
-    for (const item of this.news()) {
-      for (const c of item.categories ?? []) {
-        map.set(c.id, c.name);
-      }
-    }
-    return [...map.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-  });
 
   /** Bài hiển thị theo danh mục đang lọc. */
   protected readonly visibleNews = computed(() => {

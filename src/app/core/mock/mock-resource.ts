@@ -37,6 +37,14 @@ export interface MockResourceOptions<T extends MockRecord> {
    * theo mock sẽ vỡ khi gặp dữ liệu thật.
    */
   enrich?: (row: T) => T;
+  /**
+   * Giá trị `status` hợp lệ cho thao tác hàng loạt; mặc định ACTIVE | INACTIVE.
+   * News dùng PUBLISHED | UNPUBLISHED nên phải khai riêng, nếu không mock sẽ từ
+   * chối đúng cái giá trị mà backend chấp nhận.
+   */
+  bulkStatuses?: string[];
+  /** Hook chạy sau khi bulk đổi trạng thái một bản ghi (news cần gán `published_at`). */
+  onBulkStatus?: (row: T, status: string) => void;
 }
 
 /**
@@ -71,14 +79,17 @@ export class MockResource<T extends MockRecord> {
     return this.options.path === path;
   }
 
-  /** Khớp /path và /path/{id}; trả `null` nếu không phải đường dẫn của mình. */
-  matches(path: string): { id: number | null } | null {
+  /** Khớp /path, /path/{id} và /path/bulk; trả `null` nếu không phải đường dẫn của mình. */
+  matches(path: string): { id: number | null; bulk: boolean } | null {
     const base = `/api/${this.options.path}`;
     if (path === base) {
-      return { id: null };
+      return { id: null, bulk: false };
+    }
+    if (path === `${base}/bulk`) {
+      return { id: null, bulk: true };
     }
     const m = path.match(new RegExp(`^${base}/(\\d+)$`));
-    return m ? { id: Number(m[1]) } : null;
+    return m ? { id: Number(m[1]), bulk: false } : null;
   }
 
   handle(method: string, url: string, body?: unknown): unknown {
@@ -88,6 +99,12 @@ export class MockResource<T extends MockRecord> {
       return undefined;
     }
     const m = method.toUpperCase();
+
+    if (hit.bulk) {
+      if (m === 'PATCH') return this.bulk(body, true);
+      if (m === 'DELETE') return this.bulk(body, false);
+      return undefined;
+    }
 
     if (hit.id === null) {
       if (m === 'GET') return this.list(url);
@@ -208,6 +225,45 @@ export class MockResource<T extends MockRecord> {
     // DB v0.4: xóa mềm giữ bản ghi để tra lịch sử.
     this.deleted.add(id);
     return ok(null, `Đã xóa ${this.options.noun}`);
+  }
+
+  /**
+   * Thao tác hàng loạt — `PATCH`/`DELETE /{path}/bulk` (API v0.4 mục 2.10).
+   *
+   * Trả kết quả TỪNG PHẦN giống backend: id không tồn tại hoặc trạng thái không
+   * hợp lệ vào `failed` kèm mã lỗi, không chặn cả lô.
+   */
+  private bulk(body: unknown, toggle: boolean): unknown {
+    const payload = (body ?? {}) as { ids?: number[]; status?: string };
+    const ids = payload.ids ?? [];
+    if (ids.length === 0) {
+      return businessError('Danh sách id không được để trống');
+    }
+
+    const allowed = this.options.bulkStatuses ?? ['ACTIVE', 'INACTIVE'];
+    const status = payload.status ?? allowed[0];
+    if (toggle && !allowed.includes(status)) {
+      return businessError(`Trạng thái chỉ nhận ${allowed.join(' hoặc ')}`);
+    }
+
+    const succeeded: number[] = [];
+    const failed: { id: number; code: number; message: string }[] = [];
+
+    for (const id of ids) {
+      const target = this.alive().find((r) => r.id === id);
+      if (!target) {
+        failed.push({ id, code: 1004, message: `Không tìm thấy ${this.options.noun}` });
+        continue;
+      }
+      if (toggle) {
+        target.status = status;
+        this.options.onBulkStatus?.(target, status);
+      } else {
+        this.deleted.add(id);
+      }
+      succeeded.push(id);
+    }
+    return ok({ succeeded, failed }, 'Thao tác hàng loạt hoàn tất');
   }
 
   private checkUnique(payload: Partial<T>, selfId: number | null): unknown | null {

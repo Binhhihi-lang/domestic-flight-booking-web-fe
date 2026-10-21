@@ -96,8 +96,4 @@ export class MyVouchers {
         })
       : '—';
   }
-
-  protected formatMoney(v: number): string {
-    return MyVouchers.money.format(v);
-  }
 }

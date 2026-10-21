@@ -1,0 +1,89 @@
+<header class="sc__h">
+  <h1>Đổi mật khẩu</h1>
+  <p>Dùng mật khẩu mạnh, không trùng với mật khẩu email hay mạng xã hội.</p>
+</header>
+
+<app-app-card title="Mật khẩu" class="blk">
+  <div class="form-grid">
+    <div class="field field--full" [class.field--error]="fieldError('current_password')">
+      <label for="sc-cur">Mật khẩu hiện tại <span class="req">*</span></label>
+      <div class="field__pw">
+        <input
+          id="sc-cur"
+          [type]="showCurrent() ? 'text' : 'password'"
+          autocomplete="current-password"
+          [ngModel]="draft().current_password"
+          (ngModelChange)="setField('current_password', $event)"
+          placeholder="••••••••"
+        />
+        <button
+          class="field__eye"
+          type="button"
+          [attr.aria-label]="showCurrent() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+          (click)="toggleShow('current')"
+        >
+          <mat-icon>{{ showCurrent() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </div>
+      @if (fieldError('current_password'); as msg) {
+        <span class="field__err">{{ msg }}</span>
+      }
+    </div>
+
+    <div class="field" [class.field--error]="fieldError('new_password')">
+      <label for="sc-new">Mật khẩu mới <span class="req">*</span></label>
+      <div class="field__pw">
+        <input
+          id="sc-new"
+          [type]="showNew() ? 'text' : 'password'"
+          autocomplete="new-password"
+          [ngModel]="draft().new_password"
+          (ngModelChange)="setField('new_password', $event)"
+          placeholder="••••••••"
+        />
+        <button
+          class="field__eye"
+          type="button"
+          [attr.aria-label]="showNew() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+          (click)="toggleShow('new')"
+        >
+          <mat-icon>{{ showNew() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </div>
+      @if (fieldError('new_password'); as msg) {
+        <span class="field__err">{{ msg }}</span>
+      } @else {
+        <span class="hint">Tối thiểu 8 ký tự.</span>
+      }
+    </div>
+
+    <div class="field" [class.field--error]="fieldError('confirm')">
+      <label for="sc-confirm">Nhập lại mật khẩu mới <span class="req">*</span></label>
+      <input
+        id="sc-confirm"
+        [type]="showNew() ? 'text' : 'password'"
+        autocomplete="new-password"
+        [ngModel]="draft().confirm"
+        (ngModelChange)="setField('confirm', $event)"
+        placeholder="••••••••"
+      />
+      @if (fieldError('confirm'); as msg) {
+        <span class="field__err">{{ msg }}</span>
+      }
+    </div>
+  </div>
+
+  <p class="sc__note">
+    <mat-icon>info</mat-icon>
+    <span>
+      Sau khi đổi, các thiết bị khác đang đăng nhập sẽ bị đăng xuất ở lần làm mới
+      phiên tiếp theo.
+    </span>
+  </p>
+</app-app-card>
+
+<div class="form-actions">
+  <app-app-button [disabled]="saving()" (clicked)="submit()">
+    {{ saving() ? 'Đang cập nhật…' : 'Đổi mật khẩu' }}
+  </app-app-button>
+</div>

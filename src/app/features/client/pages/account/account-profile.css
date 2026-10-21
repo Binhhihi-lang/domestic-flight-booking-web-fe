@@ -1,0 +1,236 @@
+.pf__h {
+  margin-bottom: 18px;
+}
+
+.pf__h h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.pf__h p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--color-ink-muted);
+}
+
+.blk {
+  display: block;
+  margin-bottom: 16px;
+}
+
+/* ---------- Ảnh đại diện ---------- */
+.pf__avatar {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.pf__av-img {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 auto;
+  background: var(--color-primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pf__av-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pf__av-empty {
+  color: var(--color-primary);
+  display: flex;
+}
+
+.pf__av-empty mat-icon {
+  font-size: 42px;
+  width: 42px;
+  height: 42px;
+}
+
+.pf__av-ctl {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pf__av-ctl input[type='text'] {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  width: 100%;
+}
+
+.pf__av-ctl input[type='text']:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+.pf__av-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pf__pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 6px 10px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius);
+}
+
+.pf__pick:hover {
+  background: var(--color-primary-soft);
+}
+
+.pf__pick mat-icon {
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
+}
+
+.pf__pick input {
+  display: none;
+}
+
+.pf__clear {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--color-danger);
+  cursor: pointer;
+}
+
+.pf__clear:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Lưới form ---------- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.req {
+  color: var(--color-danger);
+}
+
+.field input {
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  padding: 11px 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  outline: none;
+  width: 100%;
+}
+
+.field input:focus {
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+}
+
+.field--error input {
+  border-color: var(--color-danger);
+}
+
+.field .hint,
+.hint {
+  font-size: 11.5px;
+  color: var(--color-ink-subtle);
+}
+
+.field__err {
+  font-size: 11.5px;
+  color: var(--color-danger);
+}
+
+/* ---------- Chỉ đọc ---------- */
+.pf__ro {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 0 0 10px;
+}
+
+.pf__ro div {
+  min-width: 0;
+}
+
+.pf__ro dt {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  margin-bottom: 3px;
+}
+
+.pf__ro dd {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Hành động ---------- */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .form-grid,
+  .pf__ro {
+    grid-template-columns: 1fr;
+  }
+
+  .pf__avatar {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .pf__av-ctl {
+    width: 100%;
+  }
+}
