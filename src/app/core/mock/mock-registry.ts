@@ -3,6 +3,7 @@ import {
   AdminUser,
   AdminUserCreatePayload,
   AdminUserUpdatePayload,
+  AuthenticatedUser,
 } from '@core/models/auth.model';
 import {
   Aircraft,
@@ -14,6 +15,7 @@ import {
 } from '@core/models/fleet-news.model';
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
+import { SeatClassSurcharge } from '@core/models/seat-surcharge.model';
 import { AIRLINES_MOCK } from '@core/mock/data/airlines.mock';
 import {
   AIRCRAFT_MOCK,
@@ -24,9 +26,11 @@ import {
   USER_VOUCHERS_MOCK,
   ROLES_MOCK,
   SEAT_TYPES_MOCK,
+  toVoucherBrief,
   VOUCHERS_MOCK,
 } from '@core/mock/data/catalog.mock';
 import { AIRPORTS_MOCK, CITIES_MOCK } from '@core/mock/data/locations.mock';
+import { SEAT_CLASS_SURCHARGES_MOCK } from '@core/mock/data/seat-surcharge.mock';
 import {
   buildLoginResponse,
   findMockUser,
@@ -36,7 +40,15 @@ import {
 import { UserVoucher, VoucherStoreItem } from '@core/models/user-voucher.model';
 import { MockResource } from '@core/mock/mock-resource';
 import { ApiResponse, PageData } from '@core/models/api-response.model';
-import { businessError, duplicate, notFound, ok, paginate, readParams } from '@core/mock/mock-response';
+import {
+  businessError,
+  duplicate,
+  notFound,
+  ok,
+  paginate,
+  readParams,
+  readStoredUser,
+} from '@core/mock/mock-response';
 
 /**
  * Sổ tra cứu mock: ánh xạ (method + đường dẫn) sang dữ liệu giả.
@@ -62,6 +74,17 @@ export class MockRegistry {
   /** Bản ghi đã xóa mềm trong seed — ẩn khỏi mọi truy vấn như DB thật. */
   private readonly deletedUsers = new Set<number>([12]);
   private temporaryPasswordSeq = 1;
+
+  /**
+   * Hồ sơ của người đang đăng nhập (mock chỉ giữ một phiên). Tách khỏi `users`
+   * để sửa hồ sơ không làm đổi bản ghi ở màn quản trị — đúng như backend, nơi
+   * `/profile` thao tác trên user trong token.
+   */
+  private profileUser: AuthenticatedUser | null = null;
+
+  /** Token đặt lại mật khẩu đã phát; map token → email để confirm tra lại. */
+  private readonly resetTokens = new Map<string, string>();
+  private resetTokenSeq = 1;
 
   /**
    * Sơ đồ ghế theo `aircraft_id`. Khởi tạo RỖNG — máy bay chưa cấu hình ghế nào,
@@ -145,6 +168,26 @@ export class MockRegistry {
       uniqueField: 'seat_type_code',
       noun: 'loại ghế',
     }),
+    new MockResource<SeatClassSurcharge>({
+      path: 'admin/seat-class-surcharges',
+      seed: SEAT_CLASS_SURCHARGES_MOCK,
+      searchFields: ['from_class', 'to_class'],
+      noun: 'phụ thu nâng hạng',
+      // UNIQUE là CẶP (from_class, to_class) nên không dùng được `uniqueField`.
+      // `update()` gọi validate với `merged` đã chứa `id`, nên `r.id !== payload.id`
+      // phân biệt đúng "trùng bản ghi khác" với "giữ nguyên cặp của chính nó".
+      validate: (payload, existing) => {
+        const from = payload.from_class;
+        const to = payload.to_class;
+        if (!from || !to) {
+          return 'Hạng vé và hạng ghế không được để trống';
+        }
+        const clash = existing.some(
+          (r) => r.id !== payload.id && r.from_class === from && r.to_class === to,
+        );
+        return clash ? `Đã có phụ thu cho cặp ${from} → ${to}` : null;
+      },
+    }),
     new MockResource<NewsItem>({
       path: 'admin/news',
       seed: NEWS_MOCK,
@@ -153,6 +196,14 @@ export class MockRegistry {
       // `category_id` khớp phần tử trong `category_ids` — filter thường so chuỗi
       // với một trường vô hướng nên không dùng được cho trường mảng.
       arrayFilters: { category_id: 'category_ids' },
+      // News dùng PUBLISHED | UNPUBLISHED cho bulk (DRAFT chỉ đạt được qua
+      // unpublish), khác ACTIVE | INACTIVE của các module master data.
+      bulkStatuses: ['PUBLISHED', 'UNPUBLISHED'],
+      onBulkStatus: (n, status) => {
+        if (status === 'PUBLISHED' && !n.published_at) {
+          n.published_at = new Date().toISOString();
+        }
+      },
       // API trả kèm `categories` lồng để client không phải gọi thêm endpoint;
       // trang khách dùng nó cho dropdown danh mục và nhãn ở bài viết.
       enrich: (n) => ({
@@ -198,6 +249,24 @@ export class MockRegistry {
     }
     if (path === '/api/auth/logout' && m === 'POST') {
       return ok(null, 'Đã đăng xuất');
+    }
+    if (path === '/api/auth/change-password' && m === 'POST') {
+      return this.changePassword(body);
+    }
+    if (path === '/api/auth/password-reset/request' && m === 'POST') {
+      return this.requestPasswordReset(body);
+    }
+    if (path === '/api/auth/password-reset/confirm' && m === 'POST') {
+      return this.confirmPasswordReset(body);
+    }
+
+    // Hồ sơ của chính người đang đăng nhập (API v0.4 mục 2.2).
+    if (path === '/api/profile') {
+      if (m === 'GET') return this.getProfile();
+      if (m === 'PUT') return this.updateProfile(body);
+    }
+    if (path === '/api/profile/avatar' && m === 'POST') {
+      return this.uploadAvatar();
     }
 
     if (path === '/api/admin/airlines' && m === 'GET') {
@@ -260,13 +329,13 @@ export class MockRegistry {
     }
 
     // Ví voucher của khách — API v0.2 mục 2.8.
-    if (path === '/api/v1/voucher-store' && m === 'GET') {
+    if (path === '/api/voucher-store' && m === 'GET') {
       return this.voucherStore();
     }
-    if (path === '/api/v1/my-vouchers' && m === 'GET') {
+    if (path === '/api/my-vouchers' && m === 'GET') {
       return this.myVouchers(url);
     }
-    const claimMatch = path.match(/^\/api\/v1\/vouchers\/(\d+)\/claim$/);
+    const claimMatch = path.match(/^\/api\/vouchers\/(\d+)\/claim$/);
     if (claimMatch && m === 'POST') {
       return this.claimVoucher(Number(claimMatch[1]));
     }
@@ -283,6 +352,18 @@ export class MockRegistry {
     // tương ứng rồi lọc bản ghi đang hoạt động. Mock giữ một nguồn dữ liệu duy
     // nhất nên sửa bên admin thấy ngay bên public, đúng như DB thật.
     if (m === 'GET' && path.startsWith('/api/public/')) {
+      // Danh mục tin trả MẢNG TRẦN `{id, name}`, không phân trang và không lộ
+      // description/status (API v0.4 mục 2.11) — không đi qua `handlePublic`.
+      if (path === '/api/public/news-categories') {
+        const categories = this.resources.find((r) => r.matchesPath('admin/news-categories'));
+        const envelope = categories?.handle('GET', '/api/admin/news-categories?size=100');
+        const rows = (envelope as ApiResponse<PageData<NewsCategory>> | undefined)?.data.items ?? [];
+        return ok(
+          rows
+            .filter((c) => c.status === 'ACTIVE')
+            .map((c) => ({ id: c.id, name: c.name })),
+        );
+      }
       return this.handlePublic(path.replace('/api/public/', ''), url);
     }
 
@@ -337,7 +418,103 @@ export class MockRegistry {
     if (!found || payload.password !== MOCK_PASSWORD) {
       return { code: 1007, message: 'Email hoặc mật khẩu không đúng', data: null };
     }
+    // Mỗi lần đăng nhập lấy lại hồ sơ từ seed: sửa hồ sơ ở phiên trước không
+    // được rò sang phiên sau (mock không có DB để phân biệt).
+    this.profileUser = { ...found };
     return ok(buildLoginResponse(found), 'Đăng nhập thành công');
+  }
+
+  // ---------- Hồ sơ cá nhân — API v0.4 mục 2.2 ----------
+
+  /**
+   * User đang đăng nhập.
+   *
+   * Ưu tiên `profileUser` (đặt ở lần login trong phiên này); nếu trống — vừa
+   * tải lại trang, mock mất state nhưng localStorage vẫn giữ phiên — thì đọc
+   * user đã lưu để trả đúng người, không rơi về tài khoản khách mẫu.
+   */
+  private currentProfile(): AuthenticatedUser {
+    if (!this.profileUser) {
+      this.profileUser =
+        readStoredUser<AuthenticatedUser>() ?? { ...findMockUser('customer@demo.local')! };
+    }
+    return this.profileUser;
+  }
+
+  private getProfile(): unknown {
+    return ok(this.currentProfile());
+  }
+
+  /** Chỉ `full_name`, `phone`, `avatar_url` sửa được; field khác bị bỏ qua. */
+  private updateProfile(body: unknown): unknown {
+    const p = (body ?? {}) as { full_name?: string; phone?: string; avatar_url?: string };
+    const user = this.currentProfile();
+
+    if (p.full_name !== undefined && p.full_name.trim() !== '') {
+      user.full_name = p.full_name.trim();
+    }
+    if (p.phone !== undefined) {
+      user.phone = p.phone.trim() === '' ? null : p.phone.trim();
+    }
+    if (p.avatar_url !== undefined) {
+      user.avatar_url = p.avatar_url.trim() === '' ? null : p.avatar_url.trim();
+    }
+    return ok(user, 'Cập nhật hồ sơ thành công');
+  }
+
+  /**
+   * Upload avatar — mock không nhận multipart nên trả về một URL cố định.
+   * BE thật đẩy file lên Cloudinary rồi trả URL công khai.
+   */
+  private uploadAvatar(): unknown {
+    const user = this.currentProfile();
+    user.avatar_url = 'https://res.cloudinary.com/demo/image/upload/avatar-mock.png';
+    return ok({ avatar_url: user.avatar_url }, 'Cập nhật ảnh đại diện thành công');
+  }
+
+  // ---------- Mật khẩu ----------
+
+  /** Sai mật khẩu hiện tại → 1007 (API v0.4 mục 2.1). */
+  private changePassword(body: unknown): unknown {
+    const p = (body ?? {}) as { current_password?: string; new_password?: string };
+    if ((p.current_password ?? '') !== MOCK_PASSWORD) {
+      return { code: 1007, message: 'Mật khẩu hiện tại không đúng', data: null };
+    }
+    if ((p.new_password ?? '').length < 8) {
+      return businessError('Mật khẩu phải từ 8 đến 100 ký tự');
+    }
+    return ok(null, 'Đổi mật khẩu thành công');
+  }
+
+  /**
+   * Luôn trả 200 với message trung tính — KHÔNG tiết lộ email có tồn tại hay
+   * không (chống dò tài khoản). `reset_token` chỉ có khi email khớp, đúng như
+   * MVP của backend.
+   */
+  private requestPasswordReset(body: unknown): unknown {
+    const email = ((body ?? {}) as { email?: string }).email?.trim().toLowerCase() ?? '';
+    const found = findMockUser(email);
+    let token: string | null = null;
+    if (found) {
+      token = `mock-reset-${this.resetTokenSeq++}`;
+      this.resetTokens.set(token, email);
+    }
+    return ok({ reset_token: token }, 'Nếu email tồn tại, hướng dẫn đã được gửi');
+  }
+
+  /** Token sai/hết hạn → 1006 (BUSINESS_RULE_VIOLATION). */
+  private confirmPasswordReset(body: unknown): unknown {
+    const p = (body ?? {}) as { token?: string; new_password?: string };
+    const token = p.token?.trim() ?? '';
+    if (!this.resetTokens.has(token)) {
+      return businessError('Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn');
+    }
+    if ((p.new_password ?? '').length < 8) {
+      return businessError('Mật khẩu phải từ 8 đến 100 ký tự');
+    }
+    // Token dùng một lần: xác nhận xong là hủy, giống backend.
+    this.resetTokens.delete(token);
+    return ok(null, 'Đặt lại mật khẩu thành công');
   }
 
   /**
@@ -525,17 +702,13 @@ export class MockRegistry {
     const items: VoucherStoreItem[] = VOUCHERS_MOCK.filter(
       (v) =>
         v.distribution_type === 'GLOBAL' &&
-        v.is_active &&
-        !v.is_deleted &&
+        v.status === 'ACTIVE' &&
         v.start_date <= today &&
         v.end_date >= today &&
         (v.claim_limit === null || v.claimed_count < v.claim_limit),
     ).map((v) => ({ ...v, claimed: claimedIds.has(v.id) }));
 
-    return ok({
-      items,
-      pagination: { page: 1, size: 20, total_items: items.length, total_pages: 1 },
-    });
+    return ok(items);
   }
 
   private myVouchers(url: string): unknown {
@@ -558,7 +731,7 @@ export class MockRegistry {
    * thì nó lọt qua và khách nhận được voucher lẽ ra chỉ ADMIN tặng.
    */
   private claimVoucher(voucherId: number): unknown {
-    const voucher = VOUCHERS_MOCK.find((v) => v.id === voucherId && !v.is_deleted);
+    const voucher = VOUCHERS_MOCK.find((v) => v.id === voucherId);
     if (!voucher) {
       return notFound('Không tìm thấy voucher');
     }
@@ -581,8 +754,7 @@ export class MockRegistry {
       // Chép hạn của voucher lúc nhận (DB v0.4 ghi rõ lý do).
       expires_at: `${voucher.end_date}T16:59:59Z`,
       used_at: null,
-      discount_amount: null,
-      voucher,
+      voucher: toVoucherBrief(voucher),
     };
     this.userVouchers.push(created);
     return ok({ user_voucher_id: created.id, status: created.status }, 'Đã nhận voucher');

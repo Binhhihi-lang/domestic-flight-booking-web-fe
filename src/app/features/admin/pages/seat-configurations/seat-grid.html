@@ -1,39 +1,83 @@
-<!-- Bảng cuộn ngang: máy bay 6 cột vẫn vừa, nhưng để chắc chắn không đẩy cả
-     trang tràn ngang trên màn hẹp. -->
-<div class="grid-wrap">
-  <table class="grid">
-    <caption class="sr-only">Lưới ghế xem trước</caption>
-    <thead>
-      <tr>
-        <th class="grid__corner" scope="col"></th>
-        @for (col of columns(); track col) {
-          <th class="grid__colhead" scope="col">{{ col }}</th>
-        }
-      </tr>
-    </thead>
-    <tbody>
-      @for (row of rows(); track row) {
-        <tr>
-          <th class="grid__rowhead" scope="row">{{ row }}</th>
-          @for (col of columns(); track col) {
-            @if (seatAt(row, col); as seat) {
-              <td>
-                <button
-                  type="button"
-                  [class]="classOf(seat)"
-                  [attr.aria-label]="'Ghế ' + row + col + ', loại ' + typeCode(seat.seat_type_id)"
-                  (click)="onCell(seat)"
-                >
-                  {{ typeCode(seat.seat_type_id) }}
-                </button>
-              </td>
-            } @else {
-              <!-- Hàng khuyết ô (lối đi, khoang trống) — để trống có chủ đích. -->
-              <td class="grid__gap" aria-hidden="true"></td>
+<!-- Sơ đồ cabin: mũi máy bay → các hàng ghế → đuôi máy bay.
+     Cuộn ngang để không đẩy cả trang tràn trên màn hẹp. -->
+<div class="cabin-wrap">
+  <div class="cabin">
+    <!-- Mũi máy bay — hình thang bo tròn, thu hẹp dần về phía trước. -->
+    <div class="cabin__nose" aria-hidden="true">
+      <svg viewBox="0 0 100 60" preserveAspectRatio="none" role="presentation">
+        <path d="M2 58 Q2 2 50 2 Q98 2 98 58 Z" />
+      </svg>
+    </div>
+
+    <div class="cabin__body">
+      <table class="grid">
+        <caption class="sr-only">Lưới ghế xem trước</caption>
+        <thead>
+          <tr>
+            <th class="grid__corner" scope="col"></th>
+            @for (col of columns(); track col) {
+              <th class="grid__colhead" scope="col">{{ col }}</th>
+              @if (hasAisleAfter(col)) {
+                <th class="grid__aisle-head" scope="col" aria-hidden="true"></th>
+              }
             }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row) {
+            <tr>
+              <th class="grid__rowhead" scope="row">{{ row }}</th>
+              @for (col of columns(); track col) {
+                @if (seatAt(row, col); as seat) {
+                  <td>
+                    <button
+                      type="button"
+                      class="cell"
+                      [style.background]="cellBackground(seat)"
+                      [attr.aria-label]="'Ghế ' + row + col + ', ' + typeName(seat.seat_type_id)"
+                      [attr.title]="row + col + ' · ' + typeName(seat.seat_type_id)"
+                      (click)="onCell(seat)"
+                    ></button>
+                  </td>
+                } @else {
+                  <!-- Ô khuyết trong hàng — giữ chỗ để cột thẳng hàng. -->
+                  <td class="grid__gap" aria-hidden="true"></td>
+                }
+                @if (hasAisleAfter(col)) {
+                  <!-- Lối đi giữa cabin: rộng hơn khe giữa hai ghế để mắt tách
+                       được hai dãy, giống sơ đồ ghế của hãng bay thật. -->
+                  <td class="grid__aisle" aria-hidden="true"></td>
+                }
+              }
+            </tr>
           }
-        </tr>
-      }
-    </tbody>
-  </table>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Đuôi máy bay — thu hẹp dần về phía sau. -->
+    <div class="cabin__tail" aria-hidden="true">
+      <svg viewBox="0 0 100 60" preserveAspectRatio="none" role="presentation">
+        <path d="M2 2 Q2 58 50 58 Q98 58 98 2 Z" />
+      </svg>
+    </div>
+  </div>
 </div>
+
+@if (legendItems().length > 0) {
+  <ul class="legend" aria-label="Chú thích màu ghế">
+    @for (t of legendItems(); track t.id) {
+      <li class="legend__item">
+        <span
+          class="legend__swatch"
+          [style.background]="t.color_hex ?? fallbackColor(t.seat_class)"
+        ></span>
+        <span class="legend__name">{{ t.seat_type_name }}</span>
+        <span class="legend__code">{{ t.seat_type_code }}</span>
+        @if (!t.color_hex) {
+          <span class="legend__note">mặc định</span>
+        }
+      </li>
+    }
+  </ul>
+}

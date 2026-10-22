@@ -97,9 +97,6 @@
                 <li>
                   <mat-icon>check</mat-icon>
                   Dùng lúc {{ formatDate(v.used_at) }}
-                  @if (v.discount_amount) {
-                    — giảm {{ formatMoney(v.discount_amount) }}₫
-                  }
                 </li>
               }
             </ul>

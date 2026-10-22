@@ -139,6 +139,13 @@ export class AdminLayout implements AfterViewInit {
         { path: '/admin/cities', label: 'Thành phố', icon: 'location_city', adminOnly: true },
         { path: '/admin/airports', label: 'Sân bay', icon: 'local_airport', adminOnly: true },
         { path: '/admin/aircrafts', label: 'Máy bay', icon: 'airlines', adminOnly: true },
+        { path: '/admin/seat-types', label: 'Loại ghế', icon: 'event_seat', adminOnly: true },
+        {
+          path: '/admin/seat-class-surcharges',
+          label: 'Phụ thu nâng hạng',
+          icon: 'payments',
+          adminOnly: true,
+        },
         // KHÔNG có mục "Sơ đồ ghế" riêng: sơ đồ thuộc về MỘT máy bay nên vào từ
         // cột "Cấu hình" ở danh sách máy bay. Thêm mục nav cùng path
         // `/admin/aircrafts` sẽ làm hai mục cùng sáng khi active và Angular báo

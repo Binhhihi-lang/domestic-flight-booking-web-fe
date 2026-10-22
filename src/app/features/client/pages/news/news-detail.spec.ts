@@ -25,7 +25,9 @@ describe('ClientNewsDetail — chống XSS (kết quả cuối cùng)', () => {
     await TestBed.configureTestingModule({
       imports: [ClientNewsDetail],
       providers: [
-        provideRouter([]),
+        // Component điều hướng về `/news` khi bài không đọc được (DRAFT/1004);
+        // thiếu route này thì Router ném NG04002 và test báo lỗi sai bản chất.
+        provideRouter([{ path: 'news', children: [] }]),
         MockRegistry,
         provideHttpClient(withInterceptors([mockInterceptor])),
         {

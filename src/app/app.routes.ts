@@ -27,6 +27,14 @@ export const routes: Routes = [
     data: { title: 'Đăng ký' },
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('@features/client/pages/forgot-password/forgot-password').then(
+        (m) => m.ForgotPassword,
+      ),
+    data: { title: 'Quên mật khẩu' },
+  },
+  {
     path: '',
     loadComponent: () =>
       import('@features/client/layout/client-layout').then((m) => m.ClientLayout),
@@ -89,7 +97,6 @@ export const routes: Routes = [
               ),
             data: { title: 'Vé của tôi' },
           },
-          ...comingSoonAccount('wallet', 'Ví của tôi'),
           {
             path: 'vouchers',
             loadComponent: () =>
@@ -102,8 +109,22 @@ export const routes: Routes = [
               import('@features/client/pages/account/voucher-store').then((m) => m.VoucherStore),
             data: { title: 'Kho voucher' },
           },
-          ...comingSoonAccount('profile', 'Hồ sơ cá nhân'),
-          ...comingSoonAccount('security', 'Đổi mật khẩu'),
+          {
+            path: 'profile',
+            loadComponent: () =>
+              import('@features/client/pages/account/account-profile').then(
+                (m) => m.AccountProfile,
+              ),
+            data: { title: 'Hồ sơ cá nhân' },
+          },
+          {
+            path: 'security',
+            loadComponent: () =>
+              import('@features/client/pages/account/account-security').then(
+                (m) => m.AccountSecurity,
+              ),
+            data: { title: 'Đổi mật khẩu' },
+          },
         ],
       },
       {
@@ -159,6 +180,12 @@ export const routes: Routes = [
       ),
       ...crudRoutes('seat-types', 'Loại ghế', () =>
         import('@features/admin/pages/seat-types/seat-types').then((m) => m.AdminSeatTypes),
+        { adminOnly: true },
+      ),
+      ...crudRoutes('seat-class-surcharges', 'Phụ thu nâng hạng', () =>
+        import('@features/admin/pages/seat-class-surcharges/seat-class-surcharges').then(
+          (m) => m.AdminSeatClassSurcharges,
+        ),
         { adminOnly: true },
       ),
       ...crudRoutes('promotions', 'Khuyến mãi', () =>
@@ -231,7 +258,12 @@ export const routes: Routes = [
       },
       ...comingSoonAdmin('flights', 'Chuyến bay'),
       ...comingSoonAdmin('bookings', 'Đặt chỗ'),
-      ...comingSoonAdmin('profile', 'Hồ sơ cá nhân'),
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('@features/admin/pages/profile/admin-profile').then((m) => m.AdminProfile),
+        data: { title: 'Hồ sơ cá nhân' },
+      },
     ],
   },
   { path: '**', redirectTo: '' },
@@ -240,26 +272,14 @@ export const routes: Routes = [
 /**
  * Sinh route `coming-soon` cho một màn admin chưa làm.
  *
- * Vì sao gom thành hàm: có 14 màn như vậy, viết tay từng khối lặp lại đúng
- * một khuôn và rất dễ lệch `data.title` với nhãn trên sidebar.
+ * Vì sao gom thành hàm: viết tay từng khối lặp lại đúng một khuôn và rất dễ
+ * lệch `data.title` với nhãn trên sidebar.
  */
 function comingSoonAdmin(path: string, title: string, adminOnly = false): Routes {
   return [
     {
       path,
       ...(adminOnly ? { canActivate: [adminGuard] } : {}),
-      loadComponent: () =>
-        import('@shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
-      data: { title },
-    },
-  ];
-}
-
-/** Cùng khuôn trên cho các mục trong trang tài khoản khách (đã có authGuard ở cha). */
-function comingSoonAccount(path: string, title: string): Routes {
-  return [
-    {
-      path,
       loadComponent: () =>
         import('@shared/components/coming-soon/coming-soon').then((m) => m.ComingSoon),
       data: { title },

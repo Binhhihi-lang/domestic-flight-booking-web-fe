@@ -20,6 +20,7 @@ import {
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
 import { Permission, Role } from '@core/models/rbac.model';
+import { SeatClassSurcharge } from '@core/models/seat-surcharge.model';
 import {
   UserVoucher,
   UserVoucherStatus,
@@ -72,6 +73,19 @@ export class AircraftService extends BaseCrudService<Aircraft> {
 export class SeatTypeService extends BaseCrudService<SeatType> {
   constructor() {
     super('admin/seat-types');
+  }
+}
+
+/**
+ * Phụ thu nâng hạng ghế — mặc định dùng chung mọi chuyến.
+ *
+ * KHÔNG có dòng cho một cặp (from_class, to_class) nghĩa là chưa có chính sách;
+ * muốn miễn phí thì tạo dòng `surcharge = 0` tường minh.
+ */
+@Injectable({ providedIn: 'root' })
+export class SeatClassSurchargeService extends BaseCrudService<SeatClassSurcharge> {
+  constructor() {
+    super('admin/seat-class-surcharges');
   }
 }
 
@@ -202,13 +216,15 @@ export class UserVoucherService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}`;
 
-  /** Kho voucher: GLOBAL đang hiệu lực, còn lượt nhận. */
-  store(
-    query: { page?: number; size?: number } = {},
-  ): Observable<ApiResponse<PageData<VoucherStoreItem>>> {
-    return this.http.get<ApiResponse<PageData<VoucherStoreItem>>>(`${this.baseUrl}/voucher-store`, {
-      params: new HttpParams({ fromObject: query as Record<string, string> }),
-    });
+  /**
+   * Kho voucher: GLOBAL đang hiệu lực, còn lượt nhận.
+   *
+   * Trả MẢNG TRẦN, không phải `PageData`: BE `VoucherCustomerController` khai
+   * `ApiResponse<List<VoucherStoreItem>>`. Kho là danh sách ngắn (chỉ GLOBAL đang
+   * phát) nên BE không phân trang — đọc `data.items` sẽ ra `undefined`.
+   */
+  store(): Observable<ApiResponse<VoucherStoreItem[]>> {
+    return this.http.get<ApiResponse<VoucherStoreItem[]>>(`${this.baseUrl}/voucher-store`);
   }
 
   /** Nhận một voucher GLOBAL vào ví. */

@@ -1,12 +1,3 @@
-<!-- ===== Ví ===== -->
-<div class="wallet">
-  <div class="wallet__in">
-    <div class="wallet__l">Số dư ví</div>
-    <div class="wallet__v tabular">1.848.000₫</div>
-    <div class="wallet__hint">Tiền hoàn từ booking đã hủy · dùng để thanh toán vé mới</div>
-  </div>
-</div>
-
 <!-- ===== Booking sắp tới ===== -->
 <h2 class="sec-t">Booking sắp tới</h2>
 <p class="sec-s">2 booking đang hoạt động</p>
@@ -81,27 +72,3 @@
     </div>
   </article>
 }
-
-<!-- ===== Lịch sử ví ===== -->
-<h2 class="sec-t spaced">Lịch sử ví</h2>
-<p class="sec-s">Giao dịch hoàn tiền và thanh toán</p>
-
-<div class="card">
-  @for (tx of walletHistory; track tx.detail) {
-    <div class="tx">
-      <div class="tx__ic" [class]="'tx__ic--' + tx.iconTone">
-        <mat-icon>{{ tx.icon }}</mat-icon>
-      </div>
-      <div class="tx__body">
-        <div class="tx__t">{{ tx.title }}</div>
-        <div class="tx__d tabular">{{ tx.detail }}</div>
-      </div>
-      <div class="tx__a">
-        <b class="tabular" [class.tx--up]="tx.amountTone === 'up'" [class.tx--down]="tx.amountTone === 'down'">
-          {{ tx.amount }}
-        </b>
-        <small class="tabular">{{ tx.balance }}</small>
-      </div>
-    </div>
-  }
-</div>

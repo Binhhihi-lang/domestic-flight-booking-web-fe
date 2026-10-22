@@ -8,6 +8,8 @@ import {
   ChangePasswordRequest,
   LoginRequest,
   LoginResponse,
+  PasswordResetConfirmRequest,
+  PasswordResetResponse,
   RegisterRequest,
   UpdateProfileRequest,
   User,
@@ -84,10 +86,22 @@ export class AuthService {
     return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/change-password`, payload);
   }
 
-  requestPasswordReset(email: string): Observable<ApiResponse<null>> {
-    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/password-reset/request`, {
-      email,
-    });
+  /**
+   * Yêu cầu đặt lại mật khẩu — LUÔN thành công với email bất kỳ (chống dò tài
+   * khoản). `data.reset_token` chỉ có ở MVP để test; có thể null.
+   */
+  requestPasswordReset(email: string): Observable<ApiResponse<PasswordResetResponse>> {
+    return this.http.post<ApiResponse<PasswordResetResponse>>(
+      `${this.baseUrl}/auth/password-reset/request`,
+      { email },
+    );
+  }
+
+  confirmPasswordReset(payload: PasswordResetConfirmRequest): Observable<ApiResponse<null>> {
+    return this.http.post<ApiResponse<null>>(
+      `${this.baseUrl}/auth/password-reset/confirm`,
+      payload,
+    );
   }
 
   private patchCurrentUser(user: User): void {

@@ -88,6 +88,12 @@ export class AdminNews {
         ],
       },
     ],
+    bulk: {
+      activeLabel: 'Xuất bản',
+      inactiveLabel: 'Ngừng xuất bản',
+      activeStatus: 'PUBLISHED',
+      inactiveStatus: 'UNPUBLISHED',
+    },
   };
 
   /** '2026-10-05T02:00:00Z' → '05/10/2026'@features/admin/pages/news/. */

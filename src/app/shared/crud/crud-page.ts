@@ -22,7 +22,7 @@ import { AppCard } from '@shared/ui/app-card/app-card';
 import { StatusBadge } from '@shared/ui/status-badge/status-badge';
 import { LoadingState } from '@shared/ui/loading-state/loading-state';
 import { MatDialog } from '@angular/material/dialog';
-import { CrudConfig, CrudField } from '@shared/crud/crud-config';
+import { CrudBulkConfig, CrudConfig, CrudField } from '@shared/crud/crud-config';
 
 /**
  * Màn CRUD dùng chung — ba chế độ: danh sách, form, chi tiết.
@@ -200,15 +200,34 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
    * Trước đây gọi tuần tự từng `PUT /{id}` vì BE chưa có bulk; nay BE đã có nên
    * dùng bulk: một request, kết quả TỪNG PHẦN (`succeeded`/`failed`) thay vì
    * phải tự đếm.
+   *
+   * Nhãn và giá trị trạng thái lấy từ `config().bulk` — News dùng
+   * PUBLISHED/UNPUBLISHED, gửi ACTIVE sẽ bị backend từ chối cả lô.
    */
+  /**
+   * Nhãn + trạng thái của thanh thao tác hàng loạt. Module có trạng thái riêng
+   * (News: xuất bản/ngừng xuất bản) khai trong `config().bulk`.
+   */
+  protected readonly bulkLabels = computed<CrudBulkConfig>(
+    () =>
+      this.config().bulk ?? {
+        activeLabel: 'Kích hoạt',
+        inactiveLabel: 'Ngừng',
+        activeStatus: 'ACTIVE',
+        inactiveStatus: 'INACTIVE',
+      },
+  );
+
   protected bulkSetActive(isActive: boolean): void {
     const ids = [...this.selectedIds()];
     if (ids.length === 0) {
       return;
     }
+    const bulk = this.bulkLabels();
+    const label = isActive ? bulk.activeLabel : bulk.inactiveLabel;
     this.runBulkRequest(
-      (svc) => svc.bulkToggle(ids, isActive ? 'ACTIVE' : 'INACTIVE'),
-      isActive ? 'Đã kích hoạt' : 'Đã ngừng hoạt động',
+      (svc) => svc.bulkToggle(ids, isActive ? bulk.activeStatus : bulk.inactiveStatus),
+      `Đã ${label.toLowerCase()}`,
       ids.length,
     );
   }
@@ -529,11 +548,21 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
         return true;
       case 'number':
         return null;
+      case 'color':
+        // `null` chứ không phải '': BE validate `@Pattern` hex nên chuỗi rỗng
+        // sẽ trượt. `null` = chưa đặt màu, hợp lệ.
+        return null;
       case 'select':
         return field.options?.length ? field.options[0].value : null;
       default:
         return '';
     }
+  }
+
+  /** Chuẩn hoá giá trị ô màu: rỗng → null, ngược lại chữ HOA. */
+  protected asColor(value: string): string | null {
+    const v = (value ?? '').trim();
+    return v.length === 0 ? null : v.toUpperCase();
   }
 
   protected setField(key: string, value: unknown): void {

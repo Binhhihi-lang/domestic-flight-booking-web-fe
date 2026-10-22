@@ -52,6 +52,13 @@ export class AdminAircrafts {
       { key: 'manufacturer', shownInTable: true, label: 'Hãng sản xuất', type: 'text', maxLength: 100 },
       { key: 'seat_capacity', shownInTable: true, label: 'Sức chứa (ghế)', type: 'number', required: true, min: 1 },
       {
+        key: 'aisle_after',
+        label: 'Lối đi sau cột',
+        type: 'text',
+        maxLength: 20,
+        hint: 'Cột sau đó là lối đi: "C" cho 3-3, "C,E" cho 3-2-2. Để trống nếu cabin nhỏ không có lối đi.',
+      },
+      {
         key: 'status', shownInTable: true,
         label: 'Trạng thái',
         type: 'select',

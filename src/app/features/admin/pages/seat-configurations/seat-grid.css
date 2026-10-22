@@ -1,10 +1,44 @@
-.grid-wrap {
+.cabin-wrap {
   overflow-x: auto;
+  padding: 12px 0;
+}
+
+/* Thân cabin: nền sáng, viền bo — tạo cảm giác khoang máy bay. */
+.cabin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.cabin__body {
+  background: var(--color-surface-alt);
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  padding: 0 12px;
+}
+
+/* Mũi và đuôi dùng SVG để bo tròn đúng tỉ lệ, không phụ thuộc số cột. */
+.cabin__nose,
+.cabin__tail {
+  width: 100%;
+  height: 46px;
+}
+
+.cabin__nose svg,
+.cabin__tail svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: var(--color-surface-alt);
+  stroke: var(--color-border);
+  stroke-width: 0.6;
 }
 
 .grid {
   border-collapse: separate;
-  border-spacing: 4px;
+  border-spacing: 6px 5px;
   margin: 0 auto;
 }
 
@@ -15,50 +49,105 @@
   font-weight: 700;
   color: var(--color-ink-subtle);
   text-align: center;
+  padding: 0;
 }
 
-.grid__colhead {
-  width: 38px;
-}
-
+/* Ô góc và ô số hàng phải cùng bề rộng, nếu không cột header lệch so với cột ghế. */
+.grid__corner,
 .grid__rowhead {
   width: 26px;
+  min-width: 26px;
 }
 
+/* Cột header phải khớp ĐÚNG bề rộng ô ghế bên dưới. */
+.grid__colhead {
+  width: 40px;
+  min-width: 40px;
+}
+
+/* Ô chứa ghế: bỏ padding mặc định của <td>, nếu không nội dung bị đẩy lệch
+   so với header dù cùng width. */
+.grid td {
+  padding: 0;
+  vertical-align: middle;
+}
+
+/* Màu nền do `[style]` binding quyết định (xem seat-grid.ts) — màu là dữ liệu
+   động từ seat_types.color_hex nên không sinh class được.
+   Ô KHÔNG hiện mã loại ghế: 40px không đủ chỗ cho "ECO_WIN"/"FIRST", chữ tràn
+   ra ngoài. Loại ghế đọc qua chú thích màu bên dưới + tooltip + aria-label. */
 .cell {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  font-family: var(--font-body);
-  font-size: 10px;
-  font-weight: 700;
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 7px 7px 4px 4px;
+  border: none;
+  padding: 0;
   cursor: pointer;
-  color: #fff;
-  transition: transform var(--dur-fast) var(--ease);
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 
 .cell:hover {
-  transform: scale(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgb(0 0 0 / 18%);
 }
 
-/* Màu theo hạng ghế — khớp bảng Seat UI của tài liệu UI. */
-.cell--economy {
-  background: var(--color-primary-bright);
-}
-
-.cell--business {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
-
-.cell--first {
-  background: var(--color-danger);
+.cell:focus-visible {
+  outline: 2px solid var(--color-primary-bright);
+  outline-offset: 2px;
 }
 
 .grid__gap {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
+}
+
+/* Lối đi giữa cabin — rộng gấp ~2,5 lần khe giữa hai ghế. */
+.grid__aisle,
+.grid__aisle-head {
+  width: 16px;
+  padding: 0;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 16px;
+  padding: 0;
+  list-style: none;
+  justify-content: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-ink-subtle);
+  white-space: nowrap;
+}
+
+.legend__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+}
+
+/* Mã loại ghế trong chú thích — thay cho chữ từng bị tràn trong ô. */
+.legend__code {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--color-ink);
+  opacity: 0.75;
+}
+
+.legend__note {
+  font-style: italic;
 }
 
 .sr-only {
@@ -68,4 +157,21 @@
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .cell,
+  .grid__gap {
+    width: 32px;
+    height: 32px;
+  }
+
+  .grid__colhead {
+    width: 32px;
+  }
+
+  .grid__aisle,
+  .grid__aisle-head {
+    width: 12px;
+  }
 }

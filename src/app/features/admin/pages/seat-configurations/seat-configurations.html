@@ -115,6 +115,7 @@
         <app-seat-grid
           [seats]="seats()"
           [seatTypes]="seatTypes()"
+          [aisleAfter]="ac.aisle_after"
           (cellClicked)="onCellClicked($event)"
         />
       }

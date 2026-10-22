@@ -6,8 +6,8 @@
     </div>
   </header>
 
-  <!-- Lọc theo danh mục. Danh sách suy từ bài đã tải (endpoint danh mục là
-       quyền ADMIN) — xem ghi chú trong news-list.ts. -->
+  <!-- Lọc theo danh mục — lấy từ /public/news-categories (mảng trần, chỉ danh
+       mục đang hoạt động). -->
   @if (!loading() && categories().length > 0) {
     <div class="cat-filter">
       <label class="cat-filter__lbl" for="news-cat">Danh mục</label>

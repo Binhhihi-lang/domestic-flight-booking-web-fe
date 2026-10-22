@@ -57,6 +57,33 @@ export interface ChangePasswordRequest {
 }
 
 /**
+ * Payload POST /auth/password-reset/request.
+ *
+ * Endpoint LUÔN trả 200 kể cả email không tồn tại (chống dò tài khoản), nên
+ * UI không được suy ra "email có tồn tại hay không" từ phản hồi.
+ */
+export interface PasswordResetRequest {
+  email: string;
+}
+
+/** Payload POST /auth/password-reset/confirm. Token sai/hết hạn → 1006. */
+export interface PasswordResetConfirmRequest {
+  token: string;
+  new_password: string;
+}
+
+/**
+ * `data` của POST /auth/password-reset/request.
+ *
+ * MVP chưa có mail server nên BE trả token thẳng trong response để luồng đặt
+ * lại mật khẩu test được end-to-end. Khi tích hợp mail thật, trường này biến mất
+ * và FE chỉ còn hiện thông báo trung tính.
+ */
+export interface PasswordResetResponse {
+  reset_token: string | null;
+}
+
+/**
  * Người dùng ở góc nhìn ADMIN — API v0.4 mục 2.3.
  *
  * Backend trả `status` dạng chuỗi `ACTIVE | INACTIVE` (xem `UserMapper`), KHÔNG
