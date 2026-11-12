@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '@core/services/auth.service';
 import { AuthAside } from '@shared/components/auth-aside/auth-aside';
@@ -31,8 +31,9 @@ export class ForgotPassword {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-  protected readonly step = signal<'request' | 'confirm' | 'done'>('request');
+  protected readonly step = signal<'request' | 'sent' | 'confirm' | 'done'>('request');
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
 
@@ -50,6 +51,16 @@ export class ForgotPassword {
     new_password: ['', [Validators.required, Validators.minLength(8)]],
     confirm: ['', [Validators.required]],
   });
+
+  constructor() {
+    // Người dùng bấm liên kết trong email: ?token=<uuid>. Nhảy thẳng sang bước
+    // đặt mật khẩu mới, không bắt họ chép mã bằng tay.
+    const token = this.route.snapshot.queryParamMap.get('token');
+    if (token) {
+      this.confirmForm.controls.token.setValue(token);
+      this.step.set('confirm');
+    }
+  }
 
   protected showRequestError(): boolean {
     const c = this.requestForm.controls.email;
@@ -71,10 +82,16 @@ export class ForgotPassword {
         this.loading.set(false);
         this.requestedEmail.set(email);
         this.issuedToken.set(res.data?.reset_token ?? null);
-        // Không có token nghĩa là email không khớp — vẫn sang bước 2 để người
-        // dùng tự nhập mã nhận được qua email (khi BE có mail server).
-        this.confirmForm.controls.token.setValue(res.data?.reset_token ?? '');
-        this.step.set('confirm');
+
+        if (res.data?.reset_token) {
+          // Chỉ có ở môi trường bật AUTH_EXPOSE_RESET_TOKEN (demo/test): không
+          // có hộp thư để mở, nên đưa thẳng sang bước đặt mật khẩu.
+          this.confirmForm.controls.token.setValue(res.data.reset_token);
+          this.step.set('confirm');
+        } else {
+          // Luồng thật: thư đã gửi, người dùng phải mở email bấm liên kết.
+          this.step.set('sent');
+        }
       },
       error: (err: Error) => {
         this.loading.set(false);

@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>VinaFly — Design System</title>
+<style>
+  :root {
+    --primary: #0770cd;
+    --primary-hover: #0a57a8;
+    --primary-bright: #0194f3;
+    --primary-soft: #eaf7ff;
+    --on-primary: #ffffff;
+    --accent: #ff5e1f;
+    --accent-hover: #e84a0c;
+    --on-accent: #3d1a08;
+    --success: #00a651;
+    --success-soft: #dcfce7;
+    --on-success-soft: #15803d;
+    --warning: #f2a81d;
+    --warning-soft: #fef3c7;
+    --on-warning-soft: #b45309;
+    --danger: #e5484d;
+    --danger-soft: #fee2e2;
+    --on-danger-soft: #b91c1c;
+    --info: #0194f3;
+    --info-soft: #e0f2fe;
+    --on-info-soft: #0369a1;
+    --bg: #f7f9fa;
+    --surface: #ffffff;
+    --surface-alt: #fbfcfd;
+    --ink: #03121a;
+    --ink-muted: #687176;
+    --ink-subtle: #6a737a;
+    --border: #dde3e8;
+    --border-soft: #edf1f4;
+    --dark: #05285d;
+    --dark-2: #083a7d;
+    --dark-line: #1a4a8a;
+    --on-dark: #ffffff;
+    --on-dark-muted: #c3d0de;
+    --on-dark-subtle: #8ea3b8;
+    --sidebar-top: #0d47a2;
+    --sidebar-bottom: #030e20;
+
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 16px;
+
+    --shadow-sm: 0 1px 4px rgba(3, 18, 26, 0.06);
+    --shadow: 0 2px 10px rgba(3, 18, 26, 0.07);
+    --shadow-lg: 0 4px 16px rgba(3, 18, 26, 0.10);
+
+    --font-head: 'Be Vietnam Pro', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ============ HEAD ============ */
+  .head {
+    background: var(--dark);
+    color: #fff;
+    padding: 44px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 40px;
+  }
+  .head__mark { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+  .head__badge {
+    width: 42px; height: 42px; border-radius: 11px;
+    background: linear-gradient(135deg, #0d47a2, var(--primary-bright));
+    display: grid; place-items: center;
+  }
+  .head__name { font-family: var(--font-head); font-weight: 700; font-size: 19px; }
+  .head__tag { font-size: 12px; color: var(--on-dark-subtle); margin-top: 1px; }
+  .head h1 {
+    font-family: var(--font-head);
+    font-size: 38px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.15;
+  }
+  .head p { margin-top: 10px; color: var(--on-dark-muted); font-size: 15px; max-width: 640px; }
+  .head__stat { text-align: right; flex-shrink: 0; }
+  .head__stat b {
+    font-family: var(--font-head);
+    display: block; font-size: 34px; line-height: 1; letter-spacing: -1px;
+  }
+  .head__stat span { font-size: 12px; color: var(--on-dark-subtle); }
+
+  /* ============ SECTION ============ */
+  .sec { padding: 52px 80px; }
+  .sec--alt { background: var(--surface); }
+  .sec__no {
+    display: inline-block;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    color: var(--primary); background: var(--primary-soft);
+    padding: 4px 10px; border-radius: 6px; margin-bottom: 12px;
+  }
+  .sec h2 {
+    font-family: var(--font-head);
+    font-size: 25px; font-weight: 700; letter-spacing: -0.4px;
+  }
+  .sec__desc { margin-top: 7px; color: var(--ink-muted); max-width: 760px; font-size: 14px; }
+  .sec__body { margin-top: 26px; }
+
+  /* ============ COLOR GRID ============ */
+  .sw-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 16px;
+  }
+  .sw { }
+  .sw__chip {
+    height: 76px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-sm);
+  }
+  .sw__n {
+    margin-top: 9px;
+    font-size: 12.5px; font-weight: 600;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    color: var(--ink);
+  }
+  .sw__h {
+    font-size: 11px;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    color: var(--ink-subtle);
+    margin-top: 1px;
+    text-transform: uppercase;
+  }
+  .sw__c { font-size: 11px; color: var(--ink-subtle); margin-top: 1px; }
+
+  /* ============ TYPE SCALE ============ */
+  .type-row {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 24px;
+    align-items: baseline;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta b { display: block; font-size: 12.5px; font-weight: 600; }
+  .type-meta span { font-size: 11px; color: var(--ink-subtle); font-family: ui-monospace, monospace; }
+
+  .d-display { font-family: var(--font-head); font-size: 32px; font-weight: 700; line-height: 1.25; letter-spacing: -0.5px; }
+  .d-h1 { font-family: var(--font-head); font-size: 24px; font-weight: 700; line-height: 1.25; }
+  .d-h2 { font-family: var(--font-head); font-size: 20px; font-weight: 600; line-height: 1.25; }
+  .d-h3 { font-family: var(--font-head); font-size: 17px; font-weight: 600; line-height: 1.25; }
+  .d-body { font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+  .d-body-s { font-family: var(--font-body); font-size: 15px; font-weight: 500; line-height: 1.5; }
+  .d-small { font-family: var(--font-body); font-size: 13px; line-height: 1.5; }
+  .d-small-s { font-family: var(--font-body); font-size: 13px; font-weight: 500; line-height: 1.5; }
+  .d-caption { font-family: var(--font-body); font-size: 11px; line-height: 1.5; color: var(--ink-muted); }
+
+  /* ============ SPACING / RADIUS ============ */
+  .sp-row { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; }
+  .sp { text-align: center; }
+  .sp__bar {
+    background: linear-gradient(180deg, var(--primary-bright), var(--primary));
+    border-radius: 4px;
+    width: 54px;
+    margin: 0 auto 8px;
+  }
+  .sp__n { font-size: 11px; font-weight: 600; color: var(--ink-muted); }
+  .sp__v { font-size: 10px; color: var(--ink-subtle); font-family: ui-monospace, monospace; }
+
+  .rad-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
+  .rad { text-align: center; }
+  .rad__box {
+    width: 84px; height: 58px;
+    background: var(--surface);
+    border: 2px solid var(--primary);
+    margin-bottom: 8px;
+  }
+  .rad__n { font-size: 11px; font-weight: 600; color: var(--ink-muted); }
+  .rad__v { font-size: 10px; color: var(--ink-subtle); font-family: ui-monospace, monospace; }
+
+  /* ============ COMPONENTS ============ */
+  .comp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 26px;
+  }
+  .comp {
+    background: var(--bg);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+  }
+  .comp__t {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-subtle);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .comp__stack { display: flex; flex-direction: column; gap: 10px; }
+  .comp__row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 44px; padding: 0 24px;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 15px; font-weight: 500;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 130ms cubic-bezier(0.4,0,0.2,1);
+  }
+  .btn--primary { background: var(--primary); color: var(--on-primary); }
+  .btn--primary:hover { background: var(--primary-hover); }
+  .btn--accent { background: var(--accent); color: var(--on-accent); }
+  .btn--secondary { background: var(--surface); color: var(--primary); border-color: var(--border); }
+  .btn--ghost { background: transparent; color: var(--primary); }
+  .btn--sm { height: 34px; padding: 0 14px; font-size: 13px; border-radius: var(--radius-sm); }
+  .btn--disabled { background: var(--border-soft); color: var(--ink-subtle); cursor: not-allowed; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: var(--radius-sm);
+    font-size: 11px; font-weight: 500;
+    white-space: nowrap;
+  }
+  .badge--success { background: var(--success-soft); color: var(--on-success-soft); }
+  .badge--warning { background: var(--warning-soft); color: var(--on-warning-soft); }
+  .badge--danger { background: var(--danger-soft); color: var(--on-danger-soft); }
+  .badge--info { background: var(--info-soft); color: var(--on-info-soft); }
+  .badge__dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field__l { font-size: 13px; font-weight: 500; }
+  .field__i {
+    height: 44px; padding: 0 14px;
+    display: flex; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .field__i--ph { color: var(--ink-subtle); }
+  .field__i--focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(7,112,205,0.12); }
+  .field__i--err { border-color: var(--danger); }
+  .field__h { font-size: 11px; color: var(--ink-subtle); }
+  .field__h--err { color: var(--on-danger-soft); }
+
+  .card-f {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-f__top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .card-f__air { font-size: 14px; font-weight: 600; }
+  .card-f__price {
+    font-family: var(--font-head);
+    font-size: 17px; font-weight: 600; color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .card-f__route {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: var(--ink-muted);
+  }
+  .card-f__time { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .card-f__line {
+    flex: 1; height: 1px; background: var(--border);
+    position: relative;
+  }
+  .card-f__line::after {
+    content: ""; position: absolute; right: 0; top: -2px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--border);
+  }
+  .card-f__meta {
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--border-soft);
+    display: flex; gap: 16px;
+    font-size: 11px; color: var(--ink-subtle);
+  }
+
+  /* ============ TABLE ============ */
+  .tbl-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--ink-subtle);
+    background: var(--surface-alt);
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  tbody td {
+    padding: 13px 16px;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  thead th { white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--primary-soft); }
+  .mono { font-family: ui-monospace, monospace; font-size: 12.5px; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* ============ SIDEBAR PREVIEW ============ */
+  .sb {
+    background: linear-gradient(180deg, var(--sidebar-top), var(--sidebar-bottom));
+    border-radius: var(--radius-lg);
+    padding: 16px 12px;
+    width: 232px;
+  }
+  .sb__lbl {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.09em;
+    text-transform: uppercase; color: #8ba7c9;
+    padding: 12px 12px 6px;
+  }
+  .sb__i {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: var(--radius-sm);
+    color: #c3d0de; font-size: 13px;
+  }
+  .sb__i--on { background: #fff; color: #1677ff; font-weight: 600; }
+  .sb__ic { width: 16px; height: 16px; border-radius: 3px; background: currentColor; opacity: 0.55; }
+  .sb__i--on .sb__ic { opacity: 1; }
+
+  /* ============ SHADOW ============ */
+  .sh-row { display: flex; gap: 26px; flex-wrap: wrap; }
+  .sh {
+    width: 160px; height: 92px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    display: grid; place-items: center;
+    font-size: 11px; color: var(--ink-subtle);
+    font-family: ui-monospace, monospace;
+  }
+  .sh--sm { box-shadow: var(--shadow-sm); }
+  .sh--md { box-shadow: var(--shadow); }
+  .sh--lg { box-shadow: var(--shadow-lg); }
+
+  /* ============ FOOT ============ */
+  .foot {
+    background: var(--dark);
+    color: var(--on-dark-subtle);
+    padding: 28px 80px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px;
+  }
+  .foot b { color: #fff; font-family: var(--font-head); }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1100px) {
+    .head { padding: 36px 40px; }
+    .head h1 { font-size: 30px; }
+    .sec { padding: 40px 40px; }
+    .foot { padding: 24px 40px; }
+  }
+  @media (max-width: 760px) {
+    .head { padding: 30px 20px; flex-direction: column; align-items: flex-start; gap: 22px; }
+    .head h1 { font-size: 25px; }
+    .head__stat { text-align: left; }
+    .head__stat b { font-size: 26px; }
+    .sec { padding: 32px 20px; }
+    .sec h2 { font-size: 20px; }
+    .sw-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+    .sw__chip { height: 62px; }
+    .type-row { grid-template-columns: 1fr; gap: 4px; padding: 11px 0; }
+    .comp-grid { grid-template-columns: 1fr; }
+    .tbl-wrap { overflow-x: auto; }
+    .foot { padding: 22px 20px; flex-direction: column; gap: 6px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HEAD ============ -->
+<header class="head">
+  <div>
+    <div class="head__mark">
+      <div class="head__badge">
+        <svg width="24" height="24" viewBox="0 0 26 26" fill="none"><path d="M4 5 L13 22 L22 5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22" cy="5" r="3" fill="#FF5E1F"/></svg>
+      </div>
+      <div>
+        <div class="head__name">VinaFly</div>
+        <div class="head__tag">Bay nội địa, giá tốt mỗi ngày</div>
+      </div>
+    </div>
+    <h1>Design System</h1>
+    <p>
+      Nguồn chân lý duy nhất cho màu, chữ, khoảng cách và thành phần giao diện.
+      Mọi giá trị dưới đây lấy trực tiếp từ <code style="font-family:ui-monospace,monospace;background:rgba(255,255,255,.12);padding:1px 5px;border-radius:4px">src/_tokens.scss</code>
+      — Tailwind và Material cùng đọc một nguồn.
+    </p>
+  </div>
+  <div class="head__stat">
+    <b>46</b>
+    <span>biến thiết kế</span>
+  </div>
+</header>
+
+<!-- ============ 1. MÀU THƯƠNG HIỆU ============ -->
+<section class="sec">
+  <span class="sec__no">01 — MÀU SẮC</span>
+  <h2>Màu thương hiệu</h2>
+  <p class="sec__desc">
+    Primary dùng cho nền nút có chữ trắng — <b>#0770CD đạt 4.99:1</b> theo WCAG AA.
+    Mã gốc #0194F3 chỉ đạt 3.22:1 nên chỉ dùng cho viền, icon và chữ trên nền sáng.
+  </p>
+
+  <div class="sec__body sw-grid">
+    <div class="sw"><div class="sw__chip" style="background:var(--primary)"></div><div class="sw__n">primary</div><div class="sw__h">#0770CD</div><div class="sw__c">4.99:1 trên trắng</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--primary-hover)"></div><div class="sw__n">primary-hover</div><div class="sw__h">#0A57A8</div><div class="sw__c">trạng thái rê chuột</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--primary-bright)"></div><div class="sw__n">primary-bright</div><div class="sw__h">#0194F3</div><div class="sw__c">viền · icon</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--primary-soft)"></div><div class="sw__n">primary-soft</div><div class="sw__h">#EAF7FF</div><div class="sw__c">nền nhấn nhẹ</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--accent)"></div><div class="sw__n">accent</div><div class="sw__h">#FF5E1F</div><div class="sw__c">CTA · giá tiền</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--accent-hover)"></div><div class="sw__n">accent-hover</div><div class="sw__h">#E84A0C</div><div class="sw__c">rê chuột</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--dark)"></div><div class="sw__n">dark</div><div class="sw__h">#05285D</div><div class="sw__c">nền tối · footer</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--dark-2)"></div><div class="sw__n">dark-2</div><div class="sw__h">#083A7D</div><div class="sw__c">nền tối cấp 2</div></div>
+  </div>
+</section>
+
+<!-- ============ 2. MÀU NGỮ NGHĨA ============ -->
+<section class="sec sec--alt">
+  <span class="sec__no">02 — MÀU NGỮ NGHĨA</span>
+  <h2>Màu trạng thái</h2>
+  <p class="sec__desc">
+    Chữ trên nền nhạt dùng tông tươi, không dùng tông đậm/xỉn. Cả bốn cặp đều đạt WCAG AA ≥ 4.5:1.
+  </p>
+
+  <div class="sec__body sw-grid">
+    <div class="sw"><div class="sw__chip" style="background:var(--success)"></div><div class="sw__n">success</div><div class="sw__h">#00A651</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--success-soft)"></div><div class="sw__n">success-soft</div><div class="sw__h">#DCFCE7</div><div class="sw__c">chữ #15803D · 4.57:1</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--warning)"></div><div class="sw__n">warning</div><div class="sw__h">#F2A81D</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--warning-soft)"></div><div class="sw__n">warning-soft</div><div class="sw__h">#FEF3C7</div><div class="sw__c">chữ #B45309 · 4.51:1</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--danger)"></div><div class="sw__n">danger</div><div class="sw__h">#E5484D</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--danger-soft)"></div><div class="sw__n">danger-soft</div><div class="sw__h">#FEE2E2</div><div class="sw__c">chữ #B91C1C · 5.30:1</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--info)"></div><div class="sw__n">info</div><div class="sw__h">#0194F3</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--info-soft)"></div><div class="sw__n">info-soft</div><div class="sw__h">#E0F2FE</div><div class="sw__c">chữ #0369A1</div></div>
+  </div>
+</section>
+
+<!-- ============ 3. BỀ MẶT ============ -->
+<section class="sec">
+  <span class="sec__no">03 — BỀ MẶT &amp; CHỮ</span>
+  <h2>Màu trung tính</h2>
+  <p class="sec__desc">
+    Nền tối dùng <b>#05285D</b> — màu footer Traveloka, không dùng đen xám.
+    <code style="font-family:ui-monospace,monospace">ink-subtle</code> đổi từ #9AA6AD sang #6A737A vì mã cũ chỉ đạt 2.36:1.
+  </p>
+
+  <div class="sec__body sw-grid">
+    <div class="sw"><div class="sw__chip" style="background:var(--bg)"></div><div class="sw__n">bg</div><div class="sw__h">#F7F9FA</div><div class="sw__c">nền trang</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--surface)"></div><div class="sw__n">surface</div><div class="sw__h">#FFFFFF</div><div class="sw__c">nền thẻ</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--surface-alt)"></div><div class="sw__n">surface-alt</div><div class="sw__h">#FBFCFD</div><div class="sw__c">nền cấp 2</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--ink)"></div><div class="sw__n">ink</div><div class="sw__h">#03121A</div><div class="sw__c">chữ chính</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--ink-muted)"></div><div class="sw__n">ink-muted</div><div class="sw__h">#687176</div><div class="sw__c">chữ phụ</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--ink-subtle)"></div><div class="sw__n">ink-subtle</div><div class="sw__h">#6A737A</div><div class="sw__c">chữ mờ · 4.58:1</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--border)"></div><div class="sw__n">border</div><div class="sw__h">#DDE3E8</div><div class="sw__c">viền</div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--border-soft)"></div><div class="sw__n">border-soft</div><div class="sw__h">#EDF1F4</div><div class="sw__c">viền nhạt</div></div>
+  </div>
+</section>
+
+<!-- ============ 4. KIỂU CHỮ ============ -->
+<section class="sec sec--alt">
+  <span class="sec__no">04 — KIỂU CHỮ</span>
+  <h2>Thang chữ</h2>
+  <p class="sec__desc">
+    Be Vietnam Pro cho tiêu đề tiếng Việt (dấu hiển thị đẹp), Inter cho nội dung.
+    Thang 8 bậc, chênh lệch rõ để phân cấp thị giác.
+  </p>
+
+  <div class="sec__body">
+    <div class="type-row"><div class="type-meta"><b>Display</b><span>32 / 40 · Bold</span></div><div class="d-display">Vé máy bay nội địa</div></div>
+    <div class="type-row"><div class="type-meta"><b>H1</b><span>24 / 30 · Bold</span></div><div class="d-h1">Tìm chuyến bay của bạn</div></div>
+    <div class="type-row"><div class="type-meta"><b>H2</b><span>20 / 25 · SemiBold</span></div><div class="d-h2">Chuyến bay phổ biến</div></div>
+    <div class="type-row"><div class="type-meta"><b>H3</b><span>17 / 21 · SemiBold</span></div><div class="d-h3">Chi tiết hành trình</div></div>
+    <div class="type-row"><div class="type-meta"><b>Body</b><span>15 / 22 · Regular</span></div><div class="d-body">Hà Nội → TP. Hồ Chí Minh · 2 giờ 5 phút · bay thẳng</div></div>
+    <div class="type-row"><div class="type-meta"><b>Body Strong</b><span>15 / 22 · Medium</span></div><div class="d-body-s">Tổng cộng: 1.890.000 ₫</div></div>
+    <div class="type-row"><div class="type-meta"><b>Small</b><span>13 / 20 · Regular</span></div><div class="d-small">Giá đã bao gồm thuế và phí sân bay</div></div>
+    <div class="type-row"><div class="type-meta"><b>Small Strong</b><span>13 / 20 · Medium</span></div><div class="d-small-s">Hành lý xách tay 7kg</div></div>
+    <div class="type-row"><div class="type-meta"><b>Caption</b><span>11 / 17 · Regular</span></div><div class="d-caption">Điều kiện áp dụng · Không hoàn, không đổi</div></div>
+  </div>
+</section>
+
+<!-- ============ 5. KHOẢNG CÁCH ============ -->
+<section class="sec">
+  <span class="sec__no">05 — KHOẢNG CÁCH &amp; BO GÓC</span>
+  <h2>Thang 4px</h2>
+  <p class="sec__desc">Mọi khoảng cách là bội số của 4. Bo góc bốn bậc theo kích thước khối.</p>
+
+  <div class="sec__body">
+    <div class="sp-row">
+      <div class="sp"><div class="sp__bar" style="height:4px"></div><div class="sp__n">xs</div><div class="sp__v">4</div></div>
+      <div class="sp"><div class="sp__bar" style="height:8px"></div><div class="sp__n">sm</div><div class="sp__v">8</div></div>
+      <div class="sp"><div class="sp__bar" style="height:12px"></div><div class="sp__n">md</div><div class="sp__v">12</div></div>
+      <div class="sp"><div class="sp__bar" style="height:16px"></div><div class="sp__n">lg</div><div class="sp__v">16</div></div>
+      <div class="sp"><div class="sp__bar" style="height:24px"></div><div class="sp__n">xl</div><div class="sp__v">24</div></div>
+      <div class="sp"><div class="sp__bar" style="height:32px"></div><div class="sp__n">2xl</div><div class="sp__v">32</div></div>
+      <div class="sp"><div class="sp__bar" style="height:48px"></div><div class="sp__n">3xl</div><div class="sp__v">48</div></div>
+      <div class="sp"><div class="sp__bar" style="height:64px"></div><div class="sp__n">4xl</div><div class="sp__v">64</div></div>
+    </div>
+
+    <div class="rad-row">
+      <div class="rad"><div class="rad__box" style="border-radius:6px"></div><div class="rad__n">radius-sm</div><div class="rad__v">6px</div></div>
+      <div class="rad"><div class="rad__box" style="border-radius:10px"></div><div class="rad__n">radius</div><div class="rad__v">10px</div></div>
+      <div class="rad"><div class="rad__box" style="border-radius:14px"></div><div class="rad__n">radius-lg</div><div class="rad__v">14px</div></div>
+      <div class="rad"><div class="rad__box" style="border-radius:16px"></div><div class="rad__n">radius-xl</div><div class="rad__v">16px</div></div>
+    </div>
+
+    <div class="sh-row" style="margin-top:34px">
+      <div class="sh sh--sm">shadow-sm</div>
+      <div class="sh sh--md">shadow</div>
+      <div class="sh sh--lg">shadow-lg</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. THÀNH PHẦN ============ -->
+<section class="sec sec--alt">
+  <span class="sec__no">06 — THÀNH PHẦN</span>
+  <h2>Thư viện thành phần</h2>
+  <p class="sec__desc">
+    Mỗi thành phần có đủ trạng thái dùng trong dự án: mặc định, rê chuột, khoá, lỗi.
+  </p>
+
+  <div class="sec__body comp-grid">
+
+    <div class="comp">
+      <div class="comp__t">Button</div>
+      <div class="comp__stack">
+        <button class="btn btn--primary">Đặt vé ngay</button>
+        <button class="btn btn--accent">Thanh toán</button>
+        <button class="btn btn--secondary">Xem chi tiết</button>
+        <button class="btn btn--ghost">Huỷ</button>
+        <div class="comp__row">
+          <button class="btn btn--primary btn--sm">Lưu</button>
+          <button class="btn btn--secondary btn--sm">Huỷ</button>
+          <button class="btn btn--disabled btn--sm">Đã khoá</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="comp">
+      <div class="comp__t">Badge trạng thái</div>
+      <div class="comp__stack">
+        <div class="comp__row">
+          <span class="badge badge--success"><i class="badge__dot"></i>Đã xác nhận</span>
+          <span class="badge badge--warning"><i class="badge__dot"></i>Chờ thanh toán</span>
+        </div>
+        <div class="comp__row">
+          <span class="badge badge--danger"><i class="badge__dot"></i>Đã huỷ</span>
+          <span class="badge badge--info"><i class="badge__dot"></i>Sắp khởi hành</span>
+        </div>
+        <div class="comp__row">
+          <span class="badge badge--success">Hoạt động</span>
+          <span class="badge badge--warning">Tạm dừng</span>
+          <span class="badge badge--danger">Đã xoá</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="comp">
+      <div class="comp__t">Input</div>
+      <div class="comp__stack">
+        <div class="field">
+          <span class="field__l">Điểm khởi hành</span>
+          <div class="field__i">Hà Nội (HAN)</div>
+          <span class="field__h">Sân bay Nội Bài</span>
+        </div>
+        <div class="field">
+          <span class="field__l">Email</span>
+          <div class="field__i field__i--ph">nhap@email.com</div>
+        </div>
+        <div class="field">
+          <span class="field__l">Số điện thoại</span>
+          <div class="field__i field__i--err">0912</div>
+          <span class="field__h field__h--err">Số điện thoại phải có 10 chữ số</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="comp">
+      <div class="comp__t">Card chuyến bay</div>
+      <div class="card-f">
+        <div class="card-f__top">
+          <span class="card-f__air">Vietnam Airlines</span>
+          <span class="card-f__price">1.890.000 ₫</span>
+        </div>
+        <div class="card-f__route">
+          <span class="card-f__time">08:00</span>
+          <span>HAN</span>
+          <span class="card-f__line"></span>
+          <span>SGN</span>
+          <span class="card-f__time">10:05</span>
+        </div>
+        <div class="card-f__meta">
+          <span>Bay thẳng</span>
+          <span>2h 05m</span>
+          <span>Airbus A321</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ 7. SIDEBAR ============ -->
+<section class="sec">
+  <span class="sec__no">07 — KHUNG VẬN HÀNH</span>
+  <h2>Sidebar quản trị</h2>
+  <p class="sec__desc">
+    Sidebar <b>không dùng một màu phẳng</b>: đo từ ảnh tham chiếu thấy đây là gradient dọc,
+    sáng ở trên (#0D47A2) tối dần xuống gần đen (#030E20). Mục đang chọn đảo ngược — nền trắng, chữ xanh.
+  </p>
+
+  <div class="sec__body">
+    <div class="sb">
+      <div class="sb__lbl">Tổng quan</div>
+      <div class="sb__i sb__i--on"><span class="sb__ic"></span>Dashboard</div>
+      <div class="sb__lbl">Danh mục hàng không</div>
+      <div class="sb__i"><span class="sb__ic"></span>Hãng hàng không</div>
+      <div class="sb__i"><span class="sb__ic"></span>Thành phố</div>
+      <div class="sb__i"><span class="sb__ic"></span>Sân bay</div>
+      <div class="sb__i"><span class="sb__ic"></span>Máy bay</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. BẢNG ============ -->
+<section class="sec sec--alt">
+  <span class="sec__no">08 — BẢNG DỮ LIỆU</span>
+  <h2>Bảng chuẩn</h2>
+  <p class="sec__desc">
+    Dùng chung cho mọi màn danh sách quản trị. Số căn phải, mã chuyến dùng chữ đẳng khoảng.
+  </p>
+
+  <div class="sec__body tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Mã chuyến</th>
+          <th>Tuyến</th>
+          <th>Khởi hành</th>
+          <th class="num">Ghế trống</th>
+          <th class="num">Giá từ</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">VN-213</td>
+          <td>HAN → SGN</td>
+          <td>08:00 · 28/10</td>
+          <td class="num">42</td>
+          <td class="num">1.890.000 ₫</td>
+          <td><span class="badge badge--success"><i class="badge__dot"></i>Đúng giờ</span></td>
+        </tr>
+        <tr>
+          <td class="mono">VJ-145</td>
+          <td>SGN → DAD</td>
+          <td>09:35 · 28/10</td>
+          <td class="num">8</td>
+          <td class="num">890.000 ₫</td>
+          <td><span class="badge badge--warning"><i class="badge__dot"></i>Hoãn 30 phút</span></td>
+        </tr>
+        <tr>
+          <td class="mono">QH-302</td>
+          <td>DAD → HAN</td>
+          <td>14:10 · 28/10</td>
+          <td class="num">0</td>
+          <td class="num">1.240.000 ₫</td>
+          <td><span class="badge badge--danger"><i class="badge__dot"></i>Hết chỗ</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="foot">
+  <span><b>VinaFly</b> — Design System v1.0</span>
+  <span>Nguồn chân lý: src/_tokens.scss · 28/10/2026</span>
+</footer>
+
+</body>
+</html>

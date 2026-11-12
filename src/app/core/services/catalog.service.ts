@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '@env/environment';
 import { ApiResponse, ListQuery, PageData } from '@core/models/api-response.model';
 import { BaseCrudService } from '@core/services/base-crud.service';
@@ -188,7 +188,9 @@ export class SeatMapService {
   private readonly baseUrl = `${environment.apiBaseUrl}/admin/aircrafts`;
 
   getMap(aircraftId: number): Observable<ApiResponse<SeatMap>> {
-    return this.http.get<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`);
+    return this.http
+      .get<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`)
+      .pipe(map(withSeatTypeId));
   }
 
   /**
@@ -200,8 +202,32 @@ export class SeatMapService {
    * cả sơ đồ.
    */
   saveMap(aircraftId: number, seats: AircraftSeat[]): Observable<ApiResponse<SeatMap>> {
-    return this.http.put<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`, { seats });
+    return this.http
+      .put<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`, { seats })
+      .pipe(map(withSeatTypeId));
   }
+}
+
+/**
+ * Backend trả `seat_type` lồng và KHÔNG có `seat_type_id` trần (API v0.4 mục
+ * 2.6). Màn cấu hình và lưới ghế đọc `seat_type_id` để tra loại ghế, nên phải
+ * bơm lại từ `seat_type.id` — thiếu bước này thì mọi ô rơi về màu mặc định và
+ * legend rỗng.
+ */
+function withSeatTypeId(res: ApiResponse<SeatMap>): ApiResponse<SeatMap> {
+  if (!res.data?.seats) {
+    return res;
+  }
+  return {
+    ...res,
+    data: {
+      ...res.data,
+      seats: res.data.seats.map((s) => ({
+        ...s,
+        seat_type_id: s.seat_type?.id ?? s.seat_type_id,
+      })),
+    },
+  };
 }
 
 /**

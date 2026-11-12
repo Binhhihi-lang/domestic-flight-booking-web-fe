@@ -75,9 +75,9 @@ export interface PasswordResetConfirmRequest {
 /**
  * `data` của POST /auth/password-reset/request.
  *
- * MVP chưa có mail server nên BE trả token thẳng trong response để luồng đặt
- * lại mật khẩu test được end-to-end. Khi tích hợp mail thật, trường này biến mất
- * và FE chỉ còn hiện thông báo trung tính.
+ * Token đặt lại đi qua email. Trường `reset_token` chỉ có giá trị khi BE chạy
+ * với `app.auth.expose-reset-token=true` (dev/demo); production trả `null` và
+ * FE chỉ hiện thông báo trung tính.
  */
 export interface PasswordResetResponse {
   reset_token: string | null;
