@@ -60,6 +60,16 @@
   .qr{width:104px; height:104px; border:1px solid var(--line-2); border-radius:4px;
       background:repeating-conic-gradient(var(--ink) 0 25%, #fff 0 50%) 0 0/13px 13px;}
 
+  /* Mã VietQR: nền mô-đun nhỏ + ba ô định vị góc, đọc ra ngay là QR */
+  .qrvn{position:relative; overflow:hidden;
+        background:repeating-conic-gradient(var(--ink) 0 25%, #fff 0 50%) 0 0/7px 7px;}
+  .qrvn > span{position:absolute; width:24%; height:24%; background:#fff;
+               border:5px solid var(--ink); box-sizing:border-box;}
+  .qrvn > span::after{content:""; position:absolute; inset:24%; background:var(--ink);}
+  .qrvn > span:nth-child(1){left:6%; top:6%;}
+  .qrvn > span:nth-child(2){right:6%; top:6%;}
+  .qrvn > span:nth-child(3){left:6%; bottom:6%;}
+
   .cover{background:var(--ink); color:#fff; border-radius:12px; padding:44px 52px; margin-bottom:40px;}
   .cover h1{margin:0 0 6px; font-size:30px; letter-spacing:-.4px;}
   .cover p{margin:0; color:#a8b0b9; font-size:13.5px; max-width:820px;}
@@ -413,6 +423,37 @@
   .dd__fullsub{flex-basis:100%; font-size:10.5px; color:var(--ink-3); margin-top:1px;}
   .mobile .dd__panel{width:100%; min-width:0;}
 
+  /* ---------- Popover chọn số hành khách (khớp flight-search-card) ---------- */
+  .pax{position:relative;}
+  .pax__btn{height:40px; width:100%; border:1px solid var(--line-2); border-radius:6px;
+            background:var(--paper); padding:0 10px; display:flex; align-items:center;
+            gap:7px; font-size:12.5px; color:var(--ink);}
+  .pax__btn.on{border-color:var(--ink);}
+  .pax__pi{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--ink-3);flex:none;position:relative;}
+  .pax__pi::after{content:"";position:absolute;left:50%;bottom:-5px;width:7px;height:5px;
+                  border:1.5px solid var(--ink-3);border-bottom:none;border-radius:4px 4px 0 0;
+                  transform:translateX(-50%);}
+  .pax__sum{flex:1; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11.5px;}
+  .pax__caret{font-size:8px; color:var(--ink-3);}
+  .pax__pop{position:absolute; right:0; top:calc(100% + 6px); z-index:30; width:296px;
+            background:var(--paper); border:1px solid var(--line-2); border-radius:8px;
+            box-shadow:0 10px 26px rgba(0,0,0,.10); padding:6px 0 0;}
+  .pax__row{display:flex; align-items:center; gap:12px; padding:11px 16px;}
+  .pax__info{flex:1;}
+  .pax__info b{display:block; font-size:12.5px; color:var(--ink);}
+  .pax__info span{font-size:10.5px; color:var(--ink-3);}
+  .pax__ctl{display:flex; align-items:center; gap:11px;}
+  .pax__btn2{width:26px;height:26px;border-radius:50%;border:1px solid var(--line-2);
+             background:var(--paper); display:flex;align-items:center;justify-content:center;
+             font-size:14px; color:var(--ink); line-height:1;}
+  .pax__btn2--off{border-color:var(--fill-2); color:var(--line-2);}
+  .pax__n{font-size:12.5px; font-weight:600; min-width:12px; text-align:center;}
+  .pax__note{margin:6px 16px 0; padding-top:10px; border-top:1px solid var(--fill);
+             font-size:10.5px; color:var(--ink-3); line-height:1.6;}
+  .pax__done{border-top:1px solid var(--fill); margin-top:10px; padding:10px 16px; text-align:right;}
+  .pax__done span{font-size:12px; font-weight:600; text-decoration:underline; color:var(--ink-2);}
+  .mobile .pax__pop{width:100%; left:0; right:auto;}
+
   /* ---------- Chi tiết hạng vé ---------- */
   .fd-wrap{background:rgba(27,32,38,.42); padding:36px 32px; display:flex; justify-content:center;}
   .fd-lg{width:100%; max-width:1020px; background:var(--paper); border-radius:12px; overflow:hidden;}
@@ -667,7 +708,7 @@
       <div><dt>Dự án</dt><dd>VinaFly — Đặt vé máy bay nội địa</dd></div>
       <div><dt>Tài liệu</dt><dd>WF-02 · Luồng khách hàng (khứ hồi &amp; một chiều)</dd></div>
       <div><dt>Kích thước</dt><dd>Desktop 1440 · Mobile 375</dd></div>
-      <div><dt>Số màn hình</dt><dd>33 màn · 65 artboard</dd></div>
+      <div><dt>Số màn hình</dt><dd>36 màn · 71 artboard</dd></div>
       <div><dt>Ngày</dt><dd>10/11/2026</dd></div>
     </dl>
   </header>
@@ -765,9 +806,13 @@
                 <div class="lbl">Ngày về</div>
                 <div class="inp">07/11/2026</div>
               </div>
-              <div>
+              <div class="pax">
                 <div class="lbl">Hành khách</div>
-                <div class="inp">2 người lớn</div>
+                <div class="pax__btn">
+                  <span class="pax__pi"></span>
+                  <span class="pax__sum">2 người lớn</span>
+                  <span class="pax__caret">▼</span>
+                </div>
               </div>
               <span class="btn btn--dark" style="height:40px; padding:0 26px">Tìm chuyến bay</span>
             </div>
@@ -850,7 +895,7 @@
             </div>
             <div class="box" style="padding:0;overflow:hidden">
               <div class="ph" style="height:96px;position:relative">
-                <span style="position:absolute;left:9px;top:9px;background:var(--paper);border:1px solid var(--line-2);border-radius:4px;padding:2px 7px;font-size:9.5px;font-weight:700">Mã giảm giá</span>
+                <span style="position:absolute;left:9px;top:9px;background:var(--paper);border:1px solid var(--line-2);border-radius:4px;padding:2px 7px;font-size:9.5px;font-weight:700">Giảm 100.000 ₫</span>
               </div>
               <div style="padding:13px 14px"><div class="bar w75"></div><div class="bar w45"></div></div>
             </div>
@@ -959,53 +1004,54 @@
           <div style="background:var(--ink); border-radius:10px; padding:24px 28px; display:flex; align-items:center; gap:26px">
             <div style="flex:1">
               <div style="color:#fff; font-size:15px; font-weight:700; margin-bottom:5px">Đăng ký nhận ưu đãi</div>
-              <div style="color:#a8b0b9; font-size:11.5px; line-height:1.6">Nhận thông tin khuyến mãi sớm nhất và mã giảm giá độc quyền qua hộp thư điện tử của bạn hàng tuần.</div>
+              <div style="color:#a8b0b9; font-size:11.5px; line-height:1.6">Nhận thông tin khuyến mãi sớm nhất và ưu đãi độc quyền qua hộp thư điện tử của bạn hàng tuần.</div>
             </div>
             <div class="inp" style="width:230px; color:var(--ink-3)">Nhập email của bạn...</div>
             <span class="btn" style="background:#fff; color:var(--ink)">Đăng ký</span>
           </div>
         </div>
 
-        <div class="sfoot">
-          <div class="sfoot__in">
-            <div class="sfoot__col">
-              <div class="sfoot__br"><span class="sfoot__mk"></span>VinaFly</div>
-              <p>Đặt vé máy bay nội địa, chỉ khai thác đường bay thẳng.<br>Giá hiển thị đã gồm thuế và phí sân bay.</p>
-            </div>
-            <div class="sfoot__col">
-              <div class="sfoot__t">Về VinaFly</div>
-              <span>Giới thiệu</span>
-              <span>Tuyển dụng</span>
-              <span>Tin tức</span>
-              <span>Liên hệ</span>
-            </div>
-            <div class="sfoot__col">
-              <div class="sfoot__t">Đặt vé</div>
-              <span>Chuyến bay nội địa</span>
-              <span>Khuyến mãi</span>
-              <span>Kho voucher</span>
-              <span>Tra cứu đặt chỗ</span>
-            </div>
-            <div class="sfoot__col">
-              <div class="sfoot__t">Hỗ trợ</div>
-              <span>Trung tâm trợ giúp</span>
-              <span>Chính sách hoàn vé</span>
-              <span>Điều khoản sử dụng</span>
-              <span>Bảo mật thông tin</span>
-            </div>
-            <div class="sfoot__col">
-              <div class="sfoot__t">Liên hệ</div>
-              <span><b>1900 1234</b></span>
-              <span>hotro&#64;vinafly.vn</span>
-              <span>Thứ 2 – Chủ nhật</span>
-              <span>06:00 – 22:00</span>
-            </div>
-          </div>
-          <div class="sfoot__bar">
-            <span>© 2026 VinaFly — Đặt vé máy bay nội địa.</span>
-            <span>Điều khoản · Bảo mật · Sơ đồ trang</span>
-          </div>
-        </div>
+        <div class="foot2">
+  <div class="foot2__in">
+    <div >
+      <div class="foot2__brand"><span class="foot2__mk">V</span><span class="foot2__nm">VinaFly</span></div>
+      <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+      <div class="foot2__soc"><span class="foot2__s">f</span><span class="foot2__s">◎</span><span class="foot2__s">▶</span><span class="foot2__s">✉</span></div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li><a href="#W-RT-25">Hướng dẫn đặt vé</a></li>
+        <li><a href="#W-RT-26">Chính sách hoàn vé</a></li>
+        <li><a href="#W-RT-23">Câu hỏi thường gặp</a></li>
+        <li><a href="#W-RT-27">Trung tâm trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li><a href="#W-RT-28">Điểm đến phổ biến</a></li>
+        <li><a href="#W-RT-16">Cẩm nang du lịch</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><span class="foot2__ic">☎</span> 1900 1234</li>
+        <li><span class="foot2__ic">✉</span> support&#64;vedi.local</li>
+        <li><span class="foot2__ic">◎</span> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot2__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot2__pay"><span>VISA</span><span>Napas</span><span>MoMo</span></div>
+  </div>
+</div>
       </div>
 
       <div class="art art--mobile mobile">
@@ -1037,7 +1083,10 @@
               <div class="fld"><div class="lbl">Ngày đi</div><div class="inp">03/11</div></div>
               <div class="fld"><div class="lbl">Ngày về</div><div class="inp">07/11</div></div>
             </div>
-            <div class="fld" style="margin-bottom:0"><div class="lbl">Hành khách</div><div class="inp">2 người lớn</div></div>
+            <div class="pax fld" style="margin-bottom:0">
+              <div class="lbl">Hành khách</div>
+              <div class="pax__btn"><span class="pax__pi"></span><span class="pax__sum">2 người lớn</span><span class="pax__caret">▼</span></div>
+            </div>
             <span class="btn btn--dark btn--block" style="margin-top:16px">Tìm chuyến bay</span>
           </div>
         </div>
@@ -1132,34 +1181,47 @@
           </div>
         </div>
 
-        <div class="sfoot">
-          <div class="sfoot__in">
-            <div class="sfoot__col sfoot__col--wide">
-              <div class="sfoot__br"><span class="sfoot__mk"></span>VinaFly</div>
-              <p>Đặt vé máy bay nội địa, chỉ đường bay thẳng.</p>
-            </div>
-            <div class="sfoot__col">
-              <div class="sfoot__t">Đặt vé</div>
-              <span>Chuyến bay</span>
-              <span>Khuyến mãi</span>
-              <span>Voucher</span>
-            </div>
-            <div class="sfoot__col">
-              <div class="sfoot__t">Hỗ trợ</div>
-              <span>Trợ giúp</span>
-              <span>Hoàn vé</span>
-              <span>Điều khoản</span>
-            </div>
-            <div class="sfoot__col sfoot__col--wide">
-              <div class="sfoot__t">Liên hệ</div>
-              <span><b>1900 1234</b> · hotro&#64;vinafly.vn</span>
-            </div>
-          </div>
-          <div class="sfoot__bar">
-            <span>© 2026 VinaFly — Đặt vé máy bay nội địa.</span>
-            <span>Điều khoản · Bảo mật</span>
-          </div>
-        </div>
+        <div class="foot2">
+  <div class="foot2__in">
+    <div >
+      <div class="foot2__brand"><span class="foot2__mk">V</span><span class="foot2__nm">VinaFly</span></div>
+      <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+      <div class="foot2__soc"><span class="foot2__s">f</span><span class="foot2__s">◎</span><span class="foot2__s">▶</span><span class="foot2__s">✉</span></div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li><a href="#W-RT-25">Hướng dẫn đặt vé</a></li>
+        <li><a href="#W-RT-26">Chính sách hoàn vé</a></li>
+        <li><a href="#W-RT-23">Câu hỏi thường gặp</a></li>
+        <li><a href="#W-RT-27">Trung tâm trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li><a href="#W-RT-28">Điểm đến phổ biến</a></li>
+        <li><a href="#W-RT-16">Cẩm nang du lịch</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><span class="foot2__ic">☎</span> 1900 1234</li>
+        <li><span class="foot2__ic">✉</span> support&#64;vedi.local</li>
+        <li><span class="foot2__ic">◎</span> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot2__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot2__pay"><span>VISA</span><span>Napas</span><span>MoMo</span></div>
+  </div>
+</div>
       </div>
     </div>
 
@@ -1303,9 +1365,13 @@
                 <div class="lbl">Ngày về</div>
                 <div class="inp">07/11/2026</div>
               </div>
-              <div>
+              <div class="pax">
                 <div class="lbl">Hành khách</div>
-                <div class="inp">2 người lớn</div>
+                <div class="pax__btn">
+                  <span class="pax__pi"></span>
+                  <span class="pax__sum">2 người lớn</span>
+                  <span class="pax__caret">▼</span>
+                </div>
               </div>
               <span class="btn btn--dark" style="height:40px; padding:0 26px; position:relative; z-index:25">Tìm chuyến bay</span>
             </div>
@@ -1493,6 +1559,292 @@
   </section>
 
   <!-- ================================================================
+       W-RT-01b · POPOVER CHỌN SỐ HÀNH KHÁCH
+       ================================================================ -->
+  <section class="row" id="W-RT-01b">
+    <div class="rowhead">
+      <span class="code">W-RT-01b</span>
+      <h2>Popover chọn số hành khách — trạng thái mở của ô Hành khách</h2>
+      <span class="route">/ · mở từ ô Hành khách</span>
+      <span class="sp"></span>
+      <span class="meta">Ba bộ đếm · tối đa 9 khách</span>
+    </div>
+
+    <div class="views">
+      <div class="art art--desktop">
+        <div class="topbar">
+          <div class="topbar__logo"><span class="topbar__mark"></span><span class="topbar__name">VinaFly</span></div>
+          <nav class="topbar__nav"><span>Trang chủ</span><span>Khuyến mãi</span><span>Tin tức</span><span>Tra cứu đặt chỗ</span></nav>
+          <span class="topbar__sp"></span>
+          <span class="btn btn--sm">Đăng nhập</span>
+          <span class="btn btn--sm btn--dark">Đăng ký</span>
+        </div>
+
+        <div style="background:var(--ink); padding:34px 32px 76px;">
+          <h2 style="margin:0 0 8px; color:#fff; font-size:26px; letter-spacing:-.3px">Bay nội địa, giá trọn gói</h2>
+          <p style="margin:0; color:#a8b0b9; font-size:12.5px">Chỉ khai thác đường bay thẳng · giá hiển thị đã gồm thuế và phí sân bay</p>
+        </div>
+
+        <div style="margin:-54px 32px 0; position:relative; padding-bottom:340px">
+          <div class="box" style="padding:22px 24px; position:relative; z-index:20">
+            <div class="seg" style="margin-bottom:18px">
+              <span class="on">Khứ hồi</span>
+              <span>Một chiều</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1.2fr 1.2fr 1fr 1fr 1fr auto; gap:14px; align-items:end">
+              <div>
+                <div class="lbl">Điểm đi</div>
+                <div class="inp" style="justify-content:space-between">
+                  <span>Hà Nội (HAN)</span><span style="color:var(--ink-3);font-size:9px">▼</span>
+                </div>
+              </div>
+              <div>
+                <div class="lbl">Điểm đến</div>
+                <div class="inp" style="justify-content:space-between">
+                  <span>TP. Hồ Chí Minh (SGN)</span><span style="color:var(--ink-3);font-size:9px">▼</span>
+                </div>
+              </div>
+              <div>
+                <div class="lbl">Ngày đi</div>
+                <div class="inp">03/11/2026</div>
+              </div>
+              <div>
+                <div class="lbl">Ngày về</div>
+                <div class="inp">07/11/2026</div>
+              </div>
+              <div class="pax">
+                <div class="lbl">Hành khách</div>
+                <div class="pax__btn on">
+                  <span class="pax__pi"></span>
+                  <span class="pax__sum">2 người lớn</span>
+                  <span class="pax__caret">▲</span>
+                </div>
+
+                <div class="pax__pop">
+                  <div class="pax__row">
+                    <div class="pax__info"><b>Người lớn</b><span>Từ 13 tuổi trở lên</span></div>
+                    <div class="pax__ctl">
+                      <span class="pax__btn2">−</span><span class="pax__n">2</span><span class="pax__btn2">+</span>
+                    </div>
+                  </div>
+                  <div class="pax__row">
+                    <div class="pax__info"><b>Trẻ em</b><span>2 – 12 tuổi</span></div>
+                    <div class="pax__ctl">
+                      <span class="pax__btn2 pax__btn2--off">−</span><span class="pax__n">0</span><span class="pax__btn2">+</span>
+                    </div>
+                  </div>
+                  <div class="pax__row">
+                    <div class="pax__info"><b>Em bé</b><span>Dưới 2 tuổi</span></div>
+                    <div class="pax__ctl">
+                      <span class="pax__btn2 pax__btn2--off">−</span><span class="pax__n">0</span><span class="pax__btn2">+</span>
+                    </div>
+                  </div>
+                  <p class="pax__note">Tối đa 9 hành khách mỗi lần đặt. Mỗi em bé phải đi cùng một người lớn.</p>
+                  <div class="pax__done"><span>Xong</span></div>
+                </div>
+              </div>
+              <span class="btn btn--dark" style="height:40px; padding:0 26px; position:relative; z-index:25">Tìm chuyến bay</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="foot2">
+  <div class="foot2__in">
+    <div >
+      <div class="foot2__brand"><span class="foot2__mk">V</span><span class="foot2__nm">VinaFly</span></div>
+      <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+      <div class="foot2__soc"><span class="foot2__s">f</span><span class="foot2__s">◎</span><span class="foot2__s">▶</span><span class="foot2__s">✉</span></div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li><a href="#W-RT-25">Hướng dẫn đặt vé</a></li>
+        <li><a href="#W-RT-26">Chính sách hoàn vé</a></li>
+        <li><a href="#W-RT-23">Câu hỏi thường gặp</a></li>
+        <li><a href="#W-RT-27">Trung tâm trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li><a href="#W-RT-28">Điểm đến phổ biến</a></li>
+        <li><a href="#W-RT-16">Cẩm nang du lịch</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><span class="foot2__ic">☎</span> 1900 1234</li>
+        <li><span class="foot2__ic">✉</span> support&#64;vedi.local</li>
+        <li><span class="foot2__ic">◎</span> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot2__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot2__pay"><span>VISA</span><span>Napas</span><span>MoMo</span></div>
+  </div>
+</div>
+      </div>
+
+      <div class="art art--mobile mobile">
+        <div class="topbar">
+          <span class="topbar__burger"></span>
+          <div class="topbar__logo"><span class="topbar__mark"></span><span class="topbar__name">VinaFly</span></div>
+          <span class="topbar__sp"></span>
+          <span class="btn btn--sm">Đăng nhập</span>
+        </div>
+
+        <div style="background:var(--ink); padding:22px 16px 54px;">
+          <h2 style="margin:0 0 6px; color:#fff; font-size:18px">Bay nội địa, giá trọn gói</h2>
+          <p style="margin:0; color:#a8b0b9; font-size:11px">Chỉ đường bay thẳng</p>
+        </div>
+
+        <div style="margin:-42px 16px 0; position:relative; padding-bottom:340px">
+          <div class="box" style="padding:16px; position:relative; z-index:20">
+            <div class="seg" style="margin-bottom:14px; width:100%">
+              <span class="on" style="flex:1; text-align:center">Khứ hồi</span>
+              <span style="flex:1; text-align:center">Một chiều</span>
+            </div>
+
+            <div class="fld"><div class="lbl">Điểm đi</div>
+              <div class="inp" style="justify-content:space-between"><span>Hà Nội (HAN)</span><span style="color:var(--ink-3);font-size:9px">▼</span></div>
+            </div>
+            <div class="fld"><div class="lbl">Điểm đến</div>
+              <div class="inp" style="justify-content:space-between"><span>TP. HCM (SGN)</span><span style="color:var(--ink-3);font-size:9px">▼</span></div>
+            </div>
+            <div class="grid2">
+              <div class="fld"><div class="lbl">Ngày đi</div><div class="inp">03/11</div></div>
+              <div class="fld"><div class="lbl">Ngày về</div><div class="inp">07/11</div></div>
+            </div>
+
+            <div class="pax fld" style="margin-bottom:0">
+              <div class="lbl">Hành khách</div>
+              <div class="pax__btn on">
+                <span class="pax__pi"></span>
+                <span class="pax__sum">2 người lớn</span>
+                <span class="pax__caret">▲</span>
+              </div>
+
+              <div class="pax__pop" style="width:100%">
+                <div class="pax__row">
+                  <div class="pax__info"><b>Người lớn</b><span>Từ 13 tuổi trở lên</span></div>
+                  <div class="pax__ctl">
+                    <span class="pax__btn2">−</span><span class="pax__n">2</span><span class="pax__btn2">+</span>
+                  </div>
+                </div>
+                <div class="pax__row">
+                  <div class="pax__info"><b>Trẻ em</b><span>2 – 12 tuổi</span></div>
+                  <div class="pax__ctl">
+                    <span class="pax__btn2 pax__btn2--off">−</span><span class="pax__n">0</span><span class="pax__btn2">+</span>
+                  </div>
+                </div>
+                <div class="pax__row">
+                  <div class="pax__info"><b>Em bé</b><span>Dưới 2 tuổi</span></div>
+                  <div class="pax__ctl">
+                    <span class="pax__btn2 pax__btn2--off">−</span><span class="pax__n">0</span><span class="pax__btn2">+</span>
+                  </div>
+                </div>
+                <p class="pax__note">Tối đa 9 hành khách mỗi lần đặt. Mỗi em bé phải đi cùng một người lớn.</p>
+                <div class="pax__done"><span>Xong</span></div>
+              </div>
+            </div>
+
+            <span class="btn btn--dark btn--block" style="margin-top:16px">Tìm chuyến bay</span>
+          </div>
+        </div>
+
+        <div class="foot2 mobile">
+  <div class="foot2__in">
+    <div class="foot2__wide">
+      <div class="foot2__brand"><span class="foot2__mk">V</span><span class="foot2__nm">VinaFly</span></div>
+      <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+      <div class="foot2__soc"><span class="foot2__s">f</span><span class="foot2__s">◎</span><span class="foot2__s">▶</span><span class="foot2__s">✉</span></div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li><a href="#W-RT-25">Hướng dẫn đặt vé</a></li>
+        <li><a href="#W-RT-26">Chính sách hoàn vé</a></li>
+        <li><a href="#W-RT-23">Câu hỏi thường gặp</a></li>
+        <li><a href="#W-RT-27">Trung tâm trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li><a href="#W-RT-28">Điểm đến phổ biến</a></li>
+        <li><a href="#W-RT-16">Cẩm nang du lịch</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><span class="foot2__ic">☎</span> 1900 1234</li>
+        <li><span class="foot2__ic">✉</span> support&#64;vedi.local</li>
+        <li><span class="foot2__ic">◎</span> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot2__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot2__pay"><span>VISA</span><span>Napas</span><span>MoMo</span></div>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Người lớn tối thiểu 1 — nút trừ mờ khi đã là 1</li>
+          <li>Em bé tối đa bằng số người lớn — mỗi em phải ngồi cùng một người lớn</li>
+          <li>Tổng chạm 9 → cả ba nút cộng mờ, dòng nhắc đổi sang "Đã đạt tối đa 9 hành khách"</li>
+          <li>Chưa thêm trẻ em / em bé → tóm tắt chỉ ghi "2 người lớn"</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> bấm vào ô Hành khách</li>
+          <li><b>Ra tới:</b> bấm <em>Xong</em> hoặc bấm ra ngoài → đóng, tóm tắt cập nhật ngay</li>
+          <li>Đổi số khách rồi bấm Tìm → số khách đi theo lên địa chỉ trang kết quả</li>
+          <li>Không đóng popover khi bấm nút + / − (khác với chọn ngày)</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Ba dòng, mỗi dòng: <b>tên loại</b> + độ tuổi · bộ đếm − số +</li>
+          <li>Độ tuổi lấy đúng nghiệp vụ: NL từ 13 · TE 2–12 · EB dưới 2</li>
+          <li>Dòng ghi chú giới hạn đặt, rồi nút <em>Xong</em> căn phải</li>
+          <li>Mobile: popover mở rộng hết bề ngang ô, không tràn khỏi màn 375</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li><b>Dùng popover chứ không dùng <code>&lt;select&gt;</code>.</b> Mỗi loại hành khách cần một bộ đếm riêng; chọn một giá trị trong danh sách không diễn đạt được "2 người lớn + 1 trẻ em".</li>
+          <li><b>Tóm tắt trên nút chỉ nêu loại có số &gt; 0.</b> "2 người lớn" gọn hơn "2 người lớn, 0 trẻ em, 0 em bé" và vẫn đủ thông tin.</li>
+          <li>Ba mốc tuổi lấy đúng nghiệp vụ tính giá: trẻ em 75%, em bé 10% giá người lớn (<code>app.pricing</code> trong backend).</li>
+          <li>Giới hạn 9 khách và "em bé ≤ người lớn" chặn ngay trên giao diện thay vì để backend trả lỗi.</li>
+          <li>Ô hành khách không mở danh sách gợi ý như ô sân bay — nó là bộ đếm, không phải ô tìm kiếm.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
        W-RT-02 · CHỌN CHUYẾN ĐI
        ================================================================ -->
   <section class="row" id="W-RT-02">
@@ -1534,38 +1886,49 @@
               <div class="box" style="padding:18px 20px">
                 <div style="font-size:13px;font-weight:700;margin-bottom:14px">Bộ lọc</div>
                 <div class="fgroup">
-                  <div class="fgroup__t">Giờ khởi hành</div>
-                  <div style="font-size:11.5px;color:var(--ink-2);line-height:2.2">
-                    <span class="check"><span class="check__b"></span>Sáng sớm 00:00 – 06:00</span><br>
-                    <span class="check on"><span class="check__b"></span>Sáng 06:00 – 12:00</span><br>
-                    <span class="check on"><span class="check__b"></span>Chiều 12:00 – 18:00</span><br>
-                    <span class="check"><span class="check__b"></span>Tối 18:00 – 24:00</span>
-                  </div>
-                </div>
-                <div class="fgroup">
                   <div class="fgroup__t">Hãng hàng không</div>
                   <div style="font-size:11.5px;color:var(--ink-2);line-height:2.2">
-                    <span class="check on"><span class="check__b"></span>Vietjet Air</span><br>
-                    <span class="check on"><span class="check__b"></span>Vietnam Airlines</span><br>
-                    <span class="check"><span class="check__b"></span>Bamboo Airways</span>
+                    <span class="check on"><span class="check__b"></span>Vietjet Air <span style="color:var(--ink-3);font-size:10px">· 7 chuyến</span></span><br>
+                    <span class="check on"><span class="check__b"></span>Vietnam Airlines <span style="color:var(--ink-3);font-size:10px">· 6 chuyến</span></span><br>
+                    <span class="check"><span class="check__b"></span>Bamboo Airways <span style="color:var(--ink-3);font-size:10px">· 5 chuyến</span></span>
                   </div>
                 </div>
                 <div class="fgroup">
-                  <div class="fgroup__t">Hạng ghế</div>
+                  <div class="fgroup__t">Hạng vé</div>
                   <div style="font-size:11.5px;color:var(--ink-2);line-height:2.2">
-                    <span class="check on"><span class="check__b"></span>Phổ thông <span style="color:var(--ink-3);font-size:10px">· từ 1.190.000 ₫</span></span><br>
-                    <span class="check"><span class="check__b"></span>Phổ thông đặc biệt <span style="color:var(--ink-3);font-size:10px">· từ 1.890.000 ₫</span></span><br>
-                    <span class="check"><span class="check__b"></span>Thương gia <span style="color:var(--ink-3);font-size:10px">· từ 3.490.000 ₫</span></span>
+                    <span class="check on"><span class="check__b"></span>Phổ thông <span style="color:var(--ink-3);font-size:10px">· 1.190.000 – 1.450.000 ₫</span></span><br>
+                    <span class="check"><span class="check__b"></span>Phổ thông đặc biệt <span style="color:var(--ink-3);font-size:10px">· 1.890.000 ₫</span></span><br>
+                    <span class="check"><span class="check__b"></span>Thương gia <span style="color:var(--ink-3);font-size:10px">· 3.490.000 ₫</span></span>
                   </div>
                   <div style="font-size:10.5px;color:var(--ink-3);margin-top:8px;line-height:1.6">
-                    Chọn một hạng ghế để đổi giá hiển thị trên thẻ chuyến.
-                    Bấm <b style="color:var(--ink-2)">Chọn</b> để xem các loại vé trong hạng đó.
+                    Chọn hạng vé để đổi giá hiển thị trên thẻ chuyến. Bấm
+                    <b style="color:var(--ink-2)">Chọn</b> để xem quyền lợi của hạng đó.
                   </div>
                 </div>
                 <div class="fgroup">
-                  <div class="fgroup__t">Điều kiện vé</div>
+                  <div class="fgroup__t">Giờ khởi hành</div>
                   <div style="font-size:11.5px;color:var(--ink-2);line-height:2.2">
-                    <span class="check"><span class="check__b"></span>Được hoàn vé</span>
+                    <span class="check"><span class="check__b"></span>Sáng sớm 00:00 – 06:00 <span style="color:var(--ink-3);font-size:10px">· 2</span></span><br>
+                    <span class="check on"><span class="check__b"></span>Sáng 06:00 – 12:00 <span style="color:var(--ink-3);font-size:10px">· 6</span></span><br>
+                    <span class="check on"><span class="check__b"></span>Chiều 12:00 – 18:00 <span style="color:var(--ink-3);font-size:10px">· 7</span></span><br>
+                    <span class="check"><span class="check__b"></span>Tối 18:00 – 24:00 <span style="color:var(--ink-3);font-size:10px">· 3</span></span>
+                  </div>
+                </div>
+                <div class="fgroup">
+                  <div class="fgroup__t">Khoảng giá</div>
+                  <div style="display:flex;gap:9px;align-items:flex-end">
+                    <div style="flex:1">
+                      <div style="font-size:10px;color:var(--ink-3);margin-bottom:4px">Từ</div>
+                      <div class="inp" style="height:32px;font-size:11.5px" >1.190.000</div>
+                    </div>
+                    <div style="flex:1">
+                      <div style="font-size:10px;color:var(--ink-3);margin-bottom:4px">Đến</div>
+                      <div class="inp" style="height:32px;font-size:11.5px">3.490.000</div>
+                    </div>
+                  </div>
+                  <div style="font-size:10px;color:var(--ink-3);margin-top:7px" class="tabular">1.190.000 ₫ – 3.490.000 ₫</div>
+                  <div style="font-size:10.5px;color:var(--ink-3);margin-top:7px;line-height:1.6">
+                    Giá đã gồm thuế và phí sân bay — xem mục Chi tiết giá ở bước thanh toán.
                   </div>
                 </div>
                 <span class="btn btn--ghost btn--block btn--sm" style="margin-top:14px">Xoá bộ lọc</span>
@@ -1575,9 +1938,10 @@
             <div class="split__main">
               <div class="sortbar">
                 <span class="lbl2">Sắp xếp:</span>
-                <span class="btn btn--sm">Giờ bay sớm nhất</span>
-                <span class="btn btn--sm btn--dark">Giá thấp nhất</span>
-                <span class="btn btn--sm">Thời gian bay ngắn nhất</span>
+                <span class="btn btn--sm btn--dark">Rẻ nhất</span>
+                <span class="btn btn--sm">Nhanh nhất</span>
+                <span class="btn btn--sm">Sớm nhất</span>
+                <span class="btn btn--sm">Muộn nhất</span>
                 <span class="sortbar__sp"></span>
                 <span class="lbl2">18 kết quả</span>
               </div>
@@ -1704,8 +2068,9 @@
           </div>
 
           <div class="sortbar" style="padding:10px 12px;gap:7px;flex-wrap:wrap;margin-bottom:14px">
-            <span class="btn btn--sm" style="height:26px;font-size:10.5px;padding:0 9px">Sớm nhất</span>
             <span class="btn btn--sm btn--dark" style="height:26px;font-size:10.5px;padding:0 9px">Rẻ nhất</span>
+            <span class="btn btn--sm" style="height:26px;font-size:10.5px;padding:0 9px">Nhanh nhất</span>
+            <span class="btn btn--sm" style="height:26px;font-size:10.5px;padding:0 9px">Sớm nhất</span>
             <span class="btn btn--sm" style="height:26px;font-size:10.5px;padding:0 9px">Lọc</span>
           </div>
 
@@ -1821,7 +2186,9 @@
           <li>Tiêu đề tuyến bay + dòng phụ tóm tắt điều kiện tìm</li>
           <li>Chỉ báo hai chặng nằm ngay dưới tiêu đề</li>
           <li>Bộ lọc cột trái, danh sách chuyến ở giữa</li>
-          <li>Mỗi chuyến một thẻ: hãng, giờ, rồi các hạng vé kèm giá và lối vào Chi tiết</li>
+          <li>Mỗi chuyến một thẻ: hãng, giờ, một giá "Giá từ", nút Chọn</li>
+          <li><b>Bộ lọc chốt 4 nhóm, đúng bằng dữ liệu backend có:</b> Hãng hàng không · Hạng vé · Giờ khởi hành · Khoảng giá. Không có nhóm "điều kiện vé" vì <code>GET /public/flights/search</code> không nhận tham số đó.</li>
+          <li>Sắp xếp chốt 4 kiểu khớp code: Rẻ nhất · Nhanh nhất · Sớm nhất · Muộn nhất</li>
         </ul>
       </div>
       <div>
@@ -1831,6 +2198,8 @@
           <li><b>Hạng vé chọn riêng cho từng chặng.</b> Chọn hạng của chặng đi không khoá hạng của chặng về — hai chuyến là hai sản phẩm riêng. Khác Traveloka (chọn chung) vì bảng giá ở đây tách dòng theo chặng.</li>
           <li>Chỉ báo chặng đặt trên cùng và luôn hiện, để biết đang ở bước nào của khứ hồi.</li>
           <li>Hiện số ghế còn lại ngay trên hạng vé — tạo động lực chọn sớm, đồng thời cảnh báo khan hiếm.</li>
+          <li><b>Thuế và phí là MỘT khoản gộp, không tách.</b> Bảng <code>flight_fares</code> chỉ có <code>base_fare</code> (giá cơ bản) và <code>tax_fee</code> — trong đó <code>tax_fee</code> đã gộp cả thuế lẫn phí sân bay thành một số duy nhất. Không có cột thuế riêng, không có cột phí riêng. Phía khách càng không tách: mọi con số là <em>giá đã gồm thuế &amp; phí</em>. Bộ lọc Khoảng giá cũng lọc trên con số đó.</li>
+          <li><b>Bỏ nhóm "Điều kiện vé / Được hoàn vé".</b> Quyền hoàn nằm ở <code>fare_rules</code> theo từng loại vé, và tham số tìm chuyến không lọc được theo nó — lọc tại giao diện sẽ là bộ lọc giả. Thông tin hoàn vé hiển thị ở màn chi tiết hạng vé.</li>
           <li>Mobile chuyển bộ lọc thành nút mở khay, không chiếm chỗ của danh sách.</li>
         </ul>
       </div>
@@ -2311,8 +2680,10 @@
 
               <div class="sortbar">
                 <span class="lbl2">Sắp xếp:</span>
-                <span class="btn btn--sm btn--dark">Giờ bay sớm nhất</span>
-                <span class="btn btn--sm">Giá thấp nhất</span>
+                <span class="btn btn--sm btn--dark">Rẻ nhất</span>
+                <span class="btn btn--sm">Nhanh nhất</span>
+                <span class="btn btn--sm">Sớm nhất</span>
+                <span class="btn btn--sm">Muộn nhất</span>
                 <span class="sortbar__sp"></span>
                 <span class="lbl2">14 kết quả</span>
               </div>
@@ -2431,8 +2802,9 @@
           </div>
 
           <div class="sortbar" style="padding:10px 12px;gap:7px;flex-wrap:wrap;margin-bottom:14px">
-            <span class="btn btn--sm btn--dark" style="height:26px;font-size:10.5px;padding:0 9px">Sớm nhất</span>
-            <span class="btn btn--sm" style="height:26px;font-size:10.5px;padding:0 9px">Rẻ nhất</span>
+            <span class="btn btn--sm btn--dark" style="height:26px;font-size:10.5px;padding:0 9px">Rẻ nhất</span>
+            <span class="btn btn--sm" style="height:26px;font-size:10.5px;padding:0 9px">Nhanh nhất</span>
+            <span class="btn btn--sm" style="height:26px;font-size:10.5px;padding:0 9px">Sớm nhất</span>
             <span class="btn btn--sm" style="height:26px;font-size:10.5px;padding:0 9px">Lọc</span>
           </div>
 
@@ -3554,28 +3926,39 @@
                 <div class="pm on">
                   <span class="pm__ic"></span>
                   <div><div class="pm__t">Ví điện tử VNPay</div>
-                    <div class="pm__d">Cổng thanh toán VNPay</div></div>
+                    <div class="pm__d">Chuyển sang trang thanh toán VNPay</div></div>
                   <span class="pm__sp"></span>
                   <span class="radio on"><span class="radio__d"></span></span>
                 </div>
 
-                <div class="box" style="padding:20px 22px;margin:0 0 10px 34px;background:var(--fill-3);display:flex;gap:24px;align-items:center">
-                  <div class="qr" style="width:118px;height:118px;flex:none"></div>
-                  <div>
-                    <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">Quét mã để thanh toán</div>
-                    <div style="font-size:11.5px;color:var(--ink-2);line-height:1.7">
-                      Mở ứng dụng ngân hàng hoặc ví VNPay và quét mã.<br>
-                      Hệ thống tự xác nhận ngay khi nhận được tiền.
-                    </div>
+                <div class="box" style="padding:16px 18px;margin:0 0 10px 34px;background:var(--fill-3)">
+                  <div style="font-size:12px;color:var(--ink-2);line-height:1.7">
+                    Bấm <b style="color:var(--ink)">Thanh toán</b> để sang cổng VNPay. Bạn chọn thẻ ATM / tài khoản /
+                    ví điện tử ở trang VNPay, nhập thông tin và xác thực OTP tại đó.
+                    VinaFly <b style="color:var(--ink)">không bao giờ</b> hỏi thông tin thẻ trên trang này.
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:11px;padding-top:11px;border-top:1px solid var(--fill)">
+                    <span style="font-size:10.5px;color:var(--ink-3)">Sẽ mở:</span>
+                    <span class="tag">sandbox.vnpayment.vn/paymentv2</span>
+                    <span style="flex:1"></span>
+                    <span style="font-size:10.5px;color:var(--ink-3)">↗ tab mới</span>
                   </div>
                 </div>
 
                 <div class="pm" style="margin-bottom:0">
                   <span class="pm__ic"></span>
-                  <div><div class="pm__t">Chuyển khoản ngân hàng</div>
-                    <div class="pm__d">Xác nhận vé sau khi nhận tiền · thường 1–3 giờ</div></div>
+                  <div><div class="pm__t">Chuyển khoản ngân hàng · VietQR</div>
+                    <div class="pm__d">Sang trang mã QR riêng · xác nhận tự động qua PayOS</div></div>
                   <span class="pm__sp"></span>
                   <span class="radio"><span class="radio__d"></span></span>
+                </div>
+
+                <div class="box" style="padding:16px 18px;margin:10px 0 0 34px;background:var(--fill-3)">
+                  <div style="font-size:12px;color:var(--ink-2);line-height:1.7">
+                    Chọn phương thức này rồi bấm <b style="color:var(--ink)">Thanh toán</b> → mở
+                    <b style="color:var(--ink)">trang mã VietQR</b> (xem W-RT-06a) với số tiền và nội dung chuyển khoản
+                    điền sẵn. Quét bằng app ngân hàng bất kỳ.
+                  </div>
                 </div>
               </div>
 
@@ -3727,24 +4110,26 @@
           <div class="pm on" style="padding:11px 13px">
             <span class="pm__ic" style="width:28px;height:28px"></span>
             <div><div class="pm__t" style="font-size:12.5px">Ví điện tử VNPay</div>
-              <div class="pm__d">Cổng thanh toán VNPay</div></div>
+              <div class="pm__d">Chuyển sang trang VNPay</div></div>
             <span class="pm__sp"></span>
             <span class="radio on"><span class="radio__d"></span></span>
           </div>
 
-          <div class="box" style="padding:14px;margin:0 0 10px 16px;background:var(--fill-3);display:flex;gap:14px;align-items:center">
-            <div class="qr" style="width:74px;height:74px;background-size:9px 9px;flex:none"></div>
-            <div style="font-size:11px;color:var(--ink-2);line-height:1.6">
-              Mở app ngân hàng hoặc VNPay<br>và quét mã để thanh toán
-            </div>
+          <div class="box" style="padding:11px 13px;margin:0 0 10px 16px;background:var(--fill-3);font-size:10.5px;color:var(--ink-2);line-height:1.6">
+            Bấm Thanh toán để sang cổng VNPay, chọn thẻ và xác thực OTP tại đó.
+            VinaFly không hỏi thông tin thẻ trên trang này.
           </div>
 
-          <div class="pm" style="padding:12px 14px;margin-bottom:16px">
+          <div class="pm" style="padding:12px 14px;margin-bottom:10px">
             <span class="pm__ic" style="width:28px;height:28px"></span>
-            <div><div class="pm__t" style="font-size:12.5px">Chuyển khoản ngân hàng</div>
-              <div class="pm__d">Xác nhận sau 1–3 giờ</div></div>
+            <div><div class="pm__t" style="font-size:12.5px">Chuyển khoản · VietQR</div>
+              <div class="pm__d">Mở trang mã QR riêng</div></div>
             <span class="pm__sp"></span>
             <span class="radio"><span class="radio__d"></span></span>
+          </div>
+
+          <div class="box" style="padding:11px 13px;margin:0 0 16px 16px;background:var(--fill-3);font-size:10.5px;color:var(--ink-2);line-height:1.6">
+            Chọn mục này rồi bấm Thanh toán → mở trang VietQR với số tiền và nội dung điền sẵn.
           </div>
 
           <div class="sec__h"><h3 style="font-size:13.5px">Voucher</h3></div>
@@ -3812,7 +4197,335 @@
           <li>Dải nhắc nói rõ hết hạn thì <em>không bị trừ tiền</em> — giảm lo lắng, giảm gọi tổng đài.</li>
           <li>Tách giá theo chặng thay vì gộp một dòng vé — đối chiếu được với số tiền từng chuyến, và cho thấy hạng hai chặng có thể khác nhau.</li>
           <li><b>Bỏ ô nhập mã voucher.</b> Hệ thống dùng ví voucher: khách chọn từ ví, backend nhận <code>user_voucher_id</code> chứ không nhận mã, nên ô "nhập mã" là giao diện không có API đứng sau.</li>
+          <li><b>QR không nằm dưới mục VNPay.</b> VNPay trả về một <em>đường dẫn chuyển hướng</em> sang cổng của họ — khách bấm rồi chọn thẻ, nhập OTP bên đó. Vẽ mã QR dưới mục VNPay là sai bản chất và khiến khách tưởng phải quét mã của VinaFly. Mã QR chỉ thuộc về phương thức <b>chuyển khoản VietQR</b>, và nó nằm ở <b>trang riêng W-RT-06a</b>.</li>
+          <li><b>VietQR và khuyến mãi là hai thứ khác nhau.</b> Khuyến mãi (promotion) giảm thẳng vào giá dòng vé, áp tự động khi tạo đơn — khách không nhận, không nhập gì. Voucher phải nhận vào ví rồi chọn khi thanh toán. Vì vậy màn này không hiện "mã khuyến mãi" ở bất kỳ đâu, chỉ hiện chương trình đang áp và giá trị giảm.</li>
           <li>Giá hai chặng gộp vào một đơn — một lần thanh toán, một mã đặt chỗ.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-RT-06a · TRANG MÃ VIETQR (chuyển khoản)
+       ================================================================ -->
+  <section class="row" id="W-RT-06a">
+    <div class="rowhead">
+      <span class="code">W-RT-06a</span>
+      <h2>Thanh toán bằng chuyển khoản — trang mã VietQR</h2>
+      <span class="route">/booking/payment/{paymentId}/vietqr</span>
+      <span class="sp"></span>
+      <span class="meta">Mở khi chọn Chuyển khoản · đếm ngược giữ chỗ vẫn chạy</span>
+    </div>
+
+    <div class="views">
+      <div class="art art--desktop">
+        <div class="topbar">
+          <div class="topbar__logo"><span class="topbar__mark"></span><span class="topbar__name">VinaFly</span></div>
+          <nav class="topbar__nav"><span>Trang chủ</span><span>Vé của tôi</span><span>Khuyến mãi</span><span>Tin tức</span><span>Tra cứu đặt chỗ</span></nav>
+          <span class="topbar__sp"></span>
+          <span class="btn btn--sm">Đăng xuất</span>
+        </div>
+
+        <div class="bar-stepper">
+          <ol class="stepper">
+            <li class="st done"><span class="st__n">✓</span>Chọn chuyến</li>
+            <li class="ln"></li>
+            <li class="st done"><span class="st__n">✓</span>Thông tin</li>
+            <li class="ln"></li>
+            <li class="st done"><span class="st__n">✓</span>Chọn ghế</li>
+            <li class="ln"></li>
+            <li class="st cur"><span class="st__n">4</span>Thanh toán</li>
+          </ol>
+          <span style="flex:1"></span>
+          <span class="timer"><span>Thời hạn thanh toán</span><b>29:41</b></span>
+        </div>
+
+        <div class="page">
+          <div class="holdbar">
+            <span class="holdbar__i"></span>
+            <span><b>Đơn đã tạo, đang chờ tiền vào.</b> Chuyển đúng số tiền và đúng nội dung bên dưới.
+              Hệ thống tự xác nhận trong vòng 1–2 phút sau khi nhận được tiền; quá 30 phút chưa nhận được,
+              đơn chuyển <b>Hết hạn</b> và ghế trả lại — bạn không bị trừ tiền.</span>
+          </div>
+
+          <div class="split">
+            <div class="split__main">
+              <div class="sec">
+                <div class="sec__h"><h3>Quét mã để chuyển khoản</h3><span class="sp"></span>
+                  <span class="tag">VietQR · Napas 247</span></div>
+
+                <div class="box sec__body" style="display:flex;gap:28px;align-items:flex-start">
+                  <div style="flex:none;text-align:center">
+                    <div class="qr qrvn" style="width:216px;height:216px;background-size:9px 9px"><span></span><span></span><span></span></div>
+                    <div style="font-size:10.5px;color:var(--ink-3);margin-top:9px">Mã có hiệu lực tới khi đơn hết hạn</div>
+                  </div>
+
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);margin-bottom:9px">Thông tin chuyển khoản</div>
+                    <div class="ln-row"><span>Ngân hàng</span><b>BIDV — CN Hoàn Kiếm</b></div>
+                    <div class="ln-row"><span>Số tài khoản</span><b class="tabular">3141 0000 1234 567</b></div>
+                    <div class="ln-row"><span>Chủ tài khoản</span><b>CÔNG TY CỔ PHẦN VINAFLY</b></div>
+                    <div class="ln-row" style="border-top:1px solid var(--fill);padding-top:11px;margin-top:3px">
+                      <span>Số tiền</span><b style="font-size:14px">6.620.000 ₫</b></div>
+                    <div class="ln-row"><span>Nội dung chuyển khoản</span><b class="tabular">VF6 620000</b></div>
+
+                    <div class="box" style="background:var(--fill-3);padding:11px 13px;margin-top:12px;font-size:11px;color:var(--ink-2);line-height:1.65">
+                      <b style="color:var(--ink)">Bắt buộc ghi đúng nội dung.</b> Hệ thống khớp giao dịch bằng mã
+                      <b style="color:var(--ink)">VF6 620000</b>. Ghi sai hoặc bỏ trống thì tiền vẫn vào nhưng
+                      đơn không tự xác nhận — phải chờ nhân viên đối soát.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sec">
+                <div class="sec__h"><h3>Sau khi chuyển khoản</h3></div>
+                <div class="box sec__body">
+                  <div style="display:flex;gap:12px;margin-bottom:13px">
+                    <span class="tag tag--dark" style="flex:none">1</span>
+                    <div style="font-size:12px;color:var(--ink-2);line-height:1.65">
+                      Giữ nguyên trang này. Hệ thống tự kiểm tra mỗi 5 giây, không cần bấm gì.
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:12px;margin-bottom:13px">
+                    <span class="tag tag--dark" style="flex:none">2</span>
+                    <div style="font-size:12px;color:var(--ink-2);line-height:1.65">
+                      Khi nhận đủ tiền, trang tự chuyển sang <b style="color:var(--ink)">Vé điện tử</b> và gửi email xác nhận.
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:12px">
+                    <span class="tag tag--dark" style="flex:none">3</span>
+                    <div style="font-size:12px;color:var(--ink-2);line-height:1.65">
+                      Chờ quá 10 phút chưa thấy xác nhận → bấm
+                      <b style="color:var(--ink)">Tôi đã chuyển khoản</b> để báo nhân viên đối soát tay.
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:10px;margin-top:15px;padding-top:14px;border-top:1px solid var(--fill)">
+                    <span class="btn btn--sm btn--dark">Tôi đã chuyển khoản</span>
+                    <span class="btn btn--sm">Huỷ đơn này</span>
+                    <span style="flex:1"></span>
+                    <span style="font-size:10.5px;color:var(--ink-3);align-self:center">Đang chờ tiền vào…</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="split__aside">
+              <div class="sum">
+                <div class="sum__h">Đơn đang giữ</div>
+                <div class="sum__b">
+                  <div class="ln-row"><span>Mã đặt chỗ</span><b class="tabular">VF6 620000</b></div>
+                  <div class="ln-row"><span>Hà Nội → TP. HCM</span><b>2 chặng</b></div>
+                  <div class="ln-row"><span>Khách</span><b>2 người lớn</b></div>
+                  <div class="ln-row" style="margin-bottom:0"><span>Tạo lúc</span><b>14:32, 30/10/2026</b></div>
+                </div>
+                <div class="sum__b" style="border-top:1px solid var(--line)">
+                  <div class="ln-row--tot ln-row"><span>Số tiền cần chuyển</span><b>6.620.000 ₫</b></div>
+                </div>
+                <div class="sum__f">
+                  <div style="font-size:10.5px;color:var(--ink-2);text-align:center;line-height:1.7">
+                    Đơn tự hết hạn sau<br>
+                    <span class="timer" style="margin-top:6px">Còn <b>29:41</b></span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="stickybar">
+            <span class="btn">← Đổi phương thức khác</span>
+            <span class="sp"></span>
+            <span style="font-size:12px;color:var(--ink-3)">Bước 4/4</span>
+          </div>
+        </div>
+
+        <div class="foot2">
+  <div class="foot2__in">
+    <div >
+      <div class="foot2__brand"><span class="foot2__mk">V</span><span class="foot2__nm">VinaFly</span></div>
+      <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+      <div class="foot2__soc"><span class="foot2__s">f</span><span class="foot2__s">◎</span><span class="foot2__s">▶</span><span class="foot2__s">✉</span></div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li><a href="#W-RT-25">Hướng dẫn đặt vé</a></li>
+        <li><a href="#W-RT-26">Chính sách hoàn vé</a></li>
+        <li><a href="#W-RT-23">Câu hỏi thường gặp</a></li>
+        <li><a href="#W-RT-27">Trung tâm trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li><a href="#W-RT-28">Điểm đến phổ biến</a></li>
+        <li><a href="#W-RT-16">Cẩm nang du lịch</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><span class="foot2__ic">☎</span> 1900 1234</li>
+        <li><span class="foot2__ic">✉</span> support&#64;vedi.local</li>
+        <li><span class="foot2__ic">◎</span> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot2__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot2__pay"><span>VISA</span><span>Napas</span><span>MoMo</span></div>
+  </div>
+</div>
+      </div>
+
+      <div class="art art--mobile mobile">
+        <div class="topbar">
+          <span class="topbar__burger"></span>
+          <div class="topbar__logo"><span class="topbar__mark"></span><span class="topbar__name">VinaFly</span></div>
+          <span class="topbar__sp"></span>
+        </div>
+
+        <div class="bar-stepper" style="padding:0 16px;height:50px">
+          <ol class="stepper">
+            <li class="st done"><span class="st__n">✓</span></li>
+            <li class="ln" style="width:14px;margin:0 5px"></li>
+            <li class="st done"><span class="st__n">✓</span></li>
+            <li class="ln" style="width:14px;margin:0 5px"></li>
+            <li class="st done"><span class="st__n">✓</span></li>
+            <li class="ln" style="width:14px;margin:0 5px"></li>
+            <li class="st cur"><span class="st__n">4</span></li>
+          </ol>
+          <span style="flex:1"></span>
+          <span class="timer" style="font-size:9.5px;padding:3px 7px"><b style="font-size:11px">29:41</b></span>
+        </div>
+
+        <div class="page" style="padding:16px 16px 0">
+          <div class="holdbar" style="padding:9px 12px;font-size:10.5px;margin-bottom:12px">
+            <span class="holdbar__i" style="width:14px;height:14px"></span>
+            <span>Đơn đang chờ tiền vào. Chuyển đúng nội dung <b>VF6 620000</b>. Quá hạn đơn tự huỷ, không trừ tiền.</span>
+          </div>
+
+          <div class="box" style="padding:16px;margin-bottom:12px;text-align:center">
+            <div class="qr qrvn" style="width:190px;height:190px;background-size:8px 8px;margin:0 auto 11px"><span></span><span></span><span></span></div>
+            <div style="font-size:11px;color:var(--ink-3)">Mã có hiệu lực tới khi đơn hết hạn</div>
+          </div>
+
+          <div class="box" style="padding:14px;margin-bottom:12px">
+            <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-3);margin-bottom:9px">Thông tin chuyển khoản</div>
+            <div class="ln-row" style="margin-bottom:7px"><span>Ngân hàng</span><b style="font-size:11.5px">BIDV — Hoàn Kiếm</b></div>
+            <div class="ln-row" style="margin-bottom:7px"><span>Số tài khoản</span><b style="font-size:11.5px">3141 0000 1234 567</b></div>
+            <div class="ln-row" style="margin-bottom:7px"><span>Chủ tài khoản</span><b style="font-size:11.5px">CTCP VINAFLY</b></div>
+            <div class="ln-row" style="margin-bottom:7px"><span>Số tiền</span><b style="font-size:13px">6.620.000 ₫</b></div>
+            <div class="ln-row" style="margin-bottom:0"><span>Nội dung</span><b style="font-size:11.5px">VF6 620000</b></div>
+          </div>
+
+          <div class="box" style="padding:11px 13px;background:var(--fill-3);margin-bottom:12px;font-size:10.5px;color:var(--ink-2);line-height:1.65">
+            <b style="color:var(--ink)">Bắt buộc ghi đúng nội dung.</b> Sai nội dung thì đơn không tự xác nhận.
+          </div>
+
+          <div class="box" style="padding:13px;margin-bottom:16px">
+            <div style="font-size:11px;color:var(--ink-2);line-height:1.65;margin-bottom:11px">
+              Hệ thống tự kiểm tra mỗi 5 giây. Nhận đủ tiền → tự chuyển sang Vé điện tử và gửi email.
+            </div>
+            <span class="btn btn--dark btn--block btn--sm" style="margin-bottom:7px">Tôi đã chuyển khoản</span>
+            <span class="btn btn--block btn--sm">Huỷ đơn này</span>
+          </div>
+        </div>
+
+        <div class="stickybar">
+          <div>
+            <div style="font-size:10px;color:var(--ink-3)">Cần chuyển</div>
+            <div style="font-size:15px;font-weight:700">6.620.000 ₫</div>
+          </div>
+          <span class="sp"></span>
+          <span style="font-size:10.5px;color:var(--ink-3)">Còn 29:41</span>
+        </div>
+
+        <div class="foot2 mobile">
+  <div class="foot2__in">
+    <div class="foot2__wide">
+      <div class="foot2__brand"><span class="foot2__mk">V</span><span class="foot2__nm">VinaFly</span></div>
+      <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+      <div class="foot2__soc"><span class="foot2__s">f</span><span class="foot2__s">◎</span><span class="foot2__s">▶</span><span class="foot2__s">✉</span></div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li><a href="#W-RT-25">Hướng dẫn đặt vé</a></li>
+        <li><a href="#W-RT-26">Chính sách hoàn vé</a></li>
+        <li><a href="#W-RT-23">Câu hỏi thường gặp</a></li>
+        <li><a href="#W-RT-27">Trung tâm trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li><a href="#W-RT-28">Điểm đến phổ biến</a></li>
+        <li><a href="#W-RT-16">Cẩm nang du lịch</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><span class="foot2__ic">☎</span> 1900 1234</li>
+        <li><span class="foot2__ic">✉</span> support&#64;vedi.local</li>
+        <li><span class="foot2__ic">◎</span> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot2__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot2__pay"><span>VISA</span><span>Napas</span><span>MoMo</span></div>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Đang chờ tiền → mã QR hiện, nút "Tôi đã chuyển khoản" bật</li>
+          <li>Nhận đủ tiền → tự chuyển sang Vé điện tử (W-RT-07), không cần bấm</li>
+          <li>Quá 30 phút → đơn <em>Hết hạn</em>, mã QR mờ đi, hiện nút Về trang chủ</li>
+          <li>Chuyển thiếu / thừa tiền → đơn giữ nguyên, chờ nhân viên đối soát</li>
+          <li>Bấm "Tôi đã chuyển khoản" quá 3 lần → khoá nút, hiện số tổng đài</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> Thanh toán (W-RT-06) khi chọn phương thức Chuyển khoản</li>
+          <li><b>Ra tới:</b> Vé điện tử khi nhận tiền · Trang chủ khi hết hạn</li>
+          <li>Mở lại được bằng mã đặt chỗ — trang không giữ trạng thái trong bộ nhớ</li>
+          <li>Đổi sang VNPay → quay lại W-RT-06, đơn và ghế giữ nguyên</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Trang riêng, không phải hộp thoại — khách cần mở song song với app ngân hàng</li>
+          <li>QR bên trái cỡ lớn, thông tin chuyển khoản bên phải để đối chiếu từng dòng</li>
+          <li>Ba bước sau khi chuyển nằm ngay dưới, kèm nút báo đã chuyển</li>
+          <li>Mobile: QR căn giữa, thông tin xuống dưới, nút dính đáy màn hình</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li><b>QR chỉ thuộc về chuyển khoản, không thuộc VNPay.</b> VNPay trả về một <em>đường dẫn</em> để chuyển hướng sang cổng của họ; vẽ QR dưới mục VNPay là sai bản chất và khiến khách tưởng phải quét mã của VinaFly.</li>
+          <li><b>Tách trang riêng thay vì nhét QR vào màn thanh toán.</b> Khách phải mở app ngân hàng trên chính điện thoại — trên mobile, một trang riêng không bị cuộn mất QR khi thao tác.</li>
+          <li>Nhấn mạnh nội dung chuyển khoản vì đó là khoá đối soát tự động; hướng dẫn PayOS khớp giao dịch bằng nội dung, sai là phải xử lý tay.</li>
+          <li>Hiện số tài khoản và chủ tài khoản đầy đủ để khách chuyển tay được khi app không quét được mã.</li>
+          <li>Trang tự kiểm tra trạng thái thay vì bắt khách bấm — chuyển khoản xong khách không biết bấm gì.</li>
         </ul>
       </div>
     </div>
@@ -5269,6 +5982,283 @@
   </section>
 
   <!-- ================================================================
+       W-RT-10a · KẾT QUẢ TRA CỨU ĐẶT CHỖ
+       ================================================================ -->
+  <section class="row" id="W-RT-10a">
+    <div class="rowhead">
+      <span class="code">W-RT-10a</span>
+      <h2>Tra cứu đặt chỗ — kết quả (khách vãng lai, chỉ đọc)</h2>
+      <span class="route">/lookup?code=AB3K9F</span>
+      <span class="sp"></span>
+      <span class="meta">Hiện sau khi nhập đúng mã + email/SĐT</span>
+    </div>
+
+    <div class="views">
+      <div class="art art--desktop">
+        <div class="topbar">
+          <div class="topbar__logo"><span class="topbar__mark"></span><span class="topbar__name">VinaFly</span></div>
+          <nav class="topbar__nav"><span>Trang chủ</span><span>Khuyến mãi</span><span>Tin tức</span><span>Tra cứu đặt chỗ</span></nav>
+          <span class="topbar__sp"></span>
+          <span class="btn btn--sm">Đăng nhập</span>
+          <span class="btn btn--sm btn--dark">Đăng ký</span>
+        </div>
+
+        <div class="page" style="padding:34px 32px 56px">
+          <div style="max-width:860px;margin:0 auto">
+
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px">
+              <div>
+                <h2 style="margin:0 0 4px;font-size:22px;letter-spacing:-.3px">Đặt chỗ AB3K9F</h2>
+                <div style="font-size:12px;color:var(--ink-3)">Đặt lúc 14:32, 30/10/2026 · tra cứu bằng an.nguyen&#64;email.com</div>
+              </div>
+              <span style="flex:1"></span>
+              <span class="tag tag--dark">ĐÃ XÁC NHẬN</span>
+            </div>
+
+            <div class="box" style="border-left:3px solid var(--mark);border-radius:0 8px 8px 0;
+                        background:var(--fill-3);padding:12px 16px;margin-bottom:16px;font-size:11.5px;color:var(--ink-2);line-height:1.65">
+              Bạn đang xem ở chế độ <b style="color:var(--ink)">chỉ đọc</b> vì chưa đăng nhập.
+              Muốn huỷ đơn hoặc xem hoá đơn, hãy <b style="color:var(--ink)">đăng nhập bằng tài khoản đã đặt vé</b>.
+            </div>
+
+            <div class="sec">
+              <div class="sec__h"><h3>Hành trình</h3><span class="tag">Khứ hồi · 2 hành khách</span><span class="sp"></span>
+                <span class="btn btn--sm">Tải vé PDF</span></div>
+
+              <div class="box" style="padding:18px 20px;margin-bottom:12px">
+                <div class="tag tag--dark" style="margin-bottom:12px">CHẶNG ĐI · Thứ Ba 03/11/2026</div>
+                <div class="flightline" style="margin-bottom:12px">
+                  <div class="fl__pt"><div class="fl__t">08:00</div><div class="fl__c">HAN</div></div>
+                  <div class="fl__mid"><div class="fl__dur">2g 05p · bay thẳng</div><div class="fl__bar"></div></div>
+                  <div class="fl__pt"><div class="fl__t">10:05</div><div class="fl__c">SGN</div></div>
+                </div>
+                <table class="table">
+                  <tbody>
+                    <tr><td>Nguyễn Văn An</td><td>VJ 123 · Phổ thông</td><td style="text-align:right"><b>Ghế 2A</b></td></tr>
+                    <tr><td>Nguyễn Văn Bình</td><td>VJ 123 · Phổ thông</td><td style="text-align:right"><b>Ghế 2B</b></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="box" style="padding:18px 20px">
+                <div class="tag" style="margin-bottom:12px">CHẶNG VỀ · Thứ Bảy 07/11/2026</div>
+                <div class="flightline" style="margin-bottom:12px">
+                  <div class="fl__pt"><div class="fl__t">19:30</div><div class="fl__c">SGN</div></div>
+                  <div class="fl__mid"><div class="fl__dur">2g 10p · bay thẳng</div><div class="fl__bar"></div></div>
+                  <div class="fl__pt"><div class="fl__t">21:40</div><div class="fl__c">HAN</div></div>
+                </div>
+                <table class="table">
+                  <tbody>
+                    <tr><td>Nguyễn Văn An</td><td>VJ 456 · Phổ thông đặc biệt</td><td style="text-align:right"><b>Ghế 4C</b></td></tr>
+                    <tr><td>Nguyễn Văn Bình</td><td>VJ 456 · Phổ thông đặc biệt</td><td style="text-align:right"><b>Ghế 4D</b></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="sec">
+              <div class="sec__h"><h3>Thanh toán và vé</h3></div>
+              <div class="box sec__body">
+                <div class="ln-row"><span>Hình thức thanh toán</span><b>VNPay · 14:32, 30/10/2026</b></div>
+                <div class="ln-row"><span>Số tiền đã trả</span><b>6.620.000 ₫</b></div>
+                <div class="ln-row" style="font-size:11px;color:var(--ink-3)"><span>Giá vé đã gồm thuế &amp; phí sân bay</span></div>
+                <div class="ln-row" style="margin-bottom:0"><span>Mã vé điện tử</span><b>2 vé · mỗi chặng một mã</b></div>
+              </div>
+            </div>
+
+            <div class="box box--dash" style="padding:15px 18px;margin-top:16px;font-size:11.5px;color:var(--ink-2);line-height:1.75">
+              <b>Không xem được ở chế độ này:</b> nút huỷ đơn, đổi ngày bay, hoá đơn VAT, thông tin liên hệ đầy đủ.
+              Đăng nhập đúng tài khoản để mở đầy đủ.
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <span class="btn">← Tra cứu đơn khác</span>
+              <span style="flex:1"></span>
+              <span class="btn btn--dark">Đăng nhập để quản lý đơn</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="foot2">
+  <div class="foot2__in">
+    <div >
+      <div class="foot2__brand"><span class="foot2__mk">V</span><span class="foot2__nm">VinaFly</span></div>
+      <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+      <div class="foot2__soc"><span class="foot2__s">f</span><span class="foot2__s">◎</span><span class="foot2__s">▶</span><span class="foot2__s">✉</span></div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li><a href="#W-RT-25">Hướng dẫn đặt vé</a></li>
+        <li><a href="#W-RT-26">Chính sách hoàn vé</a></li>
+        <li><a href="#W-RT-23">Câu hỏi thường gặp</a></li>
+        <li><a href="#W-RT-27">Trung tâm trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li><a href="#W-RT-28">Điểm đến phổ biến</a></li>
+        <li><a href="#W-RT-16">Cẩm nang du lịch</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><span class="foot2__ic">☎</span> 1900 1234</li>
+        <li><span class="foot2__ic">✉</span> support&#64;vedi.local</li>
+        <li><span class="foot2__ic">◎</span> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot2__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot2__pay"><span>VISA</span><span>Napas</span><span>MoMo</span></div>
+  </div>
+</div>
+      </div>
+
+      <div class="art art--mobile mobile">
+        <div class="topbar">
+          <span class="topbar__burger"></span>
+          <div class="topbar__logo"><span class="topbar__mark"></span><span class="topbar__name">VinaFly</span></div>
+          <span class="topbar__sp"></span>
+          <span class="btn btn--sm">Đăng nhập</span>
+        </div>
+
+        <div class="page" style="padding:18px 16px 0">
+          <div style="font-size:17px;font-weight:700;margin-bottom:3px">Đặt chỗ AB3K9F</div>
+          <div style="font-size:10.5px;color:var(--ink-3);margin-bottom:10px">14:32, 30/10/2026</div>
+          <span class="tag tag--dark" style="margin-bottom:12px">ĐÃ XÁC NHẬN</span>
+
+          <div class="box" style="border-left:3px solid var(--mark);border-radius:0 6px 6px 0;background:var(--fill-3);padding:9px 11px;margin-bottom:12px;font-size:10.5px;color:var(--ink-2);line-height:1.6">
+            Chế độ chỉ đọc. Đăng nhập để huỷ đơn hoặc xem hoá đơn.
+          </div>
+
+          <div class="box" style="padding:13px;margin-bottom:10px">
+            <div class="tag tag--dark" style="margin-bottom:9px;font-size:9px">CHẶNG ĐI · 03/11</div>
+            <div class="flightline" style="margin-bottom:9px">
+              <div class="fl__pt"><div class="fl__t" style="font-size:14px">08:00</div><div class="fl__c">HAN</div></div>
+              <div class="fl__mid"><div class="fl__dur" style="font-size:9px">2g 05p</div><div class="fl__bar"></div></div>
+              <div class="fl__pt"><div class="fl__t" style="font-size:14px">10:05</div><div class="fl__c">SGN</div></div>
+            </div>
+            <div style="font-size:10.5px;color:var(--ink-2);line-height:1.7">
+              Nguyễn Văn An · VJ 123 · Phổ thông · <b style="color:var(--ink)">Ghế 2A</b><br>
+              Nguyễn Văn Bình · VJ 123 · Phổ thông · <b style="color:var(--ink)">Ghế 2B</b>
+            </div>
+          </div>
+
+          <div class="box" style="padding:13px;margin-bottom:10px">
+            <div class="tag" style="margin-bottom:9px;font-size:9px">CHẶNG VỀ · 07/11</div>
+            <div class="flightline" style="margin-bottom:9px">
+              <div class="fl__pt"><div class="fl__t" style="font-size:14px">19:30</div><div class="fl__c">SGN</div></div>
+              <div class="fl__mid"><div class="fl__dur" style="font-size:9px">2g 10p</div><div class="fl__bar"></div></div>
+              <div class="fl__pt"><div class="fl__t" style="font-size:14px">21:40</div><div class="fl__c">HAN</div></div>
+            </div>
+            <div style="font-size:10.5px;color:var(--ink-2);line-height:1.7">
+              Nguyễn Văn An · VJ 456 · Phổ thông đặc biệt · <b style="color:var(--ink)">Ghế 4C</b><br>
+              Nguyễn Văn Bình · VJ 456 · Phổ thông đặc biệt · <b style="color:var(--ink)">Ghế 4D</b>
+            </div>
+          </div>
+
+          <div class="box" style="padding:13px;margin-bottom:12px">
+            <div class="ln-row" style="margin-bottom:7px"><span>Thanh toán</span><b style="font-size:11px">VNPay · 30/10</b></div>
+            <div class="ln-row" style="margin-bottom:5px"><span>Đã trả</span><b>6.620.000 ₫</b></div>
+            <div class="ln-row" style="margin-bottom:0;font-size:10px;color:var(--ink-3)"><span>Đã gồm thuế &amp; phí</span></div>
+          </div>
+
+          <span class="btn btn--dark btn--block">Đăng nhập để quản lý đơn</span>
+        </div>
+
+        <div class="foot2 mobile">
+  <div class="foot2__in">
+    <div class="foot2__wide">
+      <div class="foot2__brand"><span class="foot2__mk">V</span><span class="foot2__nm">VinaFly</span></div>
+      <p>Hệ thống đặt vé máy bay trực tuyến uy tín hàng đầu Việt Nam. Chúng tôi đồng hành cùng bạn trên mọi nẻo đường bay nội địa.</p>
+      <div class="foot2__soc"><span class="foot2__s">f</span><span class="foot2__s">◎</span><span class="foot2__s">▶</span><span class="foot2__s">✉</span></div>
+    </div>
+
+    <div>
+      <h4>Hỗ trợ</h4>
+      <ul>
+        <li><a href="#W-RT-25">Hướng dẫn đặt vé</a></li>
+        <li><a href="#W-RT-26">Chính sách hoàn vé</a></li>
+        <li><a href="#W-RT-23">Câu hỏi thường gặp</a></li>
+        <li><a href="#W-RT-27">Trung tâm trợ giúp</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Khám phá</h4>
+      <ul>
+        <li><a href="#W-RT-28">Điểm đến phổ biến</a></li>
+        <li><a href="#W-RT-16">Cẩm nang du lịch</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4>Liên hệ</h4>
+      <ul>
+        <li><span class="foot2__ic">☎</span> 1900 1234</li>
+        <li><span class="foot2__ic">✉</span> support&#64;vedi.local</li>
+        <li><span class="foot2__ic">◎</span> Hoàn Kiếm, Hà Nội</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot2__bot">
+    <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
+    <div class="foot2__pay"><span>VISA</span><span>Napas</span><span>MoMo</span></div>
+  </div>
+</div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Sai mã hoặc sai email/SĐT → không vào được màn này, báo chung "Không tìm thấy đặt chỗ"</li>
+          <li>Đơn chờ thanh toán → vẫn xem được, hiện đồng hồ thời hạn thanh toán</li>
+          <li>Đơn đã huỷ → hiện nhãn ĐÃ HUỶ, ẩn khối thanh toán</li>
+          <li>Đơn hết hạn → hiện HẾT HẠN + nút Đặt lại</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> bấm Tra cứu ở W-RT-10 khi mã và email/SĐT khớp</li>
+          <li><b>Ra tới:</b> Đăng nhập (W-RT-11) · tải vé PDF · tra cứu đơn khác</li>
+          <li>Không có nút huỷ / đổi ngày — đó là thao tác cần đăng nhập</li>
+          <li>Link "Đăng nhập để quản lý đơn" giữ nguyên mã đơn để quay lại sau khi đăng nhập</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Một cột hẹp canh giữa, không có sidebar tài khoản</li>
+          <li>Dải nhắc "chỉ đọc" nằm ngay trên hành trình, thấy trước khi thấy nút</li>
+          <li>Hai thẻ hành trình giống màn Vé của tôi, mỗi chặng một thẻ</li>
+          <li>Khối thanh toán chỉ có số tiền và hình thức, không có hoá đơn</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li><b>Tách màn kết quả khỏi màn nhập</b> thay vì hiện ngay dưới form — đơn khứ hồi có hai chặng, cần đủ chỗ.</li>
+          <li>Nói rõ ngay đầu trang là <em>chỉ đọc</em> và vì sao — tránh khách loay hoay tìm nút huỷ.</li>
+          <li>Vẫn cho tải vé PDF: đó là thứ khách cần nhất khi chỉ tra cứu.</li>
+          <li>Không hiện số điện thoại / email đầy đủ của người liên hệ — người lạ có mã vẫn không lấy được dữ liệu cá nhân.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
        W-RT-11 · ĐĂNG NHẬP
        ================================================================ -->
   <section class="row" id="W-RT-11">
@@ -5355,7 +6345,7 @@
           </div>
         </div>
 
-        
+
       </div>
     </div>
 
@@ -5497,7 +6487,7 @@
           </div>
         </div>
 
-        
+
       </div>
     </div>
 
@@ -5658,7 +6648,7 @@
           </div>
         </div>
 
-        
+
       </div>
     </div>
 
@@ -5750,7 +6740,7 @@
             </article>
 
             <article class="acard">
-              <div class="acard__img ph"><span class="tag acard__tag">Mã giảm giá</span></div>
+              <div class="acard__img ph"><span class="tag acard__tag">Giảm 100.000 ₫</span></div>
               <div class="acard__b">
                 <div class="acard__d">05/11 – 15/12/2026</div>
                 <div class="acard__t">Giảm 100.000 ₫ cho đơn từ 2 triệu</div>
@@ -5877,7 +6867,7 @@
           </div>
 
           <div class="acard" style="margin-bottom:12px">
-            <div class="acard__img ph" style="height:96px"><span class="tag acard__tag" style="font-size:9px">Mã giảm giá</span></div>
+            <div class="acard__img ph" style="height:96px"><span class="tag acard__tag" style="font-size:9px">Giảm 100.000 ₫</span></div>
             <div class="acard__b" style="padding:12px 13px">
               <div class="acard__d" style="font-size:10px">05/11 – 15/12/2026</div>
               <div class="acard__t" style="font-size:12px;margin:5px 0 4px">Giảm 100.000 ₫ đơn từ 2 triệu</div>
@@ -9154,9 +10144,9 @@
 
           <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
             <span class="btn btn--sm btn--dark">Tất cả</span>
-            <span class="btn btn--sm">Miền Bắc</span>
-            <span class="btn btn--sm">Miền Trung</span>
-            <span class="btn btn--sm">Miền Nam</span>
+            <span class="btn btn--sm">Có chuyến sớm nhất</span>
+            <span class="btn btn--sm">Giá thấp nhất</span>
+            <span class="btn btn--sm">Bay ngắn nhất</span>
           </div>
 
           <div class="agrid">
@@ -9319,7 +10309,7 @@
       <div>
         <h3>Trạng thái</h3>
         <ul>
-          <li>Lọc theo miền → lọc tại chỗ, không đổi trang</li>
+          <li>Đổi kiểu sắp xếp → sắp lại thẻ tại chỗ, không đổi trang</li>
           <li>Chưa có ảnh điểm đến → nền xám một màu</li>
           <li>Đang tải giá → khung xám ở dòng giá</li>
           <li>Không có chuyến tới điểm đó → thẻ mờ, ẩn dòng giá</li>
@@ -9337,7 +10327,7 @@
       <div>
         <h3>Cấu trúc</h3>
         <ul>
-          <li>Bộ lọc miền dạng nút ngang (chỉ để gom nhóm, không phải dữ liệu DB)</li>
+          <li>Hàng nút sắp xếp: Tất cả · Có chuyến sớm nhất · Giá thấp nhất · Bay ngắn nhất</li>
           <li>Lưới ba cột thẻ điểm đến: ảnh · tên + mã IATA · số chuyến · thời gian bay</li>
           <li>Giá thấp nhất đè lên góc ảnh</li>
         </ul>
@@ -9348,7 +10338,7 @@
           <li>Bấm thẻ đi thẳng tới kết quả tìm — thêm một trang chi tiết điểm đến là bước thừa, khách đã biết muốn đi đâu.</li>
           <li>Hiện số chuyến/ngày: yếu tố quyết định thực tế hơn ảnh đẹp.</li>
           <li>Ghi rõ giá là "thấp nhất 30 ngày tới" để tránh khách hiểu là giá cố định.</li>
-          <li>Nhóm miền ở đây chỉ là nhãn lọc trên giao diện, không thêm cột vào DB.</li>
+          <li><b>Không có bộ lọc theo miền Bắc / Trung / Nam.</b> Bảng <code>cities</code> chỉ có <code>city_code</code>, <code>city_name</code>, <code>country</code> — không có cột miền, và hệ thống không làm tính năng này. Thanh nút ngang ở đây sắp xếp theo dữ liệu thật (giá, giờ, thời gian bay), không bịa nhóm địa lý.</li>
         </ul>
       </div>
     </div>
