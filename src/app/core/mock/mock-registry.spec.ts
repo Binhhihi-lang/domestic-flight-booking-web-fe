@@ -322,19 +322,19 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
 describe('Voucher store mock', () => {
   it('kho chỉ trả voucher GLOBAL đang hiệu lực và còn lượt', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/v1/voucher-store') as ApiResponse<
+    const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
       PageData<VoucherStoreItem>
     >;
 
     expect(res.data.items.length).toBeGreaterThan(0);
     expect(res.data.items.every((v) => v.distribution_type === 'GLOBAL')).toBe(true);
-    expect(res.data.items.every((v) => v.is_active)).toBe(true);
+    expect(res.data.items.every((v) => v.status === 'ACTIVE')).toBe(true);
     expect(res.data.items.every((v) => v.claimed_count < (v.claim_limit ?? Infinity))).toBe(true);
   });
 
   it('kho KHÔNG chứa voucher ASSIGNED (chỉ ADMIN tặng riêng)', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/v1/voucher-store') as ApiResponse<
+    const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
       PageData<VoucherStoreItem>
     >;
 
@@ -344,37 +344,37 @@ describe('Voucher store mock', () => {
 
   it('kho KHÔNG chứa voucher đã tắt hoặc hết lượt', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/v1/voucher-store') as ApiResponse<
+    const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
       PageData<VoucherStoreItem>
     >;
 
-    // id 5 (TET100K): is_active = false và claimed_count = claim_limit.
+    // id 5 (TET100K): status = INACTIVE và claimed_count = claim_limit.
     expect(res.data.items.some((v) => v.id === 5)).toBe(false);
   });
 
   it('nhận voucher GLOBAL thành công thì ví tăng thêm một', () => {
     const registry = new MockRegistry();
     const before = (
-      registry.resolve('GET', 'http://x/api/v1/my-vouchers') as ApiResponse<PageData<UserVoucher>>
+      registry.resolve('GET', 'http://x/api/my-vouchers') as ApiResponse<PageData<UserVoucher>>
     ).data.pagination.total_items;
 
     // id 6 (BAYHE2027) là GLOBAL và khách CHƯA nhận (ví mẫu chỉ có id 1-4).
-    const claim = registry.resolve('POST', 'http://x/api/v1/vouchers/6/claim') as ApiResponse<{
+    const claim = registry.resolve('POST', 'http://x/api/vouchers/6/claim') as ApiResponse<{
       status: string;
     }>;
     expect(claim.code).toBe(1000);
     expect(claim.data.status).toBe('AVAILABLE');
 
     const after = (
-      registry.resolve('GET', 'http://x/api/v1/my-vouchers') as ApiResponse<PageData<UserVoucher>>
+      registry.resolve('GET', 'http://x/api/my-vouchers') as ApiResponse<PageData<UserVoucher>>
     ).data.pagination.total_items;
     expect(after).toBe(before + 1);
   });
 
   it('nhận LẦN HAI cùng voucher trả 1005', () => {
     const registry = new MockRegistry();
-    registry.resolve('POST', 'http://x/api/v1/vouchers/6/claim');
-    const again = registry.resolve('POST', 'http://x/api/v1/vouchers/3/claim') as ApiResponse<null>;
+    registry.resolve('POST', 'http://x/api/vouchers/6/claim');
+    const again = registry.resolve('POST', 'http://x/api/vouchers/3/claim') as ApiResponse<null>;
 
     expect(again.code).toBe(1005);
   });
@@ -382,16 +382,16 @@ describe('Voucher store mock', () => {
   it('KHÔNG nhận được voucher ASSIGNED (1006)', () => {
     const registry = new MockRegistry();
     // id 4 (VIP500K) là ASSIGNED — khách không tự nhận.
-    const res = registry.resolve('POST', 'http://x/api/v1/vouchers/4/claim') as ApiResponse<null>;
+    const res = registry.resolve('POST', 'http://x/api/vouchers/4/claim') as ApiResponse<null>;
 
     expect(res.code).toBe(1006);
   });
 
   it('sau khi nhận, kho đánh dấu claimed = true', () => {
     const registry = new MockRegistry();
-    registry.resolve('POST', 'http://x/api/v1/vouchers/6/claim');
+    registry.resolve('POST', 'http://x/api/vouchers/6/claim');
 
-    const store = registry.resolve('GET', 'http://x/api/v1/voucher-store') as ApiResponse<
+    const store = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
       PageData<VoucherStoreItem>
     >;
     expect(store.data.items.find((v) => v.id === 6)?.claimed).toBe(true);
@@ -399,7 +399,7 @@ describe('Voucher store mock', () => {
 
   it('ví có đủ 4 trạng thái trong dữ liệu mẫu', () => {
     const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/v1/my-vouchers') as ApiResponse<
+    const res = registry.resolve('GET', 'http://x/api/my-vouchers') as ApiResponse<
       PageData<UserVoucher>
     >;
 
@@ -411,7 +411,7 @@ describe('Voucher store mock', () => {
     const registry = new MockRegistry();
     const res = registry.resolve(
       'GET',
-      'http://x/api/v1/my-vouchers?status=USED',
+      'http://x/api/my-vouchers?status=USED',
     ) as ApiResponse<PageData<UserVoucher>>;
 
     expect(res.data.items.every((v) => v.status === 'USED')).toBe(true);
@@ -420,9 +420,9 @@ describe('Voucher store mock', () => {
 
   it('voucher mới nhận chép hạn từ voucher gốc', () => {
     const registry = new MockRegistry();
-    registry.resolve('POST', 'http://x/api/v1/vouchers/6/claim');
+    registry.resolve('POST', 'http://x/api/vouchers/6/claim');
 
-    const res = registry.resolve('GET', 'http://x/api/v1/my-vouchers') as ApiResponse<
+    const res = registry.resolve('GET', 'http://x/api/my-vouchers') as ApiResponse<
       PageData<UserVoucher>
     >;
     const claimed = res.data.items.find((v) => v.voucher.id === 6)!;

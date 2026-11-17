@@ -260,13 +260,13 @@ export class MockRegistry {
     }
 
     // Ví voucher của khách — API v0.2 mục 2.8.
-    if (path === '/api/v1/voucher-store' && m === 'GET') {
+    if (path === '/api/voucher-store' && m === 'GET') {
       return this.voucherStore();
     }
-    if (path === '/api/v1/my-vouchers' && m === 'GET') {
+    if (path === '/api/my-vouchers' && m === 'GET') {
       return this.myVouchers(url);
     }
-    const claimMatch = path.match(/^\/api\/v1\/vouchers\/(\d+)\/claim$/);
+    const claimMatch = path.match(/^\/api\/vouchers\/(\d+)\/claim$/);
     if (claimMatch && m === 'POST') {
       return this.claimVoucher(Number(claimMatch[1]));
     }
@@ -525,8 +525,7 @@ export class MockRegistry {
     const items: VoucherStoreItem[] = VOUCHERS_MOCK.filter(
       (v) =>
         v.distribution_type === 'GLOBAL' &&
-        v.is_active &&
-        !v.is_deleted &&
+        v.status === 'ACTIVE' &&
         v.start_date <= today &&
         v.end_date >= today &&
         (v.claim_limit === null || v.claimed_count < v.claim_limit),
@@ -558,7 +557,7 @@ export class MockRegistry {
    * thì nó lọt qua và khách nhận được voucher lẽ ra chỉ ADMIN tặng.
    */
   private claimVoucher(voucherId: number): unknown {
-    const voucher = VOUCHERS_MOCK.find((v) => v.id === voucherId && !v.is_deleted);
+    const voucher = VOUCHERS_MOCK.find((v) => v.id === voucherId);
     if (!voucher) {
       return notFound('Không tìm thấy voucher');
     }
