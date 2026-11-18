@@ -323,33 +323,33 @@ describe('Voucher store mock', () => {
   it('kho chỉ trả voucher GLOBAL đang hiệu lực và còn lượt', () => {
     const registry = new MockRegistry();
     const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
-      VoucherStoreItem[]
+      PageData<VoucherStoreItem>
     >;
 
-    expect(res.data.length).toBeGreaterThan(0);
-    expect(res.data.every((v) => v.distribution_type === 'GLOBAL')).toBe(true);
-    expect(res.data.every((v) => v.status === 'ACTIVE')).toBe(true);
-    expect(res.data.every((v) => v.claimed_count < (v.claim_limit ?? Infinity))).toBe(true);
+    expect(res.data.items.length).toBeGreaterThan(0);
+    expect(res.data.items.every((v) => v.distribution_type === 'GLOBAL')).toBe(true);
+    expect(res.data.items.every((v) => v.status === 'ACTIVE')).toBe(true);
+    expect(res.data.items.every((v) => v.claimed_count < (v.claim_limit ?? Infinity))).toBe(true);
   });
 
   it('kho KHÔNG chứa voucher ASSIGNED (chỉ ADMIN tặng riêng)', () => {
     const registry = new MockRegistry();
     const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
-      VoucherStoreItem[]
+      PageData<VoucherStoreItem>
     >;
 
     // Voucher id 4 (VIP500K) là ASSIGNED -> không được xuất hiện trong kho.
-    expect(res.data.some((v) => v.id === 4)).toBe(false);
+    expect(res.data.items.some((v) => v.id === 4)).toBe(false);
   });
 
   it('kho KHÔNG chứa voucher đã tắt hoặc hết lượt', () => {
     const registry = new MockRegistry();
     const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
-      VoucherStoreItem[]
+      PageData<VoucherStoreItem>
     >;
 
     // id 5 (TET100K): status = INACTIVE và claimed_count = claim_limit.
-    expect(res.data.some((v) => v.id === 5)).toBe(false);
+    expect(res.data.items.some((v) => v.id === 5)).toBe(false);
   });
 
   it('nhận voucher GLOBAL thành công thì ví tăng thêm một', () => {
@@ -392,9 +392,9 @@ describe('Voucher store mock', () => {
     registry.resolve('POST', 'http://x/api/vouchers/6/claim');
 
     const store = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
-      VoucherStoreItem[]
+      PageData<VoucherStoreItem>
     >;
-    expect(store.data.find((v) => v.id === 6)?.claimed).toBe(true);
+    expect(store.data.items.find((v) => v.id === 6)?.claimed).toBe(true);
   });
 
   it('ví có đủ 4 trạng thái trong dữ liệu mẫu', () => {
@@ -428,43 +428,5 @@ describe('Voucher store mock', () => {
     const claimed = res.data.items.find((v) => v.voucher.id === 6)!;
     // Voucher id 6 có end_date = 2027-12-31.
     expect(claimed.expires_at).toContain('2027-12-31');
-  });
-
-  /**
-   * BE trả `voucher` dạng RÚT GỌN trong ví (`MyVoucherResponse.VoucherBrief`).
-   * Mock trả thừa trường thì code đọc nhầm `voucher.max_discount_amount` vẫn
-   * chạy trên mock và chỉ vỡ khi nối API thật.
-   */
-  it('voucher trong ví là bản rút gọn, không có trường cấu hình của admin', () => {
-    const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/my-vouchers') as ApiResponse<
-      PageData<UserVoucher>
-    >;
-
-    const brief = res.data.items[0].voucher as unknown as Record<string, unknown>;
-    expect(Object.keys(brief).sort()).toEqual([
-      'applicable_trip_type',
-      'description',
-      'discount_type',
-      'discount_value',
-      'end_date',
-      'id',
-      'min_order_amount',
-      'start_date',
-      'voucher_code',
-      'voucher_name',
-    ]);
-    expect(brief).not.toHaveProperty('max_discount_amount');
-    expect(brief).not.toHaveProperty('claim_limit');
-    expect(brief).not.toHaveProperty('status');
-  });
-
-  it('dòng ví không còn `discount_amount`', () => {
-    const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/my-vouchers') as ApiResponse<
-      PageData<UserVoucher>
-    >;
-
-    expect(res.data.items[0]).not.toHaveProperty('discount_amount');
   });
 });

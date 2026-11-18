@@ -25,8 +25,9 @@ describe('ClientNewsDetail — chống XSS (kết quả cuối cùng)', () => {
     await TestBed.configureTestingModule({
       imports: [ClientNewsDetail],
       providers: [
-        // Component điều hướng về `/news` khi bài không đọc được (DRAFT/1004);
-        // thiếu route này thì Router ném NG04002 và test báo lỗi sai bản chất.
+        // Có route '/news' để nhánh chặn bài DRAFT điều hướng được trong test;
+        // provideRouter([]) làm promise điều hướng reject (NG04002) và Vitest
+        // báo unhandled rejection dù test vẫn xanh.
         provideRouter([{ path: 'news', children: [] }]),
         MockRegistry,
         provideHttpClient(withInterceptors([mockInterceptor])),

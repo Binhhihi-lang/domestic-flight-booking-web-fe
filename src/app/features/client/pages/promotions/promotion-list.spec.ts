@@ -13,6 +13,18 @@ import { ClientPromotionList } from '@features/client/pages/promotions/promotion
  * chương trình không dùng được — hoặc tệ hơn, không thấy chương trình đang chạy.
  */
 describe('ClientPromotionList — lọc đang hiệu lực', () => {
+  beforeEach(() => {
+    // Ghim "hôm nay" = 13/10/2026: khẳng định "SUMMER99 chưa tới ngày" chỉ
+    // đúng ở mốc này. Dùng đồng hồ thật thì test tự hỏng sau 2026-11-01.
+    // Chỉ fake Date — setTimeout trong `mount()` phải là timer thật.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-13T12:00:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   async function mount() {
     await TestBed.configureTestingModule({
       imports: [ClientPromotionList],
@@ -40,7 +52,7 @@ describe('ClientPromotionList — lọc đang hiệu lực', () => {
 
     // TET2027 có status = INACTIVE -> không được hiện.
     expect(text).not.toContain('Vé Tết 2027');
-    // SUMMER99 bắt đầu 2026-11-01, hôm nay 2026-10-13 -> chưa tới ngày.
+    // SUMMER99 bắt đầu 2026-11-01, "hôm nay" đã ghim 2026-10-13 -> chưa tới ngày.
     expect(text).not.toContain('Bay đồng giá 99K');
     // PROMO2025 đã xóa mềm.
     expect(text).not.toContain('Khuyến mãi cũ 2025');

@@ -15,7 +15,7 @@
     --fill-3:#f7f8fa;     /* nền rất nhạt */
     --paper:#ffffff;
     --canvas:#eceef1;
-    --mark:#d97706;       /* CHỈ dùng cho ghi chú/đánh dấu, không dùng cho UI */
+    --mark:#5b6570;       /* ghi chú/đánh dấu — thang xám, không dùng màu */
   }
   *{box-sizing:border-box;}
   body{
@@ -376,7 +376,7 @@
   .foot2__pay span{background:var(--fill-3); padding:3px 9px; border-radius:4px; font-size:11px;
                    font-weight:600; color:var(--ink-2);}
   .foot2__ic{font-size:11px; color:var(--ink-3); width:12px; text-align:center;}
-  .mobile .foot2{padding:26px 16px 0;}
+  .mobile .foot2{padding:26px 16px 0; margin-top:28px;}
   .mobile .foot2__in{grid-template-columns:1fr 1fr; gap:22px 16px; padding-bottom:18px;}
   .mobile .foot2__wide{grid-column:1 / -1;}
   .mobile .foot2__bot{flex-direction:column; gap:8px;}
@@ -423,7 +423,7 @@
       </div>
       <div class="legend__item">
         <div class="legend__demo"><span class="btn btn--sm btn--block" style="border-color:var(--mark);color:var(--mark)">Ghi chú</span></div>
-        <p><b>Màu cam</b>Chỉ dùng để đánh dấu ghi chú thiết kế, không phải màu giao diện.</p>
+        <p><b>Không dùng màu</b>Wireframe chỉ dùng thang xám — kể cả ghi chú thiết kế.</p>
       </div>
     </div>
   </section>
@@ -832,7 +832,14 @@
               </div>
               <div class="grid2">
                 <div class="fld"><div class="lbl">Số CCCD / Hộ chiếu</div><div class="inp">001096012345</div></div>
-                <div class="fld"><div class="lbl">Quốc tịch</div><div class="inp">Việt Nam</div></div>
+                <div class="fld">
+                  <div class="lbl">Quốc tịch</div>
+                  <div class="inp" style="justify-content:space-between">
+                    <span style="display:flex;align-items:center;gap:7px"><span style="width:12px;height:12px;border:1.5px solid var(--line-2);border-radius:50%;flex:none"></span>Việt Nam</span>
+                    <span style="color:var(--ink-3);font-size:10px">Tìm &amp; chọn ▾</span>
+                  </div>
+                  <div style="font-size:10.5px;color:var(--ink-3);margin-top:5px">Dropdown có ô gõ tìm kiếm — ví dụ “Việt”, “Hàn”, “Nhật”</div>
+                </div>
               </div>
               <div class="fld" style="border-top:1px solid var(--fill);padding-top:14px;margin-top:2px">
                 <span class="check on"><span class="check__b"></span>Người này là người liên hệ</span>
@@ -930,6 +937,10 @@
                 </div>
               </div>
               <div class="fld"><div class="lbl">Ngày sinh</div><div class="inp">12/03/1996</div></div>
+              <div class="fld"><div class="lbl">Quốc tịch</div>
+                <div class="inp" style="justify-content:space-between"><span>Việt Nam</span><span style="color:var(--ink-3);font-size:10px">Tìm ▾</span></div>
+                <div style="font-size:10.5px;color:var(--ink-3);margin-top:5px">Gõ để tìm nhanh</div>
+              </div>
               <div class="fld" style="margin-bottom:6px"><div class="lbl">Số CCCD / Hộ chiếu</div><div class="inp">001096012345</div></div>
             </div>
             <div class="dlg__f" style="padding:12px 15px">
@@ -1665,7 +1676,7 @@
                       background:var(--fill-3);padding:11px 15px;margin-bottom:14px;
                       font-size:11.5px;color:var(--ink-2)">
             <b style="color:var(--ink)">Chỗ của bạn đang được giữ.</b>
-            VinaFly giữ ghế và suất vé cho đơn này trong 30 phút kể từ lúc chọn xong chuyến.
+            VinaFly giữ ghế và suất vé cho đơn này trong 15 phút kể từ lúc chọn xong chuyến.
             Quá hạn mà chưa thanh toán, đơn tự chuyển sang <b>Hết hạn</b> và ghế trả lại cho khách khác —
             bạn không bị trừ tiền.
           </div>
@@ -1909,7 +1920,7 @@
         <ul>
           <li>Đang xử lý → nút đổi thành "Đang xác thực…", khoá danh sách phương thức</li>
           <li>VNPay trả về thất bại → hộp lỗi phía trên danh sách, giữ nguyên đơn và ghế đã chọn</li>
-          <li>Hết 30 phút → hộp thoại "Thời hạn thanh toán đã hết", đơn chuyển <em>Hết hạn</em>, về Trang chủ</li>
+          <li>Hết 15 phút → hộp thoại "Thời hạn thanh toán đã hết", đơn chuyển <em>Hết hạn</em>, về Trang chủ</li>
           <li>Còn dưới 5 phút → đồng hồ đổi màu cảnh báo</li>
           <li>Voucher bị dùng mất → dòng lỗi, gỡ voucher và tính lại tổng</li>
         </ul>
@@ -1937,7 +1948,7 @@
         <h3>Quyết định thiết kế</h3>
         <ul>
           <li><b>Nhãn là "Thời hạn thanh toán", không phải "Giữ chỗ còn…".</b> Đồng hồ cũ đếm lùi mà không nói đếm cái gì; đổi nhãn để khách hiểu còn bao lâu phải trả tiền.</li>
-          <li><b>Giữ chỗ 30 phút tính từ lúc tạo đơn</b>, không phải từ lúc bấm thanh toán — chỗ được giữ suốt lúc khách điền thông tin và chọn ghế.</li>
+          <li><b>Giữ chỗ 15 phút tính từ lúc tạo đơn</b>, không phải từ lúc bấm thanh toán — chỗ được giữ suốt lúc khách điền thông tin và chọn ghế.</li>
           <li><b>Bỏ ô nhập mã voucher.</b> Backend nhận <code>user_voucher_id</code> từ ví, không nhận mã, nên ô nhập mã không có API đứng sau.</li>
           <li>Chỉ mở hướng dẫn của phương thức đang chọn, tránh màn hình dài và rối.</li>
           <li>Cổng thanh toán cho chuyển khoản chưa chốt (đang cân nhắc PayOS) — màn hình không phụ thuộc vào lựa chọn này.</li>
