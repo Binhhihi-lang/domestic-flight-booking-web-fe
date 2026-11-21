@@ -40,6 +40,13 @@ import {
 import { UserVoucher, VoucherStoreItem } from '@core/models/user-voucher.model';
 import { NotificationItem } from '@core/models/notification.model';
 import { NOTIFICATIONS_MOCK } from '@core/mock/data/notifications.mock';
+import { BookingDetail, PaymentCreateRequest, PaymentTransaction } from '@core/models/booking.model';
+import {
+  buildMockBookingDetail,
+  buildMockETickets,
+  OPERATIONAL_DASHBOARD_MOCK,
+  OVERVIEW_DASHBOARD_MOCK,
+} from '@core/mock/data/checkout-dashboard.mock';
 import { MockResource } from '@core/mock/mock-resource';
 import { ApiResponse, PageData } from '@core/models/api-response.model';
 import {
@@ -102,6 +109,11 @@ export class MockRegistry {
 
   /** Danh sách thông báo in-app của người dùng đang đăng nhập. */
   private notifications: NotificationItem[] = NOTIFICATIONS_MOCK.map((n) => ({ ...n }));
+
+  /** Dữ liệu mẫu đơn đặt vé & thanh toán cho luồng Checkout (Cụm B6). */
+  private mockBooking: BookingDetail = buildMockBookingDetail();
+  private mockPayments: PaymentTransaction[] = [];
+  private paymentIdSeq = 500;
 
   private readonly resources = [
     new MockResource<City>({
@@ -358,6 +370,42 @@ export class MockRegistry {
     const notifReadMatch = path.match(/^\/api\/notifications\/(\d+)\/read$/);
     if (notifReadMatch && m === 'PATCH') {
       return this.markNotificationRead(Number(notifReadMatch[1]));
+    }
+
+    // Checkout, Payment, E-Ticket (Cụm B6).
+    const bookingDetailMatch = path.match(/^\/api\/bookings\/(\d+)$/);
+    if (bookingDetailMatch && m === 'GET') {
+      return ok(this.mockBooking);
+    }
+    const bookingVoucherMatch = path.match(/^\/api\/bookings\/(\d+)\/voucher$/);
+    if (bookingVoucherMatch) {
+      if (m === 'POST') return this.applyMockVoucher(body);
+      if (m === 'DELETE') return this.removeMockVoucher();
+    }
+    const bookingPayMatch = path.match(/^\/api\/bookings\/(\d+)\/payments$/);
+    if (bookingPayMatch && m === 'POST') {
+      return this.createMockPayment(body);
+    }
+    const bookingEticketMatch = path.match(/^\/api\/bookings\/(\d+)\/e-tickets$/);
+    if (bookingEticketMatch && m === 'GET') {
+      return ok(buildMockETickets(this.mockBooking));
+    }
+    const payosSyncMatch = path.match(/^\/api\/payments\/(\d+)\/payos\/sync$/);
+    if (payosSyncMatch && m === 'POST') {
+      return ok({ paid: this.mockBooking.status === 'CONFIRMED' });
+    }
+    const paymentGetMatch = path.match(/^\/api\/payments\/(\d+)$/);
+    if (paymentGetMatch && m === 'GET') {
+      const found = this.mockPayments.find((p) => p.id === Number(paymentGetMatch[1]));
+      return found ? ok(found) : notFound('Giao dịch thanh toán không tồn tại');
+    }
+
+    // Dashboard & Reports (Cụm B6).
+    if (path === '/api/admin/dashboard/operational' && m === 'GET') {
+      return ok(OPERATIONAL_DASHBOARD_MOCK);
+    }
+    if ((path === '/api/admin/dashboard' || path === '/api/admin/dashboard/overview' || path === '/api/admin/reports') && m === 'GET') {
+      return ok(OVERVIEW_DASHBOARD_MOCK);
     }
 
     // Các module master data dùng chung một lớp tài nguyên tổng quát.
@@ -1012,5 +1060,97 @@ export class MockRegistry {
       }
     }
     return ok(null, 'Đã đánh dấu tất cả thông báo là đã đọc');
+  }
+
+  // ---------- Checkout, Payment & E-Ticket (Cụm B6) ----------
+
+  private applyMockVoucher(body: unknown): unknown {
+    const payload = (body ?? {}) as { user_voucher_id?: number };
+    const uv = this.userVouchers.find((v) => v.id === payload.user_voucher_id);
+    const discount = uv ? 150000 : 100000;
+    this.mockBooking = {
+      ...this.mockBooking,
+      voucher_discount_amount: discount,
+      total_amount: Math.max(
+        0,
+        this.mockBooking.fare_amount -
+          this.mockBooking.promotion_discount_amount -
+          discount +
+          this.mockBooking.seat_surcharge_amount +
+          this.mockBooking.baggage_amount,
+      ),
+      applied_voucher: {
+        user_voucher_id: payload.user_voucher_id ?? 1,
+        voucher_id: uv?.voucher.id ?? 1,
+        voucher_code: uv?.voucher.voucher_code ?? 'HE2026',
+        voucher_name: uv?.voucher.voucher_name ?? 'Voucher Ưu đãi Hè 2026',
+        discount_amount: discount,
+        status: 'RESERVED',
+      },
+    };
+    return ok(this.mockBooking, 'Đã áp dụng voucher');
+  }
+
+  private removeMockVoucher(): unknown {
+    this.mockBooking = {
+      ...this.mockBooking,
+      voucher_discount_amount: 0,
+      total_amount:
+        this.mockBooking.fare_amount -
+        this.mockBooking.promotion_discount_amount +
+        this.mockBooking.seat_surcharge_amount +
+        this.mockBooking.baggage_amount,
+      applied_voucher: null,
+    };
+    return ok(this.mockBooking, 'Đã gỡ voucher');
+  }
+
+  private createMockPayment(body: unknown): unknown {
+    const req = (body ?? {}) as PaymentCreateRequest;
+    const id = this.paymentIdSeq++;
+    const isSuccess = req.simulate_result === 'SUCCESS';
+    const isFailed = req.simulate_result === 'FAILED';
+    const method = (req.payment_method ?? 'VNPAY').toUpperCase();
+    if (isSuccess) {
+      this.mockBooking = {
+        ...this.mockBooking,
+        status: 'CONFIRMED',
+        seat_holds: this.mockBooking.seat_holds.map((h) => ({ ...h, status: 'CONFIRMED' })),
+      };
+    }
+    const txn: PaymentTransaction = {
+      id,
+      booking_id: this.mockBooking.id,
+      booking_code: this.mockBooking.booking_code,
+      booking_status: this.mockBooking.status,
+      amount: this.mockBooking.total_amount,
+      currency: this.mockBooking.currency,
+      payment_method: method === 'PAYOS' || method === 'VIETQR' ? 'BANK_TRANSFER' : method,
+      gateway_name: method === 'VNPAY' ? 'VNPAY' : 'PAYOS',
+      gateway_transaction_id: isSuccess ? `MOCK-${method}-${id}` : null,
+      status: isSuccess ? 'SUCCESS' : isFailed ? 'FAILED' : 'PENDING',
+      retry_count: this.mockPayments.length,
+      payment_url:
+        method === 'VNPAY'
+          ? `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_TxnRef=${this.mockBooking.booking_code}-${id}`
+          : null,
+      viet_qr:
+        method === 'VNPAY'
+          ? null
+          : {
+              bank_name: 'Vietcombank — CN TP. Hồ Chí Minh',
+              account_number: '1029384756',
+              account_holder: 'CONG TY CO PHAN HANG KHONG VINAFLY',
+              amount: this.mockBooking.total_amount,
+              transfer_content: `VINAFLY ${this.mockBooking.booking_code}`,
+              qr_image_url: `https://img.vietqr.io/image/VCB-1029384756-compact2.png?amount=${this.mockBooking.total_amount}&addInfo=VINAFLY%20${this.mockBooking.booking_code}`,
+              qr_code_raw: null,
+              checkout_url: null,
+            },
+      created_at: new Date().toISOString(),
+      paid_at: isSuccess ? new Date().toISOString() : null,
+    };
+    this.mockPayments.push(txn);
+    return ok(txn, 'Khởi tạo giao dịch thanh toán thành công');
   }
 }

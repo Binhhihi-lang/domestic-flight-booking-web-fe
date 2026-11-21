@@ -1,0 +1,136 @@
+<div class="wrap">
+  <app-page-header
+    title="Báo cáo & Thống kê doanh thu"
+    subtitle="Phân tích doanh thu theo ngày, top tuyến bay và tỷ lệ lấp đầy (Chỉ dành cho Quản trị viên)"
+  >
+    <app-app-button variant="ghost" (click)="loadReport()">
+      <mat-icon>refresh</mat-icon>
+      Làm mới
+    </app-app-button>
+    <app-app-button (click)="exportCsv()">
+      <mat-icon>download</mat-icon>
+      Xuất CSV
+    </app-app-button>
+  </app-page-header>
+
+  <!-- Bộ lọc khoảng ngày -->
+  <section class="filter-bar">
+    <label class="field">
+      <span>Từ ngày</span>
+      <input
+        type="date"
+        [ngModel]="fromDate()"
+        (ngModelChange)="fromDate.set($event)"
+      />
+    </label>
+    <label class="field">
+      <span>Đến ngày</span>
+      <input
+        type="date"
+        [ngModel]="toDate()"
+        (ngModelChange)="toDate.set($event)"
+      />
+    </label>
+    <app-app-button (click)="loadReport()">
+      <mat-icon>filter_list</mat-icon>
+      Áp dụng bộ lọc
+    </app-app-button>
+  </section>
+
+  @if (loading()) {
+    <div class="state">Đang tổng hợp dữ liệu báo cáo...</div>
+  } @else if (report(); as r) {
+    <div class="kpi-grid">
+      <div class="kpi">
+        <span class="kpi__label">Tổng doanh thu hệ thống</span>
+        <strong class="kpi__val tabular">{{ formatVnd(r.revenue_total) }}</strong>
+        <small>Tháng này: {{ formatVnd(r.revenue_month) }}</small>
+      </div>
+      <div class="kpi">
+        <span class="kpi__label">Tổng đơn đặt vé</span>
+        <strong class="kpi__val tabular">{{ r.bookings_total.toLocaleString('vi-VN') }}</strong>
+        <small>Tháng này: {{ r.bookings_month.toLocaleString('vi-VN') }} đơn</small>
+      </div>
+      <div class="kpi">
+        <span class="kpi__label">Hệ số lấp đầy trung bình</span>
+        <strong class="kpi__val tabular">{{ r.occupancy_rate_percent.toFixed(1) }}%</strong>
+        <small>{{ r.pax_month.toLocaleString('vi-VN') }} lượt khách trong tháng</small>
+      </div>
+      <div class="kpi">
+        <span class="kpi__label">Tỷ lệ hủy vé</span>
+        <strong class="kpi__val tabular">{{ r.cancel_rate_percent.toFixed(1) }}%</strong>
+        <small>{{ r.flights_delayed_today }} chuyến trễ hôm nay</small>
+      </div>
+    </div>
+
+    <div class="rep-grid">
+      <app-app-card title="Biểu đồ doanh thu theo ngày">
+        <div class="bars">
+          @for (b of revenueBars(); track b.date) {
+            <div class="bar" [title]="b.day_label + ': ' + formatVnd(b.revenue)">
+              <span class="bar__val tabular">{{ b.bookings_count }}</span>
+              <div class="bar__col" [style.height.%]="b.heightPercent"></div>
+              <span class="bar__lbl">{{ b.day_label }}</span>
+            </div>
+          }
+        </div>
+      </app-app-card>
+
+      <app-app-card title="Top đường bay doanh thu cao">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Tuyến bay</th>
+                <th class="num">Số đơn</th>
+                <th class="num">Lấp đầy</th>
+                <th class="num">Doanh thu</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (route of r.top_routes; track route.route) {
+                <tr>
+                  <td><b>{{ route.route }}</b></td>
+                  <td class="num tabular">{{ route.bookings_count.toLocaleString('vi-VN') }}</td>
+                  <td class="num tabular">{{ route.load_factor_percent.toFixed(1) }}%</td>
+                  <td class="num tabular">{{ formatVnd(route.revenue) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-app-card>
+    </div>
+
+    <div class="recent">
+      <app-app-card title="Đơn đặt vé gần đây">
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Mã PNR</th>
+                <th>Khách hàng</th>
+                <th>Tuyến</th>
+                <th class="num">Hành khách</th>
+                <th class="num">Tổng tiền</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (bk of r.recent_bookings; track bk.id) {
+                <tr>
+                  <td><b>{{ bk.booking_code }}</b></td>
+                  <td>{{ bk.customer_name }}</td>
+                  <td>{{ bk.primary_route }}</td>
+                  <td class="num tabular">{{ bk.passenger_count }}</td>
+                  <td class="num tabular">{{ formatVnd(bk.total_amount) }}</td>
+                  <td><app-status-badge [tone]="statusTone(bk.status)" [label]="bk.status" /></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-app-card>
+    </div>
+  }
+</div>

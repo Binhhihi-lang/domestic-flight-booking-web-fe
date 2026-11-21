@@ -1,0 +1,246 @@
+<div class="checkout">
+  <!-- Thanh tiến trình 4 bước -->
+  <ol class="stepper" aria-label="Tiến trình đặt vé">
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Hành khách</span>
+    </li>
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Chọn ghế</span>
+    </li>
+    <li class="stepper__item stepper__item--active">
+      <span class="stepper__num">3</span>
+      <span>Xác nhận</span>
+    </li>
+    <li class="stepper__item">
+      <span class="stepper__num">4</span>
+      <span>Thanh toán</span>
+    </li>
+  </ol>
+
+  <header class="checkout__head">
+    <div>
+      <h1>Xác nhận thông tin đặt chỗ</h1>
+      <p>Kiểm tra lại hành trình, hành khách, ghế ngồi và áp dụng mã ưu đãi trước khi thanh toán.</p>
+    </div>
+    <a class="link-back" routerLink="/flights">
+      <mat-icon>arrow_back</mat-icon>
+      Tìm chuyến khác
+    </a>
+  </header>
+
+  @if (loading()) {
+    <div class="card card--state">Đang tải thông tin đơn đặt chỗ...</div>
+  } @else if (error()) {
+    <div class="card card--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (booking(); as b) {
+    <div class="checkout__grid">
+      <!-- Cột trái: Chi tiết hành trình, hành khách, ghế & hành lý -->
+      <div class="checkout__main">
+        <!-- Chặng bay -->
+        <section class="card">
+          <div class="card__head">
+            <h2><mat-icon>flight_takeoff</mat-icon> Thông tin chuyến bay</h2>
+            <span class="pnr-pill">Mã đặt chỗ: <b>{{ b.booking_code }}</b></span>
+          </div>
+
+          @for (seg of b.segments; track seg.id) {
+            <div class="seg">
+              <div class="seg__top">
+                <span class="seg__airline">{{ seg.airline_name }} · <b>{{ seg.flight_number }}</b></span>
+                <span class="seg__fare">{{ seg.fare_class_name }} ({{ seg.seat_class }})</span>
+              </div>
+              <div class="seg__route">
+                <div>
+                  <div class="seg__time tabular">{{ formatTime(seg.scheduled_departure) }}</div>
+                  <div class="seg__code">{{ seg.departure_airport_code }}</div>
+                  <div class="seg__city">{{ seg.departure_city_name }}</div>
+                </div>
+                <div class="seg__mid">
+                  <span class="seg__date">{{ formatDate(seg.scheduled_departure) }}</span>
+                  <div class="seg__line">
+                    <mat-icon>flight</mat-icon>
+                  </div>
+                  <span class="seg__aircraft">{{ seg.aircraft_model }}</span>
+                </div>
+                <div class="seg__end">
+                  <div class="seg__time tabular">{{ formatTime(seg.scheduled_arrival) }}</div>
+                  <div class="seg__code">{{ seg.arrival_airport_code }}</div>
+                  <div class="seg__city">{{ seg.arrival_city_name }}</div>
+                </div>
+              </div>
+              @if (seg.fare_rule) {
+                <div class="seg__rule">
+                  <mat-icon>info</mat-icon>
+                  <span>
+                    <b>Chính sách vé (tham khảo):</b>
+                    {{ seg.fare_rule.description || (seg.fare_rule.is_refundable ? 'Hỗ trợ hoàn vé theo quy định hãng.' : 'Hạng vé không hoàn tiền.') }}
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- Hành khách & ghế -->
+        <section class="card">
+          <div class="card__head">
+            <h2><mat-icon>groups</mat-icon> Hành khách & Ghế đã chọn</h2>
+            <span class="muted">{{ b.passengers.length }} hành khách</span>
+          </div>
+          <ul class="pax-list">
+            @for (p of b.passengers; track p.id) {
+              <li class="pax-item">
+                <div>
+                  <div class="pax-item__name">{{ p.full_name }}</div>
+                  <div class="pax-item__meta">
+                    {{ passengerTypeLabel(p.passenger_type) }} · Sinh ngày {{ formatDate(p.birth_date) }}
+                    @if (p.passport_number) {
+                      · CCCD/Hộ chiếu: {{ p.passport_number }}
+                    }
+                  </div>
+                </div>
+                <div class="pax-item__tags">
+                  @for (hold of b.seat_holds; track hold.id) {
+                    @if (hold.passenger_id === p.id) {
+                      <span class="chip chip--primary">Ghế {{ hold.seat_code }}</span>
+                    }
+                  }
+                  @for (bag of b.baggages; track bag.id) {
+                    @if (bag.passenger_id === p.id) {
+                      <span class="chip">{{ bag.baggage_name }}</span>
+                    }
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <!-- Liên hệ đại lý -->
+        <section class="card card--soft">
+          <div class="agency">
+            <mat-icon>support_agent</mat-icon>
+            <div>
+              <b>Lưu ý chính sách hủy & hỗ trợ</b>
+              <p>
+                {{ b.agency_contact?.note || 'Hệ thống không tự động hoàn tiền. Quý khách cần hoàn/đổi vé vui lòng liên hệ tổng đài 1900 1234 hoặc email hotro@vinafly.vn.' }}
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Cột phải: Voucher + Bảng kê giá + Nút thanh toán -->
+      <aside class="checkout__side">
+        <section class="card">
+          <div class="card__head">
+            <h2><mat-icon>redeem</mat-icon> Voucher ưu đãi</h2>
+          </div>
+
+          @if (b.applied_voucher; as av) {
+            <div class="voucher-applied" data-testid="voucher-applied">
+              <div>
+                <b>{{ av.voucher_code }}</b>
+                <span>Giảm {{ formatVnd(av.discount_amount) }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-link"
+                [disabled]="applyingVoucher()"
+                (click)="onRemoveVoucher()"
+              >
+                Gỡ bỏ
+              </button>
+            </div>
+          } @else if (availableVouchers().length > 0) {
+            <div class="voucher-list">
+              @for (uv of availableVouchers(); track uv.id) {
+                <div class="voucher-row">
+                  <div>
+                    <b>{{ uv.voucher.voucher_code }}</b>
+                    <span>{{ uv.voucher.voucher_name }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn--sm btn--ghost"
+                    [disabled]="applyingVoucher()"
+                    (click)="onApplyVoucher(uv.id)"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="muted-sm">Bạn chưa có voucher khả dụng. <a routerLink="/account/voucher-store">Săn voucher ngay</a></p>
+          }
+        </section>
+
+        <section class="card">
+          <div class="card__head">
+            <h2><mat-icon>receipt_long</mat-icon> Chi tiết thanh toán</h2>
+          </div>
+          <dl class="price-rows">
+            <div>
+              <dt>Giá vé (bao gồm thuế, phí)</dt>
+              <dd class="tabular">{{ formatVnd(b.fare_amount) }}</dd>
+            </div>
+            @if (b.promotion_discount_amount > 0) {
+              <div class="price-row--discount">
+                <dt>Khuyến mãi tự động</dt>
+                <dd class="tabular">−{{ formatVnd(b.promotion_discount_amount) }}</dd>
+              </div>
+            }
+            @if (b.voucher_discount_amount > 0) {
+              <div class="price-row--discount">
+                <dt>Giảm giá Voucher</dt>
+                <dd class="tabular">−{{ formatVnd(b.voucher_discount_amount) }}</dd>
+              </div>
+            }
+            @if (b.seat_surcharge_amount > 0) {
+              <div>
+                <dt>Phụ thu chọn ghế</dt>
+                <dd class="tabular">+{{ formatVnd(b.seat_surcharge_amount) }}</dd>
+              </div>
+            }
+            @if (b.baggage_amount > 0) {
+              <div>
+                <dt>Hành lý ký gửi mua thêm</dt>
+                <dd class="tabular">+{{ formatVnd(b.baggage_amount) }}</dd>
+              </div>
+            }
+            <div class="price-row--total">
+              <dt>Tổng thanh toán</dt>
+              <dd class="tabular" data-testid="review-total">{{ formatVnd(b.total_amount) }}</dd>
+            </div>
+          </dl>
+
+          <label class="terms">
+            <input
+              type="checkbox"
+              [checked]="agreedTerms()"
+              (change)="agreedTerms.set(!agreedTerms())"
+            />
+            <span>Tôi xác nhận thông tin hành khách chính xác theo giấy tờ tùy thân và đồng ý với điều kiện giá vé.</span>
+          </label>
+
+          <button
+            type="button"
+            class="btn btn--primary btn--full"
+            data-testid="btn-go-payment"
+            [disabled]="!agreedTerms()"
+            (click)="proceedToPayment()"
+          >
+            Tiếp tục thanh toán
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </section>
+      </aside>
+    </div>
+  }
+</div>
