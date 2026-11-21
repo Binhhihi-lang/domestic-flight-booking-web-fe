@@ -51,6 +51,38 @@ export const routes: Routes = [
           ),
         data: { title: 'Kết quả tìm chuyến' },
       },
+      // ---- Luồng Checkout, Thanh toán & Vé điện tử (Cụm B6.1) ----
+      {
+        path: 'booking/review',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-review').then((m) => m.BookingReview),
+        data: { title: 'Xác nhận đặt chỗ' },
+      },
+      {
+        path: 'booking/payment',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-payment').then((m) => m.BookingPayment),
+        data: { title: 'Thanh toán' },
+      },
+      {
+        path: 'booking/confirmation',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-confirmation').then(
+            (m) => m.BookingConfirmation,
+          ),
+        data: { title: 'Xác nhận vé điện tử' },
+      },
+      {
+        path: 'payment-result',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-confirmation').then(
+            (m) => m.BookingConfirmation,
+          ),
+        data: { title: 'Kết quả thanh toán' },
+      },
       // `promotions` phải đứng TRƯỚC `promotions/:id`, nếu không Angular khớp
       // chuỗi rỗng vào `:id` và trang danh sách không bao giờ mở được.
       {
@@ -144,6 +176,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('@features/admin/pages/dashboard/dashboard').then((m) => m.AdminDashboard),
         data: { title: 'Dashboard' },
+      },
+      {
+        path: 'reports',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('@features/admin/pages/reports/reports').then((m) => m.AdminReports),
+        data: { title: 'Báo cáo doanh thu' },
       },
       {
         path: 'airlines',

@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { catchError, of } from 'rxjs';
+import {
+  FlightOperationItem,
+  OperationalDashboard,
+  OverviewDashboard,
+} from '@core/models/dashboard.model';
+import { AuthService } from '@core/services/auth.service';
+import { DashboardService } from '@core/services/dashboard.service';
 import { PageHeader } from '@shared/components/page-header/page-header';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
@@ -16,156 +25,202 @@ interface StatCard {
   deltaTone: 'up' | 'down';
 }
 
-interface Bar {
+interface BarItem {
   label: string;
   value: string;
   height: number;
 }
 
-interface RouteRank {
-  code: string;
-  name: string;
-  bookings: string;
-}
-
-interface AttentionFlight {
-  code: string;
-  route: string;
-  depart: string;
-  freeSeats: number;
-  totalSeats: number;
-  fillRate: string;
-  fillTone: BadgeTone;
-  statusLabel: string;
-  statusTone: BadgeTone;
-  action: string;
-}
-
 /**
- * Dashboard vận hành — bám mockup P9.
- *
- * Vì sao bố cục này: người trực vận hành cần trả lời ba câu trong 5 giây —
- * hôm nay thế nào (thẻ số liệu), xu hướng ra sao (biểu đồ cột), và việc gì
- * cần xử lý ngay (bảng chuyến sắp hết ghế). Ba khối xếp theo đúng thứ tự đó.
- *
- * Số liệu tĩnh: DASHBOARD_READ_OPERATIONAL (STAFF) và DASHBOARD_READ (ADMIN)
- * thuộc Phase 3. Biểu đồ dựng bằng div — đủ cho 7 cột và tránh thêm thư viện
- * biểu đồ chỉ để vẽ cột.
+ * Dashboard vận hành & tổng quan — kết nối API thật (`GET /api/admin/dashboard` cho ADMIN,
+ * `GET /api/admin/dashboard/operational` cho STAFF — tuyệt đối không hiện doanh thu cho STAFF).
  */
 @Component({
   selector: 'app-admin-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, PageHeader, AppButton, AppCard, StatusBadge],
+  imports: [RouterLink, MatIconModule, PageHeader, AppButton, AppCard, StatusBadge],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class AdminDashboard {
-  protected readonly stats: StatCard[] = [
-    {
-      label: 'Booking hôm nay',
-      value: '1.284',
-      icon: 'confirmation_number',
-      tone: 'primary',
-      delta: '+12,4% so với hôm qua',
-      deltaIcon: 'trending_up',
-      deltaTone: 'up',
-    },
-    {
-      label: 'Doanh thu hôm nay',
-      value: '1,42',
-      unit: ' tỷ',
-      icon: 'payments',
-      tone: 'success',
-      delta: '+8,1% so với hôm qua',
-      deltaIcon: 'trending_up',
-      deltaTone: 'up',
-    },
-    {
-      label: 'Chuyến đang mở bán',
-      value: '248',
-      icon: 'flight',
-      tone: 'warning',
-      delta: '−3 chuyến so với hôm qua',
-      deltaIcon: 'trending_down',
-      deltaTone: 'down',
-    },
-    {
-      label: 'Chuyến sắp hết ghế',
-      value: '17',
-      icon: 'event_seat',
-      tone: 'danger',
-      delta: 'Cần mở chuyến bổ sung',
-      deltaIcon: 'warning',
-      deltaTone: 'down',
-    },
-  ];
+export class AdminDashboard implements OnInit {
+  protected readonly authService = inject(AuthService);
+  private readonly dashboardService = inject(DashboardService);
 
-  protected readonly bars: Bar[] = [
-    { label: '05/11', value: '986', height: 58 },
-    { label: '06/11', value: '1.102', height: 66 },
-    { label: '07/11', value: '1.340', height: 80 },
-    { label: '08/11', value: '1.188', height: 71 },
-    { label: '09/11', value: '1.512', height: 90 },
-    { label: '10/11', value: '1.672', height: 100 },
-    { label: '11/11', value: '1.284', height: 77 },
-  ];
+  protected readonly loading = signal(true);
+  protected readonly overview = signal<OverviewDashboard | null>(null);
+  protected readonly operational = signal<OperationalDashboard | null>(null);
+  protected readonly selectedDays = signal<7 | 30>(7);
 
-  protected readonly ranks: RouteRank[] = [
-    { code: 'HAN → SGN', name: 'Hà Nội – TP.HCM', bookings: '412' },
-    { code: 'HAN → DAD', name: 'Hà Nội – Đà Nẵng', bookings: '286' },
-    { code: 'SGN → DAD', name: 'TP.HCM – Đà Nẵng', bookings: '198' },
-    { code: 'HAN → PQC', name: 'Hà Nội – Phú Quốc', bookings: '154' },
-    { code: 'SGN → CXR', name: 'TP.HCM – Nha Trang', bookings: '121' },
-  ];
+  protected readonly isAdmin = computed(() => this.authService.isAdmin());
 
-  protected readonly attention: AttentionFlight[] = [
-    {
-      code: 'VN 165',
-      route: 'HAN → DAD',
-      depart: '15/11 · 06:15',
-      freeSeats: 4,
-      totalSeats: 180,
-      fillRate: '97,8%',
-      fillTone: 'danger',
-      statusLabel: 'Sắp hết',
-      statusTone: 'warning',
-      action: 'Mở chuyến bổ sung',
-    },
-    {
-      code: 'VJ 507',
-      route: 'HAN → DAD',
-      depart: '15/11 · 07:20',
-      freeSeats: 2,
-      totalSeats: 180,
-      fillRate: '98,9%',
-      fillTone: 'danger',
-      statusLabel: 'Gần đầy',
-      statusTone: 'danger',
-      action: 'Mở chuyến bổ sung',
-    },
-    {
-      code: 'QH 205',
-      route: 'HAN → DAD',
-      depart: '15/11 · 13:05',
-      freeSeats: 28,
-      totalSeats: 180,
-      fillRate: '84,4%',
-      fillTone: 'warning',
-      statusLabel: 'Sắp hết',
-      statusTone: 'warning',
-      action: 'Xem',
-    },
-    {
-      code: 'VN 173',
-      route: 'HAN → DAD',
-      depart: '15/11 · 18:30',
-      freeSeats: 96,
-      totalSeats: 274,
-      fillRate: '65,0%',
-      fillTone: 'success',
-      statusLabel: 'Bình thường',
-      statusTone: 'success',
-      action: 'Xem',
-    },
-  ];
+  protected readonly stats = computed<StatCard[]>(() => {
+    if (this.isAdmin()) {
+      const ov = this.overview();
+      if (!ov) return [];
+      return [
+        {
+          label: 'Booking hôm nay',
+          value: ov.bookings_today.toLocaleString('vi-VN'),
+          icon: 'confirmation_number',
+          tone: 'primary',
+          delta: `Tháng này: ${ov.bookings_month.toLocaleString('vi-VN')} đơn`,
+          deltaIcon: 'trending_up',
+          deltaTone: 'up',
+        },
+        {
+          label: 'Doanh thu hôm nay',
+          value: this.formatCompactVnd(ov.revenue_today),
+          icon: 'payments',
+          tone: 'success',
+          delta: `Tháng này: ${this.formatCompactVnd(ov.revenue_month)}`,
+          deltaIcon: 'trending_up',
+          deltaTone: 'up',
+        },
+        {
+          label: 'Chuyến bay hôm nay',
+          value: ov.flights_today.toLocaleString('vi-VN'),
+          icon: 'flight',
+          tone: 'warning',
+          delta: `${ov.flights_delayed_today} chuyến trễ giờ`,
+          deltaIcon: ov.flights_delayed_today > 0 ? 'warning' : 'check_circle',
+          deltaTone: ov.flights_delayed_today > 0 ? 'down' : 'up',
+        },
+        {
+          label: 'Hệ số lấp đầy',
+          value: `${ov.occupancy_rate_percent.toFixed(1)}%`,
+          icon: 'event_seat',
+          tone: 'danger',
+          delta: `Tỷ lệ hủy vé: ${ov.cancel_rate_percent.toFixed(1)}%`,
+          deltaIcon: 'info',
+          deltaTone: ov.cancel_rate_percent > 10 ? 'down' : 'up',
+        },
+      ];
+    }
+
+    const op = this.operational();
+    if (!op) return [];
+    return [
+      {
+        label: 'Chuyến bay hôm nay',
+        value: op.flights_today.toLocaleString('vi-VN'),
+        icon: 'flight',
+        tone: 'primary',
+        delta: `${op.flights_scheduled} đúng giờ · ${op.flights_boarding} đang lên tàu`,
+        deltaIcon: 'schedule',
+        deltaTone: 'up',
+      },
+      {
+        label: 'Đặt chỗ hôm nay',
+        value: op.bookings_today.toLocaleString('vi-VN'),
+        icon: 'confirmation_number',
+        tone: 'success',
+        delta: `${op.bookings_confirmed_today} đã xác nhận`,
+        deltaIcon: 'check_circle',
+        deltaTone: 'up',
+      },
+      {
+        label: 'Đang chờ thanh toán',
+        value: op.bookings_pending_payment.toLocaleString('vi-VN'),
+        icon: 'hourglass_top',
+        tone: 'warning',
+        delta: `${op.passengers_today.toLocaleString('vi-VN')} hành khách hôm nay`,
+        deltaIcon: 'groups',
+        deltaTone: 'up',
+      },
+      {
+        label: 'Chuyến trễ / hủy',
+        value: String(op.flights_delayed + op.flights_cancelled),
+        icon: 'warning',
+        tone: 'danger',
+        delta: `${op.flights_delayed} trễ · ${op.flights_cancelled} hủy`,
+        deltaIcon: 'warning',
+        deltaTone: 'down',
+      },
+    ];
+  });
+
+  protected readonly bars = computed<BarItem[]>(() => {
+    const items = this.overview()?.revenue_by_day ?? [];
+    const maxBookings = Math.max(1, ...items.map((i) => i.bookings_count));
+    return items.map((i) => ({
+      label: i.day_label,
+      value: i.bookings_count.toLocaleString('vi-VN'),
+      height: Math.max(12, Math.round((i.bookings_count / maxBookings) * 100)),
+    }));
+  });
+
+  protected readonly scheduleFlights = computed<FlightOperationItem[]>(
+    () => this.operational()?.today_schedule ?? [],
+  );
+
+  ngOnInit(): void {
+    this.loadDashboard();
+  }
+
+  protected switchRange(days: 7 | 30): void {
+    if (this.selectedDays() === days) return;
+    this.selectedDays.set(days);
+    this.loadDashboard();
+  }
+
+  private loadDashboard(): void {
+    this.loading.set(true);
+    if (this.isAdmin()) {
+      this.dashboardService
+        .getOverview(this.selectedDays())
+        .pipe(catchError(() => of(null)))
+        .subscribe((res) => {
+          if (res?.data) {
+            this.overview.set(res.data);
+          }
+          this.loading.set(false);
+        });
+    }
+
+    this.dashboardService
+      .getOperational()
+      .pipe(catchError(() => of(null)))
+      .subscribe((res) => {
+        if (res?.data) {
+          this.operational.set(res.data);
+        }
+        if (!this.isAdmin()) {
+          this.loading.set(false);
+        }
+      });
+  }
+
+  protected fillRateOf(f: FlightOperationItem): string {
+    if (!f.seat_capacity) return '0%';
+    const used = f.booked_seats + f.held_seats;
+    return `${((used / f.seat_capacity) * 100).toFixed(1)}%`;
+  }
+
+  protected fillToneOf(f: FlightOperationItem): BadgeTone {
+    const ratio = f.seat_capacity ? (f.booked_seats + f.held_seats) / f.seat_capacity : 0;
+    if (ratio >= 0.9) return 'danger';
+    if (ratio >= 0.75) return 'warning';
+    return 'success';
+  }
+
+  protected opStatusTone(status: string): BadgeTone {
+    if (status === 'CANCELLED') return 'danger';
+    if (status === 'DELAYED') return 'warning';
+    if (status === 'BOARDING') return 'info';
+    return 'success';
+  }
+
+  protected formatVnd(amount: number): string {
+    return `${Math.round(amount).toLocaleString('vi-VN')}đ`;
+  }
+
+  private formatCompactVnd(amount: number): string {
+    if (amount >= 1_000_000_000) {
+      return `${(amount / 1_000_000_000).toFixed(2).replace('.', ',')} tỷ`;
+    }
+    if (amount >= 1_000_000) {
+      return `${(amount / 1_000_000).toFixed(1).replace('.', ',')} tr`;
+    }
+    return this.formatVnd(amount);
+  }
 }

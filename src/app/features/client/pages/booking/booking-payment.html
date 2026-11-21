@@ -1,0 +1,215 @@
+<div class="pay">
+  <!-- Thanh tiến trình 4 bước -->
+  <ol class="stepper" aria-label="Tiến trình đặt vé">
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Hành khách</span>
+    </li>
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Chọn ghế</span>
+    </li>
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Xác nhận</span>
+    </li>
+    <li class="stepper__item stepper__item--active">
+      <span class="stepper__num">4</span>
+      <span>Thanh toán</span>
+    </li>
+  </ol>
+
+  <!-- Banner đồng hồ đếm ngược 15:00 -->
+  <div class="timer-bar" [class.timer-bar--expired]="isExpired()" data-testid="payment-timer-bar">
+    <div class="timer-bar__left">
+      <mat-icon>schedule</mat-icon>
+      @if (!isExpired()) {
+        <span>Ghế của bạn đang được giữ. Vui lòng hoàn tất thanh toán trước khi hết thời gian giữ chỗ:</span>
+      } @else {
+        <span>Đã hết thời gian giữ chỗ 15 phút. Vui lòng thực hiện đặt vé lại.</span>
+      }
+    </div>
+    <span class="timer-bar__clock tabular" data-testid="payment-countdown">{{ countdownText() }}</span>
+  </div>
+
+  @if (loading()) {
+    <div class="card card--state">Đang tải thông tin thanh toán...</div>
+  } @else if (booking(); as b) {
+    <div class="pay__grid">
+      <!-- Cột trái: Chọn phương thức thanh toán & Hiển thị QR / Cổng thanh toán -->
+      <div class="pay__main">
+        @if (error()) {
+          <div class="alert alert--danger" role="alert">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <section class="card">
+          <h2>Chọn phương thức thanh toán</h2>
+          <div class="methods">
+            <button
+              type="button"
+              class="method"
+              [class.method--active]="selectedMethod() === 'VNPAY'"
+              data-testid="method-vnpay"
+              (click)="selectMethod('VNPAY')"
+            >
+              <span class="method__radio"></span>
+              <span class="method__body">
+                <b>Cổng thanh toán VNPay</b>
+                <small>Thẻ ATM nội địa, thẻ quốc tế Visa/Master/JCB, ứng dụng VNPay QR</small>
+              </span>
+              <span class="method__tag">VNPay</span>
+            </button>
+
+            <button
+              type="button"
+              class="method"
+              [class.method--active]="selectedMethod() === 'PAYOS'"
+              data-testid="method-payos"
+              (click)="selectMethod('PAYOS')"
+            >
+              <span class="method__radio"></span>
+              <span class="method__body">
+                <b>Chuyển khoản ngân hàng VietQR (payOS)</b>
+                <small>Quét mã VietQR trên mọi app ngân hàng — đối soát tự động 24/7</small>
+              </span>
+              <span class="method__tag method__tag--qr">VietQR</span>
+            </button>
+          </div>
+
+          <div class="pay__actions">
+            <button
+              type="button"
+              class="btn btn--primary"
+              data-testid="btn-pay-now"
+              [disabled]="processing() || isExpired()"
+              (click)="submitPayment(selectedMethod() === 'PAYOS' ? 'PENDING' : 'SUCCESS')"
+            >
+              <mat-icon>lock</mat-icon>
+              @if (processing()) {
+                Đang xử lý...
+              } @else if (selectedMethod() === 'PAYOS') {
+                Tạo mã VietQR thanh toán ({{ formatVnd(b.total_amount) }})
+              } @else {
+                Thanh toán ngay qua VNPay ({{ formatVnd(b.total_amount) }})
+              }
+            </button>
+
+            <button
+              type="button"
+              class="btn btn--ghost"
+              data-testid="btn-simulate-success"
+              [disabled]="processing() || isExpired()"
+              (click)="submitPayment('SUCCESS')"
+            >
+              <mat-icon>verified</mat-icon>
+              Xác nhận thanh toán nhanh (Demo)
+            </button>
+          </div>
+        </section>
+
+        <!-- Khung hiển thị mã QR chuyển khoản khi tạo giao dịch VietQR / payOS -->
+        @if (transaction()?.viet_qr; as qr) {
+          <section class="card qr-card" data-testid="vietqr-box">
+            <div class="qr-card__head">
+              <h3>Quét mã VietQR để chuyển khoản</h3>
+              <span class="qr-card__badge">Tự động kiểm tra mỗi 3 giây</span>
+            </div>
+
+            <div class="qr-card__grid">
+              @if (qr.qr_image_url) {
+                <div class="qr-card__img-wrap">
+                  <img
+                    [src]="qr.qr_image_url"
+                    alt="Mã VietQR thanh toán đơn đặt vé"
+                    loading="lazy"
+                    width="220"
+                    height="220"
+                  />
+                </div>
+              }
+              <dl class="qr-card__info">
+                <div>
+                  <dt>Ngân hàng</dt>
+                  <dd>{{ qr.bank_name }}</dd>
+                </div>
+                <div>
+                  <dt>Số tài khoản</dt>
+                  <dd class="copy-row">
+                    <b class="tabular">{{ qr.account_number }}</b>
+                    <button type="button" class="btn-copy" (click)="copyText('acc', qr.account_number)">
+                      {{ copiedField() === 'acc' ? 'Đã chép' : 'Sao chép' }}
+                    </button>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Chủ tài khoản</dt>
+                  <dd>{{ qr.account_holder }}</dd>
+                </div>
+                <div>
+                  <dt>Số tiền</dt>
+                  <dd class="tabular"><b>{{ formatVnd(qr.amount) }}</b></dd>
+                </div>
+                <div>
+                  <dt>Nội dung chuyển khoản</dt>
+                  <dd class="copy-row">
+                    <b>{{ qr.transfer_content }}</b>
+                    <button type="button" class="btn-copy" (click)="copyText('memo', qr.transfer_content)">
+                      {{ copiedField() === 'memo' ? 'Đã chép' : 'Sao chép' }}
+                    </button>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <p class="qr-card__warn">
+              <mat-icon>warning_amber</mat-icon>
+              Vui lòng giữ nguyên <b>nội dung chuyển khoản</b> và chuyển đúng số tiền để hệ thống tự động xuất vé điện tử.
+            </p>
+
+            <div class="qr-card__foot">
+              <button type="button" class="btn btn--ghost" (click)="checkPayosSyncNow()">
+                <mat-icon>sync</mat-icon>
+                Tôi đã chuyển khoản — kiểm tra lại
+              </button>
+              @if (qr.checkout_url) {
+                <a class="btn btn--ghost" [href]="qr.checkout_url" target="_blank" rel="noopener">
+                  Mở trang payOS
+                </a>
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <!-- Cột phải: Tóm tắt đơn -->
+      <aside class="pay__side">
+        <section class="card">
+          <div class="summary__head">
+            <span>Mã đặt chỗ</span>
+            <b>{{ b.booking_code }}</b>
+          </div>
+
+          @for (seg of b.segments; track seg.id) {
+            <div class="summary__seg">
+              <div class="summary__route">{{ seg.departure_airport_code }} → {{ seg.arrival_airport_code }}</div>
+              <div class="summary__meta">{{ seg.airline_name }} · {{ seg.flight_number }} · {{ seg.fare_class_name }}</div>
+            </div>
+          }
+
+          <div class="summary__total">
+            <span>Tổng thanh toán</span>
+            <strong class="tabular">{{ formatVnd(b.total_amount) }}</strong>
+          </div>
+
+          <a class="link-back" [routerLink]="['/booking/review']" [queryParams]="{ bookingId: b.id }">
+            <mat-icon>arrow_back</mat-icon>
+            Quay lại bước xác nhận
+          </a>
+        </section>
+      </aside>
+    </div>
+  }
+</div>

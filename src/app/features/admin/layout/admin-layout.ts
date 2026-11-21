@@ -124,7 +124,10 @@ export class AdminLayout implements AfterViewInit {
   private readonly navGroups: NavGroup[] = [
     {
       label: 'Tổng quan',
-      items: [{ path: '/admin/dashboard', label: 'Dashboard', icon: 'space_dashboard' }],
+      items: [
+        { path: '/admin/dashboard', label: 'Dashboard', icon: 'space_dashboard' },
+        { path: '/admin/reports', label: 'Báo cáo doanh thu', icon: 'bar_chart', adminOnly: true },
+      ],
     },
     {
       label: 'Người dùng & phân quyền',
