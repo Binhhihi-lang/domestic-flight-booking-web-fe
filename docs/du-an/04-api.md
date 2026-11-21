@@ -215,6 +215,7 @@ Quy tắc seat map:
 - Khách: `/api/bookings`, `/api/bookings/{id}/cancel`, `/api/bookings/{id}/passengers`, `/api/bookings/{id}/seats/hold`, `/api/bookings/{id}/baggages`, `/api/bookings/{id}/voucher`, `/api/bookings/{id}/payments`, `/api/bookings/{id}/e-tickets`.
 - Payment: `/api/payments/{id}`, `/api/payments/callback`.
 - Admin: `/api/admin/bookings`, `/api/admin/dashboard*`.
+- Thông báo (In-app Polling 60s — chốt 18/11/2026, chờ V18): `GET /api/notifications?unread=true&page=0&size=20`, `GET /api/notifications/unread-count`, `PATCH /api/notifications/{id}/read`, `PATCH /api/notifications/read-all` (mỗi user chỉ đọc của chính mình — `NOTIFICATION_READ_SELF`).
 
 > Repo BE **chưa có controller** cho các path này. FE phải mock.
 

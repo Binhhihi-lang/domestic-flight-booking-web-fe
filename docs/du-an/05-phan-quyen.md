@@ -80,7 +80,7 @@ Hai trạng thái chuyến độc lập:
 | Ghế | SEAT-01 (chọn + giữ ghế) |
 | Booking | BK-01…05: tạo `PENDING_PAYMENT`, xem danh sách/chi tiết, hủy (không hoàn tiền) |
 | Thanh toán | PAY-01…03: tạo, thử lại, xem chi tiết |
-| Vé & thông báo | TKT-01, NOTI-01 (chưa triển khai), DASH-01 |
+| Vé & thông báo | TKT-01, NOTI-01 (đã chốt 18/11/2026 — in-app polling 60s, chờ V18; `CUSTOMER`/`STAFF`/`ADMIN` đọc self), DASH-01 |
 
 ---
 

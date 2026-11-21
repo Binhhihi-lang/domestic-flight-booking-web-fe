@@ -320,36 +320,38 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
 });
 
 describe('Voucher store mock', () => {
+  // Kho voucher trả MẢNG TRẦN (API v0.4), không phân trang — BE dùng
+  // ApiResponse<List<VoucherStoreItem>>.
   it('kho chỉ trả voucher GLOBAL đang hiệu lực và còn lượt', () => {
     const registry = new MockRegistry();
     const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
-      PageData<VoucherStoreItem>
+      VoucherStoreItem[]
     >;
 
-    expect(res.data.items.length).toBeGreaterThan(0);
-    expect(res.data.items.every((v) => v.distribution_type === 'GLOBAL')).toBe(true);
-    expect(res.data.items.every((v) => v.status === 'ACTIVE')).toBe(true);
-    expect(res.data.items.every((v) => v.claimed_count < (v.claim_limit ?? Infinity))).toBe(true);
+    expect(res.data.length).toBeGreaterThan(0);
+    expect(res.data.every((v) => v.distribution_type === 'GLOBAL')).toBe(true);
+    expect(res.data.every((v) => v.status === 'ACTIVE')).toBe(true);
+    expect(res.data.every((v) => v.claimed_count < (v.claim_limit ?? Infinity))).toBe(true);
   });
 
   it('kho KHÔNG chứa voucher ASSIGNED (chỉ ADMIN tặng riêng)', () => {
     const registry = new MockRegistry();
     const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
-      PageData<VoucherStoreItem>
+      VoucherStoreItem[]
     >;
 
     // Voucher id 4 (VIP500K) là ASSIGNED -> không được xuất hiện trong kho.
-    expect(res.data.items.some((v) => v.id === 4)).toBe(false);
+    expect(res.data.some((v) => v.id === 4)).toBe(false);
   });
 
   it('kho KHÔNG chứa voucher đã tắt hoặc hết lượt', () => {
     const registry = new MockRegistry();
     const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
-      PageData<VoucherStoreItem>
+      VoucherStoreItem[]
     >;
 
     // id 5 (TET100K): status = INACTIVE và claimed_count = claim_limit.
-    expect(res.data.items.some((v) => v.id === 5)).toBe(false);
+    expect(res.data.some((v) => v.id === 5)).toBe(false);
   });
 
   it('nhận voucher GLOBAL thành công thì ví tăng thêm một', () => {
@@ -392,9 +394,9 @@ describe('Voucher store mock', () => {
     registry.resolve('POST', 'http://x/api/vouchers/6/claim');
 
     const store = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
-      PageData<VoucherStoreItem>
+      VoucherStoreItem[]
     >;
-    expect(store.data.items.find((v) => v.id === 6)?.claimed).toBe(true);
+    expect(store.data.find((v) => v.id === 6)?.claimed).toBe(true);
   });
 
   it('ví có đủ 4 trạng thái trong dữ liệu mẫu', () => {
