@@ -1,7 +1,7 @@
 # 03 — Cơ sở dữ liệu
 
 > **Nguồn:** `be/docs/Database_Design_Domestic_Flight_Booking_v0.5.md` (15/10/2026) + migration thực tế trong `be/src/main/resources/db/migration` (V1–V15).
-> **Lưu ý:** v0.5 mô tả 34 bảng (33 bảng đã dựng + `notifications` chưa tạo). V14 thêm `seat_class_surcharges` nhưng V16 đã xoá bảng này ⇒ hiện có **33 bảng đã dựng**; tính cả `notifications` là **34 bảng trong thiết kế**.
+> **Lưu ý:** v0.5 mô tả 34 bảng (33 bảng đã dựng + `notifications` chưa tạo). Nghiệp vụ thông báo đã chốt tại `design/00-nghiep-vu-thong-bao.md`; bảng sẽ tạo ở migration V18. V14 thêm `seat_class_surcharges` nhưng V16 đã xoá bảng này ⇒ hiện có **33 bảng đã dựng**; tính cả `notifications` là **34 bảng trong thiết kế**.
 
 ---
 
@@ -56,7 +56,7 @@
 | Bảng | Mục đích |
 |---|---|
 | `flights` | Chuyến bay; `operation_status` + `sales_status`; `parent_flight_id` cho chuyến bổ sung |
-| `fare_classes` | Hạng vé: ECONOMY / PREMIUM_ECONOMY / BUSINESS / FIRST |
+| `fare_classes` | Hạng vé thuộc một hãng: mã đầy đủ `<mã_hãng>_<mã_hạng>` (`VN_ECON_SAVER` … `QH_BIZ_FLEX`), duy nhất toàn hệ thống; `airline_id` từ V17 |
 | `fare_rules` | Quy định hoàn vé theo hạng, có version |
 | `flight_fares` | Giá người lớn theo chuyến/hạng: `base_fare` + `tax_fee` |
 | `flight_seats` | Tồn ghế từng chuyến; `seat_surcharge`, `version` khóa lạc quan |
@@ -107,7 +107,6 @@
 | `booking_baggages` | `booking_id`, `passenger_id`, `baggage_option_id` | | N–1 | |
 | `payments` | `booking_id` | `bookings` | N–1 | Nhiều lần retry |
 | `e_tickets` | `booking_id`, `booking_segment_id`, `passenger_id`, `flight_seat_id` | | N–1 | `flight_seat_id` NULL với INFANT |
-| `seat_class_surcharges` | `from_class`, `to_class` (chuỗi hạng) | — | — | UNIQUE từng phần theo cặp chưa xóa |
 
 ---
 
@@ -155,7 +154,7 @@
 1. Không có bảng `wallets` — **ví voucher** (`user_vouchers`) vẫn tồn tại, khác ví tiền.
 2. `bookings` không có cột hoàn tiền; hủy vé chỉ đổi trạng thái.
 3. `flight_fares` chỉ có `base_fare` + `tax_fee`; không có cột thuế riêng.
-4. Cặp hạng ghế chưa cấu hình trong `seat_class_surcharges` = **không bán**, khác `surcharge = 0`.
+4. Phụ thu gắn với **loại ghế** (`seat_types.surcharge`), ghi đè theo chuyến bằng `flight_seats.seat_surcharge`; không có bảng `seat_class_surcharges` (V16 đã xoá).
 5. `notifications` chưa có bảng — đừng thiết kế màn phụ thuộc vào nó.
 
 ---

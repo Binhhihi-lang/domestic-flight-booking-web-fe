@@ -101,19 +101,20 @@ flowchart TD
 
 - Là **sản phẩm thương mại** khách mua trong một khoang.
 - Quyết định giá vé (`flight_fares`), điều kiện hoàn/đổi (`fare_rules`), phạm vi khuyến mãi/voucher.
-- Một khoang có **nhiều hạng vé**. Seed hiện tại:
+- Một khoang có **nhiều hạng vé**.
+- **Mã hạng vé lưu đầy đủ gồm mã hãng** theo dạng `<mã_hãng>_<mã_hạng>`: `VN_ECON_SAVER`, `VJ_ECON_FLEX`, `QH_BIZ_STANDARD`… Mã hạng vé **duy nhất toàn hệ thống**, không còn trùng tên giữa các hãng. Mỗi hãng có bộ 7 hạng vé riêng. Bảng dưới là bộ của **Vietnam Airlines (VN)**:
 
 | Khoang | Hạng vé | Điều kiện hoàn |
 |---|---|---|
-| Phổ thông | `ECON_SAVER` | Không hoàn |
-| Phổ thông | `ECON_STANDARD` | Hoàn 80% · trước 24h |
-| Phổ thông | `ECON_FLEX` | Hoàn 90% · trước 24h |
-| Phổ thông đặc biệt | `PREM_ECO_STANDARD` | Hoàn 85% · trước 24h |
-| Phổ thông đặc biệt | `PREM_ECO_FLEX` | Hoàn 95% · trước 24h |
-| Thương gia | `BIZ_STANDARD` | Hoàn 90% · trước 24h |
-| Thương gia | `BIZ_FLEX` | Hoàn 100% · trước 24h |
+| Phổ thông | `VN_ECON_SAVER` | Không hoàn |
+| Phổ thông | `VN_ECON_STANDARD` | Hoàn 80% · trước 24h |
+| Phổ thông | `VN_ECON_FLEX` | Hoàn 90% · trước 24h |
+| Phổ thông đặc biệt | `VN_PREM_ECO_STANDARD` | Hoàn 85% · trước 24h |
+| Phổ thông đặc biệt | `VN_PREM_ECO_FLEX` | Hoàn 95% · trước 24h |
+| Thương gia | `VN_BIZ_STANDARD` | Hoàn 90% · trước 24h |
+| Thương gia | `VN_BIZ_FLEX` | Hoàn 100% · trước 24h |
 
-> ✅ V16 đã đổi mã hạng vé cũ (`ECONOMY`, `PREMIUM_ECONOMY`, `BUSINESS`) thành mã trên và seed đủ 7 hạng vé + `fare_rules` v1.
+> ✅ V16 seed 7 hạng vé gốc; V17 gắn `airline_id` và cho phép mã trùng giữa các hãng. **V18 (đề xuất)** đổi toàn bộ mã hiện có sang dạng có tiền tố hãng và chuyển unique index về `fare_class_code` toàn hệ thống.
 
 ### 2.4 Loại ghế (`seat_type`)
 
@@ -358,10 +359,10 @@ Quy tắc:
 
 - Mỗi chuyến trả danh sách **hạng vé** kèm khoang.
 - Thẻ chuyến chỉ hiện “Giá từ” (thấp nhất trong khoang đang lọc).
-- Khách chọn **khoang** trước, sau đó chọn **hạng vé** trong khoang.
+- Khách chọn **hạng dịch vụ** trước, sau đó chọn **hạng vé** trong hạng dịch vụ đó.
 - Chọn hạng vé riêng cho từng chặng.
 
-> ✅ Đã áp dụng: bộ lọc là **khoang**, tab trong màn chọn cũng là **khoang**, danh sách bên dưới là **hạng vé**.
+> ✅ Đã áp dụng: bộ lọc là **hạng dịch vụ**, tab trong màn chọn cũng là **hạng dịch vụ**, danh sách bên dưới là **hạng vé**.
 
 ### 4.4 Quy định hoàn vé
 
@@ -529,8 +530,8 @@ Quy tắc:
 
 ### 5.8 Thông báo và báo cáo
 
-- `notifications` chưa triển khai; không thiết kế màn phụ thuộc.
-- Dashboard vận hành: chuyến, ghế, booking trong ngày.
+- Nghiệp vụ thông báo **đã chốt** tại `docs/design/00-nghiep-vu-thong-bao.md`: chỉ in-app (chuông + dropdown), không email/SMS/push; bảng `notifications` **chưa tạo**.
+- Dashboard vận hành: chuyến, ghế, booking trong ngày; **không hiện doanh thu**.
 - Dashboard tổng quan: doanh thu, booking, tỷ lệ lấp đầy.
 
 ### 5.9 Quy tắc nghiệp vụ Phase 3
