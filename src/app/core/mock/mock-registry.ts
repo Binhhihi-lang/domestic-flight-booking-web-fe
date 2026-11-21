@@ -51,6 +51,23 @@ import {
   OPERATIONAL_DASHBOARD_MOCK,
   OVERVIEW_DASHBOARD_MOCK,
 } from '@core/mock/data/checkout-dashboard.mock';
+import {
+  FlightDetailRecord,
+  FlightFare,
+  FlightFarePayload,
+  FlightPayload,
+  FlightRecord,
+  FlightSeatMap,
+  SeatInventoryRequestPayload,
+} from '@core/models/flight.model';
+import {
+  buildMockFlightSeatMap,
+  computeFarePrices,
+  FLIGHT_FARES_MOCK,
+  FLIGHT_PASSENGERS_MOCK,
+  FLIGHTS_MOCK,
+  recalcSeatMapCounts,
+} from '@core/mock/data/flights.mock';
 import { MockResource } from '@core/mock/mock-resource';
 import { ApiResponse, PageData } from '@core/models/api-response.model';
 import {
@@ -118,6 +135,14 @@ export class MockRegistry {
   private mockBooking: BookingDetail = buildMockBookingDetail();
   private mockPayments: PaymentTransaction[] = [];
   private paymentIdSeq = 500;
+
+  /** Dữ liệu mẫu Chuyến bay, Giá bán & Tồn ghế (Cụm DA2). */
+  private flights: FlightRecord[] = FLIGHTS_MOCK.map((f) => ({ ...f }));
+  private readonly deletedFlights = new Set<number>();
+  private flightIdSeq = 200;
+  private flightFares: FlightFare[] = FLIGHT_FARES_MOCK.map((f) => ({ ...f }));
+  private flightFareIdSeq = 100;
+  private flightSeatMaps = new Map<number, FlightSeatMap>();
 
   private readonly resources = [
     new MockResource<City>({
@@ -493,6 +518,50 @@ export class MockRegistry {
     }
     if ((path === '/api/admin/dashboard' || path === '/api/admin/dashboard/overview' || path === '/api/admin/reports') && m === 'GET') {
       return ok(OVERVIEW_DASHBOARD_MOCK);
+    }
+
+    // Quản trị Chuyến bay, Giá bán & Tồn ghế (Cụm DA2).
+    if (path === '/api/admin/flights') {
+      if (m === 'GET') return this.listFlights(url);
+      if (m === 'POST') return this.createFlight(body);
+    }
+    const flightActivateMatch = path.match(/^\/api\/admin\/flights\/(\d+)\/(activate|deactivate)$/);
+    if (flightActivateMatch && m === 'POST') {
+      return this.toggleFlightSales(
+        Number(flightActivateMatch[1]),
+        flightActivateMatch[2] === 'activate' ? 'OPEN' : 'CLOSED',
+      );
+    }
+    const flightSeatInvMatch = path.match(/^\/api\/admin\/flights\/(\d+)\/(seat-map|seat-inventory)$/);
+    if (flightSeatInvMatch) {
+      const flightId = Number(flightSeatInvMatch[1]);
+      if (m === 'GET') return this.getFlightSeatMap(flightId);
+      if (m === 'PUT') return this.saveFlightSeatInventory(flightId, body);
+    }
+    const flightSeatBlockMatch = path.match(/^\/api\/admin\/flight-seats\/(\d+)\/(block|unblock)$/);
+    if (flightSeatBlockMatch && m === 'POST') {
+      return this.toggleFlightSeatBlock(
+        Number(flightSeatBlockMatch[1]),
+        flightSeatBlockMatch[2] === 'block',
+      );
+    }
+    const flightIdMatch = path.match(/^\/api\/admin\/flights\/(\d+)$/);
+    if (flightIdMatch) {
+      const id = Number(flightIdMatch[1]);
+      if (m === 'GET') return this.getFlightDetail(id);
+      if (m === 'PUT') return this.updateFlight(id, body);
+      if (m === 'DELETE') return this.deleteFlight(id);
+    }
+    if (path === '/api/admin/flight-fares') {
+      if (m === 'GET') return this.listFlightFares(url);
+      if (m === 'POST') return this.createFlightFare(body);
+    }
+    const flightFareIdMatch = path.match(/^\/api\/admin\/flight-fares\/(\d+)$/);
+    if (flightFareIdMatch) {
+      const id = Number(flightFareIdMatch[1]);
+      if (m === 'GET') return this.getFlightFare(id);
+      if (m === 'PUT') return this.updateFlightFare(id, body);
+      if (m === 'DELETE') return this.deleteFlightFare(id);
     }
 
     // Các module master data dùng chung một lớp tài nguyên tổng quát.
@@ -1239,5 +1308,332 @@ export class MockRegistry {
     };
     this.mockPayments.push(txn);
     return ok(txn, 'Khởi tạo giao dịch thanh toán thành công');
+  }
+
+  // ---------- Quản trị Chuyến bay, Giá bán & Tồn ghế (Cụm DA2) ----------
+
+  private aliveFlights(): FlightRecord[] {
+    return this.flights.filter((f) => !this.deletedFlights.has(f.id));
+  }
+
+  private ensureFlightSeatMap(flight: FlightRecord): FlightSeatMap {
+    let existing = this.flightSeatMaps.get(flight.id);
+    if (!existing) {
+      existing = buildMockFlightSeatMap(flight);
+      this.flightSeatMaps.set(flight.id, existing);
+    }
+    return existing;
+  }
+
+  private listFlights(url: string): unknown {
+    const params = readParams(url);
+    const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
+    const airlineId = params.get('airline_id');
+    const depId = params.get('departure_airport_id');
+    const arrId = params.get('arrival_airport_id');
+    const depDate = params.get('departure_date');
+    const opStatus = params.get('operation_status') ?? params.get('status');
+    const salesStatus = params.get('sales_status');
+
+    let rows = this.aliveFlights();
+    if (keyword) {
+      rows = rows.filter(
+        (f) =>
+          f.flight_number.toLowerCase().includes(keyword) ||
+          f.airline.airline_name.toLowerCase().includes(keyword) ||
+          f.departure_airport.airport_code.toLowerCase().includes(keyword) ||
+          f.arrival_airport.airport_code.toLowerCase().includes(keyword),
+      );
+    }
+    if (airlineId) rows = rows.filter((f) => String(f.airline.id) === airlineId);
+    if (depId) rows = rows.filter((f) => String(f.departure_airport.id) === depId);
+    if (arrId) rows = rows.filter((f) => String(f.arrival_airport.id) === arrId);
+    if (depDate) rows = rows.filter((f) => f.scheduled_departure.startsWith(depDate));
+    if (opStatus) rows = rows.filter((f) => f.operation_status === opStatus);
+    if (salesStatus) rows = rows.filter((f) => f.sales_status === salesStatus);
+
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getFlightDetail(id: number): unknown {
+    const found = this.aliveFlights().find((f) => f.id === id);
+    if (!found) return notFound('Không tìm thấy chuyến bay');
+    const seatMap = this.ensureFlightSeatMap(found);
+    const fares = this.flightFares.filter((ff) => ff.flight_id === id);
+    const detail: FlightDetailRecord = {
+      ...found,
+      total_seats: seatMap.total_seats,
+      available_seats: seatMap.available_seats,
+      fares,
+      passengers: FLIGHT_PASSENGERS_MOCK[id] ?? [],
+    };
+    return ok(detail);
+  }
+
+  private createFlight(body: unknown): unknown {
+    const p = (body ?? {}) as Partial<FlightPayload>;
+    if (!p.flight_number?.trim()) return businessError('Số hiệu chuyến bay không được để trống');
+    if (p.departure_airport_id === p.arrival_airport_id) {
+      return businessError('Sân bay đi và sân bay đến không được trùng nhau');
+    }
+    if (!p.scheduled_departure || !p.scheduled_arrival || p.scheduled_arrival <= p.scheduled_departure) {
+      return businessError('Giờ đến dự kiến phải sau giờ khởi hành');
+    }
+    const airline = AIRLINES_MOCK.find((a) => a.id === Number(p.airline_id));
+    const aircraft = AIRCRAFT_MOCK.find((a) => a.id === Number(p.aircraft_id));
+    const dep = AIRPORTS_MOCK.find((a) => a.id === Number(p.departure_airport_id));
+    const arr = AIRPORTS_MOCK.find((a) => a.id === Number(p.arrival_airport_id));
+    if (!airline || !aircraft || !dep || !arr) {
+      return businessError('Hãng bay, tàu bay hoặc sân bay không hợp lệ');
+    }
+    const duration = Math.max(
+      30,
+      Math.round(
+        (new Date(p.scheduled_arrival).getTime() - new Date(p.scheduled_departure).getTime()) /
+          60000,
+      ),
+    );
+    const now = new Date().toISOString();
+    const created: FlightRecord = {
+      id: this.flightIdSeq++,
+      flight_number: p.flight_number.trim().toUpperCase(),
+      airline,
+      aircraft,
+      departure_airport: dep,
+      arrival_airport: arr,
+      scheduled_departure: p.scheduled_departure,
+      scheduled_arrival: p.scheduled_arrival,
+      duration_minutes: duration,
+      operation_status: p.operation_status ?? 'SCHEDULED',
+      sales_status: p.sales_status ?? 'OPEN',
+      parent_flight_id: p.parent_flight_id ?? null,
+      parent_flight_number: null,
+      created_at: now,
+      updated_at: now,
+    };
+    this.flights.unshift(created);
+    return ok(created, 'Tạo chuyến bay thành công');
+  }
+
+  private updateFlight(id: number, body: unknown): unknown {
+    const target = this.aliveFlights().find((f) => f.id === id);
+    if (!target) return notFound('Không tìm thấy chuyến bay');
+    const p = (body ?? {}) as Partial<FlightPayload>;
+    if (p.departure_airport_id && p.arrival_airport_id && p.departure_airport_id === p.arrival_airport_id) {
+      return businessError('Sân bay đi và sân bay đến không được trùng nhau');
+    }
+    const nextDep = p.scheduled_departure ?? target.scheduled_departure;
+    const nextArr = p.scheduled_arrival ?? target.scheduled_arrival;
+    if (nextArr <= nextDep) {
+      return businessError('Giờ đến dự kiến phải sau giờ khởi hành');
+    }
+    const airline = p.airline_id
+      ? AIRLINES_MOCK.find((a) => a.id === Number(p.airline_id)) ?? target.airline
+      : target.airline;
+    const aircraft = p.aircraft_id
+      ? AIRCRAFT_MOCK.find((a) => a.id === Number(p.aircraft_id)) ?? target.aircraft
+      : target.aircraft;
+    const dep = p.departure_airport_id
+      ? AIRPORTS_MOCK.find((a) => a.id === Number(p.departure_airport_id)) ?? target.departure_airport
+      : target.departure_airport;
+    const arr = p.arrival_airport_id
+      ? AIRPORTS_MOCK.find((a) => a.id === Number(p.arrival_airport_id)) ?? target.arrival_airport
+      : target.arrival_airport;
+
+    Object.assign(target, {
+      flight_number: p.flight_number ? p.flight_number.trim().toUpperCase() : target.flight_number,
+      airline,
+      aircraft,
+      departure_airport: dep,
+      arrival_airport: arr,
+      scheduled_departure: nextDep,
+      scheduled_arrival: nextArr,
+      duration_minutes: Math.max(
+        30,
+        Math.round((new Date(nextArr).getTime() - new Date(nextDep).getTime()) / 60000),
+      ),
+      operation_status: p.operation_status ?? target.operation_status,
+      sales_status: p.sales_status ?? target.sales_status,
+      updated_at: new Date().toISOString(),
+    });
+    return ok(target, 'Cập nhật chuyến bay thành công');
+  }
+
+  private toggleFlightSales(id: number, status: 'OPEN' | 'CLOSED'): unknown {
+    const target = this.aliveFlights().find((f) => f.id === id);
+    if (!target) return notFound('Không tìm thấy chuyến bay');
+    target.sales_status = status;
+    target.updated_at = new Date().toISOString();
+    return ok(target, status === 'OPEN' ? 'Mở bán chuyến bay thành công' : 'Đóng bán chuyến bay thành công');
+  }
+
+  private deleteFlight(id: number): unknown {
+    const target = this.aliveFlights().find((f) => f.id === id);
+    if (!target) return notFound('Không tìm thấy chuyến bay');
+    this.deletedFlights.add(id);
+    return ok(null, 'Đã xóa chuyến bay');
+  }
+
+  private listFlightFares(url: string): unknown {
+    const params = readParams(url);
+    const flightId = params.get('flight_id');
+    const fareClassId = params.get('fare_class_id');
+    const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
+
+    let rows = [...this.flightFares];
+    if (flightId) rows = rows.filter((f) => String(f.flight_id) === flightId);
+    if (fareClassId) rows = rows.filter((f) => String(f.fare_class_id) === fareClassId);
+    if (keyword) {
+      rows = rows.filter(
+        (f) =>
+          f.flight_number.toLowerCase().includes(keyword) ||
+          f.fare_class_code.toLowerCase().includes(keyword) ||
+          f.fare_class_name.toLowerCase().includes(keyword),
+      );
+    }
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getFlightFare(id: number): unknown {
+    const found = this.flightFares.find((f) => f.id === id);
+    return found ? ok(found) : notFound('Không tìm thấy dòng giá vé');
+  }
+
+  private hasOverlapFare(
+    flightId: number,
+    fareClassId: number,
+    from: string | null,
+    to: string | null,
+    excludeId: number | null,
+  ): boolean {
+    const startA = from ? new Date(from).getTime() : 0;
+    const endA = to ? new Date(to).getTime() : Number.MAX_SAFE_INTEGER;
+    return this.flightFares.some((f) => {
+      if (f.id === excludeId || f.flight_id !== flightId || f.fare_class_id !== fareClassId) {
+        return false;
+      }
+      const startB = f.effective_from ? new Date(f.effective_from).getTime() : 0;
+      const endB = f.effective_to ? new Date(f.effective_to).getTime() : Number.MAX_SAFE_INTEGER;
+      return startA < endB && startB < endA;
+    });
+  }
+
+  private createFlightFare(body: unknown): unknown {
+    const p = (body ?? {}) as Partial<FlightFarePayload>;
+    const fl = this.aliveFlights().find((f) => f.id === Number(p.flight_id));
+    const fc = FARE_CLASSES_MOCK.find((c) => c.id === Number(p.fare_class_id));
+    if (!fl || !fc) return businessError('Chuyến bay hoặc hạng vé không hợp lệ');
+    if (fc.airline_id !== fl.airline.id) {
+      return businessError(`Hạng vé ${fc.fare_class_code} không thuộc hãng ${fl.airline.airline_code}`);
+    }
+    if (p.effective_from && p.effective_to && p.effective_to <= p.effective_from) {
+      return businessError('Thời điểm kết thúc hiệu lực phải sau thời điểm bắt đầu');
+    }
+    if (this.hasOverlapFare(fl.id, fc.id, p.effective_from ?? null, p.effective_to ?? null, null)) {
+      return businessError('Khoảng hiệu lực bị chồng lấn với dòng giá đã tồn tại của cùng chuyến và hạng vé');
+    }
+    const baseFare = Number(p.base_fare ?? 0);
+    const taxFee = Number(p.tax_fee ?? 0);
+    if (baseFare < 0 || taxFee < 0) return businessError('Giá cơ bản và thuế phí không được âm');
+
+    const created: FlightFare = {
+      id: this.flightFareIdSeq++,
+      flight_id: fl.id,
+      flight_number: fl.flight_number,
+      fare_class_id: fc.id,
+      fare_class_code: fc.fare_class_code,
+      fare_class_name: fc.fare_class_name,
+      seat_class: fc.seat_class,
+      base_fare: baseFare,
+      tax_fee: taxFee,
+      ...computeFarePrices(baseFare, taxFee),
+      currency: p.currency ?? 'VND',
+      effective_from: p.effective_from ?? new Date().toISOString().slice(0, 19),
+      effective_to: p.effective_to ?? null,
+      created_at: new Date().toISOString(),
+    };
+    this.flightFares.unshift(created);
+    return ok(created, 'Tạo giá vé theo chuyến thành công');
+  }
+
+  private updateFlightFare(id: number, body: unknown): unknown {
+    const target = this.flightFares.find((f) => f.id === id);
+    if (!target) return notFound('Không tìm thấy dòng giá vé');
+    const p = (body ?? {}) as Partial<FlightFarePayload>;
+    const nextFrom = p.effective_from !== undefined ? p.effective_from : target.effective_from;
+    const nextTo = p.effective_to !== undefined ? p.effective_to : target.effective_to;
+    if (nextFrom && nextTo && nextTo <= nextFrom) {
+      return businessError('Thời điểm kết thúc hiệu lực phải sau thời điểm bắt đầu');
+    }
+    if (this.hasOverlapFare(target.flight_id, target.fare_class_id, nextFrom, nextTo, id)) {
+      return businessError('Khoảng hiệu lực bị chồng lấn với dòng giá khác');
+    }
+    const baseFare = Number(p.base_fare ?? target.base_fare);
+    const taxFee = Number(p.tax_fee ?? target.tax_fee);
+    Object.assign(target, {
+      base_fare: baseFare,
+      tax_fee: taxFee,
+      ...computeFarePrices(baseFare, taxFee),
+      effective_from: nextFrom,
+      effective_to: nextTo,
+    });
+    return ok(target, 'Cập nhật giá vé theo chuyến thành công');
+  }
+
+  private deleteFlightFare(id: number): unknown {
+    const idx = this.flightFares.findIndex((f) => f.id === id);
+    if (idx < 0) return notFound('Không tìm thấy dòng giá vé');
+    this.flightFares.splice(idx, 1);
+    return ok(null, 'Đã xóa dòng giá vé');
+  }
+
+  private getFlightSeatMap(flightId: number): unknown {
+    const fl = this.aliveFlights().find((f) => f.id === flightId);
+    if (!fl) return notFound('Không tìm thấy chuyến bay');
+    return ok(this.ensureFlightSeatMap(fl));
+  }
+
+  private saveFlightSeatInventory(flightId: number, body: unknown): unknown {
+    const fl = this.aliveFlights().find((f) => f.id === flightId);
+    if (!fl) return notFound('Không tìm thấy chuyến bay');
+    const map = this.ensureFlightSeatMap(fl);
+    const req = (body ?? {}) as Partial<SeatInventoryRequestPayload>;
+    for (const item of req.seats ?? []) {
+      const seat = map.seats.find(
+        (s) =>
+          (item.flight_seat_id !== undefined && s.id === item.flight_seat_id) ||
+          (item.seat_code !== undefined && s.seat_code === item.seat_code),
+      );
+      if (!seat) continue;
+      if (item.status && (seat.status === 'BOOKED' || seat.status === 'HELD')) {
+        return businessError(`Không thể đổi trạng thái ghế ${seat.seat_code} đang được đặt hoặc giữ`);
+      }
+      if (item.status) seat.status = item.status;
+      if (item.seat_surcharge !== undefined) {
+        if (item.seat_surcharge < 0) return businessError('Phụ thu ghế không được âm');
+        seat.seat_surcharge = Number(item.seat_surcharge);
+      }
+    }
+    const updated = recalcSeatMapCounts(map);
+    this.flightSeatMaps.set(flightId, updated);
+    return ok(updated, 'Cập nhật tồn ghế chuyến bay thành công');
+  }
+
+  private toggleFlightSeatBlock(flightSeatId: number, block: boolean): unknown {
+    for (const [flightId, map] of this.flightSeatMaps.entries()) {
+      const seat = map.seats.find((s) => s.id === flightSeatId);
+      if (!seat) continue;
+      if (seat.status === 'BOOKED' || seat.status === 'HELD') {
+        return businessError(`Ghế ${seat.seat_code} đang có hành khách đặt/giữ, không thể ${block ? 'khóa' : 'mở khóa'}`);
+      }
+      seat.status = block ? 'BLOCKED' : 'AVAILABLE';
+      this.flightSeatMaps.set(flightId, recalcSeatMapCounts(map));
+      return ok(null, block ? 'Đã khóa ghế' : 'Đã mở khóa ghế');
+    }
+    return notFound('Không tìm thấy ghế chuyến bay');
   }
 }
