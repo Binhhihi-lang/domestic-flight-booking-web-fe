@@ -20,7 +20,7 @@ import {
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
 import { Permission, Role } from '@core/models/rbac.model';
-import { SeatClassSurcharge } from '@core/models/seat-surcharge.model';
+import { BaggageOption, FareClass, FareRule } from '@core/models/fare-baggage.model';
 import {
   UserVoucher,
   UserVoucherStatus,
@@ -76,16 +76,24 @@ export class SeatTypeService extends BaseCrudService<SeatType> {
   }
 }
 
-/**
- * Phụ thu nâng hạng ghế — mặc định dùng chung mọi chuyến.
- *
- * KHÔNG có dòng cho một cặp (from_class, to_class) nghĩa là chưa có chính sách;
- * muốn miễn phí thì tạo dòng `surcharge = 0` tường minh.
- */
 @Injectable({ providedIn: 'root' })
-export class SeatClassSurchargeService extends BaseCrudService<SeatClassSurcharge> {
+export class FareClassService extends BaseCrudService<FareClass> {
   constructor() {
-    super('admin/seat-class-surcharges');
+    super('admin/fare-classes');
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class FareRuleService extends BaseCrudService<FareRule> {
+  constructor() {
+    super('admin/fare-rules');
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class BaggageOptionService extends BaseCrudService<BaggageOption> {
+  constructor() {
+    super('admin/baggage-options');
   }
 }
 

@@ -15,7 +15,7 @@ import {
 } from '@core/models/fleet-news.model';
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
-import { SeatClassSurcharge } from '@core/models/seat-surcharge.model';
+import { BaggageOption, FareClass, FareRule } from '@core/models/fare-baggage.model';
 import { AIRLINES_MOCK } from '@core/mock/data/airlines.mock';
 import {
   AIRCRAFT_MOCK,
@@ -29,8 +29,12 @@ import {
   toVoucherBrief,
   VOUCHERS_MOCK,
 } from '@core/mock/data/catalog.mock';
+import {
+  BAGGAGE_OPTIONS_MOCK,
+  FARE_CLASSES_MOCK,
+  FARE_RULES_MOCK,
+} from '@core/mock/data/fare-baggage.mock';
 import { AIRPORTS_MOCK, CITIES_MOCK } from '@core/mock/data/locations.mock';
-import { SEAT_CLASS_SURCHARGES_MOCK } from '@core/mock/data/seat-surcharge.mock';
 import {
   buildLoginResponse,
   findMockUser,
@@ -184,25 +188,108 @@ export class MockRegistry {
       searchFields: ['seat_type_code', 'seat_type_name'],
       uniqueField: 'seat_type_code',
       noun: 'loại ghế',
+      validate: (p) =>
+        p.surcharge !== undefined && p.surcharge !== null && p.surcharge < 0
+          ? 'Phụ thu không được âm'
+          : null,
     }),
-    new MockResource<SeatClassSurcharge>({
-      path: 'admin/seat-class-surcharges',
-      seed: SEAT_CLASS_SURCHARGES_MOCK,
-      searchFields: ['from_class', 'to_class'],
-      noun: 'phụ thu nâng hạng',
-      // UNIQUE là CẶP (from_class, to_class) nên không dùng được `uniqueField`.
-      // `update()` gọi validate với `merged` đã chứa `id`, nên `r.id !== payload.id`
-      // phân biệt đúng "trùng bản ghi khác" với "giữ nguyên cặp của chính nó".
-      validate: (payload, existing) => {
-        const from = payload.from_class;
-        const to = payload.to_class;
-        if (!from || !to) {
-          return 'Hạng vé và hạng ghế không được để trống';
+    new MockResource<FareClass>({
+      path: 'admin/fare-classes',
+      seed: FARE_CLASSES_MOCK,
+      searchFields: ['fare_class_code', 'fare_class_name', 'airline_code', 'airline_name'],
+      uniqueField: 'fare_class_code',
+      noun: 'hạng vé',
+      validate: (p) => {
+        if (p.airline_id === undefined || p.airline_id === null) {
+          return 'Hãng áp dụng không được để trống';
         }
-        const clash = existing.some(
-          (r) => r.id !== payload.id && r.from_class === from && r.to_class === to,
-        );
-        return clash ? `Đã có phụ thu cho cặp ${from} → ${to}` : null;
+        if (!p.seat_class) {
+          return 'Khoang dịch vụ không được để trống';
+        }
+        return null;
+      },
+      enrich: (fc) => {
+        const airline = AIRLINES_MOCK.find((a) => a.id === Number(fc.airline_id));
+        const airlineCode = airline?.airline_code ?? fc.airline_code ?? '';
+        const rawCode = (fc.fare_class_code ?? '').trim().toUpperCase();
+        const prefixedCode =
+          airlineCode && rawCode && !rawCode.startsWith(`${airlineCode}_`)
+            ? `${airlineCode}_${rawCode}`
+            : rawCode;
+        return {
+          ...fc,
+          airline_id: Number(fc.airline_id),
+          airline_code: airlineCode,
+          airline_name: airline?.airline_name ?? fc.airline_name ?? '',
+          fare_class_code: prefixedCode,
+        };
+      },
+    }),
+    new MockResource<FareRule>({
+      path: 'admin/fare-rules',
+      seed: FARE_RULES_MOCK,
+      searchFields: ['fare_class_code', 'fare_class_name', 'airline_code', 'description'],
+      noun: 'quy định hoàn vé',
+      validate: (p) => {
+        if (p.fare_class_id === undefined || p.fare_class_id === null) {
+          return 'Hạng vé không được để trống';
+        }
+        if (
+          p.refund_min_hours_before_departure !== undefined &&
+          (p.refund_min_hours_before_departure < 0 || p.refund_min_hours_before_departure > 720)
+        ) {
+          return 'Số giờ tối thiểu phải từ 0 đến 720';
+        }
+        if (
+          p.refund_percent !== undefined &&
+          (p.refund_percent < 0 || p.refund_percent > 100)
+        ) {
+          return 'Phần trăm hoàn phải từ 0 đến 100';
+        }
+        return null;
+      },
+      enrich: (rule) => {
+        const fc = FARE_CLASSES_MOCK.find((f) => f.id === Number(rule.fare_class_id));
+        return {
+          ...rule,
+          fare_class_id: Number(rule.fare_class_id),
+          fare_class_code: fc?.fare_class_code ?? rule.fare_class_code ?? '',
+          fare_class_name: fc?.fare_class_name ?? rule.fare_class_name ?? '',
+          airline_code: fc?.airline_code ?? rule.airline_code ?? '',
+          version: rule.version ?? 1,
+          is_refundable: Boolean(rule.is_refundable),
+          refund_min_hours_before_departure: Number(rule.refund_min_hours_before_departure ?? 0),
+          refund_percent: Number(rule.refund_percent ?? 0),
+        };
+      },
+    }),
+    new MockResource<BaggageOption>({
+      path: 'admin/baggage-options',
+      seed: BAGGAGE_OPTIONS_MOCK,
+      searchFields: ['name', 'airline_code', 'airline_name'],
+      noun: 'gói hành lý',
+      validate: (p) => {
+        if (p.airline_id === undefined || p.airline_id === null) {
+          return 'Hãng áp dụng không được để trống';
+        }
+        if (p.weight_kg === undefined || p.weight_kg === null || p.weight_kg <= 0 || p.weight_kg > 100) {
+          return 'Khối lượng phải lớn hơn 0 và tối đa 100 kg';
+        }
+        if (p.price === undefined || p.price === null || p.price < 0) {
+          return 'Đơn giá không được âm';
+        }
+        return null;
+      },
+      enrich: (bg) => {
+        const airline = AIRLINES_MOCK.find((a) => a.id === Number(bg.airline_id));
+        return {
+          ...bg,
+          airline_id: Number(bg.airline_id),
+          airline_code: airline?.airline_code ?? bg.airline_code ?? '',
+          airline_name: airline?.airline_name ?? bg.airline_name ?? '',
+          weight_kg: Number(bg.weight_kg),
+          price: Number(bg.price),
+        };
       },
     }),
     new MockResource<NewsItem>({
