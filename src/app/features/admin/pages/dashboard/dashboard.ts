@@ -12,11 +12,14 @@ import { DashboardService } from '@core/services/dashboard.service';
 import { PageHeader } from '@shared/components/page-header/page-header';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
+import { CountUpDirective, CountUpFormat } from '@shared/ui/count-up/count-up.directive';
 import { StatusBadge, BadgeTone } from '@shared/ui/status-badge/status-badge';
 
 interface StatCard {
   label: string;
   value: string;
+  numericValue: number;
+  format: CountUpFormat;
   unit?: string;
   icon: string;
   tone: 'primary' | 'success' | 'warning' | 'danger';
@@ -38,7 +41,7 @@ interface BarItem {
 @Component({
   selector: 'app-admin-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MatIconModule, PageHeader, AppButton, AppCard, StatusBadge],
+  imports: [RouterLink, MatIconModule, PageHeader, AppButton, AppCard, StatusBadge, CountUpDirective],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -61,6 +64,8 @@ export class AdminDashboard implements OnInit {
         {
           label: 'Booking hôm nay',
           value: ov.bookings_today.toLocaleString('vi-VN'),
+          numericValue: ov.bookings_today,
+          format: 'number',
           icon: 'confirmation_number',
           tone: 'primary',
           delta: `Tháng này: ${ov.bookings_month.toLocaleString('vi-VN')} đơn`,
@@ -70,6 +75,8 @@ export class AdminDashboard implements OnInit {
         {
           label: 'Doanh thu hôm nay',
           value: this.formatCompactVnd(ov.revenue_today),
+          numericValue: ov.revenue_today,
+          format: 'compact-vnd',
           icon: 'payments',
           tone: 'success',
           delta: `Tháng này: ${this.formatCompactVnd(ov.revenue_month)}`,
@@ -79,6 +86,8 @@ export class AdminDashboard implements OnInit {
         {
           label: 'Chuyến bay hôm nay',
           value: ov.flights_today.toLocaleString('vi-VN'),
+          numericValue: ov.flights_today,
+          format: 'number',
           icon: 'flight',
           tone: 'warning',
           delta: `${ov.flights_delayed_today} chuyến trễ giờ`,
@@ -88,6 +97,8 @@ export class AdminDashboard implements OnInit {
         {
           label: 'Hệ số lấp đầy',
           value: `${ov.occupancy_rate_percent.toFixed(1)}%`,
+          numericValue: ov.occupancy_rate_percent,
+          format: 'percent',
           icon: 'event_seat',
           tone: 'danger',
           delta: `Tỷ lệ hủy vé: ${ov.cancel_rate_percent.toFixed(1)}%`,
@@ -103,6 +114,8 @@ export class AdminDashboard implements OnInit {
       {
         label: 'Chuyến bay hôm nay',
         value: op.flights_today.toLocaleString('vi-VN'),
+        numericValue: op.flights_today,
+        format: 'number',
         icon: 'flight',
         tone: 'primary',
         delta: `${op.flights_scheduled} đúng giờ · ${op.flights_boarding} đang lên tàu`,
@@ -112,6 +125,8 @@ export class AdminDashboard implements OnInit {
       {
         label: 'Đặt chỗ hôm nay',
         value: op.bookings_today.toLocaleString('vi-VN'),
+        numericValue: op.bookings_today,
+        format: 'number',
         icon: 'confirmation_number',
         tone: 'success',
         delta: `${op.bookings_confirmed_today} đã xác nhận`,
@@ -121,6 +136,8 @@ export class AdminDashboard implements OnInit {
       {
         label: 'Đang chờ thanh toán',
         value: op.bookings_pending_payment.toLocaleString('vi-VN'),
+        numericValue: op.bookings_pending_payment,
+        format: 'number',
         icon: 'hourglass_top',
         tone: 'warning',
         delta: `${op.passengers_today.toLocaleString('vi-VN')} hành khách hôm nay`,
@@ -130,6 +147,8 @@ export class AdminDashboard implements OnInit {
       {
         label: 'Chuyến trễ / hủy',
         value: String(op.flights_delayed + op.flights_cancelled),
+        numericValue: op.flights_delayed + op.flights_cancelled,
+        format: 'number',
         icon: 'warning',
         tone: 'danger',
         delta: `${op.flights_delayed} trễ · ${op.flights_cancelled} hủy`,

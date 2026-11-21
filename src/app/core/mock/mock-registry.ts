@@ -131,8 +131,9 @@ export class MockRegistry {
   /** Danh sách thông báo in-app của người dùng đang đăng nhập. */
   private notifications: NotificationItem[] = NOTIFICATIONS_MOCK.map((n) => ({ ...n }));
 
-  /** Dữ liệu mẫu đơn đặt vé & thanh toán cho luồng Checkout (Cụm B6). */
+  /** Dữ liệu mẫu đơn đặt vé & thanh toán cho luồng Checkout (Cụm B6) & Quản lý đặt chỗ (Cụm DA3). */
   private mockBooking: BookingDetail = buildMockBookingDetail();
+  private mockBookingsList: BookingDetail[] = this.buildInitialBookings();
   private mockPayments: PaymentTransaction[] = [];
   private paymentIdSeq = 500;
 
@@ -484,10 +485,31 @@ export class MockRegistry {
       return this.markNotificationRead(Number(notifReadMatch[1]));
     }
 
-    // Checkout, Payment, E-Ticket (Cụm B6).
+    // Checkout, Payment, E-Ticket (Cụm B6) & Quản lý đặt chỗ Khách / Admin (Cụm DA3).
+    if (path === '/api/public/flights/search' && m === 'GET') {
+      return this.searchPublicFlights(url);
+    }
+    if (path === '/api/bookings' && m === 'GET') {
+      return this.listBookings(url);
+    }
+    const bookingCancelMatch = path.match(/^\/api\/bookings\/(\d+)\/cancel$/);
+    if (bookingCancelMatch && m === 'POST') {
+      return this.cancelBooking(Number(bookingCancelMatch[1]), body);
+    }
+    if (path === '/api/admin/bookings' && m === 'GET') {
+      return this.listBookings(url);
+    }
+    const adminBookingCancelMatch = path.match(/^\/api\/admin\/bookings\/(\d+)\/cancel$/);
+    if (adminBookingCancelMatch && m === 'POST') {
+      return this.cancelBooking(Number(adminBookingCancelMatch[1]), body);
+    }
+    const adminBookingDetailMatch = path.match(/^\/api\/admin\/bookings\/(\d+)$/);
+    if (adminBookingDetailMatch && m === 'GET') {
+      return this.getBookingById(Number(adminBookingDetailMatch[1]));
+    }
     const bookingDetailMatch = path.match(/^\/api\/bookings\/(\d+)$/);
     if (bookingDetailMatch && m === 'GET') {
-      return ok(this.mockBooking);
+      return this.getBookingById(Number(bookingDetailMatch[1]));
     }
     const bookingVoucherMatch = path.match(/^\/api\/bookings\/(\d+)\/voucher$/);
     if (bookingVoucherMatch) {
@@ -1635,5 +1657,193 @@ export class MockRegistry {
       return ok(null, block ? 'Đã khóa ghế' : 'Đã mở khóa ghế');
     }
     return notFound('Không tìm thấy ghế chuyến bay');
+  }
+
+  // ---------- Luồng tìm chuyến & Quản lý đặt chỗ (Cụm DA3) ----------
+
+  private buildInitialBookings(): BookingDetail[] {
+    const primary = buildMockBookingDetail();
+    const confirmed: BookingDetail = {
+      ...primary,
+      id: 1049,
+      booking_code: 'DH-1049',
+      status: 'CONFIRMED',
+      total_amount: 2959000,
+      fare_amount: 2790000,
+      seat_surcharge_amount: 50000,
+      baggage_amount: 219000,
+      promotion_discount_amount: 100000,
+      voucher_discount_amount: 0,
+      agency_contact: {
+        agency_name: 'VinaFly Domestic Booking',
+        hotline: '1900 1234',
+        support_email: 'hotro@vinafly.vn',
+        note: 'Hệ thống không tự động hoàn tiền. Vui lòng liên hệ tổng đài đại lý để xử lý hoàn vé theo quy định hạng vé.',
+      },
+    };
+    const pending: BookingDetail = {
+      ...primary,
+      id: 1055,
+      booking_code: 'DH-1055',
+      customer_name: 'Lê Thu Hà',
+      customer_email: 'thuha@demo.local',
+      status: 'PENDING_PAYMENT',
+      total_amount: 1690000,
+      fare_amount: 1640000,
+      seat_surcharge_amount: 50000,
+      baggage_amount: 0,
+      promotion_discount_amount: 0,
+      voucher_discount_amount: 0,
+    };
+    const cancelled: BookingDetail = {
+      ...primary,
+      id: 1038,
+      booking_code: 'DH-1038',
+      customer_name: 'Trần Quốc Huy',
+      customer_email: 'quochuy@demo.local',
+      status: 'CANCELLED',
+      cancelled_at: '2026-11-18T09:15:00Z',
+      cancel_reason: 'Khách thay đổi lịch công tác',
+      total_amount: 2040000,
+      fare_amount: 2040000,
+      seat_surcharge_amount: 0,
+      baggage_amount: 0,
+      promotion_discount_amount: 0,
+      voucher_discount_amount: 0,
+    };
+    return [confirmed, pending, cancelled];
+  }
+
+  private searchPublicFlights(url: string): unknown {
+    const params = readParams(url);
+    const dep = (params.get('departure_airport_code') ?? '').trim().toUpperCase();
+    const arr = (params.get('arrival_airport_code') ?? '').trim().toUpperCase();
+    const seatClass = (params.get('seat_class') ?? '').trim().toUpperCase();
+
+    const openFlights = this.aliveFlights().filter(
+      (f) => f.sales_status === 'OPEN' && f.operation_status !== 'CANCELLED',
+    );
+
+    const items = openFlights
+      .filter((f) => {
+        if (dep && f.departure_airport.airport_code !== dep) return false;
+        if (arr && f.arrival_airport.airport_code !== arr) return false;
+        return true;
+      })
+      .map((f) => {
+        const seatMap = this.ensureFlightSeatMap(f);
+        const fares = [
+          {
+            fare_class_id: f.airline.id === 2 ? 5 : 1,
+            fare_class_code: `${f.airline.airline_code}_ECO_SAVER`,
+            fare_class_name: 'Phổ thông tiết kiệm',
+            seat_class: 'ECONOMY' as const,
+            adult_price: f.airline.id === 2 ? 1270000 : 1640000,
+            child_price: f.airline.id === 2 ? 952500 : 1230000,
+            infant_price: f.airline.id === 2 ? 127000 : 164000,
+            cabin_baggage: '7kg xách tay',
+            checked_baggage: 'Không gồm ký gửi (mua thêm)',
+            refundable: false,
+            refund_summary: 'Không hỗ trợ hoàn vé',
+            change_summary: 'Đổi chuyến thu phí 360.000đ + chênh lệch',
+          },
+          {
+            fare_class_id: f.airline.id === 2 ? 6 : 3,
+            fare_class_code: `${f.airline.airline_code}_PREM_ECO`,
+            fare_class_name: 'Phổ thông đặc biệt',
+            seat_class: 'PREMIUM_ECONOMY' as const,
+            adult_price: f.airline.id === 2 ? 1870000 : 2640000,
+            child_price: f.airline.id === 2 ? 1402500 : 1980000,
+            infant_price: f.airline.id === 2 ? 187000 : 264000,
+            cabin_baggage: '10kg xách tay',
+            checked_baggage: '23kg ký gửi miễn phí',
+            refundable: true,
+            refund_summary: 'Hoàn 85% trước 12 giờ bay',
+            change_summary: 'Miễn phí đổi ngày trước 24 giờ',
+          },
+          {
+            fare_class_id: f.airline.id === 2 ? 7 : 4,
+            fare_class_code: `${f.airline.airline_code}_BUS_FLEX`,
+            fare_class_name: 'Thương gia linh hoạt',
+            seat_class: 'BUSINESS' as const,
+            adult_price: f.airline.id === 2 ? 3470000 : 3940000,
+            child_price: f.airline.id === 2 ? 2602500 : 2955000,
+            infant_price: f.airline.id === 2 ? 347000 : 394000,
+            cabin_baggage: '14kg xách tay + phòng chờ',
+            checked_baggage: '32kg ký gửi miễn phí',
+            refundable: true,
+            refund_summary: 'Hoàn 100% trước 3 giờ bay',
+            change_summary: 'Đổi giờ bay miễn phí không giới hạn',
+          },
+        ].filter((fc) => !seatClass || fc.seat_class === seatClass);
+
+        return {
+          id: f.id,
+          flight_number: f.flight_number,
+          airline_id: f.airline.id,
+          airline_code: f.airline.airline_code,
+          airline_name: f.airline.airline_name,
+          aircraft_model: f.aircraft.model,
+          departure_airport_code: f.departure_airport.airport_code,
+          departure_airport_name: f.departure_airport.airport_name,
+          arrival_airport_code: f.arrival_airport.airport_code,
+          arrival_airport_name: f.arrival_airport.airport_name,
+          scheduled_departure: f.scheduled_departure,
+          scheduled_arrival: f.scheduled_arrival,
+          duration_minutes: f.duration_minutes,
+          available_seats: seatMap.available_seats,
+          min_price: fares[0]?.adult_price ?? 1640000,
+          fares,
+        };
+      });
+
+    return ok(items);
+  }
+
+  private listBookings(url: string): unknown {
+    const params = readParams(url);
+    const status = (params.get('status') ?? '').trim().toUpperCase();
+    const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
+    let rows = [...this.mockBookingsList];
+    if (status) {
+      rows = rows.filter((b) => b.status === status);
+    }
+    if (keyword) {
+      rows = rows.filter(
+        (b) =>
+          b.booking_code.toLowerCase().includes(keyword) ||
+          b.customer_name.toLowerCase().includes(keyword) ||
+          b.customer_email.toLowerCase().includes(keyword),
+      );
+    }
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getBookingById(id: number): unknown {
+    const found = this.mockBookingsList.find((b) => b.id === id);
+    if (found) return ok(found);
+    // Giữ tương thích với booking-checkout.spec.ts (id 1049 hoặc id bất kỳ dùng mockBooking)
+    return ok(this.mockBooking);
+  }
+
+  private cancelBooking(id: number, body: unknown): unknown {
+    const target = this.mockBookingsList.find((b) => b.id === id);
+    if (!target) return notFound('Không tìm thấy đơn đặt chỗ');
+    if (target.status === 'CANCELLED') {
+      return businessError('Đơn đặt chỗ đã được hủy trước đó');
+    }
+    const reason = ((body ?? {}) as { reason?: string }).reason?.trim() || 'Khách hàng yêu cầu hủy vé';
+    target.status = 'CANCELLED';
+    target.cancelled_at = new Date().toISOString();
+    target.cancel_reason = reason;
+    target.agency_contact = {
+      agency_name: 'VinaFly Domestic Booking',
+      hotline: '1900 1234',
+      support_email: 'hotro@vinafly.vn',
+      note: 'Hệ thống không tự động hoàn tiền. Vui lòng liên hệ 1900 1234 hoặc hotro@vinafly.vn để xử lý hoàn vé.',
+    };
+    return ok(target, 'Đã hủy đơn đặt chỗ thành công');
   }
 }

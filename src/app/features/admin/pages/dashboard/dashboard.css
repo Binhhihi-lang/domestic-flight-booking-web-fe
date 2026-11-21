@@ -12,6 +12,20 @@
   border-radius: var(--radius-lg);
   padding: 16px 17px;
   min-width: 0;
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: var(--color-primary-bright);
+}
+
+.stat--anim {
+  animation: vfFadeUp 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .stat__ic {
@@ -139,11 +153,17 @@
   max-width: 42px;
   background: linear-gradient(180deg, var(--color-primary-bright), var(--color-primary));
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  transition: opacity var(--dur);
+  transform-origin: bottom;
+  transition: opacity var(--dur), transform var(--dur) var(--ease);
+}
+
+.bar__b--anim {
+  animation: vfBarGrow 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .bar:hover .bar__b {
-  opacity: 0.82;
+  opacity: 0.88;
+  transform: scaleY(1.03);
 }
 
 .bar__l {

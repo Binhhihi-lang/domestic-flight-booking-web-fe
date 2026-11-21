@@ -114,3 +114,86 @@ a {
     font-size: 19px;
   }
 }
+
+/* =====================================================================
+   Chuyển động mượt mà dùng chung (Dashboard, Báo cáo & Popup/Modal)
+   ===================================================================== */
+@keyframes vfFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes vfBarGrow {
+  from {
+    opacity: 0.35;
+    transform: scaleY(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes vfBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vfModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Lớp phủ & khung popup mượt mà dùng chung cho mọi modal trong ứng dụng */
+.vf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(3, 18, 26, 0.52);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: vfBackdropIn 200ms var(--ease) both;
+}
+
+.vf-modal-panel {
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  animation: vfModalIn 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Làm mượt cả hộp thoại Angular Material Dialog toàn ứng dụng */
+.cdk-overlay-pane .mat-mdc-dialog-surface {
+  animation: vfModalIn 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vf-modal-backdrop,
+  .vf-modal-panel,
+  .cdk-overlay-pane .mat-mdc-dialog-surface {
+    animation: none !important;
+  }
+}
