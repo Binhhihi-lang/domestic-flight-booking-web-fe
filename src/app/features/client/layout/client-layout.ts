@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from '@core/services/auth.service';
 import { BrandLogo } from '@shared/components/brand-logo/brand-logo';
+import { NotificationBell } from '@shared/components/notification-bell/notification-bell';
 
 /**
  * Khung trang khách hàng — bám mockup P1 (nguồn chân lý thị giác).
@@ -18,7 +19,7 @@ import { BrandLogo } from '@shared/components/brand-logo/brand-logo';
 @Component({
   selector: 'app-client-layout',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatMenuModule, BrandLogo],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatMenuModule, BrandLogo, NotificationBell],
   templateUrl: './client-layout.html',
   styleUrl: './client-layout.css',
 })
