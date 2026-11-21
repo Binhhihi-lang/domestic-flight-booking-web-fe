@@ -1,0 +1,910 @@
+/* =====================================================================
+   base.css — nền dùng chung cho cả 3 prototype (khách / admin / staff)
+   Chỉ chứa thứ cả ba cùng cần. Riêng của từng khu vực nằm trong file
+   của khu vực đó (customer.css / admin.css / staff.css).
+   ===================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  color: var(--color-ink);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  line-height: var(--leading-tight);
+  margin: 0;
+  color: var(--color-ink);
+}
+
+h1 {
+  font-size: var(--text-h1);
+  font-weight: 700;
+}
+h2 {
+  font-size: var(--text-h2);
+  font-weight: 700;
+}
+h3 {
+  font-size: var(--text-h3);
+  font-weight: 600;
+}
+h4 {
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-bright);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ===================== Màn hình (router của prototype) ===================== */
+
+.screen {
+  display: none;
+}
+.screen.is-active {
+  display: block;
+}
+
+/* ===================== Tiện ích ===================== */
+
+.muted {
+  color: var(--color-ink-muted);
+}
+.subtle {
+  color: var(--color-ink-subtle);
+}
+.small {
+  font-size: var(--text-small);
+}
+.caption {
+  font-size: var(--text-caption);
+}
+.strong {
+  font-weight: 600;
+}
+.mono {
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  letter-spacing: 0.02em;
+}
+.center {
+  text-align: center;
+}
+.right {
+  text-align: right;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.hidden {
+  display: none !important;
+}
+.grow {
+  flex: 1;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: flex;
+  align-items: center;
+}
+.between {
+  justify-content: space-between;
+}
+.wrap {
+  flex-wrap: wrap;
+}
+.gap-xs {
+  gap: var(--sp-xs);
+}
+.gap-sm {
+  gap: var(--sp-sm);
+}
+.gap-md {
+  gap: var(--sp-md);
+}
+.gap-lg {
+  gap: var(--sp-lg);
+}
+.gap-xl {
+  gap: var(--sp-xl);
+}
+.gap-2xl {
+  gap: var(--sp-2xl);
+}
+
+.mt-sm {
+  margin-top: var(--sp-sm);
+}
+.mt-md {
+  margin-top: var(--sp-md);
+}
+.mt-lg {
+  margin-top: var(--sp-lg);
+}
+.mt-xl {
+  margin-top: var(--sp-xl);
+}
+.mt-2xl {
+  margin-top: var(--sp-2xl);
+}
+
+.shell {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 var(--sp-xl);
+}
+.shell-wide {
+  max-width: 1440px;
+}
+
+/* ===================== Thẻ / khối ===================== */
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.card-lg {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow);
+}
+.card-pad {
+  padding: var(--sp-xl);
+}
+.card-pad-lg {
+  padding: var(--sp-2xl);
+}
+.card-flat {
+  box-shadow: none;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-lg);
+  padding: var(--sp-lg) var(--sp-xl);
+  border-bottom: 1px solid var(--color-border-soft);
+}
+.card-body {
+  padding: var(--sp-xl);
+}
+.card-foot {
+  padding: var(--sp-lg) var(--sp-xl);
+  border-top: 1px solid var(--color-border-soft);
+  background: var(--color-surface-alt);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border-soft);
+  border: 0;
+  margin: var(--sp-lg) 0;
+}
+
+/* ===================== Nút ===================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-sm);
+  height: 40px;
+  padding: 0 var(--sp-lg);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+/* Nút dạng <a> phải giữ đúng màu chữ của biến thể, nếu không rule
+   `a:hover` ở trên (độ ưu tiên cao hơn) sẽ đổi chữ sang màu link và
+   làm chữ biến mất trên nền đậm. */
+.btn--primary,
+.btn--primary:hover:not(:disabled) {
+  color: var(--color-on-primary);
+}
+.btn--accent,
+.btn--accent:hover:not(:disabled) {
+  color: var(--color-on-accent);
+}
+.btn--secondary:hover:not(:disabled) {
+  color: var(--color-primary);
+}
+.btn--danger,
+.btn--danger:hover:not(:disabled) {
+  color: var(--color-danger);
+}
+.btn--ghost:hover:not(:disabled) {
+  color: var(--color-ink);
+}
+
+.btn--accent {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.btn--accent:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.btn--secondary {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border-color: var(--color-border);
+}
+.btn--secondary:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--color-ink-muted);
+}
+.btn--ghost:hover:not(:disabled) {
+  background: var(--color-border-soft);
+  color: var(--color-ink);
+}
+
+.btn--danger {
+  background: var(--color-surface);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.btn--danger:hover:not(:disabled) {
+  background: var(--color-danger-soft);
+}
+
+.btn--sm {
+  height: 32px;
+  padding: 0 var(--sp-md);
+  font-size: var(--text-small);
+  border-radius: var(--radius-sm);
+}
+.btn--lg {
+  height: 48px;
+  padding: 0 var(--sp-2xl);
+  font-size: var(--text-h3);
+}
+.btn--block {
+  width: 100%;
+}
+
+.material-icons,
+.material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* ===================== Nhãn trạng thái ===================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  height: 24px;
+  padding: 0 var(--sp-sm);
+  border-radius: 999px;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge--info {
+  background: var(--color-info-soft);
+  color: var(--color-on-info-soft);
+}
+.badge--success {
+  background: var(--color-success-soft);
+  color: var(--color-on-success-soft);
+}
+.badge--warning {
+  background: var(--color-warning-soft);
+  color: var(--color-on-warning-soft);
+}
+.badge--danger {
+  background: var(--color-danger-soft);
+  color: var(--color-on-danger-soft);
+}
+.badge--neutral {
+  background: var(--color-border-soft);
+  color: var(--color-ink-muted);
+}
+.badge--primary {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+.badge--accent {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-hover);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ===================== Nhập liệu ===================== */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field > label,
+.field-label {
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+.field > label .req {
+  color: var(--color-danger);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  height: 42px;
+  padding: 0 var(--sp-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
+}
+.textarea {
+  height: auto;
+  min-height: 96px;
+  padding: var(--sp-md);
+  resize: vertical;
+  line-height: var(--leading-normal);
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-ink-subtle);
+}
+.input:disabled,
+.select:disabled {
+  background: var(--color-border-soft);
+  color: var(--color-ink-subtle);
+  cursor: not-allowed;
+}
+.input--error,
+.select--error {
+  border-color: var(--color-danger);
+}
+.field-hint {
+  font-size: var(--text-caption);
+  color: var(--color-ink-subtle);
+}
+.field-error {
+  font-size: var(--text-caption);
+  color: var(--color-on-danger-soft);
+  font-weight: 600;
+}
+
+.input-group {
+  display: flex;
+  align-items: stretch;
+}
+.input-group > .input {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+.input-group > .btn {
+  border-radius: 0 var(--radius) var(--radius) 0;
+  height: auto;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-sm);
+  cursor: pointer;
+  font-size: var(--text-body);
+}
+.check input {
+  margin: 3px 0 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.switch span {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+}
+.switch span::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform var(--dur-fast) var(--ease);
+  box-shadow: var(--shadow-sm);
+}
+.switch input:checked + span {
+  background: var(--color-primary);
+}
+.switch input:checked + span::before {
+  transform: translateX(20px);
+}
+
+/* ===================== Bảng ===================== */
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+table.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-small);
+}
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface-alt);
+  padding: var(--sp-md) var(--sp-lg);
+  text-align: left;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.table tbody td {
+  padding: var(--sp-md) var(--sp-lg);
+  border-bottom: 1px solid var(--color-border-soft);
+  vertical-align: middle;
+}
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.table tbody tr:hover {
+  background: var(--color-surface-alt);
+}
+.table .cell-actions {
+  display: flex;
+  gap: var(--sp-xs);
+  justify-content: flex-end;
+}
+.table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===================== Modal & overlay ===================== */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-xl);
+  background: rgba(3, 18, 26, 0.5);
+  backdrop-filter: blur(2px);
+}
+.overlay.is-open {
+  display: flex;
+}
+
+.modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+.modal--wide {
+  max-width: 720px;
+}
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-lg);
+  padding: var(--sp-xl) var(--sp-xl) var(--sp-md);
+}
+.modal-body {
+  padding: 0 var(--sp-xl) var(--sp-xl);
+}
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-md);
+  padding: var(--sp-lg) var(--sp-xl);
+  border-top: 1px solid var(--color-border-soft);
+  background: var(--color-surface-alt);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+.modal-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.modal-close:hover {
+  background: var(--color-border-soft);
+  color: var(--color-ink);
+}
+
+/* ===================== Toast ===================== */
+
+.toast-stack {
+  position: fixed;
+  right: var(--sp-xl);
+  bottom: var(--sp-xl);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  min-width: 280px;
+  padding: var(--sp-md) var(--sp-lg);
+  border-radius: var(--radius);
+  background: var(--color-dark);
+  color: var(--color-on-dark);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-small);
+  animation: toast-in var(--dur) var(--ease);
+}
+.toast--success .material-icons {
+  color: #4ade80;
+}
+.toast--error .material-icons {
+  color: #fca5a5;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===================== Tabs & pill ===================== */
+
+.tabs {
+  display: flex;
+  gap: var(--sp-xs);
+  border-bottom: 1px solid var(--color-border);
+}
+.tab {
+  padding: var(--sp-md) var(--sp-lg);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-ink-muted);
+  font-size: var(--text-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+.tab:hover {
+  color: var(--color-ink);
+}
+.tab.is-active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.pills {
+  display: flex;
+  gap: var(--sp-sm);
+  flex-wrap: wrap;
+}
+.pill {
+  height: 34px;
+  padding: 0 var(--sp-lg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+.pill:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.pill.is-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* ===================== Bước (stepper) ===================== */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  flex-wrap: wrap;
+}
+.stepper__step {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  font-size: var(--text-small);
+  color: var(--color-ink-subtle);
+  white-space: nowrap;
+}
+.stepper__num {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.stepper__step.is-done {
+  color: var(--color-success);
+}
+.stepper__step.is-done .stepper__num {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+.stepper__step.is-active {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.stepper__step.is-active .stepper__num {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.stepper__line {
+  flex: 1;
+  min-width: 16px;
+  height: 1.5px;
+  background: var(--color-border);
+}
+
+/* ===================== Chân trang ===================== */
+
+.footer {
+  background: var(--color-dark);
+  color: var(--color-on-dark);
+  padding: var(--sp-3xl) 0 var(--sp-xl);
+  margin-top: var(--sp-4xl);
+}
+.footer a {
+  color: var(--color-on-dark-muted);
+  font-size: var(--text-small);
+}
+.footer a:hover {
+  color: var(--color-on-dark);
+}
+.footer h4 {
+  color: var(--color-on-dark);
+  font-size: var(--text-small);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--sp-md);
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(3, 1fr);
+  gap: var(--sp-2xl);
+}
+.footer li {
+  margin-bottom: var(--sp-sm);
+}
+.footer-bottom {
+  margin-top: var(--sp-2xl);
+  padding-top: var(--sp-lg);
+  border-top: 1px solid var(--color-dark-line);
+  font-size: var(--text-caption);
+  color: var(--color-on-dark-subtle);
+}
+
+/* ===================== Thanh công cụ prototype ===================== */
+
+.proto-bar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sp-lg);
+  transform: translateX(-50%);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(5, 40, 93, 0.94);
+  box-shadow: var(--shadow-lg);
+  color: #fff;
+  font-size: var(--text-caption);
+  backdrop-filter: blur(8px);
+}
+.proto-bar button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+}
+.proto-bar button:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+.proto-bar span {
+  padding: 0 var(--sp-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ===================== Responsive ===================== */
+
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .shell {
+    padding: 0 var(--sp-lg);
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --text-display: 1.5rem;
+    --text-h1: 1.25rem;
+    --text-h2: 1.125rem;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: var(--sp-xl);
+  }
+  .card-pad,
+  .card-body {
+    padding: var(--sp-lg);
+  }
+  .proto-bar {
+    bottom: var(--sp-sm);
+  }
+}

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VinaFly — Ba bản prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/tokens.css" />
+    <link rel="stylesheet" href="assets/base.css" />
+    <style>
+      .index-hero {
+        background: var(--color-dark);
+        color: var(--color-on-dark);
+        padding: var(--sp-4xl) 0 var(--sp-3xl);
+      }
+      .index-hero h1 {
+        color: var(--color-on-dark);
+        font-size: var(--text-display);
+      }
+      .index-hero p {
+        color: var(--color-on-dark-muted);
+        max-width: 620px;
+        margin-top: var(--sp-md);
+      }
+      .index-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--sp-xl);
+        margin-top: calc(var(--sp-3xl) * -1);
+      }
+      .index-card {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition:
+          transform var(--dur) var(--ease),
+          box-shadow var(--dur) var(--ease);
+      }
+      .index-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+      }
+      .index-card__top {
+        padding: var(--sp-xl);
+        color: #fff;
+      }
+      .index-card__top .material-icons {
+        font-size: 28px;
+      }
+      .index-card__top h2 {
+        color: #fff;
+        margin-top: var(--sp-md);
+        font-size: var(--text-h2);
+      }
+      .index-card__top span {
+        font-size: var(--text-small);
+        opacity: 0.82;
+      }
+      .index-card__body {
+        padding: var(--sp-xl);
+        flex: 1;
+      }
+      .index-card__body li {
+        display: flex;
+        gap: var(--sp-sm);
+        align-items: flex-start;
+        padding: var(--sp-sm) 0;
+        border-bottom: 1px solid var(--color-border-soft);
+        font-size: var(--text-small);
+        color: var(--color-ink-muted);
+      }
+      .index-card__body li:last-child {
+        border-bottom: 0;
+      }
+      .index-card__body li .material-icons {
+        font-size: 16px;
+        color: var(--color-success);
+        margin-top: 2px;
+      }
+      .index-card__foot {
+        padding: 0 var(--sp-xl) var(--sp-xl);
+      }
+      .index-note {
+        margin-top: var(--sp-3xl);
+        padding: var(--sp-xl);
+        border-radius: var(--radius-lg);
+        background: var(--color-info-soft);
+        color: var(--color-on-info-soft);
+        font-size: var(--text-small);
+      }
+      .index-note strong {
+        display: block;
+        margin-bottom: var(--sp-sm);
+        font-size: var(--text-body);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="index-hero">
+      <div class="shell">
+        <div class="row gap-md" style="margin-bottom: var(--sp-xl)">
+          <span class="material-icons" style="font-size: 34px">flight_takeoff</span>
+          <div>
+            <div class="strong" style="font-size: var(--text-h2)">VinaFly</div>
+            <div class="small" style="opacity: 0.75">
+              Đặt vé máy bay nội địa — bản mẫu giao diện
+            </div>
+          </div>
+        </div>
+        <h1>Ba bản prototype</h1>
+        <p>
+          Ba khu vực của cùng một hệ thống, dùng chung một bộ token thiết kế và cùng một bộ dữ
+          liệu mẫu. Số liệu khớp nhau giữa ba bản — đơn <span class="mono">DH-1049</span> xuất
+          hiện ở cả ba.
+        </p>
+      </div>
+    </div>
+
+    <div class="shell">
+      <div class="index-grid">
+        <article class="card card-lg index-card">
+          <div class="index-card__top" style="background: var(--color-primary)">
+            <span class="material-icons">person</span>
+            <h2>Khách hàng</h2>
+            <span>43 màn · 4 popup · đặt vé trọn luồng</span>
+          </div>
+          <div class="index-card__body">
+            <ul>
+              <li><span class="material-icons">check</span> Trang chủ, tìm chuyến, chi tiết chuyến</li>
+              <li><span class="material-icons">check</span> Chọn ghế, hành khách, thanh toán</li>
+              <li><span class="material-icons">check</span> Xác nhận, vé của tôi, voucher</li>
+            </ul>
+          </div>
+          <div class="index-card__foot">
+            <a class="btn btn--primary btn--block" href="customer.html">
+              Mở bản khách hàng
+              <span class="material-icons">arrow_forward</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="card card-lg index-card">
+          <div class="index-card__top" style="background: var(--color-dark-2)">
+            <span class="material-icons">admin_panel_settings</span>
+            <h2>Quản trị</h2>
+            <span>46 màn · 4 popup · toàn quyền hệ thống</span>
+          </div>
+          <div class="index-card__body">
+            <ul>
+              <li><span class="material-icons">check</span> Dashboard doanh thu, báo cáo</li>
+              <li><span class="material-icons">check</span> Chuyến bay, máy bay, sơ đồ ghế</li>
+              <li><span class="material-icons">check</span> Đặt chỗ, người dùng, hạng vé</li>
+            </ul>
+          </div>
+          <div class="index-card__foot">
+            <a class="btn btn--primary btn--block" href="admin.html">
+              Mở bản quản trị
+              <span class="material-icons">arrow_forward</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="card card-lg index-card">
+          <div class="index-card__top" style="background: var(--color-sidebar-top)">
+            <span class="material-icons">support_agent</span>
+            <h2>Nhân viên</h2>
+            <span>9 màn · 4 popup · vận hành ca trực</span>
+          </div>
+          <div class="index-card__body">
+            <ul>
+              <li><span class="material-icons">check</span> Bảng ca trực, chuyến sắp bay</li>
+              <li><span class="material-icons">check</span> Sửa chuyến, xử lý hoãn/huỷ</li>
+              <li><span class="material-icons">check</span> Danh sách khách, check-in</li>
+            </ul>
+          </div>
+          <div class="index-card__foot">
+            <a class="btn btn--primary btn--block" href="staff.html">
+              Mở bản nhân viên
+              <span class="material-icons">arrow_forward</span>
+            </a>
+          </div>
+        </article>
+      </div>
+
+      <div class="index-note">
+        <strong>Cách xem</strong>
+        Mỗi bản là một trang HTML tự chứa, mở thẳng bằng trình duyệt — không cần cài đặt hay
+        build. Thanh công cụ ở đáy trang cho phép về màn đầu và quay lại. Ảnh minh hoạ tải từ
+        Unsplash nên cần mạng; nếu không có mạng, bố cục vẫn giữ nguyên, chỉ thiếu ảnh.
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="shell">
+        <div class="footer-bottom" style="margin-top: 0; border-top: 0; padding-top: 0">
+          VinaFly — bản mẫu giao diện phục vụ đồ án. Số liệu trong trang là dữ liệu mẫu, không
+          phải dữ liệu thật.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

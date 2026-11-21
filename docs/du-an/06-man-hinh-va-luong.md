@@ -73,7 +73,6 @@ Ba màn xác thực (`/login`, `/register`, `/forgot-password`) nằm **ngoài**
 | D7 | Xác nhận hủy vé | modal từ D6 | A | ❌ |
 | D8 | Vé điện tử của tôi | `/account/tickets` | A | ❌ (W-RT-09a) |
 | D9 | Voucher của tôi | `/account/vouchers` | A | ✅ |
-| D10 | Đổi ngày bay | `/account/bookings/:id/change` | A | ❌ (W-RT-08a) |
 
 ### 2.4 Admin
 
@@ -88,13 +87,14 @@ Ba màn xác thực (`/login`, `/register`, `/forgot-password`) nằm **ngoài**
 | F13–F14 | Khuyến mãi / Voucher | `/admin/promotions`, `/vouchers` | ✅ |
 | F15–F16 | Danh mục tin / Tin tức | `/admin/news-categories`, `/news` | ✅ |
 | F17 | Quản lý chuyến bay | `/admin/flights` | ⏳ coming-soon |
+| F17a | Sửa chuyến + đổi trạng thái vận hành | `/admin/flights/:id/edit` | ❌ (W-ADM-23) |
 | F18 | Hạng vé | `/admin/fare-classes` | ❌ |
 | F19 | Quy định hoàn vé | `/admin/fare-rules` | ❌ |
 | F20 | Gói hành lý | `/admin/baggage-options` | ❌ |
 | F21 | Giá bán theo chuyến | `/admin/flight-fares` | ❌ |
 | F22 | Tồn ghế | `/admin/flight-seat-inventory` | ❌ |
 | F23–F24 | Đặt chỗ: danh sách / chi tiết | `/admin/bookings` | ⏳ coming-soon |
-| F25 | Báo cáo & thống kê | `/admin/dashboard` | ❌ |
+| F25 | Báo cáo & thống kê | `/admin/reports` | ❌ |
 | F26 | Hồ sơ admin | `/admin/profile` | ⏳ coming-soon |
 
 Wireframe admin có thêm (vượt danh sách trên): **W-ADM-16** Hạng dịch vụ, **W-ADM-17…21** Hạng vé / Quy định hoàn / Gói hành lý / Giá bán theo chuyến / Tồn ghế, **W-ADM-26** Đặt chỗ chi tiết, **W-ADM-02** Báo cáo & thống kê.
@@ -136,7 +136,6 @@ FE **chưa có module `features/staff`**; toàn bộ khu vực mới dừng ở 
 | W-RT-01b | Popover số hành khách | đã code trong `flight-search-card` |
 | W-RT-02b | Chi tiết chuyến bay — hạng vé gom theo hạng dịch vụ | chưa code (B3) |
 | W-RT-06a | Trang mã VietQR | chưa code |
-| W-RT-08a | Đổi ngày bay | chưa code |
 | W-RT-09a | Vé điện tử của tôi | chưa code |
 | W-RT-10/10a | Tra cứu đặt chỗ khách vãng lai | chưa code |
 | W-RT-16b | Tin theo chuyên mục | chưa code |
@@ -167,15 +166,15 @@ Trang chủ (chọn tuyến, ngày, khách)
 Quy tắc UI:
 
 - Thẻ chuyến chỉ hiện **một giá “Giá từ”** + số hạng vé; bấm Chọn mới mở bảng hạng.
-- Bộ lọc gồm 4 nhóm: **hãng · hạng vé · giờ khởi hành · khoảng giá**.
+- Bộ lọc gồm 4 nhóm: **hãng · hạng dịch vụ · giờ khởi hành · khoảng giá**.
 - Sắp xếp: **Rẻ nhất · Nhanh nhất · Sớm nhất · Muộn nhất**.
-- Ô hành khách là **popover 3 bộ đếm** (người lớn ≥13, trẻ em 2–12, em bé <2); tổng ≤ 9; em bé ≤ người lớn.
+- Ô hành khách là **popover 3 bộ đếm** (người lớn ≥12, trẻ em 2–11, em bé <2); tổng ≤ 9; em bé ≤ người lớn.
 - Không có ô nhập mã voucher, không có bộ lọc “điểm dừng”.
 
 ### Tra cứu đặt chỗ (khách vãng lai)
 
 - `W-RT-10`: nhập **mã đặt chỗ + email/SĐT** (bắt buộc cả hai).
-- `W-RT-10a`: kết quả **chỉ đọc** — trạng thái, hành trình, ghế, thanh toán, tải vé PDF; không có nút hủy/đổi ngày.
+- `W-RT-10a`: kết quả **chỉ đọc** — trạng thái, hành trình, ghế, thanh toán, tải vé PDF; không có nút hủy.
 
 ---
 
@@ -250,7 +249,7 @@ Công cụ: Figma Design (3–5), FigJam (2), Prototype mode (6), Figma AI/Make 
 - Tài liệu dùng `/news/:slug`; code dùng `/news/:id`.
 - `/forgot-password` và `/reset-password` có trong tài liệu nhưng **chưa có route** trên nhánh hiện tại.
 - `/account/profile`, `/account/security`, `/admin/profile` đang là `coming-soon`.
-- Tài liệu UI đếm 77 màn; wireframe khách đã vẽ **45 màn / 90 artboard** (mỗi màn một desktop + một mobile), có thêm các màn ngoài tài liệu (tra cứu đặt chỗ, chi tiết voucher, đổi ngày bay, danh mục hãng bay / sân bay / thành phố).
+- Tài liệu UI đếm 77 màn; wireframe khách đã vẽ **44 màn / 88 artboard** (mỗi màn một desktop + một mobile), có thêm các màn ngoài tài liệu (tra cứu đặt chỗ, chi tiết voucher, danh mục hãng bay / sân bay / thành phố).
 
 ---
 

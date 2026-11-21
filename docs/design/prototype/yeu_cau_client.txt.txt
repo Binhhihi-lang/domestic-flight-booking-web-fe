@@ -1,0 +1,70 @@
+Hãy tiếp tục tạo liên kết Prototype (On click -> Navigate to, animation: Dissolve 150ms) để nối 25 màn hình mới (mockup-02-khu-hoi-khach) liền mạch với 21 màn hình Đặt vé đã có sẵn (mockup-01-dat-ve) trên cùng trang này:
+
+1. Thanh điều hướng đầu trang (Header) & Chân trang (Footer) — áp dụng cho TẤT CẢ các màn hình Khách hàng (cả Mockup 01 & Mockup 02):
+- Logo "VinaFly" & mục "Trang chủ" -> W-CUS-01 (Trang chủ)
+- Mục "Khuyến mãi" -> W-CUS-28 (Khuyến mãi)
+- Mục "Tin tức" -> W-CUS-30 (Tin tức & cẩm nang)
+- Mục "Tra cứu đặt chỗ" -> W-CUS-21 (Tra cứu đặt chỗ)
+- Menu tài khoản (góc phải trên):
+  + "Hồ sơ cá nhân" -> W-CUS-23
+  + "Vé của tôi" -> W-CUS-17
+  + "Voucher của tôi" -> W-CUS-25
+  + "Đăng xuất" -> W-CUS-02 (Đăng nhập)
+- Footer (nếu có các link này):
+  + "Điểm đến phổ biến" -> W-CUS-37 | "Hãng hàng không" -> W-CUS-38 | "Sân bay" -> W-CUS-40 | "Thành phố" -> W-CUS-41
+  + "Trung tâm trợ giúp" -> W-CUS-33 | "Hướng dẫn đặt vé" -> W-CUS-34 | "Chính sách hoàn vé" -> W-CUS-35 | "Liên hệ hỗ trợ" -> W-CUS-36
+
+2. Nối luồng Khứ hồi & Chọn ghế Thương gia vào luồng Đặt vé (Mockup 01):
+- Từ W-CUS-07 (Chọn hạng vé): nút chọn hạng Thương gia (hoặc tab/nút chuyển sang chuyến về) -> W-RT-01 (Chọn chuyến về)
+- Từ W-RT-01 (Chọn chuyến về):
+  + Nút "Quay lại" / "Đổi chuyến đi" -> W-CUS-05 (Kết quả tìm chuyến)
+  + Nút "Chọn" chuyến về -> W-RT-02 (Chọn ghế Thương gia)
+- Từ W-RT-02 (Chọn ghế Thương gia):
+  + Nút "Quay lại" -> W-RT-01
+  + Nút "Tiếp tục" -> W-CUS-09 (Thông tin hành khách) để đi tiếp sang Xem lại đơn (W-CUS-10) và Thanh toán (W-CUS-11)
+
+3. Nối Vé điện tử & Tra cứu đặt chỗ vào Quản lý vé (Mockup 01):
+- Từ W-CUS-19 (Vé điện tử của tôi):
+  + Bấm vào thẻ vé / nút "Xem vé" -> W-CUS-16 (Vé điện tử)
+  + Link "Một vé gồm những gì" -> W-CUS-20
+  + Link "Vé của tôi" -> W-CUS-17
+- Từ W-CUS-20 (Một vé gồm những gì): nút "Quay lại" -> W-CUS-19
+- Từ W-CUS-21 (Tra cứu đặt chỗ): nút "Tra cứu" -> W-CUS-22 (Kết quả tra cứu)
+- Từ W-CUS-22 (Kết quả tra cứu):
+  + Nút "Xem chi tiết đặt chỗ" -> W-CUS-18 (Chi tiết đặt chỗ)
+  + Nút "Xem vé điện tử" -> W-CUS-16 (Vé điện tử)
+  + Nút "Tra cứu đơn khác" -> W-CUS-21
+
+4. Tài khoản cá nhân & Đổi mật khẩu:
+- Từ W-CUS-23 (Hồ sơ cá nhân):
+  + Nút / mục "Đổi mật khẩu" -> W-CUS-24
+  + Mục "Vé của tôi" -> W-CUS-17 | "Voucher của tôi" -> W-CUS-25
+- Từ W-CUS-24 (Đổi mật khẩu): nút "Quay lại" / "Huỷ" / "Cập nhật mật khẩu" -> W-CUS-23
+
+5. Voucher & Khuyến mãi (nối ngược về Đặt vé):
+- Từ W-CUS-25 (Voucher của tôi):
+  + Nút "Kho voucher" / "Nhận thêm voucher" -> W-CUS-26
+  + Bấm vào thẻ voucher -> W-CUS-27 (Chi tiết voucher)
+  + Nút "Dùng ngay" -> W-CUS-01 (Trang chủ)
+- Từ W-CUS-26 (Kho voucher):
+  + Bấm vào thẻ voucher -> W-CUS-27
+  + Tab / link "Voucher của tôi" -> W-CUS-25
+- Từ W-CUS-27 (Chi tiết voucher):
+  + Nút "Quay lại" -> W-CUS-25
+  + Nút "Đặt vé ngay" / "Áp dụng ngay" -> W-CUS-01 (Trang chủ)
+- Từ W-CUS-28 (Khuyến mãi): bấm vào thẻ chương trình khuyến mãi -> W-CUS-29 (Chi tiết khuyến mãi)
+- Từ W-CUS-29 (Chi tiết khuyến mãi):
+  + Link "Về danh sách khuyến mãi" -> W-CUS-28
+  + Nút "Tìm chuyến áp dụng" / "Đặt vé ngay" -> W-CUS-05 (Kết quả tìm chuyến)
+
+6. Tin tức, Trợ giúp & Danh mục khám phá:
+- W-CUS-30 (Tin tức): bấm danh mục "Kinh nghiệm bay" -> W-CUS-31; bấm vào bài viết -> W-CUS-32 (Chi tiết tin tức)
+- W-CUS-31 (Kinh nghiệm bay): bấm bài viết -> W-CUS-32; link "Tất cả tin tức" -> W-CUS-30
+- W-CUS-32 (Chi tiết tin tức): link "Quay lại" -> W-CUS-30
+- W-CUS-33 (Trung tâm trợ giúp): "Hướng dẫn đặt vé" -> W-CUS-34; "Chính sách hoàn vé" -> W-CUS-35; "Liên hệ hỗ trợ" -> W-CUS-36
+- W-CUS-34 / W-CUS-35 / W-CUS-36: link "Trung tâm trợ giúp" -> W-CUS-33
+- W-CUS-37 (Điểm đến phổ biến), W-CUS-40 (Sân bay), W-CUS-41 (Thành phố): nút "Tìm chuyến bay" / bấm vào thẻ tuyến -> W-CUS-05 (Kết quả tìm chuyến)
+- W-CUS-38 (Hãng hàng không): bấm vào thẻ hãng bay -> W-CUS-39 (Chi tiết hãng hàng không)
+- W-CUS-39 (Chi tiết hãng hàng không): link "Quay lại" -> W-CUS-38; nút "Tìm chuyến của hãng" -> W-CUS-05
+
+Giữ nguyên W-CUS-01 (Trang chủ) là Flow Starting Point duy nhất cho toàn bộ luồng Khách hàng.

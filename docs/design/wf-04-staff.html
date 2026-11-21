@@ -461,9 +461,9 @@
               </div>
               <div class="stat">
                 <div class="stat__ic"></div>
-                <div class="stat__l">Doanh thu hôm nay</div>
-                <div class="stat__v">412<small> triệu</small></div>
-                <div class="stat__d">↑ +4,8% so với hôm qua</div>
+                <div class="stat__l">Tỷ lệ lấp đầy hôm nay</div>
+                <div class="stat__v">78<small>%</small></div>
+                <div class="stat__d">Trung bình các chuyến trong ngày</div>
               </div>
               <div class="stat">
                 <div class="stat__ic"></div>
@@ -489,20 +489,20 @@
                 <tbody>
                   <tr>
                     <td><span class="cd">VN 165</span></td><td><b>HAN → DAD</b></td>
-                    <td>15/11/2026 · 06:15</td><td class="num">4</td>
-                    <td><span class="badge badge--warn">Sắp hết</span></td>
+                    <td>15/11/2026 · 06:15</td><td class="num">4 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
                     <td><span class="ract"><a>Mở chuyến bổ sung</a></span></td>
                   </tr>
                   <tr>
                     <td><span class="cd">VJ 507</span></td><td><b>HAN → DAD</b></td>
-                    <td>15/11/2026 · 07:20</td><td class="num">2</td>
-                    <td><span class="badge badge--warn">Sắp hết</span></td>
+                    <td>15/11/2026 · 07:20</td><td class="num">2 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
                     <td><span class="ract"><a>Mở chuyến bổ sung</a></span></td>
                   </tr>
                   <tr>
                     <td><span class="cd">QH 204</span></td><td><b>SGN → DAD</b></td>
-                    <td>15/11/2026 · 09:05</td><td class="num">6</td>
-                    <td><span class="badge badge--warn">Sắp hết</span></td>
+                    <td>15/11/2026 · 09:05</td><td class="num">6 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
                     <td><span class="ract"><a>Mở chuyến bổ sung</a></span></td>
                   </tr>
                   <tr>
@@ -520,7 +520,7 @@
               <table class="tbl">
                 <thead>
                   <tr>
-                    <th style="width:120px">Mã PNR</th>
+                    <th style="width:120px">Mã đơn hàng</th>
                     <th style="width:220px">Khách hàng</th>
                     <th>Tuyến</th>
                     <th style="width:190px">Hạn thanh toán</th>
@@ -530,21 +530,21 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td><span class="cd">VF3B8N</span></td>
+                    <td><span class="cd">DH-1046</span><div style="font-size:9px;color:var(--ink-3)">PNR sau thanh toán</div></td>
                     <td><b>Lê Minh Cường</b><div style="font-size:10px;color:var(--ink-3)">cuong.le&#64;gmail.com</div></td>
                     <td>SGN → DAD</td><td>13/11/2026 · 09:27</td>
                     <td class="num">1.290.000 ₫</td>
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF8C4D</span></td>
+                    <td><span class="cd">DH-1047</span></td>
                     <td><b>Nguyễn Thị Mai</b><div style="font-size:10px;color:var(--ink-3)">mai.nguyen&#64;email.com</div></td>
                     <td>HAN → SGN</td><td>13/11/2026 · 09:41</td>
                     <td class="num">2.660.000 ₫</td>
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF1L9S</span></td>
+                    <td><span class="cd">DH-1048</span></td>
                     <td><b>Phạm Quốc Bảo</b><div style="font-size:10px;color:var(--ink-3)">bao.pham&#64;email.com</div></td>
                     <td>DAD → HAN</td><td>13/11/2026 · 09:55</td>
                     <td class="num">1.480.000 ₫</td>
@@ -576,7 +576,7 @@
           <li><b>Vào từ:</b> đăng nhập vận hành, mục Dashboard ở sidebar</li>
           <li><b>Ra tới:</b> danh sách chuyến khi bấm "Mở chuyến bổ sung"</li>
           <li>Booking chờ xác nhận mở sang chi tiết booking</li>
-          <li>Chuông trên header mở danh sách việc cần xử lý</li>
+          <li>Chuông thông báo là placeholder — nghiệp vụ chốt tại docs/design/00-nghiep-vu-thong-bao.md; chưa có bảng notifications</li>
         </ul>
       </div>
       <div>
@@ -679,18 +679,18 @@
                   <tr>
                     <td><span class="cb"></span></td><td><span class="cd">VN 165</span></td>
                     <td><b>HAN → DAD</b></td><td>15/11/2026 · 06:15</td>
-                    <td>VN-A321-01</td><td class="num">4</td>
+                    <td>VN-A321-01</td><td class="num">4 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
                     <td><span class="badge badge--ok">Mở bán</span></td>
-                    <td><span class="badge badge--warn">Sắp hết</span></td>
-                    <td><span class="ract"><a>Sửa</a><a>Xem</a></span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
+                    <td><span class="ract"><a>Sửa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
                     <td><span class="cb"></span></td><td><span class="cd">VJ 507</span></td>
                     <td><b>HAN → DAD</b></td><td>15/11/2026 · 07:20</td>
-                    <td>VJ-A321-02</td><td class="num">2</td>
+                    <td>VJ-A321-02</td><td class="num">2 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
                     <td><span class="badge badge--ok">Mở bán</span></td>
-                    <td><span class="badge badge--warn">Sắp hết</span></td>
-                    <td><span class="ract"><a>Sửa</a><a>Xem</a></span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
+                    <td><span class="ract"><a>Sửa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
                     <td><span class="cb"></span></td><td><span class="cd">QH 204</span></td>
@@ -698,7 +698,7 @@
                     <td>QH-A320-03</td><td class="num">6</td>
                     <td><span class="badge badge--ok">Mở bán</span></td>
                     <td><span class="badge">Đã lên lịch</span></td>
-                    <td><span class="ract"><a>Sửa</a><a>Xem</a></span></td>
+                    <td><span class="ract"><a>Sửa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
                     <td><span class="cb"></span></td><td><span class="cd">VU 812</span></td>
@@ -706,7 +706,7 @@
                     <td>VU-ATR-04</td><td class="num">68</td>
                     <td><span class="badge">Đóng bán</span></td>
                     <td><span class="badge badge--warn">Bản nháp</span></td>
-                    <td><span class="ract"><a>Sửa</a><a>Xem</a></span></td>
+                    <td><span class="ract"><a>Sửa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
                     <td><span class="cb"></span></td><td><span class="cd">VN 218</span></td>
@@ -714,7 +714,7 @@
                     <td>VN-B787-05</td><td class="num">12</td>
                     <td><span class="badge">Đóng bán</span></td>
                     <td><span class="badge">Đã cất cánh</span></td>
-                    <td><span class="ract"><a>Xem</a></span></td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                 </tbody>
               </table>
@@ -1240,7 +1240,7 @@
       <h2>Danh sách đặt chỗ</h2>
       <span class="route">/staff/bookings</span>
       <span class="sp"></span>
-      <span class="meta">Chỉ đọc — tra cứu theo mã PNR</span>
+      <span class="meta">Chỉ đọc — tra cứu theo mã đơn hoặc PNR</span>
     </div>
 
     <div class="art">
@@ -1277,7 +1277,7 @@
             <div class="pgh">
               <div>
                 <h1>Đặt chỗ</h1>
-                <p>Toàn bộ booking của khách · tra cứu theo mã PNR, tên hoặc email</p>
+                <p>Toàn bộ booking của khách · tra cứu theo mã đơn hoặc PNR, tên hoặc email</p>
               </div>
               <span class="sp"></span>
               <span class="btn btn--ghost">Xuất Excel</span>
@@ -1285,7 +1285,7 @@
 
             <div class="card">
               <div class="tb">
-                <div class="srh"><span class="srh__ic"></span>Tìm theo mã PNR, tên hoặc email khách</div>
+                <div class="srh"><span class="srh__ic"></span>Tìm theo mã đơn, PNR, tên hoặc email khách</div>
                 <div class="sel">Tất cả trạng thái<span class="sel__c"></span></div>
                 <div class="sel">Hành trình: tất cả<span class="sel__c"></span></div>
                 <div class="sel">13/11/2026 – 20/11/2026<span class="sel__c"></span></div>
@@ -1295,7 +1295,7 @@
               <table class="tbl">
                 <thead>
                   <tr>
-                    <th style="width:130px">Mã PNR</th>
+                    <th style="width:130px">Mã đơn / PNR</th>
                     <th style="width:220px">Khách hàng</th>
                     <th>Tuyến</th>
                     <th style="width:170px">Ngày bay</th>
@@ -1307,15 +1307,15 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td><span class="cd">VF7K2M</span></td>
+                    <td><span class="cd">VF7K2M</span><div style="font-size:9px;color:var(--ink-3)">DH-1042</div></td>
                     <td><b>Nguyễn Văn An</b><div style="font-size:10px;color:var(--ink-3)">an.nguyen&#64;email.com</div></td>
                     <td>HAN → SGN</td><td>15/11/2026</td><td class="num">2</td>
-                    <td class="num">2.660.000 ₫</td>
+                    <td class="num">2.750.000 ₫</td>
                     <td><span class="badge badge--ok">Đã xác nhận</span></td>
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF9Q1T</span></td>
+                    <td><span class="cd">VF9Q1T</span><div style="font-size:9px;color:var(--ink-3)">DH-1043</div></td>
                     <td><b>Trần Thị Bích</b><div style="font-size:10px;color:var(--ink-3)">bich.tran&#64;email.com</div></td>
                     <td>HAN → SGN → HAN</td><td>20/11/2026</td><td class="num">1</td>
                     <td class="num">5.220.000 ₫</td>
@@ -1323,7 +1323,7 @@
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF3B8N</span></td>
+                    <td><span class="cd">DH-1046</span><div style="font-size:9px;color:var(--ink-3)">PNR sau thanh toán</div></td>
                     <td><b>Lê Minh Cường</b><div style="font-size:10px;color:var(--ink-3)">cuong.le&#64;gmail.com</div></td>
                     <td>SGN → DAD</td><td>14/11/2026</td><td class="num">1</td>
                     <td class="num">1.290.000 ₫</td>
@@ -1331,7 +1331,7 @@
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF5H0P</span></td>
+                    <td><span class="cd">VF5H0P</span><div style="font-size:9px;color:var(--ink-3)">DH-1044</div></td>
                     <td><b>Phạm Thu Hà</b><div style="font-size:10px;color:var(--ink-3)">ha.pham&#64;email.com</div></td>
                     <td>HAN → DAD</td><td>12/11/2026</td><td class="num">2</td>
                     <td class="num">2.480.000 ₫</td>
@@ -1339,7 +1339,7 @@
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF2X7R</span></td>
+                    <td><span class="cd">DH-1045</span><div style="font-size:9px;color:var(--ink-3)">PNR sau thanh toán</div></td>
                     <td><b>Đỗ Quang Minh</b><div style="font-size:10px;color:var(--ink-3)">minh.do&#64;email.com</div></td>
                     <td>SGN → CXR</td><td>11/11/2026</td><td class="num">3</td>
                     <td class="num">3.870.000 ₫</td>
@@ -1378,14 +1378,14 @@
         <ul>
           <li><b>Vào từ:</b> sidebar nhóm "Bán vé", Dashboard, hoặc tab Đặt chỗ của chuyến</li>
           <li><b>Ra tới:</b> chi tiết booking để xem hành khách, ghế, hành lý, thanh toán</li>
-          <li>Mã PNR là khoá tra cứu khi khách gọi tổng đài</li>
+          <li>Đơn chưa thanh toán chỉ có mã đơn hàng; PNR sinh sau khi thanh toán thành công.</li>
           <li>Xuất Excel để đối soát, không chuyển trang</li>
         </ul>
       </div>
       <div>
         <h3>Cấu trúc</h3>
         <ul>
-          <li>Bảy cột: PNR, khách hàng, tuyến, ngày bay, số khách, tổng tiền, trạng thái</li>
+          <li>Bảy cột: mã đơn/PNR, khách hàng, tuyến, ngày bay, số khách, tổng tiền, trạng thái</li>
           <li>Cột khách hàng hai dòng: tên đậm, email mờ</li>
           <li>Số khách và tổng tiền canh phải</li>
           <li>Không cột tích chọn vì không có thao tác hàng loạt</li>
@@ -1395,7 +1395,7 @@
         <h3>Quyết định thiết kế</h3>
         <ul>
           <li>Chỉ đọc đúng quyền staff: xem để hỗ trợ khách, không sửa dữ liệu.</li>
-          <li>Mã PNR đứng đầu bảng vì là khoá tra cứu duy nhất.</li>
+          <li>Mã đơn/PNR đứng đầu bảng: PNR là khoá tra cứu sau khi đơn đã thanh toán.</li>
           <li>Lọc theo khoảng ngày vì staff thường hỏi "hôm nay có bao nhiêu đơn".</li>
           <li>Giữ "Hết hạn" tách khỏi "Đã huỷ" để biết khách có chủ động huỷ hay không.</li>
         </ul>
@@ -1462,7 +1462,7 @@
                 <div class="dl__r"><dt>Loại hành trình</dt><dd>Một chiều</dd></div>
                 <div class="dl__r"><dt>Trạng thái</dt><dd><span class="badge badge--ok">Đã xác nhận</span></dd></div>
                 <div class="dl__r"><dt>Hạn thanh toán</dt><dd>Đã thanh toán lúc 08:47, 13/11/2026</dd></div>
-                <div class="dl__r"><dt>Tổng tiền</dt><dd><b>2.660.000 ₫</b></dd></div>
+                <div class="dl__r"><dt>Tổng tiền</dt><dd><b>2.750.000 ₫</b></dd></div>
               </div>
             </div>
 
@@ -1475,8 +1475,8 @@
                 <tbody>
                   <tr>
                     <td>1 · Đi</td><td><span class="cd">VN 165</span></td><td>HAN → DAD</td>
-                    <td>Phổ thông — Linh hoạt</td><td>Hoàn trước 24 giờ · 80%</td>
-                    <td class="num">2.660.000 ₫</td>
+                    <td>VN_ECON_FLEX · Phổ thông linh hoạt</td><td>Hoàn trước 24 giờ · 90%</td>
+                    <td class="num">2.400.000 ₫</td>
                   </tr>
                 </tbody>
               </table>
@@ -1490,7 +1490,7 @@
                 </thead>
                 <tbody>
                   <tr><td><b>Nguyễn Văn An</b></td><td>Nam</td><td>12/04/1990</td><td><span class="badge">Người lớn</span></td><td><span class="cd">12A</span></td></tr>
-                  <tr><td><b>Nguyễn Bé Na</b></td><td>Nữ</td><td>03/09/2018</td><td><span class="badge">Trẻ em</span></td><td><span class="cd">12B</span></td></tr>
+                  <tr><td><b>Nguyễn Thị Mai</b></td><td>Nữ</td><td>08/09/1997</td><td><span class="badge">Người lớn</span></td><td><span class="cd">12B</span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -1504,7 +1504,7 @@
                   </thead>
                   <tbody>
                     <tr><td>Nguyễn Văn An</td><td>Hành lý 20 kg</td><td class="num">1</td><td class="num">250.000 ₫</td></tr>
-                    <tr><td>Nguyễn Bé Na</td><td>Hành lý 10 kg</td><td class="num">1</td><td class="num">120.000 ₫</td></tr>
+                    <tr><td>Nguyễn Thị Mai</td><td>Hành lý 20 kg</td><td class="num">1</td><td class="num">250.000 ₫</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1516,7 +1516,7 @@
                     <tr><th>Phương thức</th><th>Trạng thái</th><th class="num">Số tiền</th></tr>
                   </thead>
                   <tbody>
-                    <tr><td>VNPay</td><td><span class="badge badge--ok">Thành công</span></td><td class="num">2.660.000 ₫</td></tr>
+                    <tr><td>VNPay</td><td><span class="badge badge--ok">Thành công</span></td><td class="num">2.750.000 ₫</td></tr>
                   </tbody>
                 </table>
                 <div class="dl">
@@ -1534,7 +1534,7 @@
                 </thead>
                 <tbody>
                   <tr><td><span class="cd">ET-7K2M-01</span></td><td>Nguyễn Văn An</td><td>HAN → DAD</td><td>12A</td><td><span class="badge badge--ok">Đã phát hành</span></td></tr>
-                  <tr><td><span class="cd">ET-7K2M-02</span></td><td>Nguyễn Bé Na</td><td>HAN → DAD</td><td>12B</td><td><span class="badge badge--ok">Đã phát hành</span></td></tr>
+                  <tr><td><span class="cd">ET-7K2M-02</span></td><td>Nguyễn Thị Mai</td><td>HAN → DAD</td><td>12B</td><td><span class="badge badge--ok">Đã phát hành</span></td></tr>
                 </tbody>
               </table>
             </div>

@@ -1,0 +1,166 @@
+/* =====================================================================
+   tokens.css — bản sao 1:1 của src/_tokens.scss
+   Không sửa giá trị ở đây. Muốn đổi thì sửa _tokens.scss rồi chép lại.
+   ===================================================================== */
+
+:root {
+  /* ---------- Màu thương hiệu ---------- */
+  --color-primary: #0770cd;
+  --color-primary-hover: #0a57a8;
+  --color-primary-bright: #0194f3;
+  --color-primary-soft: #eaf7ff;
+  --color-on-primary: #ffffff;
+
+  --color-accent: #ff5e1f;
+  --color-accent-hover: #e84a0c;
+  --color-on-accent: #3d1a08;
+  --color-accent-soft: #fff1ea;
+
+  /* ---------- Màu ngữ nghĩa ---------- */
+  --color-success: #00a651;
+  --color-success-soft: #dcfce7;
+  --color-on-success-soft: #15803d;
+
+  --color-warning: #f2a81d;
+  --color-warning-soft: #fef3c7;
+  --color-on-warning-soft: #b45309;
+
+  --color-danger: #e5484d;
+  --color-danger-soft: #fee2e2;
+  --color-on-danger-soft: #b91c1c;
+
+  --color-info: #0194f3;
+  --color-info-soft: #e0f2fe;
+  --color-on-info-soft: #0369a1;
+
+  /* ---------- Bề mặt & chữ ---------- */
+  --color-bg: #f7f9fa;
+  --color-surface: #ffffff;
+  --color-surface-alt: #fbfcfd;
+  --color-ink: #03121a;
+  --color-ink-muted: #687176;
+  --color-ink-subtle: #6a737a;
+  --color-border: #dde3e8;
+  --color-border-soft: #edf1f4;
+
+  /* ---------- Nền tối ---------- */
+  --color-dark: #05285d;
+  --color-dark-2: #083a7d;
+  --color-dark-line: #1a4a8a;
+  --color-on-dark: #ffffff;
+  --color-on-dark-muted: #c3d0de;
+  --color-on-dark-subtle: #8ea3b8;
+
+  /* ---------- Sidebar vận hành ---------- */
+  --color-sidebar-top: #0d47a2;
+  --color-sidebar-bottom: #030e20;
+  --color-sidebar-line: rgba(255, 255, 255, 0.12);
+  --color-sidebar-item: #c3d0de;
+  --color-sidebar-icon: #7f9dc4;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.08);
+  --color-sidebar-label: #8ba7c9;
+  --color-sidebar-active-bg: #ffffff;
+  --color-sidebar-active-fg: #1677ff;
+
+  /* ---------- Chữ ---------- */
+  --font-heading: 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --text-display: 2rem;
+  --text-h1: 1.5rem;
+  --text-h2: 1.25rem;
+  --text-h3: 1.0625rem;
+  --text-body: 0.9375rem;
+  --text-small: 0.8125rem;
+  --text-caption: 0.6875rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+
+  /* ---------- Bo góc ---------- */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+
+  /* ---------- Đổ bóng ---------- */
+  --shadow-sm: 0 1px 4px rgba(3, 18, 26, 0.06);
+  --shadow: 0 2px 10px rgba(3, 18, 26, 0.07);
+  --shadow-lg: 0 4px 16px rgba(3, 18, 26, 0.1);
+
+  /* ---------- Chuyển động ---------- */
+  --dur-fast: 130ms;
+  --dur: 200ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---------- Khoảng cách (thang 4px, khớp Figma) ---------- */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-lg: 16px;
+  --sp-xl: 24px;
+  --sp-2xl: 32px;
+  --sp-3xl: 48px;
+  --sp-4xl: 64px;
+}
+
+[data-theme='dark'] {
+  --color-primary: #4da9f7;
+  --color-primary-hover: #6fb8f5;
+  --color-primary-bright: #4da9f7;
+  --color-primary-soft: #0d2b45;
+  --color-on-primary: #04121f;
+
+  --color-accent: #ff7a45;
+  --color-accent-hover: #ff8f60;
+  --color-on-accent: #2b1206;
+  --color-accent-soft: #2b1a12;
+
+  --color-success: #3dd68c;
+  --color-success-soft: #102a20;
+  --color-on-success-soft: #7fe8b4;
+
+  --color-warning: #ffb020;
+  --color-warning-soft: #33260c;
+  --color-on-warning-soft: #ffd88a;
+
+  --color-danger: #f87171;
+  --color-danger-soft: #3a1a1c;
+  --color-on-danger-soft: #f7b4b6;
+
+  --color-info: #4da9f7;
+  --color-info-soft: #0d2b45;
+  --color-on-info-soft: #a8d8ff;
+
+  --color-bg: #05285d;
+  --color-surface: #121f31;
+  --color-surface-alt: #17263a;
+  --color-ink: #e6edf5;
+  --color-ink-muted: #93a7be;
+  --color-ink-subtle: #7c90a6;
+  --color-border: #1f3145;
+  --color-border-soft: #2c4257;
+
+  --color-dark: #041f49;
+  --color-dark-2: #083a7d;
+  --color-dark-line: #1a4a8a;
+
+  --color-sidebar-top: #0a3a86;
+  --color-sidebar-bottom: #02101f;
+  --color-sidebar-line: rgba(255, 255, 255, 0.1);
+  --color-sidebar-item: #b8c8dc;
+  --color-sidebar-icon: #7391b8;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.07);
+  --color-sidebar-label: #7e9cc2;
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+  }
+}

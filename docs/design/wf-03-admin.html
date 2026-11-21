@@ -680,7 +680,7 @@
           <li><b>Vào từ:</b> đăng nhập vận hành, mục Dashboard ở sidebar</li>
           <li><b>Ra tới:</b> danh sách chuyến bay khi bấm "Mở chuyến bổ sung"</li>
           <li>"Xuất báo cáo" tải tệp, không chuyển trang</li>
-          <li>Thông báo trên header mở danh sách việc cần xử lý</li>
+          <li>Chuông thông báo là placeholder — nghiệp vụ chốt tại docs/design/00-nghiep-vu-thong-bao.md; chưa có bảng notifications</li>
         </ul>
       </div>
       <div>
@@ -985,7 +985,6 @@
               <table class="tbl">
                 <thead>
                   <tr>
-                    <th style="width:44px"><span class="cb"></span></th>
                     <th>Họ tên</th>
                     <th>Email</th>
                     <th style="width:130px">Vai trò</th>
@@ -996,7 +995,6 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td><span class="cb"></span></td>
                     <td><b>Nguyễn Văn An</b></td>
                     <td><span class="cd">an.nguyen@vinafly.vn</span></td>
                     <td><span class="badge">Quản trị</span></td>
@@ -1005,7 +1003,6 @@
                     <td><span class="ract"><a>Sửa</a><a>Xóa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cb"></span></td>
                     <td><b>Trần Thị Bích</b></td>
                     <td><span class="cd">bich.tran@vinafly.vn</span></td>
                     <td><span class="badge">Nhân viên</span></td>
@@ -1014,7 +1011,6 @@
                     <td><span class="ract"><a>Sửa</a><a>Xóa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cb"></span></td>
                     <td><b>Lê Minh Cường</b></td>
                     <td><span class="cd">cuong.le@gmail.com</span></td>
                     <td><span class="badge">Khách hàng</span></td>
@@ -1023,7 +1019,6 @@
                     <td><span class="ract"><a>Sửa</a><a>Xóa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cb"></span></td>
                     <td><b>Phạm Thu Hà</b></td>
                     <td><span class="cd">ha.pham@vinafly.vn</span></td>
                     <td><span class="badge">Nhân viên</span></td>
@@ -1075,7 +1070,7 @@
         <h3>Cấu trúc</h3>
         <ul>
           <li>Cùng khuôn danh sách của W-ADM-08</li>
-          <li>Năm cột dữ liệu, không cột ảnh</li>
+          <li>Không có cột tích chọn — user không có thao tác hàng loạt</li>
           <li>Vai trò và trạng thái là nhãn màu, đọc nhanh hơn chữ thường</li>
           <li>Ngày tạo canh phải cho dễ so sánh</li>
         </ul>
@@ -1202,9 +1197,9 @@
             <div class="card">
               <div class="card__h"><h2>Đặt chỗ gần đây</h2><span class="sp"></span><span class="tag">3 booking</span></div>
               <table class="tbl">
-                <thead><tr><th>Mã PNR</th><th>Tuyến</th><th>Ngày bay</th><th class="num">Tổng tiền</th><th>Trạng thái</th></tr></thead>
+                <thead><tr><th>Mã đơn / PNR</th><th>Tuyến</th><th>Ngày bay</th><th class="num">Tổng tiền</th><th>Trạng thái</th></tr></thead>
                 <tbody>
-                  <tr><td><span class="cd">VF7K2M</span></td><td>HAN → SGN</td><td>15/11/2026</td><td class="num">2.660.000 ₫</td><td><span class="badge badge--ok">Đã xác nhận</span></td></tr>
+                  <tr><td><span class="cd">VF7K2M</span></td><td>HAN → SGN</td><td>15/11/2026</td><td class="num">2.750.000 ₫</td><td><span class="badge badge--ok">Đã xác nhận</span></td></tr>
                   <tr><td><span class="cd">VF1D4A</span></td><td>HAN → DAD</td><td>02/10/2026</td><td class="num">1.480.000 ₫</td><td><span class="badge">Đã hủy</span></td></tr>
                   <tr><td><span class="cd">VF6P9C</span></td><td>SGN → HAN</td><td>18/08/2026</td><td class="num">1.290.000 ₫</td><td><span class="badge badge--ok">Đã xác nhận</span></td></tr>
                 </tbody>
@@ -4055,14 +4050,6 @@
                     <td>Một loại ghế chuẩn, phụ thu 0</td>
                     <td><span class="badge badge--ok">Đang dùng</span></td>
                   </tr>
-                  <tr>
-                    <td><span class="cd">FIRST</span></td>
-                    <td>Hạng nhất</td>
-                    <td class="num">—</td>
-                    <td class="num">—</td>
-                    <td>Chưa khai thác — chỉ mở khi có đường bay quốc tế</td>
-                    <td><span class="badge">Không dùng</span></td>
-                  </tr>
                 </tbody>
               </table>
             </div>
@@ -4079,7 +4066,7 @@
         <h3>Trạng thái</h3>
         <ul>
           <li>Ba hạng dịch vụ đang dùng cho vé nội địa</li>
-          <li>Hạng nhất ở trạng thái "Không dùng" — chỉ mở khi có đường bay quốc tế</li>
+          <li>Mô hình nội địa không có Hạng nhất — chỉ mở lại khi mở rộng bay quốc tế</li>
           <li>Hạng dịch vụ không có hạng vé nào đang bán → khách không thấy hạng dịch vụ đó</li>
         </ul>
       </div>
@@ -4205,15 +4192,16 @@
                   <tr><th style="width:44px"><span class="cb"></span></th><th style="width:170px">Mã hạng vé</th><th>Tên hạng vé</th><th style="width:180px">Hãng áp dụng</th><th style="width:190px">Hạng dịch vụ</th><th style="width:200px">Quy định hoàn</th><th style="width:130px">Trạng thái</th><th style="width:120px"></th></tr>
                 </thead>
                 <tbody>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">ECON_SAVER</span></td><td><b>Phổ thông tiết kiệm</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Không hoàn · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">PREM_ECO_STANDARD</span></td><td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông đặc biệt</span></td><td>Hoàn 85% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">BIZ_STANDARD</span></td><td><b>Thương gia tiêu chuẩn</b></td><td>Bamboo Airways</td><td><span class="badge">Thương gia</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">BIZ_FLEX</span></td><td><b>Thương gia linh hoạt</b></td><td>Bamboo Airways</td><td><span class="badge">Thương gia</span></td><td>Hoàn 100% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">ECON_PROMO</span></td><td><b>Phổ thông khuyến mãi</b></td><td>VietJet Air</td><td><span class="badge">Phổ thông</span></td><td>Chưa cấu hình</td><td><span class="badge">Tạm tắt</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_ECON_SAVER</span></td><td><b>Phổ thông tiết kiệm</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Không hoàn · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_ECON_STANDARD</span></td><td><b>Phổ thông tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 80% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_PREM_ECO_STANDARD</span></td><td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông đặc biệt</span></td><td>Hoàn 85% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_PREM_ECO_FLEX</span></td><td><b>Phổ thông đặc biệt linh hoạt</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông đặc biệt</span></td><td>Hoàn 95% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">QH_BIZ_STANDARD</span></td><td><b>Thương gia tiêu chuẩn</b></td><td>Bamboo Airways</td><td><span class="badge">Thương gia</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">QH_BIZ_FLEX</span></td><td><b>Thương gia linh hoạt</b></td><td>Bamboo Airways</td><td><span class="badge">Thương gia</span></td><td>Hoàn 100% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
                 </tbody>
               </table>
-              <div class="pager"><span>Hiển thị 1–6 trên 6 bản ghi</span><span class="sp"></span><span class="pg on">1</span></div>
+              <div class="pager"><span>Hiển thị 1–7 trên 7 bản ghi</span><span class="sp"></span><span class="pg on">1</span></div>
             </div>
           </div>
 
@@ -4247,7 +4235,7 @@
           <li>Bảng: mã, tên, hãng áp dụng, hạng dịch vụ, quy định hoàn đang hiệu lực, trạng thái</li>
           <li>Cột quy định hoàn tóm tắt để không phải mở màn khác</li>
           <li>Hạng dịch vụ dùng badge thay vì màu</li>
-          <li>Sáu dòng, phân trang khi dài hơn</li>
+          <li>Bảy dòng, phân trang khi dài hơn</li>
         </ul>
       </div>
       <div>
@@ -4346,9 +4334,15 @@
             <div class="card">
               <div class="card__h"><h2>Thông tin hạng vé</h2></div>
               <div class="fgrid">
-                <div class="fg"><label>Mã hạng vé <span class="req">*</span></label><div class="inp inp--ph">VD: ECON_SAVER</div><div class="hint">Chữ in hoa, không dấu; duy nhất trong một hãng; không sửa được sau khi đã có giá bán</div></div>
+                <div class="fg"><label>Hãng áp dụng <span class="req">*</span></label><div class="sel">Vietnam Airlines (VN)<span class="sel__c"></span></div><div class="hint">Mã hãng là tiền tố bắt buộc của mã hạng vé</div></div>
+                <div class="fg"><label>Mã hạng vé <span class="req">*</span></label>
+                  <div class="inp" style="padding:0;display:flex;align-items:center">
+                    <span style="padding:0 9px;height:100%;display:flex;align-items:center;border-right:1px solid var(--line-2);background:var(--fill-3);font-family:Consolas,monospace;font-weight:700">VN_</span>
+                    <span style="padding:0 10px;color:var(--ink-3)">ECON_SAVER</span>
+                  </div>
+                  <div class="hint">Mã đầy đủ: <b>VN_ECON_SAVER</b> — tiền tố lấy từ hãng áp dụng; duy nhất toàn hệ thống; không sửa được sau khi đã có giá bán</div>
+                </div>
                 <div class="fg"><label>Tên hạng vé <span class="req">*</span></label><div class="inp inp--ph">VD: Phổ thông tiết kiệm</div><div class="hint">Tên khách đọc khi chọn hạng vé</div></div>
-                <div class="fg"><label>Hãng áp dụng <span class="req">*</span></label><div class="sel">Vietnam Airlines<span class="sel__c"></span></div><div class="hint">Mỗi hạng vé thuộc đúng một hãng</div></div>
                 <div class="fg"><label>Hạng dịch vụ <span class="req">*</span></label><div class="sel">Phổ thông<span class="sel__c"></span></div><div class="hint">Chỉ ba giá trị: Phổ thông · Phổ thông đặc biệt · Thương gia — không có Hạng nhất</div></div>
               </div>
             </div>
@@ -4387,7 +4381,8 @@
           <li>Mã hạng vé khoá lại sau khi hạng vé đã có giá bán — sửa mã sẽ làm lệch giá đã cấu hình theo chuyến.</li>
           <li>Chưa có quy định hoàn vẫn lưu được, nhưng hạng vé không mở bán được ở màn Giá bán theo chuyến.</li>
           <li>Tạm tắt chỉ ngừng bán mới; đơn đã đặt giữ nguyên hạng vé và quy định đã chụp lúc đặt.</li>
-          <li>Mã duy nhất trong phạm vi một hãng — hai hãng khác nhau được dùng trùng mã.</li>
+          <li>Mã hạng vé có tiền tố mã hãng, nên <b>duy nhất toàn hệ thống</b> — hai hãng không còn trùng mã.</li>
+          <li>Tiền tố <b>tự ghép từ hãng áp dụng</b> (VN_, VJ_, QH_…) để admin không gõ sai; phần sau tiền tố là mã hạng.</li>
         </ul>
       </div>
       <div>
@@ -4513,17 +4508,18 @@
                   <tr><th style="width:170px">Mã hạng vé</th><th style="width:210px">Tên hạng vé</th><th style="width:140px">Hạng dịch vụ</th><th style="width:90px" class="num">Version</th><th style="width:110px">Được hoàn</th><th style="width:150px" class="num">Huỷ trước (giờ)</th><th style="width:100px" class="num">% hoàn</th><th style="width:140px">Hiệu lực từ</th><th style="width:130px">Trạng thái</th><th style="width:100px"></th></tr>
                 </thead>
                 <tbody>
-                  <tr><td><span class="cd">ECON_SAVER</span></td><td><b>Phổ thông tiết kiệm</b></td><td>Phổ thông</td><td class="num">v1</td><td><span class="badge">Không</span></td><td class="num">—</td><td class="num">0%</td><td>01/10/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cd">ECON_STANDARD</span></td><td><b>Phổ thông tiêu chuẩn</b></td><td>Phổ thông</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">80%</td><td>01/10/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cd">ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Phổ thông</td><td class="num">v2</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">90%</td><td>01/10/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cd">PREM_ECO_STANDARD</span></td><td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td>Phổ thông đặc biệt</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">85%</td><td>01/06/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cd">PREM_ECO_FLEX</span></td><td><b>Phổ thông đặc biệt linh hoạt</b></td><td>Phổ thông đặc biệt</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">95%</td><td>01/06/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cd">BIZ_STANDARD</span></td><td><b>Thương gia tiêu chuẩn</b></td><td>Thương gia</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">90%</td><td>01/06/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cd">BIZ_FLEX</span></td><td><b>Thương gia linh hoạt</b></td><td>Thương gia</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">100%</td><td>01/06/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cd">ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Phổ thông</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">48</td><td class="num">60%</td><td>01/01/2026</td><td><span class="badge">Hết hiệu lực</span></td><td><span class="ract"><a>Xem</a></span></td></tr>
+                  <tr><td><span class="cd">VN_ECON_SAVER</span></td><td><b>Phổ thông tiết kiệm</b></td><td>Phổ thông</td><td class="num">v1</td><td><span class="badge">Không</span></td><td class="num">—</td><td class="num">0%</td><td>01/10/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cd">VN_ECON_STANDARD</span></td><td><b>Phổ thông tiêu chuẩn</b></td><td>Phổ thông</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">80%</td><td>01/10/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cd">VN_ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Phổ thông</td><td class="num">v2</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">90%</td><td>01/10/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cd">VN_PREM_ECO_STANDARD</span></td><td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td>Phổ thông đặc biệt</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">85%</td><td>01/06/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cd">VN_PREM_ECO_FLEX</span></td><td><b>Phổ thông đặc biệt linh hoạt</b></td><td>Phổ thông đặc biệt</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">95%</td><td>01/06/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cd">QH_BIZ_STANDARD</span></td><td><b>Thương gia tiêu chuẩn</b></td><td>Thương gia</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">90%</td><td>01/06/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cd">QH_BIZ_FLEX</span></td><td><b>Thương gia linh hoạt</b></td><td>Thương gia</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">24</td><td class="num">100%</td><td>01/06/2026</td><td><span class="badge badge--ok">Đang hiệu lực</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cd">VN_ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Phổ thông</td><td class="num">v1</td><td><span class="badge badge--ok">Có</span></td><td class="num">48</td><td class="num">60%</td><td>01/01/2026</td><td><span class="badge">Hết hiệu lực</span></td><td><span class="ract"><a>Xem</a></span></td></tr>
                 </tbody>
               </table>
               <div class="pager"><span>Hiển thị 1–8 trên 8 bản ghi</span><span class="sp"></span><span class="pg on">1</span></div>
+              <div class="note2" style="margin:12px 16px 16px">Mã hạng vé có tiền tố hãng: <b>VN_</b> = Vietnam Airlines, <b>QH_</b> = Bamboo Airways — nhờ vậy hai hãng không trùng mã.</div>
             </div>
           </div>
 
@@ -4654,7 +4650,7 @@
             <div class="card">
               <div class="card__h"><h2>Hạng vé áp dụng</h2><span class="sp"></span><span class="tag">Đang có v1</span></div>
               <div class="fgrid">
-                <div class="fg fg--full"><label>Hạng vé <span class="req">*</span></label><div class="sel">ECON_FLEX · Phổ thông linh hoạt · Vietnam Airlines · Phổ thông<span class="sel__c"></span></div><div class="hint">Mỗi lần lưu hệ thống <b>sinh version mới</b> cho hạng vé này — version cũ giữ nguyên, không ghi đè.</div></div>
+                <div class="fg fg--full"><label>Hạng vé <span class="req">*</span></label><div class="sel">VN_ECON_FLEX · Phổ thông linh hoạt · Vietnam Airlines · Phổ thông<span class="sel__c"></span></div><div class="hint">Mỗi lần lưu hệ thống <b>sinh version mới</b> cho hạng vé này — version cũ giữ nguyên, không ghi đè.</div></div>
               </div>
             </div>
 
@@ -4724,7 +4720,7 @@
         <ul>
           <li>Sửa bằng version mới thay vì ghi đè để tra được chính sách đúng tại thời điểm khách đặt.</li>
           <li>Huỷ trước nhận 0 thay vì thêm ô "không giới hạn" — một trường thay vì hai, và số 0 đọc ra ngay là không chặn thời điểm.</li>
-          <li>Phần trăm hoàn tính trên giá vé, không gồm thuế và phí; ghi rõ ngay dưới ô vì đây là chỗ khách hay thắc mắc khi hoàn tiền.</li>
+          <li>Phần trăm hoàn tính trên giá vé đã gồm thuế và phí; ghi rõ ngay dưới ô vì đây là chỗ khách hay thắc mắc khi hoàn tiền.</li>
           <li>Đưa câu xem trước vào biểu mẫu vì đó là thứ khách đọc — admin viết xong thấy luôn câu mình vừa tạo có xuôi không.</li>
         </ul>
       </div>
@@ -5135,31 +5131,31 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td><b>Phổ thông tiết kiệm</b></td><td><span class="badge">Phổ thông</span></td>
+                    <td><b>Phổ thông tiết kiệm</b><div style="font-size:10.5px;color:var(--ink-3)">VN_ECON_SAVER</div></td><td><span class="badge">Phổ thông</span></td>
                     <td class="num">1.000.000 ₫</td><td class="num">200.000 ₫</td>
                     <td class="num"><b>1.200.000 ₫</b></td><td class="num">900.000 ₫</td><td class="num">120.000 ₫</td>
                     <td>01/11 → —</td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td>
                   </tr>
                   <tr>
-                    <td><b>Ghế tiêu chuẩn</b></td><td><span class="badge">Phổ thông</span></td>
+                    <td><b>Phổ thông tiêu chuẩn</b><div style="font-size:10.5px;color:var(--ink-3)">VN_ECON_STANDARD</div></td><td><span class="badge">Phổ thông</span></td>
                     <td class="num">1.400.000 ₫</td><td class="num">220.000 ₫</td>
                     <td class="num"><b>1.620.000 ₫</b></td><td class="num">1.215.000 ₫</td><td class="num">162.000 ₫</td>
                     <td>01/11 → —</td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td>
                   </tr>
                   <tr>
-                    <td><b>Phổ thông linh hoạt</b></td><td><span class="badge">Phổ thông</span></td>
+                    <td><b>Phổ thông linh hoạt</b><div style="font-size:10.5px;color:var(--ink-3)">VN_ECON_FLEX</div></td><td><span class="badge">Phổ thông</span></td>
                     <td class="num">1.900.000 ₫</td><td class="num">250.000 ₫</td>
                     <td class="num"><b>2.150.000 ₫</b></td><td class="num">1.612.500 ₫</td><td class="num">215.000 ₫</td>
                     <td>01/11 → —</td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td>
                   </tr>
                   <tr>
-                    <td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td><span class="badge">Phổ thông đặc biệt</span></td>
+                    <td><b>Phổ thông đặc biệt tiêu chuẩn</b><div style="font-size:10.5px;color:var(--ink-3)">VN_PREM_ECO_STANDARD</div></td><td><span class="badge">Phổ thông đặc biệt</span></td>
                     <td class="num">2.600.000 ₫</td><td class="num">300.000 ₫</td>
                     <td class="num"><b>2.900.000 ₫</b></td><td class="num">2.175.000 ₫</td><td class="num">290.000 ₫</td>
                     <td>01/11 → —</td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td>
                   </tr>
                   <tr>
-                    <td><b>Thương gia tiêu chuẩn</b></td><td><span class="badge">Thương gia</span></td>
+                    <td><b>Thương gia tiêu chuẩn</b><div style="font-size:10.5px;color:var(--ink-3)">VN_BIZ_STANDARD</div></td><td><span class="badge">Thương gia</span></td>
                     <td class="num">4.800.000 ₫</td><td class="num">520.000 ₫</td>
                     <td class="num"><b>5.320.000 ₫</b></td><td class="num">3.990.000 ₫</td><td class="num">532.000 ₫</td>
                     <td>01/11 → —</td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td>
@@ -5301,7 +5297,7 @@
               <div class="card__h"><h2>Chuyến và hạng vé</h2></div>
               <div class="fgrid">
                 <div class="fg"><label>Chuyến bay <span class="req">*</span></label><div class="sel">VN 165 · HAN → DAD · 15/11/2026 · 06:15<span class="sel__c"></span></div><div class="hint">Chuyến phải đang ở trạng thái nháp hoặc đã lên lịch</div></div>
-                <div class="fg"><label>Hạng vé <span class="req">*</span></label><div class="sel">ECON_SAVER — Phổ thông tiết kiệm<span class="sel__c"></span></div><div class="hint">Danh sách rút từ hạng vé của đúng hãng khai thác chuyến</div></div>
+                <div class="fg"><label>Hạng vé <span class="req">*</span></label><div class="sel">VN_ECON_SAVER — Phổ thông tiết kiệm<span class="sel__c"></span></div><div class="hint">Danh sách rút từ hạng vé của đúng hãng khai thác chuyến</div></div>
                 <div class="fg"><label>Hạng dịch vụ</label><div class="inp" style="background:var(--fill-3)">Phổ thông</div><div class="hint">Suy ra từ hạng vé, hệ thống tự điền</div></div>
               </div>
             </div>
@@ -5325,7 +5321,7 @@
               <div class="note2" style="margin:18px 20px 0">Hệ thống chặn hai dòng giá chồng khoảng hiệu lực trên cùng một hạng vé của cùng một chuyến. Cảnh báo hiện ngay khi rời ô hiệu lực, trước khi bấm lưu — không đợi tới lúc ghi dữ liệu mới báo lỗi.</div>
               <div style="display:flex; align-items:center; gap:10px; padding:14px 20px 18px">
                 <span class="badge badge--warn">Cảnh báo mẫu</span>
-                <span class="hint" style="margin-top:0">ECON_SAVER của VN 165 đã có dòng hiệu lực 01/11/2026 → 30/11/2026. Khoảng 01/12/2026 → để trống chồng lên dòng này.</span>
+                <span class="hint" style="margin-top:0">VN_ECON_SAVER của VN 165 đã có dòng hiệu lực 01/11/2026 → 30/11/2026. Khoảng 01/12/2026 → để trống chồng lên dòng này.</span>
               </div>
             </div>
 
@@ -5708,17 +5704,17 @@
                   <tr>
                     <td><span class="cb"></span></td><td><span class="cd">VN 165</span></td>
                     <td><b>HAN → DAD</b></td><td>15/11/2026 · 06:15</td>
-                    <td>VN-A321-01</td><td class="num">4</td>
+                    <td>VN-A321-01</td><td class="num">4 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
                     <td><span class="badge badge--ok">Mở bán</span></td>
-                    <td><span class="badge badge--warn">Sắp hết</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
                     <td><span class="ract"><a>Sửa</a><a>Xóa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
                     <td><span class="cb"></span></td><td><span class="cd">VJ 507</span></td>
                     <td><b>HAN → DAD</b></td><td>15/11/2026 · 07:20</td>
-                    <td>VJ-A321-02</td><td class="num">2</td>
+                    <td>VJ-A321-02</td><td class="num">2 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
                     <td><span class="badge badge--ok">Mở bán</span></td>
-                    <td><span class="badge badge--warn">Sắp hết</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
                     <td><span class="ract"><a>Sửa</a><a>Xóa</a><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
@@ -5758,7 +5754,8 @@
       <div>
         <h3>Trạng thái</h3>
         <ul>
-          <li>Hai trạng thái tách riêng: bán vé (mở/đóng) và vận hành (nháp, lên lịch, sắp hết, huỷ)</li>
+          <li>Hai trạng thái tách riêng: bán vé (mở/đóng) và vận hành (nháp, lên lịch, lên máy bay, trễ, cất cánh, hạ cánh, huỷ)</li>
+          <li>“Sắp hết” là badge cảnh báo tồn ghế, không phải trạng thái vận hành</li>
           <li>Chuyến nháp chưa hiện với khách dù đã mở bán</li>
           <li>Hết ghế → cột Ghế trống về 0, bán vé tự đóng</li>
           <li>Không đổi máy bay khi chuyến đã có booking</li>
@@ -5800,10 +5797,10 @@
   <section class="row">
     <div class="rowhead">
       <span class="code">W-ADM-23</span>
-      <h2>Chuyến bay — biểu mẫu</h2>
-      <span class="route">/admin/flights/create</span>
+      <h2>Chuyến bay — biểu mẫu sửa (trạng thái vận hành mở)</h2>
+      <span class="route">/admin/flights/:id/edit</span>
       <span class="sp"></span>
-      <span class="meta">Bổ sung F17 · tạo và sửa chuyến</span>
+      <span class="meta">Bổ sung F17 · đổi trạng thái trong luồng sửa chuyến</span>
     </div>
 
     <div class="art">
@@ -5858,7 +5855,7 @@
           <div class="hd">
             <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
             <span class="hd__sep"></span>
-            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><span>Chuyến bay</span><span class="sep">›</span><b>Thêm chuyến</b></div>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><span>Chuyến bay</span><span class="sep">›</span><span>VN 165</span><span class="sep">›</span><b>Sửa</b></div>
             <span class="sp"></span>
             <span class="hd__date">13/11/2026</span>
             <span class="hd__bell"></span>
@@ -5868,8 +5865,8 @@
           <div class="cnt">
             <div class="pgh">
               <div>
-                <h1>Thêm chuyến bay</h1>
-                <p>Lịch bay mới · sau khi lưu mới cấu hình giá và tồn ghế</p>
+                <h1>Sửa chuyến VN 165</h1>
+                <p>Cập nhật lịch bay · đổi trạng thái vận hành trong khối Trạng thái</p>
               </div>
             </div>
 
@@ -5890,11 +5887,45 @@
             <div class="card">
               <div class="card__h"><h2>Trạng thái</h2></div>
               <div class="fgrid">
-                <div class="fg"><label>Trạng thái vận hành</label><div class="sel">Bản nháp (DRAFT)<span class="sel__c"></span></div></div>
+                <div class="fg">
+                  <label>Trạng thái vận hành <span class="req">*</span></label>
+                  <div class="sel" style="border-color:var(--ink);background:var(--paper)">Đã lên lịch (SCHEDULED)<span class="sel__c"></span></div>
+                  <div style="margin-top:4px;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--paper);box-shadow:0 6px 18px rgba(3,18,26,.08)">
+                    <div style="display:flex;gap:9px;padding:8px 11px;border-bottom:1px solid var(--fill);opacity:.55">
+                      <span style="width:14px;flex:none">○</span>
+                      <div><b style="font-size:11.5px">Bản nháp (DRAFT)</b><div class="hint" style="margin:1px 0 0">Chưa có giá/tồn ghế · khách không thấy</div></div>
+                    </div>
+                    <div style="display:flex;gap:9px;padding:8px 11px;border-bottom:1px solid var(--fill);background:var(--fill-3)">
+                      <span style="width:14px;flex:none;font-weight:700">✓</span>
+                      <div><b style="font-size:11.5px">Đã lên lịch (SCHEDULED)</b><div class="hint" style="margin:1px 0 0">Đang chọn · đã có giá và tồn ghế</div></div>
+                    </div>
+                    <div style="display:flex;gap:9px;padding:8px 11px;border-bottom:1px solid var(--fill)">
+                      <span style="width:14px;flex:none">○</span>
+                      <div><b style="font-size:11.5px">Lên máy bay (BOARDING)</b><div class="hint" style="margin:1px 0 0">Chỉ từ SCHEDULED hoặc DELAYED</div></div>
+                    </div>
+                    <div style="display:flex;gap:9px;padding:8px 11px;border-bottom:1px solid var(--fill)">
+                      <span style="width:14px;flex:none">○</span>
+                      <div><b style="font-size:11.5px">Trễ (DELAYED)</b><div class="hint" style="margin:1px 0 0">Nhánh từ SCHEDULED/BOARDING · vẫn bán nếu còn ghế</div></div>
+                    </div>
+                    <div style="display:flex;gap:9px;padding:8px 11px;border-bottom:1px solid var(--fill)">
+                      <span style="width:14px;flex:none">○</span>
+                      <div><b style="font-size:11.5px">Đã cất cánh (DEPARTED)</b><div class="hint" style="margin:1px 0 0">Khoá sửa lịch và đổi máy bay</div></div>
+                    </div>
+                    <div style="display:flex;gap:9px;padding:8px 11px;border-bottom:1px solid var(--fill);opacity:.55">
+                      <span style="width:14px;flex:none">○</span>
+                      <div><b style="font-size:11.5px">Đã hạ cánh (ARRIVED)</b><div class="hint" style="margin:1px 0 0">Chỉ sau DEPARTED · trạng thái kết thúc</div></div>
+                    </div>
+                    <div style="display:flex;gap:9px;padding:8px 11px;opacity:.55">
+                      <span style="width:14px;flex:none">○</span>
+                      <div><b style="font-size:11.5px">Đã huỷ (CANCELLED)</b><div class="hint" style="margin:1px 0 0">Trước DEPARTED · tự đóng bán · không tự hoàn tiền</div></div>
+                    </div>
+                  </div>
+                  <div class="hint">Trạng thái bán (OPEN/CLOSED) là công tắc riêng bên cạnh. Không cho lùi trạng thái sau DEPARTED.</div>
+                </div>
                 <div class="fg"><label>Mở bán</label><div class="toggle"><span class="sw off"></span>Tắt — khách chưa thấy chuyến</div></div>
               </div>
-              <div class="note2">Chuyến nháp chưa hiện với khách dù đã mở bán. Sau khi tạo, sang tab <b>Giá bán</b> để nhập giá cơ bản và thuế/phí, rồi sang <b>Tồn ghế</b> để sinh ghế từ sơ đồ máy bay.</div>
-              <div class="fact"><span class="btn btn--ghost">Huỷ</span><span class="btn">Lưu nháp</span><span class="btn btn--dark">Tạo chuyến</span></div>
+              <div class="note2"><b>Vòng đời trạng thái:</b> DRAFT → SCHEDULED → BOARDING → DEPARTED → ARRIVED; DELAYED là nhánh, CANCELLED trước DEPARTED. Sau DEPARTED khoá sửa lịch; huỷ chuyến tự đóng bán và không tự hoàn tiền.</div>
+              <div class="fact"><span class="btn btn--ghost">Huỷ</span><span class="btn btn--dark">Lưu thay đổi</span></div>
             </div>
           </div>
 
@@ -5908,6 +5939,7 @@
         <h3>Trạng thái</h3>
         <ul>
           <li>Tạo mới mặc định DRAFT và đóng bán</li>
+          <li>Sửa chuyến: hiện dropdown 7 trạng thái, lựa chọn không hợp lệ bị mờ</li>
           <li>Sân bay đến phải khác sân bay đi, giờ đến sau giờ đi</li>
           <li>Máy bay phải có sơ đồ ghế đủ sức chứa</li>
           <li>Chuyến bổ sung trỏ về chuyến gốc bằng parent_flight_id</li>
@@ -5916,7 +5948,7 @@
       <div>
         <h3>Luồng</h3>
         <ul>
-          <li><b>Vào từ:</b> nút "+ Thêm chuyến bay" ở danh sách</li>
+          <li><b>Vào từ:</b> nút "+ Thêm chuyến bay" ở danh sách, hoặc nút Sửa ở chi tiết chuyến</li>
           <li><b>Ra tới:</b> chi tiết chuyến, tab Giá bán, tab Tồn ghế</li>
           <li>Huỷ quay lại danh sách, không lưu gì</li>
           <li>Mở bán chỉ sau khi đã có giá và tồn ghế</li>
@@ -5926,15 +5958,18 @@
         <h3>Cấu trúc</h3>
         <ul>
           <li>Hai khối: lịch bay và trạng thái</li>
+          <li>Ô trạng thái vận hành mở dropdown ngay dưới ô chọn, không phải màn riêng</li>
+          <li>Mỗi lựa chọn kèm điều kiện chuyển trạng thái</li>
           <li>Ô máy bay hiện kèm số ghế để chọn đúng</li>
           <li>Gợi ý ràng buộc nằm ngay dưới ô liên quan</li>
-          <li>Khối ghi chú nêu rõ hai bước còn lại sau khi tạo</li>
         </ul>
       </div>
       <div>
         <h3>Quyết định thiết kế</h3>
         <ul>
           <li>Tách "tạo chuyến" khỏi "nhập giá" để không bắt admin làm ba việc trong một lần.</li>
+          <li>Đổi trạng thái vận hành ngay trong luồng sửa chuyến thay vì thêm màn riêng.</li>
+          <li>Dropdown hiện cả 7 trạng thái nhưng mờ lựa chọn không hợp lệ, để admin thấy vòng đời đầy đủ.</li>
           <li>Hiện số ghế ngay trong ô chọn máy bay vì đó là ràng buộc thật khi mở chuyến bổ sung.</li>
           <li>Mặc định đóng bán để tránh khách thấy chuyến chưa có giá.</li>
           <li>Không cho đổi máy bay sau khi có booking — ghi ở màn sửa.</li>
@@ -6023,7 +6058,7 @@
               <span class="sp"></span>
               <div class="hstatus">
                 <div><span>Bán vé</span><b>Mở bán</b></div>
-                <div><span>Vận hành</span><b class="warn">Sắp hết</b></div>
+                <div><span>Vận hành</span><b>Đã lên lịch</b></div>
               </div>
               <span class="btn btn--ghost">Đóng bán</span>
               <span class="btn btn--dark">Sửa</span>
@@ -6115,7 +6150,7 @@
       <h2>Đặt chỗ</h2>
       <span class="route">/admin/bookings</span>
       <span class="sp"></span>
-      <span class="meta">Tra cứu theo mã PNR</span>
+      <span class="meta">Tra cứu theo mã đơn hoặc PNR</span>
     </div>
 
     <div class="art">
@@ -6181,13 +6216,13 @@
             <div class="pgh">
               <div>
                 <h1>Đặt chỗ</h1>
-                <p>Toàn bộ booking của khách, tra cứu theo mã PNR</p>
+                <p>Toàn bộ booking của khách, tra cứu theo mã đơn hoặc PNR</p>
               </div>
             </div>
 
             <div class="card">
               <div class="tb">
-                <div class="srh"><span class="srh__ic"></span>Tìm theo mã PNR, tên hoặc email khách</div>
+                <div class="srh"><span class="srh__ic"></span>Tìm theo mã đơn, PNR, tên hoặc email khách</div>
                 <div class="sel">Tất cả trạng thái<span class="sel__c"></span></div>
                 <div class="sel">Hành trình: tất cả<span class="sel__c"></span></div>
                 <span class="sp"></span>
@@ -6197,7 +6232,7 @@
               <table class="tbl">
                 <thead>
                   <tr>
-                    <th style="width:130px">Mã PNR</th>
+                    <th style="width:130px">Mã đơn / PNR</th>
                     <th style="width:200px">Khách hàng</th>
                     <th>Tuyến</th>
                     <th style="width:170px">Ngày bay</th>
@@ -6209,15 +6244,15 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td><span class="cd">VF7K2M</span></td>
+                    <td><span class="cd">VF7K2M</span><div style="font-size:9px;color:var(--ink-3)">DH-1042</div></td>
                     <td><b>Nguyễn Văn An</b><div style="font-size:10px;color:var(--ink-3)">an.nguyen&#64;email.com</div></td>
                     <td>HAN → SGN</td><td>15/11/2026</td><td class="num">2</td>
-                    <td class="num">2.660.000 ₫</td>
+                    <td class="num">2.750.000 ₫</td>
                     <td><span class="badge badge--ok">Đã xác nhận</span></td>
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF9Q1T</span></td>
+                    <td><span class="cd">VF9Q1T</span><div style="font-size:9px;color:var(--ink-3)">DH-1043</div></td>
                     <td><b>Trần Thị Bích</b><div style="font-size:10px;color:var(--ink-3)">bich.tran&#64;email.com</div></td>
                     <td>HAN → SGN → HAN</td><td>20/11/2026</td><td class="num">1</td>
                     <td class="num">5.220.000 ₫</td>
@@ -6225,7 +6260,7 @@
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF3B8N</span></td>
+                    <td><span class="cd">DH-1046</span><div style="font-size:9px;color:var(--ink-3)">PNR sau thanh toán</div></td>
                     <td><b>Lê Minh Cường</b><div style="font-size:10px;color:var(--ink-3)">cuong.le&#64;gmail.com</div></td>
                     <td>SGN → DAD</td><td>14/11/2026</td><td class="num">1</td>
                     <td class="num">1.290.000 ₫</td>
@@ -6233,7 +6268,7 @@
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF5H0P</span></td>
+                    <td><span class="cd">VF5H0P</span><div style="font-size:9px;color:var(--ink-3)">DH-1044</div></td>
                     <td><b>Phạm Thu Hà</b><div style="font-size:10px;color:var(--ink-3)">ha.pham&#64;email.com</div></td>
                     <td>HAN → DAD</td><td>12/11/2026</td><td class="num">2</td>
                     <td class="num">2.480.000 ₫</td>
@@ -6241,7 +6276,7 @@
                     <td><span class="ract"><span class="chev">›</span></span></td>
                   </tr>
                   <tr>
-                    <td><span class="cd">VF2X7R</span></td>
+                    <td><span class="cd">DH-1045</span><div style="font-size:9px;color:var(--ink-3)">PNR sau thanh toán</div></td>
                     <td><b>Đỗ Quang Minh</b><div style="font-size:10px;color:var(--ink-3)">minh.do&#64;email.com</div></td>
                     <td>SGN → CXR</td><td>11/11/2026</td><td class="num">3</td>
                     <td class="num">3.870.000 ₫</td>
@@ -6280,14 +6315,14 @@
         <ul>
           <li><b>Vào từ:</b> sidebar nhóm "Bán vé &amp; khuyến mãi", hoặc từ danh sách chuyến bay</li>
           <li><b>Ra tới:</b> chi tiết booking: hành khách, ghế, hành lý, thanh toán</li>
-          <li>Mã PNR cũng là thứ khách đọc cho tổng đài khi cần hỗ trợ</li>
+          <li>Booking đã thanh toán mới có PNR; đơn chờ thanh toán chỉ có mã đơn hàng</li>
           <li>Xuất Excel để đối soát doanh thu, không chuyển trang</li>
         </ul>
       </div>
       <div>
         <h3>Cấu trúc</h3>
         <ul>
-          <li>Sáu cột: mã PNR, khách hàng, tuyến, ngày bay, số hành khách, tổng tiền, trạng thái</li>
+          <li>Sáu cột: mã đơn/PNR, khách hàng, tuyến, ngày bay, số hành khách, tổng tiền, trạng thái</li>
           <li>Cột khách hàng hai dòng: tên đậm, email mờ bên dưới</li>
           <li>Tổng tiền và số hành khách canh phải</li>
           <li>Không cột tích chọn — booking không sửa hàng loạt</li>
@@ -6296,7 +6331,7 @@
       <div>
         <h3>Quyết định thiết kế</h3>
         <ul>
-          <li>Mã PNR đứng đầu bảng vì đó là khoá tra cứu duy nhất khi khách gọi đến.</li>
+          <li>Mã đơn/PNR đứng đầu bảng: PNR là khoá tra cứu sau khi đơn đã thanh toán.</li>
           <li>Không cho sửa hay xóa booking: hệ thống giữ nguyên lịch sử để đối soát.</li>
           <li>Không có cột tích chọn và thao tác hàng loạt — mọi thay đổi đi qua chi tiết booking.</li>
           <li>Trạng thái tính cả "Hết hạn" để phân biệt với khách tự hủy.</li>
@@ -6314,7 +6349,7 @@
       <h2>Đặt chỗ — chi tiết</h2>
       <span class="route">/admin/bookings/:id</span>
       <span class="sp"></span>
-      <span class="meta">Bổ sung F24 · chỉ đọc, không huỷ hộ khách</span>
+      <span class="meta">Bổ sung F24 · chỉ đọc + một hành động huỷ, không sửa</span>
     </div>
 
     <div class="art">
@@ -6390,11 +6425,12 @@
             <div class="card">
               <div class="card__h"><h2>Thông tin booking</h2></div>
               <div class="dl">
+                <div class="dl__r"><dt>Mã đơn hàng</dt><dd><span class="cd">DH-1042</span></dd></div>
                 <div class="dl__r"><dt>Mã PNR</dt><dd><span class="cd">VF7K2M</span></dd></div>
                 <div class="dl__r"><dt>Khách hàng</dt><dd>Nguyễn Văn An · an.nguyen&#64;email.com · 090 123 4567</dd></div>
                 <div class="dl__r"><dt>Hành trình</dt><dd>Một chiều · HAN → SGN</dd></div>
                 <div class="dl__r"><dt>Ngày tạo</dt><dd>10/11/2026 · 09:14</dd></div>
-                <div class="dl__r"><dt>Hạn thanh toán</dt><dd>10/11/2026 · 09:44 (đã thanh toán)</dd></div>
+                <div class="dl__r"><dt>Hạn thanh toán</dt><dd>10/11/2026 · 09:29 (đã thanh toán)</dd></div>
                 <div class="dl__r"><dt>Trạng thái</dt><dd>Đã xác nhận (CONFIRMED)</dd></div>
               </div>
             </div>
@@ -6404,7 +6440,7 @@
               <table class="tbl">
                 <thead><tr><th style="width:100px">Chiều</th><th>Chuyến</th><th>Tuyến</th><th>Khởi hành</th><th>Hạng vé</th><th>Quy định hoàn</th><th class="num">Giá chặng</th></tr></thead>
                 <tbody>
-                  <tr><td>Đi</td><td><b>VN 165</b></td><td>HAN → SGN</td><td>15/11/2026 · 06:15</td><td>Linh hoạt</td><td>Hoàn 80% trước 24h</td><td class="num">2.400.000 ₫</td></tr>
+                  <tr><td>Đi</td><td><b>VN 165</b></td><td>HAN → SGN</td><td>15/11/2026 · 06:15</td><td>VN_ECON_FLEX · Linh hoạt</td><td>Hoàn 90% trước 24h</td><td class="num">2.400.000 ₫</td></tr>
                 </tbody>
               </table>
             </div>
@@ -6427,8 +6463,8 @@
                 <div class="dl__r"><dt>Khuyến mãi</dt><dd>−100.000 ₫</dd></div>
                 <div class="dl__r"><dt>Voucher</dt><dd>−50.000 ₫</dd></div>
                 <div class="dl__r"><dt>Phụ thu ghế</dt><dd>0 ₫</dd></div>
-                <div class="dl__r"><dt>Hành lý</dt><dd>+360.000 ₫</dd></div>
-                <div class="dl__r"><dt>Tổng thanh toán</dt><dd><b>2.610.000 ₫</b></dd></div>
+                <div class="dl__r"><dt>Hành lý</dt><dd>+500.000 ₫</dd></div>
+                <div class="dl__r"><dt>Tổng thanh toán</dt><dd><b>2.750.000 ₫</b></dd></div>
               </div>
               <table class="tbl">
                 <thead><tr><th>Phương thức</th><th>Cổng</th><th>Mã giao dịch</th><th>Trạng thái</th><th>Thời điểm</th></tr></thead>
@@ -6447,6 +6483,16 @@
                   <tr><td><span class="cd">TKT-7K2M-02</span></td><td>Nguyễn Thị Mai</td><td>HAN → SGN</td><td>12B</td><td><span class="badge badge--ok">Đã phát hành</span></td><td>10/11/2026 · 09:22</td></tr>
                 </tbody>
               </table>
+            </div>
+
+            <div class="card" style="margin-top:16px">
+              <div class="card__h"><h2>Huỷ đặt chỗ</h2><span class="sp"></span><span class="tag">Không tự hoàn tiền</span></div>
+              <div style="padding:0 20px 4px;font-size:12px;color:var(--ink-2);line-height:1.7">
+                Huỷ đặt chỗ chuyển booking sang <b>Đã huỷ</b>, giải phóng ghế và huỷ vé điện tử.
+                Hệ thống <b>không tự hoàn tiền</b> — khách liên hệ đại lý để được xử lý theo chính sách của hạng vé.
+                Thao tác cần xác nhận và không sửa được booking sau khi huỷ.
+              </div>
+              <div class="fact"><span class="btn">Huỷ đặt chỗ</span></div>
             </div>
           </div>
 
@@ -6470,7 +6516,7 @@
         <ul>
           <li><b>Vào từ:</b> danh sách đặt chỗ hoặc danh sách booking của chuyến</li>
           <li><b>Ra tới:</b> hồ sơ khách, chi tiết chuyến, in vé</li>
-          <li>Không có nút huỷ hộ khách — khách tự huỷ khi đăng nhập</li>
+          <li>Có một hành động huỷ đặt chỗ, kèm xác nhận; không sửa booking</li>
           <li>Hoàn tiền xử lý ngoài hệ thống qua đại lý</li>
         </ul>
       </div>
@@ -6486,10 +6532,10 @@
       <div>
         <h3>Quyết định thiết kế</h3>
         <ul>
-          <li>Chỉ đọc hoàn toàn: hệ thống giữ nguyên lịch sử để đối soát doanh thu.</li>
+          <li>Chỉ đọc, ngoại trừ một hành động huỷ: hệ thống giữ nguyên lịch sử để đối soát doanh thu.</li>
           <li>Hiện cả bảng cộng trừ tiền để trả lời câu hỏi "vì sao tổng này".</li>
           <li>Không hiện thông tin thanh toán đầy đủ của khách cho STAFF ở màn danh sách.</li>
-          <li>Không thiết kế hoàn tiền/đổi chuyến — nằm ngoài phạm vi Phase 1–3.</li>
+          <li>Huỷ đặt chỗ có trong hệ thống; hoàn tiền xử lý ngoài hệ thống qua đại lý. Không thiết kế đổi chuyến — nằm ngoài phạm vi Phase 1–3.</li>
         </ul>
       </div>
     </div>
@@ -8763,11 +8809,11 @@
                   <tr><th style="width:44px"><span class="cb"></span></th><th style="width:170px">Mã hạng vé</th><th>Tên hạng vé</th><th style="width:180px">Hãng áp dụng</th><th style="width:190px">Hạng dịch vụ</th><th style="width:200px">Quy định hoàn</th><th style="width:130px">Trạng thái</th><th style="width:120px"></th></tr>
                 </thead>
                 <tbody>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">ECON_SAVER</span></td><td><b>Phổ thông tiết kiệm</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Không hoàn · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">PREM_ECO_STANDARD</span></td><td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông đặc biệt</span></td><td>Hoàn 85% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">BIZ_STANDARD</span></td><td><b>Thương gia tiêu chuẩn</b></td><td>Bamboo Airways</td><td><span class="badge">Thương gia</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">ECON_PROMO</span></td><td><b>Phổ thông khuyến mãi</b></td><td>VietJet Air</td><td><span class="badge">Phổ thông</span></td><td>Chưa cấu hình</td><td><span class="badge">Tạm tắt</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_ECON_SAVER</span></td><td><b>Phổ thông tiết kiệm</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Không hoàn · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_PREM_ECO_STANDARD</span></td><td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông đặc biệt</span></td><td>Hoàn 85% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">QH_BIZ_STANDARD</span></td><td><b>Thương gia tiêu chuẩn</b></td><td>Bamboo Airways</td><td><span class="badge">Thương gia</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_ECON_STANDARD</span></td><td><b>Phổ thông tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 80% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
                 </tbody>
               </table>
               <div class="pager"><span>Hiển thị 1–5 trên 5 bản ghi</span><span class="sp"></span><span class="pg on">1</span></div>
@@ -8783,12 +8829,12 @@
           <div class="dlg__h">
             <div class="dlg__ic">!</div>
             <div>
-              <h3>Xoá hạng vé ECON_SAVER?</h3>
+              <h3>Xoá hạng vé VN_ECON_SAVER?</h3>
               <p>Hạng vé sẽ bị ẩn khỏi mọi danh sách. Thao tác này không xoá dữ liệu khỏi database.</p>
             </div>
           </div>
           <div class="dlg__bd">
-            <div class="dlg__warn">Hạng vé đang được dùng ở <b>12 bảng giá</b> và <b>340 vé đã bán</b>. Vì vậy hệ thống không xoá cứng: ECON_SAVER chỉ chuyển sang trạng thái <b>ngừng dùng</b>, còn vé đã bán giữ nguyên hạng vé cũ.</div>
+            <div class="dlg__warn">Hạng vé đang được dùng ở <b>12 bảng giá</b> và <b>340 vé đã bán</b>. Vì vậy hệ thống không xoá cứng: VN_ECON_SAVER chỉ chuyển sang trạng thái <b>ngừng dùng</b>, còn vé đã bán giữ nguyên hạng vé cũ.</div>
           </div>
           <div class="dlg__f"><span class="btn btn--ghost">Huỷ</span><span class="btn btn--dark">Xoá</span></div>
         </div>
@@ -8884,11 +8930,11 @@
                   <tr><th style="width:44px"><span class="cb on"></span></th><th style="width:170px">Mã hạng vé</th><th>Tên hạng vé</th><th style="width:180px">Hãng áp dụng</th><th style="width:190px">Hạng dịch vụ</th><th style="width:200px">Quy định hoàn</th><th style="width:130px">Trạng thái</th><th style="width:120px"></th></tr>
                 </thead>
                 <tbody>
-                  <tr><td><span class="cb on"></span></td><td><span class="cd">ECON_SAVER</span></td><td><b>Phổ thông tiết kiệm</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Không hoàn · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb on"></span></td><td><span class="cd">ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">PREM_ECO_STANDARD</span></td><td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông đặc biệt</span></td><td>Hoàn 85% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb on"></span></td><td><span class="cd">BIZ_STANDARD</span></td><td><b>Thương gia tiêu chuẩn</b></td><td>Bamboo Airways</td><td><span class="badge">Thương gia</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
-                  <tr><td><span class="cb"></span></td><td><span class="cd">ECON_PROMO</span></td><td><b>Phổ thông khuyến mãi</b></td><td>VietJet Air</td><td><span class="badge">Phổ thông</span></td><td>Chưa cấu hình</td><td><span class="badge">Tạm tắt</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb on"></span></td><td><span class="cd">VN_ECON_SAVER</span></td><td><b>Phổ thông tiết kiệm</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Không hoàn · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb on"></span></td><td><span class="cd">VN_ECON_FLEX</span></td><td><b>Phổ thông linh hoạt</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_PREM_ECO_STANDARD</span></td><td><b>Phổ thông đặc biệt tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông đặc biệt</span></td><td>Hoàn 85% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb on"></span></td><td><span class="cd">QH_BIZ_STANDARD</span></td><td><b>Thương gia tiêu chuẩn</b></td><td>Bamboo Airways</td><td><span class="badge">Thương gia</span></td><td>Hoàn 90% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
+                  <tr><td><span class="cb"></span></td><td><span class="cd">VN_ECON_STANDARD</span></td><td><b>Phổ thông tiêu chuẩn</b></td><td>Vietnam Airlines</td><td><span class="badge">Phổ thông</span></td><td>Hoàn 80% · trước 24h · v1</td><td><span class="badge badge--ok">Đang dùng</span></td><td><span class="ract"><a>Sửa</a><a>Xoá</a></span></td></tr>
                 </tbody>
               </table>
               <div class="pager"><span>Hiển thị 1–5 trên 5 bản ghi</span><span class="sp"></span><span class="pg on">1</span></div>
@@ -8910,9 +8956,9 @@
           </div>
           <div class="dlg__bd">
             <ul class="dlg__lst">
-              <li><span class="cd">ECON_SAVER</span><b>Phổ thông tiết kiệm</b><span>· Vietnam Airlines</span></li>
-              <li><span class="cd">ECON_FLEX</span><b>Phổ thông linh hoạt</b><span>· Vietnam Airlines</span></li>
-              <li><span class="cd">BIZ_STANDARD</span><b>Thương gia tiêu chuẩn</b><span>· Bamboo Airways</span></li>
+              <li><span class="cd">VN_ECON_SAVER</span><b>Phổ thông tiết kiệm</b><span>· Vietnam Airlines</span></li>
+              <li><span class="cd">VN_ECON_FLEX</span><b>Phổ thông linh hoạt</b><span>· Vietnam Airlines</span></li>
+              <li><span class="cd">QH_BIZ_STANDARD</span><b>Thương gia tiêu chuẩn</b><span>· Bamboo Airways</span></li>
             </ul>
             <div class="dlg__warn" style="margin-top:12px">Hạng vé đang có <b>giá bán</b> hoặc đã dùng trong <b>vé đã xuất</b> sẽ bị bỏ qua, không xoá. Sau khi xoá, hệ thống báo lại danh sách hạng vé bị bỏ qua để người vận hành xử lý tiếp.</div>
           </div>
