@@ -303,7 +303,61 @@ export const routes: Routes = [
           ),
         data: { title: 'Sơ đồ ghế' },
       },
-      ...comingSoonAdmin('flights', 'Chuyến bay'),
+      // ---- Quản trị Chuyến bay, Giá bán & Tồn ghế (Cụm DA2) ----
+      {
+        path: 'flights',
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flights').then((m) => m.AdminFlights),
+        data: { title: 'Chuyến bay' },
+      },
+      {
+        path: 'flights/new',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flight-form').then((m) => m.AdminFlightForm),
+        data: { title: 'Thêm chuyến bay' },
+      },
+      {
+        path: 'flights/:id',
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flight-detail').then((m) => m.AdminFlightDetail),
+        data: { title: 'Chi tiết chuyến bay' },
+      },
+      {
+        path: 'flights/:id/edit',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flight-form').then((m) => m.AdminFlightForm),
+        data: { title: 'Sửa chuyến bay' },
+      },
+      {
+        path: 'flights/:id/operation',
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flight-edit').then((m) => m.AdminFlightEdit),
+        data: { title: 'Cập nhật vận hành' },
+      },
+      {
+        path: 'flights/:id/seat-inventory',
+        loadComponent: () =>
+          import('@features/admin/pages/flight-seat-inventory/flight-seat-inventory').then(
+            (m) => m.AdminFlightSeatInventory,
+          ),
+        data: { title: 'Tồn ghế chuyến bay' },
+      },
+      {
+        path: 'flight-fares',
+        loadComponent: () =>
+          import('@features/admin/pages/flight-fares/flight-fares').then((m) => m.AdminFlightFares),
+        data: { title: 'Bảng giá chuyến bay' },
+      },
+      {
+        path: 'flight-seat-inventory',
+        loadComponent: () =>
+          import('@features/admin/pages/flight-seat-inventory/flight-seat-inventory').then(
+            (m) => m.AdminFlightSeatInventory,
+          ),
+        data: { title: 'Tồn ghế chuyến bay' },
+      },
       ...comingSoonAdmin('bookings', 'Đặt chỗ'),
       {
         path: 'profile',

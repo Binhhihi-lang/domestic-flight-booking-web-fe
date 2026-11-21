@@ -158,6 +158,8 @@ export class AdminLayout implements AfterViewInit {
       label: 'Bán vé & khuyến mãi',
       items: [
         { path: '/admin/flights', label: 'Chuyến bay', icon: 'flight_takeoff' },
+        { path: '/admin/flight-fares', label: 'Bảng giá chuyến', icon: 'sell' },
+        { path: '/admin/flight-seat-inventory', label: 'Tồn ghế chuyến', icon: 'airline_seat_recline_normal' },
         { path: '/admin/bookings', label: 'Đặt chỗ', icon: 'confirmation_number' },
         { path: '/admin/promotions', label: 'Khuyến mãi', icon: 'local_offer', adminOnly: true },
         { path: '/admin/vouchers', label: 'Voucher', icon: 'redeem', adminOnly: true },
