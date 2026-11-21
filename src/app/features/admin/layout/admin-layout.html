@@ -102,9 +102,7 @@
         <span class="tabular">{{ today }}</span>
       </span>
 
-      <button class="header__icon" type="button" aria-label="Thông báo">
-        <mat-icon>notifications_none</mat-icon>
-      </button>
+      <app-notification-bell />
 
       <button class="header__user" type="button" [matMenuTriggerFor]="accountMenu">
         <span class="header__meta">

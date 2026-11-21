@@ -38,6 +38,8 @@ import {
   USERS_MOCK,
 } from '@core/mock/data/auth.mock';
 import { UserVoucher, VoucherStoreItem } from '@core/models/user-voucher.model';
+import { NotificationItem } from '@core/models/notification.model';
+import { NOTIFICATIONS_MOCK } from '@core/mock/data/notifications.mock';
 import { MockResource } from '@core/mock/mock-resource';
 import { ApiResponse, PageData } from '@core/models/api-response.model';
 import {
@@ -97,6 +99,9 @@ export class MockRegistry {
   /** Ví voucher của khách đang đăng nhập (mock chỉ có một khách). */
   private userVouchers: UserVoucher[] = USER_VOUCHERS_MOCK.map((v) => ({ ...v }));
   private userVoucherIdSeq = 100;
+
+  /** Danh sách thông báo in-app của người dùng đang đăng nhập. */
+  private notifications: NotificationItem[] = NOTIFICATIONS_MOCK.map((n) => ({ ...n }));
 
   private readonly resources = [
     new MockResource<City>({
@@ -338,6 +343,21 @@ export class MockRegistry {
     const claimMatch = path.match(/^\/api\/vouchers\/(\d+)\/claim$/);
     if (claimMatch && m === 'POST') {
       return this.claimVoucher(Number(claimMatch[1]));
+    }
+
+    // Thông báo in-app — 00-nghiep-vu-thong-bao.md.
+    if (path === '/api/notifications' && m === 'GET') {
+      return this.listNotifications(url);
+    }
+    if (path === '/api/notifications/unread-count' && m === 'GET') {
+      return this.getUnreadNotificationCount();
+    }
+    if (path === '/api/notifications/read-all' && m === 'PATCH') {
+      return this.markAllNotificationsRead();
+    }
+    const notifReadMatch = path.match(/^\/api\/notifications\/(\d+)\/read$/);
+    if (notifReadMatch && m === 'PATCH') {
+      return this.markNotificationRead(Number(notifReadMatch[1]));
     }
 
     // Các module master data dùng chung một lớp tài nguyên tổng quát.
@@ -948,5 +968,49 @@ export class MockRegistry {
       succeeded.push(id);
     }
     return ok({ succeeded, failed }, 'Thao tác hàng loạt hoàn tất');
+  }
+
+  // ---------- Thông báo In-App — 00-nghiep-vu-thong-bao.md ----------
+
+  private listNotifications(url: string): unknown {
+    const params = readParams(url);
+    const unreadParam = params.get('unread');
+    let rows = [...this.notifications].sort((a, b) =>
+      b.created_at.localeCompare(a.created_at),
+    );
+    if (unreadParam === 'true') {
+      rows = rows.filter((n) => !n.is_read);
+    }
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getUnreadNotificationCount(): unknown {
+    const unreadCount = this.notifications.filter((n) => !n.is_read).length;
+    return ok({ unread_count: unreadCount });
+  }
+
+  private markNotificationRead(id: number): unknown {
+    const target = this.notifications.find((n) => n.id === id);
+    if (!target) {
+      return notFound('Không tìm thấy thông báo');
+    }
+    if (!target.is_read) {
+      target.is_read = true;
+      target.read_at = new Date().toISOString();
+    }
+    return ok(target, 'Đã đánh dấu đã đọc');
+  }
+
+  private markAllNotificationsRead(): unknown {
+    const now = new Date().toISOString();
+    for (const item of this.notifications) {
+      if (!item.is_read) {
+        item.is_read = true;
+        item.read_at = now;
+      }
+    }
+    return ok(null, 'Đã đánh dấu tất cả thông báo là đã đọc');
   }
 }

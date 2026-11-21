@@ -26,7 +26,12 @@ function user(role: 'ADMIN' | 'STAFF' | 'CUSTOMER'): AuthenticatedUser {
 
 /** Bộ quyền tối thiểu để đi hết các màn đang có. */
 function buildPermissions(role: 'ADMIN' | 'STAFF' | 'CUSTOMER'): string[] {
-  const customer = ['PROFILE_READ_SELF', 'PROFILE_UPDATE_SELF', 'BOOKING_READ_SELF'];
+  const customer = [
+    'PROFILE_READ_SELF',
+    'PROFILE_UPDATE_SELF',
+    'BOOKING_READ_SELF',
+    'NOTIFICATION_READ_SELF',
+  ];
   const staff = [
     ...customer,
     'FLIGHT_READ',

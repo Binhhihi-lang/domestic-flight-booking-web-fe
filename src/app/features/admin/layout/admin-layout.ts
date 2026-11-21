@@ -21,6 +21,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { AuthService } from '@core/services/auth.service';
 import { BrandLogo } from '@shared/components/brand-logo/brand-logo';
+import { NotificationBell } from '@shared/components/notification-bell/notification-bell';
 
 interface NavItem {
   path: string;
@@ -61,6 +62,7 @@ interface NavGroup {
     MatMenuModule,
     MatTooltipModule,
     BrandLogo,
+    NotificationBell,
   ],
   templateUrl: './admin-layout.html',
   styleUrl: './admin-layout.css',

@@ -25,6 +25,7 @@
   <span class="topbar__sp"></span>
 
   @if (authService.isLoggedIn()) {
+    <app-notification-bell />
     <button class="topbar__user" type="button" [matMenuTriggerFor]="accountMenu">
       <span class="avatar">{{ initials() }}</span>
       <span class="topbar__user-name">{{ authService.currentUser()?.full_name }}</span>
