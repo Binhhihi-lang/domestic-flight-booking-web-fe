@@ -192,7 +192,10 @@ export class MockResource<T extends MockRecord> {
       status: payload.status ?? 'ACTIVE',
     } as T;
     this.rows.push(created);
-    return ok(created, `Tạo ${this.options.noun} thành công`);
+    return ok(
+      this.options.enrich ? this.options.enrich(created) : created,
+      `Tạo ${this.options.noun} thành công`,
+    );
   }
 
   private update(id: number, body: unknown): unknown {
@@ -214,7 +217,7 @@ export class MockResource<T extends MockRecord> {
     }
 
     Object.assign(target, merged, { id });
-    return ok(target, 'Cập nhật thành công');
+    return ok(this.options.enrich ? this.options.enrich(target) : target, 'Cập nhật thành công');
   }
 
   private remove(id: number): unknown {

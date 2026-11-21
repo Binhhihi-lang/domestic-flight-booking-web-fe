@@ -221,9 +221,17 @@ export const routes: Routes = [
         import('@features/admin/pages/seat-types/seat-types').then((m) => m.AdminSeatTypes),
         { adminOnly: true },
       ),
-      ...crudRoutes('seat-class-surcharges', 'Phụ thu nâng hạng', () =>
-        import('@features/admin/pages/seat-class-surcharges/seat-class-surcharges').then(
-          (m) => m.AdminSeatClassSurcharges,
+      ...crudRoutes('fare-classes', 'Hạng vé', () =>
+        import('@features/admin/pages/fare-classes/fare-classes').then((m) => m.AdminFareClasses),
+        { adminOnly: true },
+      ),
+      ...crudRoutes('fare-rules', 'Quy định hoàn vé', () =>
+        import('@features/admin/pages/fare-rules/fare-rules').then((m) => m.AdminFareRules),
+        { adminOnly: true },
+      ),
+      ...crudRoutes('baggage-options', 'Gói hành lý', () =>
+        import('@features/admin/pages/baggage-options/baggage-options').then(
+          (m) => m.AdminBaggageOptions,
         ),
         { adminOnly: true },
       ),

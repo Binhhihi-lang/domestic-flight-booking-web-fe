@@ -135,8 +135,8 @@ export class SeatGrid {
     switch (seatClass) {
       case 'BUSINESS':
         return 'var(--color-accent)';
-      case 'FIRST':
-        return 'var(--color-danger)';
+      case 'PREMIUM_ECONOMY':
+        return 'var(--color-warning)';
       default:
         return 'var(--color-primary-bright)';
     }

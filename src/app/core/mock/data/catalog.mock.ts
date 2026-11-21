@@ -15,16 +15,16 @@ export const AIRCRAFT_MOCK: Aircraft[] = [
   { id: 8, aircraft_code: 'BL-A320-03', model: 'Airbus A320', manufacturer: 'Airbus', seat_capacity: 180, aisle_after: 'C', status: 'INACTIVE' },
 ];
 
-/** Loại ghế — API v0.2 mục 2.6. v0.4 nâng thành CRUD đầy đủ. */
+/** Loại ghế — API v0.4 mục 2.6 & BE V16 (gồm khoang và phụ thu mặc định VND). */
 export const SEAT_TYPES_MOCK: SeatType[] = [
-  { id: 1, seat_type_code: 'ECO', seat_type_name: 'Phổ thông', color_hex: '#90CAF9', seat_class: 'ECONOMY', status: 'ACTIVE' },
-  { id: 2, seat_type_code: 'ECO_WIN', seat_type_name: 'Phổ thông - cửa sổ', color_hex: '#64B5F6', seat_class: 'ECONOMY', status: 'ACTIVE' },
-  { id: 3, seat_type_code: 'ECO_AIS', seat_type_name: 'Phổ thông - lối đi', color_hex: '#42A5F5', seat_class: 'ECONOMY', status: 'ACTIVE' },
-  { id: 4, seat_type_code: 'PREM_ECO', seat_type_name: 'Phổ thông ưu tiên', color_hex: '#1E88E5', seat_class: 'ECONOMY', status: 'ACTIVE' },
-  { id: 5, seat_type_code: 'BUS', seat_type_name: 'Ghế thương gia', color_hex: '#F9A825', seat_class: 'BUSINESS', status: 'ACTIVE' },
-  { id: 6, seat_type_code: 'BUS_WIN', seat_type_name: 'Thương gia - cửa sổ', color_hex: '#FBC02D', seat_class: 'BUSINESS', status: 'ACTIVE' },
-  { id: 7, seat_type_code: 'FIRST', seat_type_name: 'Hạng nhất', color_hex: '#6A1B9A', seat_class: 'FIRST', status: 'ACTIVE' },
-  { id: 8, seat_type_code: 'EXIT', seat_type_name: 'Ghế thoát hiểm', color_hex: '#9E9E9E', seat_class: 'ECONOMY', status: 'INACTIVE' },
+  { id: 1, seat_type_code: 'ECO', seat_type_name: 'Phổ thông tiêu chuẩn', color_hex: '#90CAF9', seat_class: 'ECONOMY', surcharge: 0, status: 'ACTIVE' },
+  { id: 2, seat_type_code: 'ECO_WIN', seat_type_name: 'Phổ thông - cửa sổ', color_hex: '#64B5F6', seat_class: 'ECONOMY', surcharge: 50000, status: 'ACTIVE' },
+  { id: 3, seat_type_code: 'ECO_AIS', seat_type_name: 'Phổ thông - lối đi', color_hex: '#42A5F5', seat_class: 'ECONOMY', surcharge: 40000, status: 'ACTIVE' },
+  { id: 4, seat_type_code: 'PREM_ECO', seat_type_name: 'Phổ thông đặc biệt', color_hex: '#1E88E5', seat_class: 'PREMIUM_ECONOMY', surcharge: 150000, status: 'ACTIVE' },
+  { id: 5, seat_type_code: 'BUS', seat_type_name: 'Ghế thương gia', color_hex: '#F9A825', seat_class: 'BUSINESS', surcharge: 250000, status: 'ACTIVE' },
+  { id: 6, seat_type_code: 'BUS_WIN', seat_type_name: 'Thương gia - cửa sổ', color_hex: '#FBC02D', seat_class: 'BUSINESS', surcharge: 300000, status: 'ACTIVE' },
+  { id: 7, seat_type_code: 'PREM_EXIT', seat_type_name: 'Phổ thông đặc biệt - chỗ rộng', color_hex: '#6A1B9A', seat_class: 'PREMIUM_ECONOMY', surcharge: 180000, status: 'ACTIVE' },
+  { id: 8, seat_type_code: 'EXIT', seat_type_name: 'Ghế thoát hiểm', color_hex: '#9E9E9E', seat_class: 'ECONOMY', surcharge: 120000, status: 'INACTIVE' },
 ];
 
 /**

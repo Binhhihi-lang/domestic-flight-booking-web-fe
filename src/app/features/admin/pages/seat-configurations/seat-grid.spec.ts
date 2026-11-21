@@ -13,6 +13,7 @@ function seatType(id: number, cls: SeatType['seat_class'], color: string | null)
     seat_type_name: `Loại ${id}`,
     seat_class: cls,
     color_hex: color,
+    surcharge: 0,
     status: 'ACTIVE',
   };
 }
@@ -109,7 +110,7 @@ describe('SeatGrid — màu theo color_hex', () => {
       [
         seatType(1, 'ECONOMY', '#90CAF9'),
         seatType(2, 'BUSINESS', '#F9A825'),
-        seatType(3, 'FIRST', '#6A1B9A'),
+        seatType(3, 'PREMIUM_ECONOMY', '#6A1B9A'),
       ],
     );
     const names = [...(f.nativeElement as HTMLElement).querySelectorAll('.legend__name')].map(

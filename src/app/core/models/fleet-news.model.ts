@@ -1,7 +1,7 @@
-/** Hạng ghế — API v0.4 mục 2.6. */
+/** Khoang dịch vụ — API v0.4 / BE V16 (ECONOMY, PREMIUM_ECONOMY, BUSINESS). */
 import { ActiveStatus } from '@core/models/airline.model';
 
-export type SeatClass = 'ECONOMY' | 'BUSINESS' | 'FIRST';
+export type SeatClass = 'ECONOMY' | 'PREMIUM_ECONOMY' | 'BUSINESS';
 
 /**
  * Máy bay — API v0.4 mục 2.6, bảng aircrafts (DB v0.4).
@@ -24,8 +24,8 @@ export interface Aircraft {
 export type AircraftPayload = Omit<Aircraft, 'id'>;
 
 /**
- * Loại ghế — API v0.4 mục 2.6.
- * v0.4 thêm `color_hex` để sơ đồ ghế tô màu theo hạng.
+ * Loại ghế — API v0.4 mục 2.6 & BE V16.
+ * Gồm `color_hex` để sơ đồ ghế tô màu và `surcharge` (phụ thu chọn ghế VND).
  */
 export interface SeatType {
   id: number;
@@ -33,6 +33,7 @@ export interface SeatType {
   seat_type_name: string;
   seat_class: SeatClass;
   color_hex: string | null;
+  surcharge: number;
   status: ActiveStatus;
 }
 
