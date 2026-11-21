@@ -41,24 +41,24 @@
     <div class="state">Đang tổng hợp dữ liệu báo cáo...</div>
   } @else if (report(); as r) {
     <div class="kpi-grid">
-      <div class="kpi">
+      <div class="kpi kpi--anim" style="animation-delay: 0ms">
         <span class="kpi__label">Tổng doanh thu hệ thống</span>
-        <strong class="kpi__val tabular">{{ formatVnd(r.revenue_total) }}</strong>
+        <strong class="kpi__val tabular" [appCountUp]="r.revenue_total" countUpFormat="vnd">{{ formatVnd(r.revenue_total) }}</strong>
         <small>Tháng này: {{ formatVnd(r.revenue_month) }}</small>
       </div>
-      <div class="kpi">
+      <div class="kpi kpi--anim" style="animation-delay: 70ms">
         <span class="kpi__label">Tổng đơn đặt vé</span>
-        <strong class="kpi__val tabular">{{ r.bookings_total.toLocaleString('vi-VN') }}</strong>
+        <strong class="kpi__val tabular" [appCountUp]="r.bookings_total" countUpFormat="number">{{ r.bookings_total.toLocaleString('vi-VN') }}</strong>
         <small>Tháng này: {{ r.bookings_month.toLocaleString('vi-VN') }} đơn</small>
       </div>
-      <div class="kpi">
+      <div class="kpi kpi--anim" style="animation-delay: 140ms">
         <span class="kpi__label">Hệ số lấp đầy trung bình</span>
-        <strong class="kpi__val tabular">{{ r.occupancy_rate_percent.toFixed(1) }}%</strong>
+        <strong class="kpi__val tabular" [appCountUp]="r.occupancy_rate_percent" countUpFormat="percent">{{ r.occupancy_rate_percent.toFixed(1) }}%</strong>
         <small>{{ r.pax_month.toLocaleString('vi-VN') }} lượt khách trong tháng</small>
       </div>
-      <div class="kpi">
+      <div class="kpi kpi--anim" style="animation-delay: 210ms">
         <span class="kpi__label">Tỷ lệ hủy vé</span>
-        <strong class="kpi__val tabular">{{ r.cancel_rate_percent.toFixed(1) }}%</strong>
+        <strong class="kpi__val tabular" [appCountUp]="r.cancel_rate_percent" countUpFormat="percent">{{ r.cancel_rate_percent.toFixed(1) }}%</strong>
         <small>{{ r.flights_delayed_today }} chuyến trễ hôm nay</small>
       </div>
     </div>
@@ -66,10 +66,14 @@
     <div class="rep-grid">
       <app-app-card title="Biểu đồ doanh thu theo ngày">
         <div class="bars">
-          @for (b of revenueBars(); track b.date) {
+          @for (b of revenueBars(); track b.date; let idx = $index) {
             <div class="bar" [title]="b.day_label + ': ' + formatVnd(b.revenue)">
               <span class="bar__val tabular">{{ b.bookings_count }}</span>
-              <div class="bar__col" [style.height.%]="b.heightPercent"></div>
+              <div
+                class="bar__col bar__col--anim"
+                [style.height.%]="b.heightPercent"
+                [style.animation-delay.ms]="idx * 55"
+              ></div>
               <span class="bar__lbl">{{ b.day_label }}</span>
             </div>
           }

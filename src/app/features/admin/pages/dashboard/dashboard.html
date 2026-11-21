@@ -26,14 +26,14 @@
   } @else {
     <!-- ===== Thẻ số liệu ===== -->
     <div class="stats">
-      @for (s of stats(); track s.label) {
-        <div class="stat">
+      @for (s of stats(); track s.label; let idx = $index) {
+        <div class="stat stat--anim" [style.animation-delay.ms]="idx * 70">
           <div class="stat__ic" [class]="'stat__ic--' + s.tone">
             <mat-icon>{{ s.icon }}</mat-icon>
           </div>
           <div class="stat__l">{{ s.label }}</div>
           <div class="stat__v tabular">
-            {{ s.value }}@if (s.unit) {<span class="stat__u">{{ s.unit }}</span>}
+            <span [appCountUp]="s.numericValue" [countUpFormat]="s.format">{{ s.value }}</span>@if (s.unit) {<span class="stat__u">{{ s.unit }}</span>}
           </div>
           <div class="stat__d" [class.up]="s.deltaTone === 'up'" [class.down]="s.deltaTone === 'down'">
             <mat-icon>{{ s.deltaIcon }}</mat-icon>
@@ -49,10 +49,14 @@
         <app-app-card title="Booking theo ngày">
           <span cardActions class="muted-sm">{{ selectedDays() }} ngày gần nhất</span>
           <div class="bars">
-            @for (b of bars(); track b.label) {
+            @for (b of bars(); track b.label; let idx = $index) {
               <div class="bar" [title]="b.value + ' booking · ' + b.label">
                 <span class="bar__v tabular">{{ b.value }}</span>
-                <div class="bar__b" [style.height.%]="b.height"></div>
+                <div
+                  class="bar__b bar__b--anim"
+                  [style.height.%]="b.height"
+                  [style.animation-delay.ms]="idx * 55"
+                ></div>
                 <span class="bar__l">{{ b.label }}</span>
               </div>
             }

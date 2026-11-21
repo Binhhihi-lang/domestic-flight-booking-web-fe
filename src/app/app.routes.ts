@@ -51,7 +51,21 @@ export const routes: Routes = [
           ),
         data: { title: 'Kết quả tìm chuyến' },
       },
-      // ---- Luồng Checkout, Thanh toán & Vé điện tử (Cụm B6.1) ----
+      // ---- Luồng Đặt vé Bước 2–3 (Cụm DA3.1) & Checkout (Cụm B6.1) ----
+      {
+        path: 'booking/seats',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-seats').then((m) => m.BookingSeats),
+        data: { title: 'Chọn ghế ngồi' },
+      },
+      {
+        path: 'booking/passengers',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-passengers').then(
+            (m) => m.BookingPassengers,
+          ),
+        data: { title: 'Thông tin hành khách' },
+      },
       {
         path: 'booking/review',
         canActivate: [authGuard],
@@ -128,6 +142,14 @@ export const routes: Routes = [
                 (m) => m.AccountBookings,
               ),
             data: { title: 'Vé của tôi' },
+          },
+          {
+            path: 'bookings/:id',
+            loadComponent: () =>
+              import('@features/client/pages/booking/booking-detail').then(
+                (m) => m.BookingDetailPage,
+              ),
+            data: { title: 'Chi tiết đặt chỗ' },
           },
           {
             path: 'vouchers',
@@ -358,7 +380,20 @@ export const routes: Routes = [
           ),
         data: { title: 'Tồn ghế chuyến bay' },
       },
-      ...comingSoonAdmin('bookings', 'Đặt chỗ'),
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('@features/admin/pages/bookings/bookings').then((m) => m.AdminBookings),
+        data: { title: 'Đặt chỗ' },
+      },
+      {
+        path: 'bookings/:id',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-detail').then(
+            (m) => m.BookingDetailPage,
+          ),
+        data: { title: 'Chi tiết đặt chỗ', adminMode: true },
+      },
       {
         path: 'profile',
         loadComponent: () =>

@@ -7,6 +7,7 @@ import { DashboardService } from '@core/services/dashboard.service';
 import { PageHeader } from '@shared/components/page-header/page-header';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
+import { CountUpDirective } from '@shared/ui/count-up/count-up.directive';
 import { StatusBadge, BadgeTone } from '@shared/ui/status-badge/status-badge';
 
 /**
@@ -16,7 +17,7 @@ import { StatusBadge, BadgeTone } from '@shared/ui/status-badge/status-badge';
 @Component({
   selector: 'app-admin-reports',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, MatIconModule, PageHeader, AppButton, AppCard, StatusBadge],
+  imports: [FormsModule, MatIconModule, PageHeader, AppButton, AppCard, StatusBadge, CountUpDirective],
   templateUrl: './reports.html',
   styleUrl: './reports.css',
 })
