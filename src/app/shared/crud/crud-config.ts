@@ -37,7 +37,9 @@ export type CrudFieldType =
   | 'text'
   | 'number'
   | 'date'
+  | 'datetime-local'
   | 'select'
+  | 'multiselect'
   | 'textarea'
   | 'toggle'
   | 'image'
@@ -116,6 +118,15 @@ export interface CrudConfig<T, P> {
   fields: CrudField[];
   /** Màn chỉ đọc (Vai trò, Quyền) thì đặt true để ẩn nút thêm/sửa/xóa. */
   readonly?: boolean;
+  /**
+   * Ẩn cột checkbox và thanh thao tác hàng loạt (dùng cho module không có
+   * endpoint `/bulk` như Người dùng để tránh gọi 404).
+   */
+  disableBulk?: boolean;
+  /**
+   * Ẩn nút Xóa trên các dòng đặc thù (ví dụ tài khoản ADMIN hệ thống).
+   */
+  hideDelete?: (row: T) => boolean;
   /**
    * Endpoint trả MẢNG TRẦN thay vì `{items, pagination}` (BR-LIST-05) — hiện có
    * Role và Permission. Bật cờ này thì `CrudPage` gọi `listAll()`/`searchAll()`

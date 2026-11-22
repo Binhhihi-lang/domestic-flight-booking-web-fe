@@ -24,11 +24,11 @@ import { BrandLogo } from '@shared/components/brand-logo/brand-logo';
 import { NotificationBell } from '@shared/components/notification-bell/notification-bell';
 
 interface NavItem {
-  path: string;
+  id: string;
+  path?: string;
+  action?: 'logout';
   label: string;
   icon: string;
-  /** Chỉ ADMIN mới thấy mục này (STAFF không có User Management/RBAC). */
-  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -37,19 +37,11 @@ interface NavGroup {
 }
 
 /**
- * Khung khu vực vận hành (STAFF/ADMIN) — sidebar + header + nội dung + footer.
+ * Khung khu vực vận hành (ADMIN / STAFF) — sidebar dọc + header breadcrumb + nội dung + footer.
  *
- * Vì sao dùng sidebar chứ không phải thanh ngang: tài liệu UI đã chốt
- * "Admin Sidebar/Header/Breadcrumb", và khu vực này có ~20 màn chia thành 7
- * nhóm — nhồi hết lên thanh ngang thì không đọc được, còn sidebar hiện được
- * nhóm và giữ nguyên vị trí khi chuyển màn.
- *
- * Vì sao header có breadcrumb: người vận hành đi sâu 2–3 cấp (Danh mục >
- * Hãng hàng không > Sửa), breadcrumb là cách duy nhất biết mình đang ở đâu mà
- * không phải quay lại sidebar.
- *
- * Mobile (≤1024px): sidebar trượt ra ngoài, mở bằng nút hamburger trên header,
- * kèm lớp phủ để bấm ra ngoài là đóng.
+ * Tách riêng cấu trúc menu theo đúng vai trò (bám sát prototype `admin.html` & `staff.html`):
+ * - ADMIN: 7 nhóm quản trị đầy đủ (bỏ Hạng dịch vụ V16 và bỏ Design system khỏi menu vận hành).
+ * - STAFF: 3 nhóm gọn (Vận hành, Danh mục máy bay chỉ đọc, Cá nhân).
  */
 @Component({
   selector: 'app-admin-layout',
@@ -121,87 +113,105 @@ export class AdminLayout implements AfterViewInit {
     return title;
   }
 
-  private readonly navGroups: NavGroup[] = [
+  private readonly adminNavGroups: NavGroup[] = [
     {
       label: 'Tổng quan',
       items: [
-        { path: '/admin/dashboard', label: 'Dashboard', icon: 'space_dashboard' },
-        { path: '/admin/reports', label: 'Báo cáo doanh thu', icon: 'bar_chart', adminOnly: true },
+        { id: 'dashboard', path: '/admin/dashboard', label: 'Dashboard', icon: 'space_dashboard' },
+        { id: 'reports', path: '/admin/reports', label: 'Báo cáo & thống kê', icon: 'insights' },
       ],
     },
     {
       label: 'Người dùng & phân quyền',
       items: [
-        { path: '/admin/users', label: 'Người dùng', icon: 'manage_accounts', adminOnly: true },
-        { path: '/admin/roles', label: 'Vai trò', icon: 'admin_panel_settings', adminOnly: true },
-        { path: '/admin/permissions', label: 'Quyền', icon: 'vpn_key', adminOnly: true },
+        { id: 'users', path: '/admin/users', label: 'Người dùng', icon: 'manage_accounts' },
+        { id: 'roles', path: '/admin/roles', label: 'Vai trò', icon: 'admin_panel_settings' },
+        { id: 'permissions', path: '/admin/permissions', label: 'Quyền', icon: 'vpn_key' },
       ],
     },
     {
       label: 'Danh mục hàng không',
       items: [
-        { path: '/admin/airlines', label: 'Hãng hàng không', icon: 'connecting_airports', adminOnly: true },
-        { path: '/admin/cities', label: 'Thành phố', icon: 'location_city', adminOnly: true },
-        { path: '/admin/airports', label: 'Sân bay', icon: 'local_airport', adminOnly: true },
-        { path: '/admin/aircrafts', label: 'Máy bay', icon: 'airlines', adminOnly: true },
-        { path: '/admin/seat-types', label: 'Loại ghế', icon: 'event_seat', adminOnly: true },
-        { path: '/admin/fare-classes', label: 'Hạng vé', icon: 'airline_seat_recline_extra', adminOnly: true },
-        { path: '/admin/fare-rules', label: 'Quy định hoàn vé', icon: 'gavel', adminOnly: true },
-        { path: '/admin/baggage-options', label: 'Gói hành lý', icon: 'luggage', adminOnly: true },
-        // KHÔNG có mục "Sơ đồ ghế" riêng: sơ đồ thuộc về MỘT máy bay nên vào từ
-        // cột "Cấu hình" ở danh sách máy bay. Thêm mục nav cùng path
-        // `/admin/aircrafts` sẽ làm hai mục cùng sáng khi active và Angular báo
-        // trùng khoá `@for` (NG0955).
+        { id: 'airlines', path: '/admin/airlines', label: 'Hãng hàng không', icon: 'connecting_airports' },
+        { id: 'cities', path: '/admin/cities', label: 'Thành phố', icon: 'location_city' },
+        { id: 'airports', path: '/admin/airports', label: 'Sân bay', icon: 'local_airport' },
+        { id: 'aircrafts', path: '/admin/aircrafts', label: 'Máy bay', icon: 'airlines' },
+        { id: 'seat-types', path: '/admin/seat-types', label: 'Loại ghế', icon: 'event_seat' },
+      ],
+    },
+    {
+      label: 'Giá vé & hành lý',
+      items: [
+        { id: 'fare-classes', path: '/admin/fare-classes', label: 'Hạng vé', icon: 'sell' },
+        { id: 'fare-rules', path: '/admin/fare-rules', label: 'Quy định hoàn vé', icon: 'gavel' },
+        { id: 'baggage-options', path: '/admin/baggage-options', label: 'Gói hành lý', icon: 'luggage' },
+        { id: 'flight-fares', path: '/admin/flight-fares', label: 'Giá bán theo chuyến', icon: 'price_change' },
+        { id: 'flight-seat-inventory', path: '/admin/flight-seat-inventory', label: 'Tồn ghế', icon: 'event_available' },
       ],
     },
     {
       label: 'Bán vé & khuyến mãi',
       items: [
-        { path: '/admin/flights', label: 'Chuyến bay', icon: 'flight_takeoff' },
-        { path: '/admin/flight-fares', label: 'Bảng giá chuyến', icon: 'sell' },
-        { path: '/admin/flight-seat-inventory', label: 'Tồn ghế chuyến', icon: 'airline_seat_recline_normal' },
-        { path: '/admin/bookings', label: 'Đặt chỗ', icon: 'confirmation_number' },
-        { path: '/admin/promotions', label: 'Khuyến mãi', icon: 'local_offer', adminOnly: true },
-        { path: '/admin/vouchers', label: 'Voucher', icon: 'redeem', adminOnly: true },
+        { id: 'flights', path: '/admin/flights', label: 'Chuyến bay', icon: 'flight_takeoff' },
+        { id: 'bookings', path: '/admin/bookings', label: 'Đặt chỗ', icon: 'confirmation_number' },
+        { id: 'promotions', path: '/admin/promotions', label: 'Khuyến mãi', icon: 'local_offer' },
+        { id: 'vouchers', path: '/admin/vouchers', label: 'Voucher', icon: 'redeem' },
       ],
     },
     {
       label: 'Nội dung',
       items: [
-        { path: '/admin/news', label: 'Tin tức', icon: 'feed', adminOnly: true },
-        {
-          path: '/admin/news-categories',
-          label: 'Danh mục tin',
-          icon: 'label',
-          adminOnly: true,
-        },
+        { id: 'news', path: '/admin/news', label: 'Tin tức', icon: 'feed' },
+        { id: 'news-categories', path: '/admin/news-categories', label: 'Danh mục tin', icon: 'label' },
       ],
     },
     {
       label: 'Hệ thống',
       items: [
-        { path: '/admin/profile', label: 'Hồ sơ cá nhân', icon: 'account_circle' },
-        { path: '/admin/style-guide', label: 'Design system', icon: 'palette' },
+        { id: 'profile', path: '/admin/profile', label: 'Hồ sơ cá nhân', icon: 'account_circle' },
+        { id: 'logout', action: 'logout', label: 'Đăng xuất', icon: 'logout' },
       ],
     },
   ];
 
-  /** STAFF không có User Management/RBAC (Permission Matrix v2.0). */
-  protected readonly visibleGroups = computed(() => {
-    const isAdmin = this.authService.isAdmin();
-    return this.navGroups
-      .map((group) => ({
-        label: group.label,
-        items: group.items.filter((item) => !item.adminOnly || isAdmin),
-      }))
-      .filter((group) => group.items.length > 0);
-  });
+  private readonly staffNavGroups: NavGroup[] = [
+    {
+      label: 'Vận hành',
+      items: [
+        { id: 'dashboard', path: '/admin/dashboard', label: 'Dashboard', icon: 'space_dashboard' },
+        { id: 'flights', path: '/admin/flights', label: 'Chuyến bay', icon: 'flight_takeoff' },
+        { id: 'flight-fares', path: '/admin/flight-fares', label: 'Bảng giá chuyến', icon: 'price_change' },
+        { id: 'flight-seat-inventory', path: '/admin/flight-seat-inventory', label: 'Tồn ghế chuyến', icon: 'event_available' },
+        { id: 'bookings', path: '/admin/bookings', label: 'Đặt chỗ', icon: 'confirmation_number' },
+      ],
+    },
+    {
+      label: 'Danh mục',
+      items: [
+        { id: 'aircrafts', path: '/admin/aircrafts', label: 'Máy bay', icon: 'airlines' },
+      ],
+    },
+    {
+      label: 'Cá nhân',
+      items: [
+        { id: 'profile', path: '/admin/profile', label: 'Hồ sơ cá nhân', icon: 'account_circle' },
+      ],
+    },
+  ];
 
-  protected readonly roleLabel = computed(() =>
-    this.authService.isAdmin() ? 'Quản trị viên' : 'Nhân viên',
+  protected readonly visibleGroups = computed(() =>
+    this.authService.isAdmin() ? this.adminNavGroups : this.staffNavGroups,
   );
 
-  protected readonly initials = () => {
+  protected readonly roleLabel = computed(() =>
+    this.authService.isAdmin() ? 'Quản trị viên' : 'Nhân viên vận hành',
+  );
+
+  protected readonly roleCode = computed(() =>
+    this.authService.isAdmin() ? 'ADMIN' : 'STAFF',
+  );
+
+  protected readonly initials = computed(() => {
     const name = this.authService.currentUser()?.full_name ?? '';
     const parts = name.trim().split(/\s+/).filter(Boolean);
     if (parts.length === 0) {
@@ -210,7 +220,14 @@ export class AdminLayout implements AfterViewInit {
     const first = parts[0][0] ?? '';
     const last = parts.length > 1 ? (parts[parts.length - 1][0] ?? '') : '';
     return (first + last).toUpperCase();
-  };
+  });
+
+  protected onItemAction(item: NavItem): void {
+    this.sidebarOpen.set(false);
+    if (item.action === 'logout') {
+      this.logout();
+    }
+  }
 
   protected goToClient(): void {
     this.router.navigate(['/']);

@@ -30,6 +30,7 @@ export class AdminAirlines {
     emptyMessage: 'Chưa có hãng hàng không',
     emptyHint: 'Thêm hãng đầu tiên để bắt đầu',
     editTitle: 'Sửa hãng hàng không',
+    detailTitle: (r) => r.airline_name,
     deleteTitle: () => 'Xóa hãng hàng không?',
     deleteMessage: (r) =>
       `Bạn có chắc muốn xóa "${r.airline_name}"? Bản ghi vẫn được giữ lại để tra lịch sử.`,
@@ -55,6 +56,7 @@ export class AdminAirlines {
         label: 'Mã hãng',
         type: 'text',
         required: true,
+        createOnly: true,
         maxLength: 10,
         hint: 'Tối đa 10 ký tự, ví dụ VN',
       },

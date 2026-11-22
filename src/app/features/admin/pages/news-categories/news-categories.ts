@@ -26,6 +26,7 @@ export class AdminNewsCategories {
     emptyMessage: 'Chưa có danh mục',
     emptyHint: 'Thêm danh mục đầu tiên để bắt đầu',
     editTitle: 'Sửa danh mục',
+    detailTitle: (r) => r.name,
     deleteTitle: () => 'Xóa danh mục?',
     deleteMessage: (r) =>
       `Bạn có chắc muốn xóa "${r.name}"? Danh mục còn bài viết tham chiếu sẽ bị từ chối xóa.`,
@@ -39,8 +40,8 @@ export class AdminNewsCategories {
       },
     ],
     fields: [
-      { key: 'name', shownInTable: true, label: 'Tên danh mục', type: 'text', required: true, maxLength: 150 },
-      { key: 'description', shownInTable: true, label: 'Mô tả', type: 'textarea', fullWidth: true, maxLength: 500 },
+      { key: 'name', shownInTable: true, label: 'Tên danh mục', type: 'text', required: true, maxLength: 100 },
+      { key: 'description', shownInTable: true, label: 'Mô tả', type: 'textarea', fullWidth: true, maxLength: 255 },
       {
         key: 'status', shownInTable: true,
         label: 'Trạng thái',

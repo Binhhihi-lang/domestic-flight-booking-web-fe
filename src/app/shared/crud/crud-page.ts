@@ -1,40 +1,44 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   computed,
   inject,
   input,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Observable } from 'rxjs';
+import { Observable, Subject, switchMap, takeUntil, timer } from 'rxjs';
+import { environment } from '@env/environment';
 import { ApiResponse, BulkResult, ListQuery } from '@core/models/api-response.model';
 import { BaseCrudService } from '@core/services/base-crud.service';
-import { PageHeader } from '@shared/components/page-header/page-header';
+import { UploadService } from '@core/services/upload.service';
 import { ConfirmDialog } from '@shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
+import { PageHeader } from '@shared/components/page-header/page-header';
+import { ServerPager } from '@shared/components/server-pager/server-pager';
+import { CrudBulkConfig, CrudConfig, CrudField } from '@shared/crud/crud-config';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
-import { StatusBadge } from '@shared/ui/status-badge/status-badge';
 import { LoadingState } from '@shared/ui/loading-state/loading-state';
-import { MatDialog } from '@angular/material/dialog';
-import { CrudBulkConfig, CrudConfig, CrudField } from '@shared/crud/crud-config';
+import { StatusBadge } from '@shared/ui/status-badge/status-badge';
 
 /**
  * Màn CRUD dùng chung — ba chế độ: danh sách, form, chi tiết.
  *
- * Vì sao gộp ba chế độ vào một component: cả ba đều xoay quanh cùng một
- * `CrudConfig` (cột, trường, nhãn). Tách thành ba component thì mỗi module phải
- * khai ba nơi và dễ lệch nhau. Chế độ đọc từ `route.data.mode`, do
- * `crudRoutes()` sinh ra.
- *
- * Vì sao form là TRANG RIÊNG chứ không phải hộp thoại: tài liệu UI quy định vậy
- * (F4/F5), và form nghiệp vụ có tới 14 trường nên hộp thoại phải cuộn, khó nhìn
- * tổng thể. Trang riêng cũng cho phép dán link trực tiếp tới form sửa.
+ * Bám sát bố cục prototype `admin.css`:
+ * - Bộ lọc tách thành thẻ trắng riêng (`.adm-filter--card`) phía trên bảng
+ * - Thẻ danh sách (`.adm-listcard`) sát mép không thụt lề, tiêu đề bảng sticky,
+ *   mã dùng monospace, thanh phân trang `ServerPager` dính sát đáy thẻ
+ * - Ô tìm kiếm debounce 300ms tránh spam API
+ * - Trường `createOnly` hiển thị ở trạng thái `disabled` khi sửa và giữ nguyên giá trị gốc trong payload `PUT`
+ * - Tải ảnh gọi `UploadService.uploadAdminImage()` (chỉ fallback `FileReader` khi chạy mock/test)
  */
 @Component({
   selector: 'app-crud-page',
@@ -44,6 +48,7 @@ import { CrudBulkConfig, CrudConfig, CrudField } from '@shared/crud/crud-config'
     RouterLink,
     MatIconModule,
     PageHeader,
+    ServerPager,
     AppButton,
     AppCard,
     StatusBadge,
@@ -61,6 +66,8 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly uploadService = inject(UploadService);
+  private readonly destroyRef = inject(DestroyRef);
 
   /** 'list' | 'form' | 'detail' — do crudRoutes() gắn vào route.data. */
   protected readonly mode = signal<'list' | 'form' | 'detail'>('list');
@@ -68,6 +75,7 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   protected readonly rows = signal<T[]>([]);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
+  protected readonly uploadingField = signal<string | null>(null);
   protected readonly keyword = signal('');
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(10);
@@ -81,8 +89,17 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   /** Lỗi validate theo trường, hiện ngay dưới ô nhập. */
   protected readonly fieldErrors = signal<Record<string, string>>({});
 
+  /** Luồng tìm kiếm có debounce 300ms và hủy kịp thời khi nhấn "Bỏ lọc". */
+  private readonly keyword$ = new Subject<string>();
+  private readonly cancelSearch$ = new Subject<void>();
+
   protected readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.totalItems() / this.pageSize())),
+  );
+
+  protected readonly hasFilterBar = computed(
+    () =>
+      Boolean(this.config().searchPlaceholder) || (this.config().filters?.length ?? 0) > 0,
   );
 
   protected readonly hasFilters = computed(
@@ -91,28 +108,10 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       Object.values(this.filterValues()).some((v) => v !== '' && v !== undefined),
   );
 
-  protected readonly rangeLabel = computed(() => {
-    const total = this.totalItems();
-    const noun = this.config().title.toLowerCase();
-    if (total === 0) {
-      return `Không có ${noun} nào`;
-    }
-    const from = this.pageIndex() * this.pageSize() + 1;
-    const to = Math.min(from + this.rows().length - 1, total);
-    return `Hiển thị ${from}–${to} trong ${total} ${noun}`;
-  });
-
-  protected readonly pageNumbers = computed(() => {
-    const total = this.totalPages();
-    const current = this.pageIndex() + 1;
-    const start = Math.max(1, Math.min(current - 2, total - 4));
-    const end = Math.min(total, start + 4);
-    const numbers: number[] = [];
-    for (let p = start; p <= end; p++) {
-      numbers.push(p);
-    }
-    return numbers;
-  });
+  /** Chỉ hiện checkbox & thanh thao tác hàng loạt khi không readonly và không disableBulk. */
+  protected readonly showBulk = computed(
+    () => !this.config().readonly && !this.config().disableBulk,
+  );
 
   /** Đường dẫn gốc của module, suy từ URL hiện tại (bỏ /new, /:id, /:id/edit). */
   protected readonly basePath = computed(() => {
@@ -124,13 +123,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   // Chọn nhiều dòng để thao tác hàng loạt
   // =====================================================================
 
-  /**
-   * Id các hàng đang được chọn.
-   *
-   * Vì sao lưu theo ID chứ không theo chỉ số hàng: sau khi tải lại danh sách
-   * (đổi trang, lọc, xóa xong) thì chỉ số đổi hết, còn id vẫn định danh đúng
-   * bản ghi. Lưu chỉ số sẽ chọn nhầm hàng sau mỗi lần tải lại.
-   */
   protected readonly selectedIds = signal<Set<number>>(new Set());
 
   protected readonly selectedCount = computed(() => this.selectedIds().size);
@@ -153,8 +145,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   }
 
   protected toggleRow(id: number, event: Event): void {
-    // Checkbox nằm trong hàng có handler mở chi tiết — chặn nổi bọt để bấm ô
-    // chọn không mở luôn trang chi tiết.
     event.stopPropagation();
     const next = new Set(this.selectedIds());
     if (next.has(id)) {
@@ -193,21 +183,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     }
   }
 
-  /**
-   * Bật/tắt trạng thái cho các hàng đang chọn — gọi endpoint bulk thật
-   * (`PATCH /admin/{resource}/bulk`, API v0.4 mục 2.10).
-   *
-   * Trước đây gọi tuần tự từng `PUT /{id}` vì BE chưa có bulk; nay BE đã có nên
-   * dùng bulk: một request, kết quả TỪNG PHẦN (`succeeded`/`failed`) thay vì
-   * phải tự đếm.
-   *
-   * Nhãn và giá trị trạng thái lấy từ `config().bulk` — News dùng
-   * PUBLISHED/UNPUBLISHED, gửi ACTIVE sẽ bị backend từ chối cả lô.
-   */
-  /**
-   * Nhãn + trạng thái của thanh thao tác hàng loạt. Module có trạng thái riêng
-   * (News: xuất bản/ngừng xuất bản) khai trong `config().bulk`.
-   */
   protected readonly bulkLabels = computed<CrudBulkConfig>(
     () =>
       this.config().bulk ?? {
@@ -219,6 +194,9 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   );
 
   protected bulkSetActive(isActive: boolean): void {
+    if (!this.showBulk()) {
+      return;
+    }
     const ids = [...this.selectedIds()];
     if (ids.length === 0) {
       return;
@@ -234,6 +212,9 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
 
   /** Xóa mềm hàng loạt — phải qua hộp thoại xác nhận vì là hành động phá hủy. */
   protected bulkDelete(): void {
+    if (!this.showBulk()) {
+      return;
+    }
     const ids = [...this.selectedIds()];
     if (ids.length === 0) {
       return;
@@ -260,12 +241,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       });
   }
 
-  /**
-   * Chạy một lời gọi bulk và báo kết quả từng phần.
-   *
-   * Backend không chặn cả lô khi một bản ghi vi phạm — nó trả `failed` kèm mã
-   * lỗi. Vì vậy phải đọc `failed` chứ không coi HTTP 200 là tất cả thành công.
-   */
   private runBulkRequest(
     request: (svc: BaseCrudService<T, P>) => Observable<ApiResponse<BulkResult>>,
     verb: string,
@@ -299,7 +274,17 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     this.pageSize.set(this.config().pageSize ?? 10);
     this.initFilters();
 
-    this.route.data.subscribe((data) => {
+    this.keyword$
+      .pipe(
+        switchMap(() => timer(300).pipe(takeUntil(this.cancelSearch$))),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.pageIndex.set(0);
+        this.load();
+      });
+
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       const mode = (data['mode'] as 'list' | 'form' | 'detail') ?? 'list';
       this.mode.set(mode);
       if (mode === 'list') {
@@ -334,12 +319,12 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
 
   protected onKeyword(value: string): void {
     this.keyword.set(value);
-    // BR-LIST-02: đổi từ khoá thì quay về trang 1.
-    this.pageIndex.set(0);
-    this.load();
+    // Debounce 300ms — BR-LIST-02 quay về trang 1 khi tải lại.
+    this.keyword$.next(value);
   }
 
   protected clearFilters(): void {
+    this.cancelSearch$.next();
     this.keyword.set('');
     this.initFilters();
     this.pageIndex.set(0);
@@ -360,6 +345,11 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     this.load();
   }
 
+  protected canDeleteRow(row: T): boolean {
+    const hide = this.config().hideDelete;
+    return hide ? !hide(row) : true;
+  }
+
   /** Bấm vào hàng để xem chi tiết — màn chỉ đọc thì không điều hướng. */
   protected openDetail(row: T): void {
     if (this.config().readonly) {
@@ -368,18 +358,14 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     this.router.navigate([`${this.basePath()}/${row.id}`]);
   }
 
-  /** Mở trang thêm mới. Điều hướng bằng TS vì AppButton là <button>, không
-   *  gắn được routerLink (directive của router chỉ áp cho thẻ <a>). */
   protected goCreate(): void {
     this.router.navigate([`${this.basePath()}/new`]);
   }
 
-  /** Mở trang sửa của một bản ghi. */
   protected goEdit(row: T): void {
     this.router.navigate([`${this.basePath()}/${row.id}/edit`]);
   }
 
-  /** Bàn phím: Enter/Space trên hàng cũng mở chi tiết (a11y). */
   protected onRowKey(event: KeyboardEvent, row: T): void {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -388,7 +374,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   }
 
   protected confirmDelete(row: T, event: Event): void {
-    // Nút Xóa nằm trong hàng có handler mở chi tiết — chặn nổi bọt.
     event.stopPropagation();
     const cfg = this.config();
     this.dialog
@@ -418,15 +403,13 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   private load(): void {
     this.loading.set(true);
 
-    // Endpoint trả MẢNG TRẦN (BR-LIST-05) — Role, Permission. Không phân trang,
-    // không nhận `page`/`size`, nên đi đường riêng thay vì nhồi vào `list()`.
     if (this.config().unpaginated) {
       this.loadUnpaginated();
       return;
     }
 
     const query: ListQuery = {
-      page: this.pageIndex() + 1, // API dùng trang bắt đầu từ 1
+      page: this.pageIndex() + 1,
       size: this.pageSize(),
       keyword: this.keyword(),
     };
@@ -452,14 +435,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       });
   }
 
-  /**
-   * Nạp danh sách không phân trang.
-   *
-   * Vì sao dùng `searchAll` khi có và không có từ khoá/bộ lọc: `PermissionService`
-   * có bản nhận query (lọc theo `module`), còn `RoleService` chỉ có `listAll()`.
-   * Kiểm tra theo thực tế service cung cấp gì thay vì buộc mọi service phải có
-   * cùng bộ method.
-   */
   private loadUnpaginated(): void {
     const query: ListQuery = {};
     if (this.keyword().trim()) {
@@ -475,9 +450,8 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       searchAll?: (q: ListQuery) => Observable<ApiResponse<unknown[]>>;
       listAll: () => Observable<ApiResponse<unknown[]>>;
     };
-    const request$ = Object.keys(query).length > 0 && svc.searchAll
-      ? svc.searchAll(query)
-      : svc.listAll();
+    const request$ =
+      Object.keys(query).length > 0 && svc.searchAll ? svc.searchAll(query) : svc.listAll();
 
     request$.subscribe({
       next: (res) => {
@@ -501,7 +475,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
   private loadOne(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
-      // Chế độ form thêm mới: dựng bản nháp từ giá trị mặc định.
       this.current.set(null);
       this.draft.set(this.buildDraft(null));
       return;
@@ -524,10 +497,19 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       });
   }
 
-  /** Trường hiển thị theo chế độ: `createOnly` ẩn khi sửa, `editOnly` ẩn khi tạo. */
+  /**
+   * Trường hiển thị theo chế độ:
+   * - Khi TẠO: ẩn `editOnly`.
+   * - Khi SỬA: vẫn HIỂN THỊ `createOnly` ở trạng thái `disabled` (chỉ đọc) để
+   *   người dùng thấy khóa gốc và giữ nguyên giá trị trong payload `PUT`.
+   */
   protected visibleFields(): CrudField[] {
     const editing = this.current() !== null;
-    return this.config().fields.filter((f) => (editing ? !f.createOnly : !f.editOnly));
+    return this.config().fields.filter((f) => (editing ? true : !f.editOnly));
+  }
+
+  protected isFieldDisabled(field: CrudField): boolean {
+    return this.isEdit() && !!field.createOnly;
   }
 
   private buildDraft(row: T | null): Record<string, unknown> {
@@ -535,9 +517,30 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     const source = row as Record<string, unknown> | null;
 
     for (const field of this.visibleFields()) {
-      const fromRow = source ? source[field.key] : undefined;
-      draft[field.key] =
-        fromRow !== undefined && fromRow !== null ? fromRow : this.defaultFor(field);
+      let fromRow = source ? source[field.key] : undefined;
+
+      // Fallback cho bài viết Tin tức: BE có thể trả `categories: [{id, name}]` thay vì `category_ids`.
+      if (
+        field.type === 'multiselect' &&
+        (fromRow === undefined || fromRow === null) &&
+        field.key === 'category_ids' &&
+        source &&
+        Array.isArray(source['categories'])
+      ) {
+        fromRow = (source['categories'] as Array<{ id?: number }>)
+          .map((c) => c.id)
+          .filter((id): id is number => id !== undefined && id !== null);
+      }
+
+      if (fromRow === undefined || fromRow === null) {
+        draft[field.key] = this.defaultFor(field);
+      } else if (field.type === 'datetime-local') {
+        draft[field.key] = CrudPage.toDatetimeLocal(fromRow);
+      } else if (field.type === 'multiselect') {
+        draft[field.key] = Array.isArray(fromRow) ? [...fromRow] : [];
+      } else {
+        draft[field.key] = fromRow;
+      }
     }
     return draft;
   }
@@ -549,9 +552,9 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       case 'number':
         return null;
       case 'color':
-        // `null` chứ không phải '': BE validate `@Pattern` hex nên chuỗi rỗng
-        // sẽ trượt. `null` = chưa đặt màu, hợp lệ.
         return null;
+      case 'multiselect':
+        return [];
       case 'select':
         return field.options?.length ? field.options[0].value : null;
       default:
@@ -567,7 +570,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
 
   protected setField(key: string, value: unknown): void {
     this.draft.set({ ...this.draft(), [key]: value });
-    // Xoá lỗi của ô vừa sửa để người dùng thấy phản hồi ngay.
     if (this.fieldErrors()[key]) {
       const next = { ...this.fieldErrors() };
       delete next[key];
@@ -579,16 +581,29 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     return this.draft()[key];
   }
 
+  protected isMultiSelected(key: string, optionValue: string | number | boolean | null): boolean {
+    const current = this.draft()[key];
+    if (!Array.isArray(current)) {
+      return false;
+    }
+    return current.some((v) => String(v) === String(optionValue));
+  }
+
+  protected toggleMultiOption(key: string, optionValue: string | number | boolean | null): void {
+    const current = Array.isArray(this.draft()[key]) ? [...(this.draft()[key] as unknown[])] : [];
+    const idx = current.findIndex((v) => String(v) === String(optionValue));
+    if (idx >= 0) {
+      current.splice(idx, 1);
+    } else {
+      current.push(optionValue);
+    }
+    this.setField(key, current);
+  }
+
   /**
-   * Đọc ảnh người dùng chọn từ máy thành data URL (base64) và lưu vào trường.
-   *
-   * Vì sao data URL thay vì upload ngay: BE chưa có endpoint upload ảnh cho
-   * các module này (chỉ Cloudinary cho avatar ở Profile). Data URL cho phép xem
-   * trước tức thì và vẫn gửi được trong payload JSON. Khi BE có endpoint, chỉ
-   * cần đổi chỗ này thành gọi upload rồi lưu URL trả về — phần còn lại giữ nguyên.
-   *
-   * Giới hạn 2 MB: base64 phình ~33% và đi kèm payload JSON, ảnh lớn sẽ làm
-   * request nặng và có thể vượt giới hạn body của server.
+   * Tải ảnh lên server qua `UploadService.uploadAdminImage()` để nhận URL gọn
+   * (< 500 ký tự). Chỉ fallback sang `FileReader` (data URL) khi chạy trong
+   * môi trường mock hoặc Vitest.
    */
   protected onPickImage(event: Event, key: string): void {
     const input = event.target as HTMLInputElement;
@@ -602,30 +617,59 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       input.value = '';
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      this.notify('Ảnh vượt quá 2 MB. Chọn ảnh nhỏ hơn hoặc dán đường dẫn.');
+    if (file.size > 5 * 1024 * 1024) {
+      this.notify('Ảnh vượt quá 5 MB. Chọn ảnh nhỏ hơn hoặc dán đường dẫn.');
       input.value = '';
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.setField(key, reader.result as string);
-      // Xoá giá trị input file để chọn lại cùng tệp vẫn kích hoạt (change).
-      input.value = '';
-    };
-    reader.onerror = () => {
-      this.notify('Không đọc được tệp ảnh');
-      input.value = '';
-    };
-    reader.readAsDataURL(file);
+    if (this.shouldUseFileReaderFallback()) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.setField(key, reader.result as string);
+        input.value = '';
+      };
+      reader.onerror = () => {
+        this.notify('Không đọc được tệp ảnh');
+        input.value = '';
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    this.uploadingField.set(key);
+    this.uploadService.uploadAdminImage(file).subscribe({
+      next: (res) => {
+        this.uploadingField.set(null);
+        const url = res.data?.url ?? '';
+        if (url) {
+          this.clearBrokenImage(url);
+          this.setField(key, url);
+          this.notify(res.message || 'Tải ảnh lên thành công');
+        } else {
+          this.notify('Không nhận được đường dẫn ảnh từ máy chủ');
+        }
+        input.value = '';
+      },
+      error: (err: Error) => {
+        this.uploadingField.set(null);
+        this.notify(err.message || 'Không thể tải ảnh lên');
+        input.value = '';
+      },
+    });
+  }
+
+  private shouldUseFileReaderFallback(): boolean {
+    const isVitest =
+      typeof import.meta !== 'undefined' &&
+      Boolean((import.meta as unknown as { vitest?: unknown }).vitest);
+    return environment.useMock || isVitest;
   }
 
   protected asString(value: unknown): string {
     return value === null || value === undefined ? '' : String(value);
   }
 
-  /** Kiểm tra trường bắt buộc; ghi lỗi vào `fieldErrors` và trả về true nếu hợp lệ. */
   private validate(): boolean {
     const errors: Record<string, string> = {};
     for (const f of this.visibleFields()) {
@@ -633,7 +677,14 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
         continue;
       }
       const v = this.draft()[f.key];
-      const empty = typeof v === 'string' ? v.trim().length === 0 : v === null || v === undefined;
+      let empty = false;
+      if (f.type === 'multiselect') {
+        empty = !Array.isArray(v) || v.length === 0;
+      } else if (typeof v === 'string') {
+        empty = v.trim().length === 0;
+      } else {
+        empty = v === null || v === undefined;
+      }
       if (empty) {
         errors[f.key] = `${f.label} không được để trống`;
       }
@@ -648,11 +699,27 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       return;
     }
 
-    // Chuẩn hoá: bỏ khoảng trắng thừa ở trường chữ, đổi chuỗi số thành number.
+    const editing = this.current();
+    const editingRecord = editing as Record<string, unknown> | null;
     const payload: Record<string, unknown> = {};
+
     for (const field of this.visibleFields()) {
       let v = this.draft()[field.key];
-      if (typeof v === 'string') {
+
+      // Khi sửa bản ghi, trường `createOnly` giữ nguyên giá trị gốc từ bản ghi
+      // để Backend `@NotNull`/`@NotBlank` không trả lỗi 400.
+      if (editingRecord && field.createOnly) {
+        const original = editingRecord[field.key];
+        if (original !== undefined && original !== null) {
+          v = original;
+        }
+      }
+
+      if (field.type === 'datetime-local') {
+        v = CrudPage.fromDatetimeLocal(v);
+      } else if (field.type === 'multiselect') {
+        v = Array.isArray(v) ? v : [];
+      } else if (typeof v === 'string') {
         v = v.trim();
         if (field.type === 'number' && v !== '') {
           v = Number(v);
@@ -661,7 +728,6 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
       payload[field.key] = v;
     }
 
-    const editing = this.current();
     this.saving.set(true);
     const request$ = editing
       ? this.service().update(editing.id, payload as P)
@@ -684,14 +750,20 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     this.router.navigate([this.basePath()]);
   }
 
-  /** Ảnh trong bảng tải lỗi (URL hỏng, chặn hotlink) → đánh dấu để hiện khung nền. */
   protected readonly brokenImages = signal<Set<string>>(new Set());
 
-  /** Đánh dấu một URL ảnh là hỏng để không hiện icon ảnh vỡ của trình duyệt. */
   protected markImageBroken(src: string): void {
     const next = new Set(this.brokenImages());
     next.add(src);
     this.brokenImages.set(next);
+  }
+
+  private clearBrokenImage(src: string): void {
+    if (this.brokenImages().has(src)) {
+      const next = new Set(this.brokenImages());
+      next.delete(src);
+      this.brokenImages.set(next);
+    }
   }
 
   protected isImageBroken(src: string | null): boolean {
@@ -702,32 +774,102 @@ export class CrudPage<T extends { id: number }, P = Partial<T>> implements OnIni
     return this.current() !== null;
   }
 
-  /** Tiêu đề trang chi tiết — dùng `detailTitle` của module nếu có. */
   protected detailHeading(row: T): string {
     const custom = this.config().detailTitle;
     return custom ? custom(row) : this.config().title;
   }
 
   /**
-   * Giá trị của một trường form CHƯA xuất hiện trong cột bảng — hiện thêm ở
-   * trang chi tiết. Trả chuỗi rỗng nếu trường đã có cột (tránh lặp) hoặc rỗng.
-   *
-   * So khớp theo `key` + cờ `shownInTable` của module, KHÔNG theo nhãn: nhãn cột
-   * và nhãn trường thường khác nhau ("Mã" vs "Mã thành phố") nên so theo nhãn
-   * sẽ làm trường bị lặp.
+   * Giá trị của trường form CHƯA xuất hiện trong cột bảng — hiện thêm ở trang
+   * chi tiết, tự ánh xạ `select` / `multiselect` sang nhãn tiếng Việt.
    */
   protected detailExtra(field: CrudField, row: T): string {
     if (field.shownInTable || field.type === 'toggle') {
       return '';
     }
-    const raw = (row as Record<string, unknown>)[field.key];
+    const source = row as Record<string, unknown>;
+    let raw = source[field.key];
+
+    if (
+      field.type === 'multiselect' &&
+      (raw === undefined || raw === null) &&
+      field.key === 'category_ids' &&
+      Array.isArray(source['categories'])
+    ) {
+      raw = (source['categories'] as Array<{ id?: number }>)
+        .map((c) => c.id)
+        .filter((id): id is number => id !== undefined && id !== null);
+    }
+
     if (raw === null || raw === undefined || raw === '') {
       return '';
     }
+
+    if (field.type === 'select' && field.options?.length) {
+      const matched = field.options.find((o) => String(o.value) === String(raw));
+      return matched ? matched.label : String(raw);
+    }
+
+    if (field.type === 'multiselect' && Array.isArray(raw)) {
+      if (raw.length === 0) {
+        return '';
+      }
+      const opts = field.options ?? [];
+      return raw
+        .map((item) => {
+          const matched = opts.find((o) => String(o.value) === String(item));
+          return matched ? matched.label : String(item);
+        })
+        .join(', ');
+    }
+
+    if (field.type === 'datetime-local' && typeof raw === 'string') {
+      const d = new Date(raw);
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      }
+    }
+
     return String(raw);
   }
 
   private notify(message: string): void {
     this.snackBar.open(message, 'Đóng', { duration: 3000 });
+  }
+
+  /** Chuẩn hóa chuỗi ISO từ BE sang định dạng `YYYY-MM-DDTHH:mm` của `<input type="datetime-local">`. */
+  private static toDatetimeLocal(value: unknown): string {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(trimmed)) {
+      return trimmed.slice(0, 16);
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return `${trimmed}T00:00`;
+    }
+    return trimmed;
+  }
+
+  /** Chuẩn hóa giá trị `datetime-local` gửi lên BE (`LocalDateTime` cần `:00` giây). */
+  private static fromDatetimeLocal(value: unknown): string | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) {
+      return `${trimmed}:00`;
+    }
+    return trimmed;
   }
 }

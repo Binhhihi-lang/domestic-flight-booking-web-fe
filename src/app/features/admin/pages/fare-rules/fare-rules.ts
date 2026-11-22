@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FareRule } from '@core/models/fare-baggage.model';
 import { FareClassService, FareRuleService } from '@core/services/catalog.service';
@@ -24,7 +24,7 @@ export class AdminFareRules {
     initialValue: null,
   });
 
-  protected readonly config = () => {
+  protected readonly config = computed<CrudConfig<FareRule, Partial<FareRule>>>(() => {
     const fareClassList = this.fareClasses()?.data.items ?? [];
     const fareClassOptions = [
       { value: null as number | null, label: '— Chọn hạng vé —' },
@@ -41,7 +41,7 @@ export class AdminFareRules {
       })),
     ];
 
-    const config: CrudConfig<FareRule, Partial<FareRule>> = {
+    return {
       title: 'Quy định hoàn vé',
       subtitle: 'Chính sách hoàn và đổi vé theo từng hạng vé (hiển thị cho khách khi đặt & hủy vé)',
       createLabel: 'Thêm quy định',
@@ -50,6 +50,7 @@ export class AdminFareRules {
       emptyMessage: 'Chưa có quy định hoàn vé',
       emptyHint: 'Thêm quy định đầu tiên cho các hạng vé đang áp dụng',
       editTitle: 'Sửa quy định hoàn vé',
+      detailTitle: (r) => `${r.fare_class_code} — Phiên bản v${r.version}`,
       deleteTitle: () => 'Xóa quy định hoàn vé?',
       deleteMessage: (r) =>
         `Bạn có chắc muốn xóa quy định v${r.version} của hạng vé "${r.fare_class_code}"?`,
@@ -71,6 +72,12 @@ export class AdminFareRules {
         {
           label: 'Báo trước tối thiểu',
           value: (r) => (r.is_refundable ? `${r.refund_min_hours_before_departure} giờ` : '—'),
+          kind: 'num',
+          width: '150px',
+        },
+        {
+          label: 'Hiệu lực từ',
+          value: (r) => AdminFareRules.formatDateTime(r.effective_from),
           kind: 'num',
           width: '150px',
         },
@@ -118,8 +125,9 @@ export class AdminFareRules {
         },
         {
           key: 'effective_from',
-          label: 'Hiệu lực từ ngày',
-          type: 'date',
+          shownInTable: true,
+          label: 'Hiệu lực từ',
+          type: 'datetime-local',
           hint: 'Để trống nếu áp dụng ngay',
         },
         {
@@ -161,6 +169,18 @@ export class AdminFareRules {
         },
       ],
     };
-    return config;
-  };
+  });
+
+  /** Định dạng ISO `LocalDateTime` sang `dd/MM/yyyy HH:mm`. */
+  private static formatDateTime(iso: string | null): string {
+    if (!iso) {
+      return '—';
+    }
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) {
+      return iso;
+    }
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
 }

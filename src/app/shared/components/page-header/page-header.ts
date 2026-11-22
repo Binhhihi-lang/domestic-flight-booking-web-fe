@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-/** Tiêu đề trang + mô tả + slot hành động bên phải. */
+/** Tiêu đề trang + mô tả + slot hành động bên phải — bám sát `.adm-page` của prototype. */
 @Component({
   selector: 'app-page-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,27 +22,37 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 16px;
+      gap: var(--sp-lg);
       flex-wrap: wrap;
-      margin-bottom: 24px;
+      margin-bottom: var(--sp-xl);
+    }
+
+    .page-header__text {
+      min-width: 0;
     }
 
     .page-header__text h1 {
       margin: 0;
-      font: var(--mat-sys-headline-small);
-      color: var(--mat-sys-on-surface);
+      font-family: var(--font-heading);
+      font-size: var(--text-h1);
+      font-weight: 700;
+      line-height: var(--leading-tight);
+      color: var(--color-ink);
     }
 
     .page-header__text p {
-      margin: 4px 0 0;
-      font: var(--mat-sys-body-medium);
-      color: var(--mat-sys-on-surface-variant);
+      margin: 6px 0 0;
+      font-family: var(--font-body);
+      font-size: var(--text-small);
+      line-height: var(--leading-normal);
+      color: var(--color-ink-muted);
     }
 
     .page-header__actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--sp-sm);
+      flex-wrap: wrap;
     }
   `,
 })

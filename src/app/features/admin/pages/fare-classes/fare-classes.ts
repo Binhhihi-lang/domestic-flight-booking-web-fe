@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FareClass } from '@core/models/fare-baggage.model';
 import { SeatClass } from '@core/models/fleet-news.model';
@@ -32,7 +32,7 @@ export class AdminFareClasses {
     initialValue: null,
   });
 
-  protected readonly config = () => {
+  protected readonly config = computed<CrudConfig<FareClass, Partial<FareClass>>>(() => {
     const airlineList = this.airlines()?.data.items ?? [];
     const airlineOptions = [
       { value: null as number | null, label: '— Chọn hãng hàng không —' },
@@ -43,7 +43,7 @@ export class AdminFareClasses {
       ...airlineList.map((a) => ({ value: String(a.id), label: `${a.airline_code} — ${a.airline_name}` })),
     ];
 
-    const config: CrudConfig<FareClass, Partial<FareClass>> = {
+    return {
       title: 'Hạng vé',
       subtitle: 'Danh mục hạng vé theo hãng hàng không và khoang dịch vụ',
       createLabel: 'Thêm hạng vé',
@@ -52,6 +52,7 @@ export class AdminFareClasses {
       emptyMessage: 'Chưa có hạng vé',
       emptyHint: 'Thêm hạng vé đầu tiên cho các hãng hàng không',
       editTitle: 'Sửa hạng vé',
+      detailTitle: (r) => `${r.fare_class_code} — ${r.fare_class_name}`,
       deleteTitle: () => 'Xóa hạng vé?',
       deleteMessage: (r) =>
         `Bạn có chắc muốn xóa hạng vé "${r.fare_class_name}" (${r.fare_class_code})? Hạng vé đang được cấu hình giá chuyến bay sẽ bị từ chối xóa.`,
@@ -153,6 +154,5 @@ export class AdminFareClasses {
         },
       ],
     };
-    return config;
-  };
+  });
 }

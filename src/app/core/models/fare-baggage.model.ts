@@ -47,6 +47,24 @@ export interface FareRulePayload {
   status?: ActiveStatus;
 }
 
+/** Quy định hoàn/đổi vé công khai (`/api/public/fare-rules`). */
+export interface PublicFareRule {
+  id: number;
+  fare_class_id: number;
+  fare_class_code: string;
+  fare_class_name: string;
+  airline_id?: number;
+  airline_code: string;
+  airline_name?: string;
+  seat_class?: SeatClass;
+  version: number;
+  is_refundable: boolean;
+  refund_min_hours_before_departure: number;
+  refund_percent: number;
+  description: string | null;
+  effective_from: string | null;
+}
+
 /** Gói hành lý ký gửi — API Phase 2 (`/api/admin/baggage-options`). */
 export interface BaggageOption {
   id: number;

@@ -4,11 +4,13 @@ import { PermissionService } from '@core/services/catalog.service';
 import { CrudConfig } from '@shared/crud/crud-config';
 import { CrudPage } from '@shared/crud/crud-page';
 
-/** Danh sách module để lọc — lấy từ `permissions.module` (API v0.2 mục 2.4). */
+/** Danh sách module để lọc — khớp 100% với `permissions.module` trong DB V10. */
 const MODULES = [
-  'AUTH', 'USER', 'ROLE', 'AIRLINE', 'CITY', 'AIRPORT', 'AIRCRAFT',
-  'SEAT_CONFIG', 'PROMOTION', 'VOUCHER', 'NEWS', 'FLIGHT', 'FARE_CLASS',
-  'BOOKING', 'PAYMENT',
+  'AUTH', 'USER', 'RBAC', 'AIRLINE', 'CITY', 'AIRPORT', 'AIRCRAFT',
+  'SEAT_TYPE', 'SEAT_CONFIG', 'FARE', 'FLIGHT', 'FLIGHT_FARE',
+  'SEAT_INVENTORY', 'BAGGAGE', 'BOOKING', 'PASSENGER', 'PAYMENT',
+  'ETICKET', 'PROMOTION', 'VOUCHER', 'NEWS', 'NEWS_CATEGORY',
+  'DASHBOARD', 'NOTIFICATION',
 ];
 
 /**

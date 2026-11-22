@@ -1,0 +1,113 @@
+<div class="wrap">
+  <app-page-header
+    title="Hồ sơ cá nhân"
+    subtitle="Thông tin tài khoản và bảo mật đăng nhập khu vực vận hành"
+  />
+
+  <app-account-profile [hideHeading]="true" />
+
+  <section class="pw-section" aria-label="Đổi mật khẩu">
+    <app-app-card title="Đổi mật khẩu" [hasFooter]="true">
+      <form class="pw-grid" (submit)="$event.preventDefault(); submitPassword()">
+        <div class="field field--full" [class.field--error]="passwordError('current_password')">
+          <label for="adm-pw-cur">
+            Mật khẩu hiện tại <span class="req" aria-hidden="true">*</span>
+          </label>
+          <div class="field__pw">
+            <input
+              id="adm-pw-cur"
+              name="current_password"
+              [type]="showCurrent() ? 'text' : 'password'"
+              autocomplete="current-password"
+              [ngModel]="passwordDraft().current_password"
+              (ngModelChange)="setPasswordField('current_password', $event)"
+              placeholder="Nhập mật khẩu hiện tại"
+            />
+            <button
+              class="field__eye"
+              type="button"
+              [attr.aria-label]="showCurrent() ? 'Ẩn mật khẩu hiện tại' : 'Hiện mật khẩu hiện tại'"
+              (click)="toggleShow('current')"
+            >
+              <mat-icon>{{ showCurrent() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          @if (passwordError('current_password'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          }
+        </div>
+
+        <div class="field" [class.field--error]="passwordError('new_password')">
+          <label for="adm-pw-new">
+            Mật khẩu mới <span class="req" aria-hidden="true">*</span>
+          </label>
+          <div class="field__pw">
+            <input
+              id="adm-pw-new"
+              name="new_password"
+              [type]="showNew() ? 'text' : 'password'"
+              autocomplete="new-password"
+              [ngModel]="passwordDraft().new_password"
+              (ngModelChange)="setPasswordField('new_password', $event)"
+              placeholder="Tối thiểu 8 ký tự"
+            />
+            <button
+              class="field__eye"
+              type="button"
+              [attr.aria-label]="showNew() ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'"
+              (click)="toggleShow('new')"
+            >
+              <mat-icon>{{ showNew() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          @if (passwordError('new_password'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          } @else {
+            <span class="hint">Tối thiểu 8 ký tự, khác mật khẩu hiện tại.</span>
+          }
+        </div>
+
+        <div class="field" [class.field--error]="passwordError('confirm_password')">
+          <label for="adm-pw-confirm">
+            Nhập lại mật khẩu mới <span class="req" aria-hidden="true">*</span>
+          </label>
+          <div class="field__pw">
+            <input
+              id="adm-pw-confirm"
+              name="confirm_password"
+              [type]="showConfirm() ? 'text' : 'password'"
+              autocomplete="new-password"
+              [ngModel]="passwordDraft().confirm_password"
+              (ngModelChange)="setPasswordField('confirm_password', $event)"
+              placeholder="Nhập lại mật khẩu mới"
+            />
+            <button
+              class="field__eye"
+              type="button"
+              [attr.aria-label]="showConfirm() ? 'Ẩn mật khẩu nhập lại' : 'Hiện mật khẩu nhập lại'"
+              (click)="toggleShow('confirm')"
+            >
+              <mat-icon>{{ showConfirm() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          @if (passwordError('confirm_password'); as msg) {
+            <span class="field__err">{{ msg }}</span>
+          }
+        </div>
+      </form>
+
+      <p class="pw-note">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          Sau khi đổi mật khẩu, các thiết bị khác đang đăng nhập bằng tài khoản này sẽ cần đăng nhập lại.
+        </span>
+      </p>
+
+      <div cardFooter class="pw-actions">
+        <app-app-button [disabled]="savingPassword()" (clicked)="submitPassword()">
+          {{ savingPassword() ? 'Đang cập nhật…' : 'Đổi mật khẩu' }}
+        </app-app-button>
+      </div>
+    </app-app-card>
+  </section>
+</div>
