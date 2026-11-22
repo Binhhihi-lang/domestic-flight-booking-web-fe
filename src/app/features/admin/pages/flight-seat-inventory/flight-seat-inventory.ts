@@ -17,6 +17,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
 
 const SEAT_STATUS_META: Record<FlightSeatStatus, { label: string; tone: BadgeTone }> = {
   AVAILABLE: { label: 'Còn trống', tone: 'success' },
+  HOLD: { label: 'Đang giữ (15p)', tone: 'warning' },
   HELD: { label: 'Đang giữ (15p)', tone: 'warning' },
   BOOKED: { label: 'Đã đặt', tone: 'info' },
   BLOCKED: { label: 'Đã khóa', tone: 'danger' },
@@ -137,7 +138,7 @@ const CABIN_LABELS: Record<SeatClass, string> = {
                         type="button"
                         class="inv-seat"
                         [class.inv-seat--available]="seat.status === 'AVAILABLE'"
-                        [class.inv-seat--held]="seat.status === 'HELD'"
+                        [class.inv-seat--held]="seat.status === 'HOLD' || seat.status === 'HELD'"
                         [class.inv-seat--booked]="seat.status === 'BOOKED'"
                         [class.inv-seat--blocked]="seat.status === 'BLOCKED'"
                         [class.inv-seat--selected]="selectedSeat()?.id === seat.id"

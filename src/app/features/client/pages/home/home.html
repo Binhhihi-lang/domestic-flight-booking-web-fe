@@ -19,7 +19,7 @@
   <p>Khám phá các hành trình được lựa chọn nhiều nhất</p>
   <div class="route-grid">
     @for (route of routes; track route.name) {
-      <article class="route">
+      <article class="route" (click)="goRoute(route)" tabindex="0" (keydown.enter)="goRoute(route)">
         <div class="route__img" [style.background-image]="'url(' + route.image + ')'"></div>
         <div class="route__bd">
           <div class="route__nm">{{ route.name }}</div>
@@ -216,8 +216,10 @@
       </p>
     </div>
     <div class="cta__form">
-      <input type="email" placeholder="Nhập email của bạn..." aria-label="Email nhận ưu đãi" />
-      <button class="cta__btn" type="button">Đăng ký</button>
+      <input #offerEmail type="email" placeholder="Nhập email của bạn..." aria-label="Email nhận ưu đãi" />
+      <button class="cta__btn" type="button" (click)="subscribeOffer(offerEmail.value)">
+        {{ subscribedEmail() ? 'Đã đăng ký' : 'Đăng ký' }}
+      </button>
     </div>
   </div>
 </div>

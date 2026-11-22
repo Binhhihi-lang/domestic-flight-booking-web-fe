@@ -13,7 +13,7 @@ export type FlightOperationStatus =
 
 export type FlightSalesStatus = 'OPEN' | 'CLOSED';
 
-export type FlightSeatStatus = 'AVAILABLE' | 'HELD' | 'BOOKED' | 'BLOCKED';
+export type FlightSeatStatus = 'AVAILABLE' | 'HOLD' | 'HELD' | 'BOOKED' | 'BLOCKED';
 
 /** Chuyến bay — khớp `FlightResponse` (BE `/api/admin/flights`). */
 export interface FlightRecord {

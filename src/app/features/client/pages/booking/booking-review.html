@@ -45,7 +45,11 @@
         <section class="card">
           <div class="card__head">
             <h2><mat-icon>flight_takeoff</mat-icon> Thông tin chuyến bay</h2>
-            <span class="pnr-pill">Mã đặt chỗ: <b>{{ b.booking_code }}</b></span>
+            @if (b.status === 'CONFIRMED') {
+              <span class="pnr-pill">Mã đặt chỗ (PNR): <b>{{ b.booking_code }}</b></span>
+            } @else {
+              <span class="pnr-pill">Mã đơn hàng: <b>DH-{{ b.id }}</b> · PNR cấp sau thanh toán</span>
+            }
           </div>
 
           @for (seg of b.segments; track seg.id) {

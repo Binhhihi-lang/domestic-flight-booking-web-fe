@@ -100,7 +100,7 @@ describe('Luồng Checkout — Review, Payment & Confirmation (Cụm B6.1)', () 
     await fixture.whenStable();
 
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent).toContain('VF882194');
+    expect(el.textContent).toContain('DH-1001');
     expect(el.textContent).toContain('VN 214');
     expect(el.querySelector('[data-testid="review-total"]')?.textContent).toContain('2.590.000đ');
   });

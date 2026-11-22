@@ -26,7 +26,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
     <section class="bd-page">
       <header class="bd-head">
         <div>
-          <h1>Chi tiết đặt chỗ {{ booking()?.booking_code ?? '' }}</h1>
+          <h1>Chi tiết đặt chỗ {{ booking() ? ('DH-' + booking()!.id) : '' }}</h1>
           <p class="bd-sub">Hành trình, danh sách hành khách, ghế ngồi, hành lý và quy định hoàn vé</p>
         </div>
         <div class="bd-head__actions">
@@ -55,7 +55,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
             <section class="bd-card">
               <div class="bd-row-between">
                 <div>
-                  <strong>Mã đơn: {{ b.booking_code }}</strong>
+                  <strong>Mã đơn: DH-{{ b.id }}@if (b.status === 'CONFIRMED' && b.booking_code) { · PNR: {{ b.booking_code }} }</strong>
                   <div class="bd-muted">Khách đặt: {{ b.customer_name }} · {{ b.customer_email }}</div>
                 </div>
                 <app-status-badge [tone]="statusTone(b.status)" [label]="statusLabel(b.status)" />

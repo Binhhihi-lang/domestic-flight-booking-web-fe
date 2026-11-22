@@ -51,6 +51,12 @@ export const routes: Routes = [
           ),
         data: { title: 'Kết quả tìm chuyến' },
       },
+      {
+        path: 'lookup',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-lookup').then((m) => m.BookingLookup),
+        data: { title: 'Tra cứu đặt chỗ' },
+      },
       // ---- Luồng Đặt vé Bước 2–3 (Cụm DA3.1) & Checkout (Cụm B6.1) ----
       {
         path: 'booking/seats',

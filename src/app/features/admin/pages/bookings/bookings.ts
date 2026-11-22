@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { BookingDetail, BookingStatus } from '@core/models/booking.model';
+import { BookingStatus, BookingSummary } from '@core/models/booking.model';
 import { BookingFlowService } from '@core/services/booking-flow.service';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -77,7 +77,12 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
               <tbody>
                 @for (b of rows(); track b.id) {
                   <tr>
-                    <td><strong>{{ b.booking_code }}</strong></td>
+                    <td>
+                    <strong>DH-{{ b.id }}</strong>
+                    @if (b.status === 'CONFIRMED' && b.booking_code) {
+                      <div style="font-size: 12px; color: var(--color-text-secondary);">PNR {{ b.booking_code }}</div>
+                    }
+                  </td>
                     <td>
                       <div><strong>{{ b.customer_name }}</strong></div>
                       <div class="ab-muted">{{ b.customer_email }}</div>
@@ -88,7 +93,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                         <div class="ab-muted">{{ seg.flight_number }} · {{ seg.airline_name }}</div>
                       }
                     </td>
-                    <td class="col-num">{{ b.passengers.length }}</td>
+                    <td class="col-num">{{ b.passenger_count ?? 0 }}</td>
                     <td class="col-num"><strong>{{ formatMoney(b.total_amount) }}</strong></td>
                     <td>
                       <app-status-badge [tone]="statusTone(b.status)" [label]="statusLabel(b.status)" />
@@ -202,7 +207,7 @@ export class AdminBookings {
   protected readonly loading = signal(true);
   protected readonly keyword = signal('');
   protected readonly status = signal('');
-  protected readonly rows = signal<BookingDetail[]>([]);
+  protected readonly rows = signal<BookingSummary[]>([]);
 
   constructor() {
     this.load();
