@@ -26,7 +26,7 @@ import { NotificationBell } from '@shared/components/notification-bell/notificat
 interface NavItem {
   id: string;
   path?: string;
-  action?: 'logout';
+  action?: 'logout' | 'support';
   label: string;
   icon: string;
 }
@@ -65,6 +65,16 @@ export class AdminLayout implements AfterViewInit {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly sidebarOpen = signal(false);
+  protected readonly supportOpen = signal(false);
+
+  protected openSupport(): void {
+    this.sidebarOpen.set(false);
+    this.supportOpen.set(true);
+  }
+
+  protected closeSupport(): void {
+    this.supportOpen.set(false);
+  }
 
   /**
    * Sidebar thu gọn (chỉ icon). Giữ trong bộ nhớ của layout, không lưu
@@ -169,6 +179,7 @@ export class AdminLayout implements AfterViewInit {
       label: 'Hệ thống',
       items: [
         { id: 'profile', path: '/admin/profile', label: 'Hồ sơ cá nhân', icon: 'account_circle' },
+        { id: 'support', action: 'support', label: 'Liên hệ hỗ trợ', icon: 'support_agent' },
         { id: 'logout', action: 'logout', label: 'Đăng xuất', icon: 'logout' },
       ],
     },
@@ -195,6 +206,7 @@ export class AdminLayout implements AfterViewInit {
       label: 'Cá nhân',
       items: [
         { id: 'profile', path: '/admin/profile', label: 'Hồ sơ cá nhân', icon: 'account_circle' },
+        { id: 'support', action: 'support', label: 'Liên hệ hỗ trợ', icon: 'support_agent' },
       ],
     },
   ];
@@ -226,6 +238,8 @@ export class AdminLayout implements AfterViewInit {
     this.sidebarOpen.set(false);
     if (item.action === 'logout') {
       this.logout();
+    } else if (item.action === 'support') {
+      this.openSupport();
     }
   }
 

@@ -424,12 +424,74 @@
 }
 
 @media print {
+  .confirm {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .confirm__side,
   .side-actions,
-  .hero__actions {
-    display: none;
+  .hero__actions,
+  .hero__icon {
+    display: none !important;
   }
 
   .confirm__grid {
-    grid-template-columns: 1fr;
+    display: block;
+  }
+
+  .hero {
+    box-shadow: none;
+    border: 1.5px solid var(--color-border);
+    padding: 16px;
+    margin-bottom: 16px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .hero h1 {
+    font-size: 18px;
+  }
+
+  .pnr-box {
+    padding: 10px 20px;
+  }
+
+  .pnr-box strong {
+    font-size: 24px;
+  }
+
+  .tickets__head {
+    margin-bottom: 10px;
+  }
+
+  .tickets__grid {
+    gap: 14px;
+  }
+
+  .boarding {
+    box-shadow: none;
+    border: 1.5px solid var(--color-border);
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 12px;
+  }
+
+  .boarding__head {
+    background: var(--color-primary) !important;
+    color: var(--color-on-primary) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .boarding__route {
+    grid-template-columns: 1fr auto 1fr !important;
+    padding: 14px 18px;
+  }
+
+  .boarding__foot {
+    grid-template-columns: 2fr 1fr 1fr !important;
+    padding: 12px 18px;
   }
 }

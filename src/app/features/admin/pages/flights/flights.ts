@@ -18,6 +18,7 @@ import { AuthService } from '@core/services/auth.service';
 import { FlightAdminService } from '@core/services/flight-admin.service';
 import { ConfirmDialog, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
+import { PageHeader } from '@shared/components/page-header/page-header';
 import { ServerPager } from '@shared/components/server-pager/server-pager';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
@@ -50,27 +51,25 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
     MatIconModule,
     AppButton,
     AppAlert,
+    PageHeader,
     StatusBadge,
     EmptyState,
     SkeletonBlock,
     ServerPager,
   ],
   template: `
-    <section class="flt-page">
-      <header class="flt-head">
-        <div>
-          <h1>Chuyến bay</h1>
-          <p class="flt-sub">Lịch khai thác, tỷ lệ lấp đầy, trạng thái vận hành và mở bán chuyến bay</p>
-        </div>
-        <div class="flt-head__actions">
-          <a routerLink="/admin/flights/new" class="flt-add-link">
-            <app-app-button variant="primary" size="sm">
-              <mat-icon aria-hidden="true">add</mat-icon>
-              Thêm chuyến bay
-            </app-app-button>
-          </a>
-        </div>
-      </header>
+    <section class="wrap flt-page">
+      <app-page-header
+        title="Chuyến bay"
+        subtitle="Lịch khai thác, tỷ lệ lấp đầy, trạng thái vận hành và mở bán chuyến bay"
+      >
+        <a routerLink="/admin/flights/new" class="flt-add-link">
+          <app-app-button variant="primary">
+            <mat-icon aria-hidden="true">add</mat-icon>
+            Thêm chuyến bay
+          </app-app-button>
+        </a>
+      </app-page-header>
 
       <div class="adm-filter adm-filter--card" role="search" aria-label="Bộ lọc chuyến bay">
         <div class="flt-search">
@@ -153,7 +152,7 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
                   <th>Lấp đầy (Ghế trống)</th>
                   <th>Vận hành</th>
                   <th>Mở bán</th>
-                  <th class="col-actions">Thao tác</th>
+                  <th class="col-actions"></th>
                 </tr>
               </thead>
               <tbody>
@@ -233,7 +232,7 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
                       <div class="flt-actions">
                         <a
                           [routerLink]="['/admin/flights', row.id, 'edit']"
-                          class="flt-act"
+                          class="rowbtn"
                           title="Sửa thông tin lịch bay"
                         >
                           Sửa
@@ -241,13 +240,14 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
                         @if (isAdmin()) {
                           <button
                             type="button"
-                            class="flt-act flt-act--danger"
+                            class="rowbtn rowbtn--danger"
                             (click)="confirmDelete(row)"
                             [attr.aria-label]="'Xoá chuyến bay ' + row.flight_number"
                           >
-                            Xoá
+                            Xóa
                           </button>
                         }
+                        <mat-icon class="rowchev" aria-hidden="true">chevron_right</mat-icon>
                       </div>
                     </td>
                   </tr>
@@ -380,7 +380,7 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
     }
     .flt-table th,
     .flt-table td {
-      padding: 12px 14px;
+      padding: var(--sp-md) var(--sp-lg);
       text-align: left;
       border-bottom: 1px solid var(--color-border-soft);
       font-size: var(--text-small);
@@ -388,9 +388,12 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
     }
     .flt-table th {
       font-size: var(--text-caption);
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       color: var(--color-ink-muted);
       background: var(--color-surface-alt);
+      border-bottom: 1px solid var(--color-border);
       white-space: nowrap;
     }
     .flt-row {
@@ -398,7 +401,7 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
       transition: background-color var(--dur-fast) var(--ease);
     }
     .flt-row:hover {
-      background: var(--color-surface-alt);
+      background: var(--color-primary-soft);
     }
     .flt-code {
       font-weight: 700;
@@ -472,40 +475,58 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
     }
     .col-actions {
       text-align: right;
+      width: 170px;
     }
     .flt-actions {
       display: inline-flex;
-      flex-wrap: wrap;
+      align-items: center;
       justify-content: flex-end;
-      gap: 6px;
+      gap: var(--sp-xs);
+      white-space: nowrap;
     }
-    .flt-act {
-      padding: 4px 10px;
+    .rowbtn {
+      font-family: var(--font-body);
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 6px 11px;
       border-radius: var(--radius-sm);
-      border: 1px solid var(--color-border);
+      border: 1.5px solid var(--color-border);
       background: var(--color-surface);
       color: var(--color-ink);
-      font-size: var(--text-caption);
-      font-weight: 500;
-      text-decoration: none;
       cursor: pointer;
       transition:
+        background-color var(--dur-fast) var(--ease),
         border-color var(--dur-fast) var(--ease),
-        color var(--dur-fast) var(--ease),
-        background-color var(--dur-fast) var(--ease);
+        color var(--dur-fast) var(--ease);
     }
-    .flt-act:hover {
-      border-color: var(--color-primary);
+    .rowbtn:hover {
+      background: var(--color-surface-alt);
+      border-color: var(--color-primary-bright);
       color: var(--color-primary);
     }
-    .flt-act--danger {
-      border-color: var(--color-danger);
-      color: var(--color-danger);
+    .rowbtn--danger {
+      border-color: transparent;
+      background: transparent;
+      color: var(--color-primary);
     }
-    .flt-act--danger:hover {
-      border-color: var(--color-danger);
+    .rowbtn--danger:hover {
       background: var(--color-danger-soft);
+      border-color: transparent;
       color: var(--color-on-danger-soft);
+    }
+    .rowchev {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--color-ink-subtle);
+      opacity: 0;
+      transition: opacity var(--dur-fast) var(--ease);
+    }
+    .flt-row:hover .rowchev,
+    .flt-row:focus-visible .rowchev {
+      opacity: 1;
+      color: var(--color-primary);
     }
   `,
 })

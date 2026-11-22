@@ -13,6 +13,7 @@ import { SeatClass } from '@core/models/fleet-news.model';
 import { FlightAdminService, SeatInventoryService } from '@core/services/flight-admin.service';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { FlightSearchPicker } from '@shared/components/flight-search-picker/flight-search-picker';
+import { PageHeader } from '@shared/components/page-header/page-header';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -64,19 +65,16 @@ interface CabinSection {
     AppButton,
     EmptyState,
     FlightSearchPicker,
+    PageHeader,
     SkeletonBlock,
     StatusBadge,
   ],
   template: `
-    <section class="inv-page">
-      <header class="inv-head">
-        <div>
-          <h1>Tồn ghế chuyến bay</h1>
-          <p class="inv-sub">
-            Theo dõi trạng thái ghế theo chuyến, đồng bộ từ sơ đồ tàu bay và điều chỉnh phụ thu ghế
-          </p>
-        </div>
-      </header>
+    <section class="wrap inv-page">
+      <app-page-header
+        title="Tồn ghế chuyến bay"
+        subtitle="Theo dõi trạng thái ghế theo chuyến, đồng bộ từ sơ đồ tàu bay và điều chỉnh phụ thu ghế"
+      />
 
       @if (error()) {
         <app-alert tone="error" title="Không tải được tồn ghế" [message]="error()!" />

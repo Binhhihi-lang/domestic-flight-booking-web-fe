@@ -319,21 +319,34 @@
 
 .seg__line {
   width: 100%;
-  border-bottom: 1.5px dashed var(--color-border);
   display: flex;
+  align-items: center;
   justify-content: center;
   position: relative;
-  height: 12px;
+  height: 22px;
+}
+
+.seg__line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 1.5px dashed var(--color-border);
+  transform: translateY(-50%);
 }
 
 .seg__line mat-icon {
-  position: absolute;
-  top: 2px;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--color-surface-alt);
-  padding: 0 var(--sp-xs);
+  width: 24px;
+  height: 24px;
   font-size: 18px;
-  width: 18px;
-  height: 18px;
+  line-height: 1;
   color: var(--color-primary-bright);
   transform: rotate(90deg);
 }

@@ -40,7 +40,7 @@
       <mat-icon>schedule</mat-icon>
       @if (booking(); as b) {
         <div class="timer-bar__meta">
-          <span class="timer-bar__order">Mã đơn <b>DH-{{ b.id }}</b></span>
+          <span class="timer-bar__order">Mã đơn <b>{{ b.order_code || ('DH-' + b.id) }}</b></span>
           <span class="timer-bar__sep" aria-hidden="true">|</span>
           <span class="timer-bar__total">Tổng thanh toán <b class="tabular">{{ formatVnd(b.total_amount) }}</b></span>
         </div>
@@ -142,7 +142,7 @@
           <div>
             <b>Mã đặt chỗ (PNR) được cấp ngay sau khi thanh toán thành công</b>
             <p>
-              Trong lúc chờ thanh toán, đơn hàng của bạn được ghi nhận với mã tạm <b>DH-{{ b.id }}</b>. Ngay khi giao dịch hoàn tất, hệ thống sẽ tự động xuất mã PNR chính thức và vé điện tử cho toàn bộ hành khách.
+              Trong lúc chờ thanh toán, đơn hàng của bạn được ghi nhận với mã tạm <b>{{ b.order_code || ('DH-' + b.id) }}</b>. Ngay khi giao dịch hoàn tất, hệ thống sẽ tự động xuất mã PNR chính thức và vé điện tử cho toàn bộ hành khách.
             </p>
           </div>
         </div>
@@ -230,7 +230,7 @@
               <b>{{ b.booking_code }}</b>
             } @else {
               <span>Mã đơn hàng</span>
-              <b>DH-{{ b.id }}</b>
+              <b>{{ b.order_code || ('DH-' + b.id) }}</b>
             }
           </div>
 

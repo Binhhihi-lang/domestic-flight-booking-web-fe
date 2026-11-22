@@ -48,7 +48,7 @@
         <article class="mb-card">
           <div class="mb-card__top">
             <div class="mb-code tabular">
-              <strong>DH-{{ b.id }}</strong>
+              <strong>{{ b.order_code || ('DH-' + b.id) }}</strong>
               @if (b.status === 'CONFIRMED' && b.booking_code) {
                 <span class="mb-pnr">PNR: {{ b.booking_code }}</span>
               }

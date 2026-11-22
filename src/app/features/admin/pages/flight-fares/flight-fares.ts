@@ -13,6 +13,7 @@ import { FlightFareService } from '@core/services/flight-admin.service';
 import { ConfirmDialog, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { FlightSearchPicker } from '@shared/components/flight-search-picker/flight-search-picker';
+import { PageHeader } from '@shared/components/page-header/page-header';
 import { ServerPager } from '@shared/components/server-pager/server-pager';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
@@ -44,30 +45,26 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     AppButton,
     EmptyState,
     FlightSearchPicker,
+    PageHeader,
     ServerPager,
     SkeletonBlock,
     StatusBadge,
   ],
   template: `
-    <section class="ffare-page">
-      <header class="ffare-head">
-        <div>
-          <h1>Bảng giá chuyến bay</h1>
-          <p class="ffare-sub">
-            Cấu hình giá cơ bản + thuế phí người lớn theo từng chuyến và hạng vé (Trẻ em 75%, Em bé 10%)
-          </p>
-        </div>
-        <div class="ffare-head__actions">
-          <app-app-button variant="ghost" size="sm" (clicked)="openCopyModal()">
-            <mat-icon aria-hidden="true">content_copy</mat-icon>
-            Sao chép từ chuyến khác
-          </app-app-button>
-          <app-app-button variant="primary" size="sm" (clicked)="toggleCreateForm()">
-            <mat-icon aria-hidden="true">{{ showForm() ? 'close' : 'add' }}</mat-icon>
-            {{ showForm() ? 'Đóng biểu mẫu' : 'Thêm dòng giá' }}
-          </app-app-button>
-        </div>
-      </header>
+    <section class="wrap ffare-page">
+      <app-page-header
+        title="Bảng giá chuyến bay"
+        subtitle="Cấu hình giá cơ bản + thuế phí người lớn theo từng chuyến và hạng vé (Trẻ em 75%, Em bé 10%)"
+      >
+        <app-app-button variant="ghost" (clicked)="openCopyModal()">
+          <mat-icon aria-hidden="true">content_copy</mat-icon>
+          Sao chép từ chuyến khác
+        </app-app-button>
+        <app-app-button variant="primary" (clicked)="toggleCreateForm()">
+          <mat-icon aria-hidden="true">{{ showForm() ? 'close' : 'add' }}</mat-icon>
+          {{ showForm() ? 'Đóng biểu mẫu' : 'Thêm dòng giá' }}
+        </app-app-button>
+      </app-page-header>
 
       <div class="adm-filter adm-filter--card" role="search" aria-label="Bộ lọc bảng giá">
         <div class="ffare-field ffare-field--picker">
@@ -252,7 +249,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
                   <th class="col-num">Trẻ em 75%</th>
                   <th class="col-num">Em bé 10%</th>
                   <th>Hiệu lực</th>
-                  <th class="col-actions">Thao tác</th>
+                  <th class="col-actions"></th>
                 </tr>
               </thead>
               <tbody>
@@ -278,7 +275,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
                       <div class="ffare-row-acts">
                         <button
                           type="button"
-                          class="ffare-edit"
+                          class="rowbtn"
                           (click)="startEdit(row)"
                           [attr.aria-label]="'Sửa giá vé ' + row.fare_class_code"
                         >
@@ -286,7 +283,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
                         </button>
                         <button
                           type="button"
-                          class="ffare-del"
+                          class="rowbtn rowbtn--danger"
                           (click)="confirmRemoveFare(row)"
                           [attr.aria-label]="'Xóa giá vé ' + row.fare_class_code"
                         >
@@ -560,7 +557,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     }
     .ffare-table th,
     .ffare-table td {
-      padding: 12px 14px;
+      padding: var(--sp-md) var(--sp-lg);
       text-align: left;
       border-bottom: 1px solid var(--color-border-soft);
       font-size: var(--text-small);
@@ -568,9 +565,16 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     }
     .ffare-table th {
       font-size: var(--text-caption);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       color: var(--color-ink-muted);
       background: var(--color-surface-alt);
+      border-bottom: 1px solid var(--color-border);
       white-space: nowrap;
+    }
+    .ffare-table tbody tr:hover {
+      background: var(--color-primary-soft);
     }
     .col-num {
       text-align: right;
@@ -599,34 +603,38 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     .ffare-row-acts {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      justify-content: flex-end;
+      gap: var(--sp-xs);
+      white-space: nowrap;
     }
-    .ffare-edit {
-      padding: 4px 10px;
-      border: 1px solid var(--color-border);
+    .rowbtn {
+      font-family: var(--font-body);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 6px 11px;
       border-radius: var(--radius-sm);
+      border: 1.5px solid var(--color-border);
       background: var(--color-surface);
+      color: var(--color-ink);
+      cursor: pointer;
+      transition:
+        background-color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
+    }
+    .rowbtn:hover {
+      background: var(--color-surface-alt);
+      border-color: var(--color-primary-bright);
       color: var(--color-primary);
-      font-size: var(--text-caption);
-      font-weight: 600;
-      cursor: pointer;
     }
-    .ffare-edit:hover {
-      border-color: var(--color-primary);
-      background: var(--color-primary-soft);
+    .rowbtn--danger {
+      border-color: transparent;
+      background: transparent;
+      color: var(--color-primary);
     }
-    .ffare-del {
-      padding: 4px 10px;
-      border: 1px solid var(--color-danger);
-      border-radius: var(--radius-sm);
-      background: var(--color-surface);
-      color: var(--color-danger);
-      font-size: var(--text-caption);
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .ffare-del:hover {
+    .rowbtn--danger:hover {
       background: var(--color-danger-soft);
+      border-color: transparent;
       color: var(--color-on-danger-soft);
     }
     .ffare-copy-modal {

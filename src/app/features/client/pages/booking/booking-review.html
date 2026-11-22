@@ -61,7 +61,7 @@
             @if (b.status === 'CONFIRMED') {
               <span class="pnr-pill">Mã đặt chỗ (PNR): <b>{{ b.booking_code }}</b></span>
             } @else {
-              <span class="pnr-pill">Mã đơn hàng: <b>DH-{{ b.id }}</b> · PNR cấp sau thanh toán</span>
+              <span class="pnr-pill">Mã đơn hàng: <b>{{ b.order_code || ('DH-' + b.id) }}</b> · PNR cấp sau thanh toán</span>
             }
           </div>
 

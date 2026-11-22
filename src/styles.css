@@ -197,3 +197,28 @@ a {
     animation: none !important;
   }
 }
+
+/* =====================================================================
+   Chuẩn in ấn A4 cho Vé điện tử & Chi tiết đơn đặt chỗ
+   ===================================================================== */
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    height: auto !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print,
+  .vf-modal-backdrop,
+  .cdk-overlay-container {
+    display: none !important;
+  }
+}

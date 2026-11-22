@@ -493,3 +493,12 @@
     display: none;
   }
 }
+
+@media print {
+  .topbar,
+  .foot,
+  .drawer,
+  .scrim {
+    display: none !important;
+  }
+}

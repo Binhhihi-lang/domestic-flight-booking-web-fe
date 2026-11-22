@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { BookingDetail, BookingSeatHoldDetail, BookingStatus } from '@core/models/booking.model';
+import { AuthService } from '@core/services/auth.service';
 import { BookingFlowService } from '@core/services/booking-flow.service';
 import { BadgeTone, StatusBadge } from '@shared/ui/status-badge/status-badge';
 
@@ -82,12 +83,20 @@ type SeatHoldWithFlight = BookingSeatHoldDetail & {
           </form>
 
           <div class="lk-note lk-note--info">
-            <mat-icon>visibility</mat-icon>
+            <mat-icon>{{ isLoggedIn() ? 'verified_user' : 'visibility' }}</mat-icon>
             <div>
-              <b>Tra cứu được gì khi chưa đăng nhập</b>
-              <p>
-                Trạng thái đơn, hành trình, giờ bay, thông tin ghế. Thao tác hủy vé và quản lý chi tiết yêu cầu đăng nhập đúng tài khoản đã đặt.
-              </p>
+              @if (isLoggedIn()) {
+                <b>Bạn đã đăng nhập</b>
+                <p>
+                  Tra cứu nhanh theo mã đơn hàng/PNR hoặc xem toàn bộ lịch sử đặt vé trong mục
+                  <a routerLink="/account/bookings">Vé của tôi</a>.
+                </p>
+              } @else {
+                <b>Tra cứu được gì khi chưa đăng nhập</b>
+                <p>
+                  Trạng thái đơn, hành trình, giờ bay, thông tin ghế. Thao tác hủy vé và quản lý chi tiết yêu cầu đăng nhập đúng tài khoản đã đặt.
+                </p>
+              }
             </div>
           </div>
 
@@ -116,15 +125,27 @@ type SeatHoldWithFlight = BookingSeatHoldDetail & {
               <app-status-badge [tone]="statusTone(b.status)" [label]="statusLabel(b.status)" />
             </div>
 
-            <div class="lk-note lk-note--warning">
-              <mat-icon>lock</mat-icon>
-              <div>
-                <b>Bạn đang xem ở chế độ chỉ đọc</b>
-                <p>
-                  Muốn hủy đơn hoặc quản lý chi tiết vé, hãy đăng nhập bằng tài khoản đã đặt vé. Thông tin liên hệ nhạy cảm được ẩn ở chế độ này.
-                </p>
+            @if (isLoggedIn()) {
+              <div class="lk-note lk-note--info">
+                <mat-icon>verified_user</mat-icon>
+                <div>
+                  <b>Bạn đang đăng nhập</b>
+                  <p>
+                    Bấm <b>Mở chi tiết &amp; quản lý đơn</b> bên dưới để xem đầy đủ vé điện tử, in vé hoặc thực hiện thao tác hủy đơn.
+                  </p>
+                </div>
               </div>
-            </div>
+            } @else {
+              <div class="lk-note lk-note--warning">
+                <mat-icon>lock</mat-icon>
+                <div>
+                  <b>Bạn đang xem ở chế độ chỉ đọc</b>
+                  <p>
+                    Muốn hủy đơn hoặc quản lý chi tiết vé, hãy đăng nhập bằng tài khoản đã đặt vé. Thông tin liên hệ nhạy cảm được ẩn ở chế độ này.
+                  </p>
+                </div>
+              </div>
+            }
 
             <div class="lk-sec-head">
               <h2>Hành trình</h2>
@@ -174,7 +195,7 @@ type SeatHoldWithFlight = BookingSeatHoldDetail & {
             <div class="lk-card">
               <div class="lk-kv">
                 <span>Mã đơn hàng</span>
-                <b>DH-{{ b.id }}</b>
+                <b class="lk-mono">{{ b.order_code || ('DH-' + b.id) }}</b>
               </div>
               @if (b.status === 'CONFIRMED' && b.booking_code) {
                 <div class="lk-kv">
@@ -195,9 +216,23 @@ type SeatHoldWithFlight = BookingSeatHoldDetail & {
               <button type="button" class="lk-btn lk-btn--secondary" (click)="resetLookup()">
                 <mat-icon>arrow_back</mat-icon> Tra cứu đơn khác
               </button>
-              <a class="lk-btn lk-btn--primary" routerLink="/login">
-                Đăng nhập để quản lý đơn
-              </a>
+              @if (isLoggedIn()) {
+                <a
+                  class="lk-btn lk-btn--primary"
+                  [routerLink]="isStaffOrAdmin() ? ['/admin/bookings', b.id] : ['/account/bookings', b.id]"
+                >
+                  <mat-icon>confirmation_number</mat-icon>
+                  Mở chi tiết &amp; quản lý đơn
+                </a>
+              } @else {
+                <a
+                  class="lk-btn lk-btn--primary"
+                  routerLink="/login"
+                  [queryParams]="{ returnUrl: '/account/bookings/' + b.id }"
+                >
+                  Đăng nhập để quản lý đơn
+                </a>
+              }
             </div>
           </div>
         }
@@ -536,7 +571,13 @@ type SeatHoldWithFlight = BookingSeatHoldDetail & {
 })
 export class BookingLookup implements OnInit {
   private readonly bookingFlow = inject(BookingFlowService);
+  private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+
+  protected readonly isLoggedIn = computed(() => this.authService.isLoggedIn());
+  protected readonly isStaffOrAdmin = computed(
+    () => this.authService.isAdmin() || this.authService.isStaff(),
+  );
 
   protected bookingCode = '';
   protected email = '';
@@ -548,7 +589,9 @@ export class BookingLookup implements OnInit {
   protected readonly displayRef = computed(() => {
     const b = this.result();
     if (!b) return '';
-    return b.status === 'CONFIRMED' && b.booking_code ? b.booking_code : `DH-${b.id}`;
+    return b.status === 'CONFIRMED' && b.booking_code
+      ? b.booking_code
+      : b.order_code || `DH-${b.id}`;
   });
 
   ngOnInit(): void {
@@ -559,6 +602,8 @@ export class BookingLookup implements OnInit {
       this.bookingCode = code;
       this.email = email;
       this.submitLookup();
+    } else if (!this.email && this.authService.currentUser()?.email) {
+      this.email = this.authService.currentUser()!.email;
     }
   }
 
