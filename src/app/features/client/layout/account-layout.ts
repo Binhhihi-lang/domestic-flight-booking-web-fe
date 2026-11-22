@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '@core/services/auth.service';
 
@@ -11,15 +11,7 @@ interface AccountLink {
 }
 
 /**
- * Khung trang tài khoản khách hàng — bám mockup P11.
- *
- * Vì sao có menu dọc bên trái: khách hàng có 5 mục (vé, kho voucher, voucher
- * của tôi, hồ sơ, mật khẩu) và luôn quay lại giữa chúng. Menu dọc giữ nguyên
- * vị trí khi chuyển mục; trên mobile nó thành dải ngang cuộn để không chiếm
- * chiều dọc.
- *
- * Vì sao tách khỏi client-layout: trang tài khoản có bố cục hai cột riêng,
- * nhét vào layout chung sẽ phải thêm ngoại lệ cho mọi màn khác.
+ * Khung trang tài khoản khách hàng — bám prototype `customer.html`.
  */
 @Component({
   selector: 'app-account-layout',
@@ -30,11 +22,14 @@ interface AccountLink {
 })
 export class AccountLayout {
   protected readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
+  protected readonly loggingOut = signal(false);
 
   protected readonly links: AccountLink[] = [
     { path: '/account', label: 'Vé của tôi', icon: 'confirmation_number', exact: true },
-    { path: '/account/voucher-store', label: 'Kho voucher', icon: 'redeem' },
     { path: '/account/vouchers', label: 'Voucher của tôi', icon: 'card_membership' },
+    { path: '/account/voucher-store', label: 'Kho voucher', icon: 'redeem' },
     { path: '/account/profile', label: 'Hồ sơ cá nhân', icon: 'person' },
     { path: '/account/security', label: 'Đổi mật khẩu', icon: 'lock' },
   ];
@@ -49,4 +44,22 @@ export class AccountLayout {
     const last = parts.length > 1 ? (parts[parts.length - 1][0] ?? '') : '';
     return (first + last).toUpperCase();
   });
+
+  protected logout(): void {
+    if (this.loggingOut()) {
+      return;
+    }
+    this.loggingOut.set(true);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.loggingOut.set(false);
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        this.authService.clearSession();
+        this.loggingOut.set(false);
+        this.router.navigate(['/login']);
+      },
+    });
+  }
 }

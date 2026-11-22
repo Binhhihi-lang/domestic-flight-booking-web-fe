@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { NewsItem } from '@core/models/fleet-news.model';
 import { PublicNewsService } from '@core/services/public-catalog.service';
 import { SanitizeService } from '@core/services/sanitize.service';
@@ -11,10 +12,7 @@ import { LoadingState } from '@shared/ui/loading-state/loading-state';
 /**
  * Chi tiết tin tức — NEWS-02 (API v0.2 mục 2.9).
  *
- * Vì sao `content` PHẢI qua `SanitizeService` trước khi bind `[innerHTML]`:
- * nội dung là HTML do ADMIN nhập. Bind thẳng là mở đường cho XSS chạy trên máy
- * của MỌI khách đọc bài — không phải lỗi giao diện mà là chiếm phiên đăng nhập.
- * Xem `sanitize.service.ts` để biết allowlist và các vector bị chặn.
+ * `content` BẮT BUỘC đi qua `SanitizeService` trước khi bind `[innerHTML]`.
  */
 @Component({
   selector: 'app-news-detail',
@@ -28,35 +26,22 @@ export class ClientNewsDetail {
   private readonly sanitizeService = inject(SanitizeService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly loading = signal(true);
   protected readonly article = signal<NewsItem | null>(null);
+  protected readonly copied = signal(false);
 
-  /**
-   * Nội dung ĐÃ làm sạch — đây là thứ DUY NHẤT được bind vào `[innerHTML]`.
-   * Template KHÔNG được bind `article()!.content` ở bất kỳ đâu.
-   */
   protected readonly safeContent = computed(() => {
     const a = this.article();
     return a ? this.sanitizeService.sanitizeHtml(a.content) : '';
   });
 
-  /** Tên danh mục để hiện nhãn — API trả kèm `categories` ở endpoint chi tiết. */
   protected readonly categoryNames = computed(
     () => this.article()?.categories?.map((c) => c.name) ?? [],
   );
 
-  /**
-   * Bài liên quan — cùng danh mục, KHÁC bài đang đọc, tối đa 3 bài.
-   *
-   * Vì sao KHÔNG gộp mọi danh mục của bài: một bài có thể gắn nhiều danh mục (vd
-   * "Hãng hàng không" + "Thông báo"); gộp hết thì "liên quan" loãng thành "mọi
-   * bài cùng bất kỳ danh mục nào". Thay vào đó thử LẦN LƯỢT từng danh mục — xem
-   * `loadRelated`.
-   */
   protected readonly related = signal<NewsItem[]>([]);
-
-  /** id bài có ảnh tải lỗi — hiện nền thay thế thay vì icon ảnh vỡ. */
   protected readonly brokenThumbs = signal<Set<number>>(new Set());
 
   protected markBroken(id: number): void {
@@ -66,16 +51,24 @@ export class ClientNewsDetail {
   }
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
+    const initialId = this.route.snapshot.paramMap.get('id');
+    if (this.route.paramMap) {
+      this.route.paramMap.subscribe((params) => {
+        this.loadById(params.get('id'));
+      });
+    } else {
+      this.loadById(initialId);
+    }
+  }
+
+  private loadById(id: string | null): void {
     if (!id) {
       this.router.navigate(['/news']);
       return;
     }
+    this.loading.set(true);
     this.newsService.getById(Number(id)).subscribe({
       next: (res) => {
-        // BE trả `1004` (data = null) cho bài DRAFT/UNPUBLISHED/không tồn tại —
-        // mục 2.9 API v0.4: không xác nhận id có tồn tại hay không. Kiểm `res.data`
-        // trước khi đọc `status`, nếu không sẽ ném TypeError và trang trắng.
         if (!res.data || res.data.status !== 'PUBLISHED') {
           this.loading.set(false);
           this.router.navigate(['/news']);
@@ -87,28 +80,16 @@ export class ClientNewsDetail {
         this.loadRelated(res.data);
       },
       error: () => {
-        // Không tìm thấy (hoặc lỗi mạng) → về danh sách thay vì đứng ở trang trắng.
         this.loading.set(false);
         this.router.navigate(['/news']);
       },
     });
   }
 
-  /**
-   * Nạp bài liên quan — cùng danh mục, KHÁC bài đang đọc, tối đa 3 bài.
-   *
-   * Vì sao thử LẦN LƯỢT từng danh mục thay vì chỉ lấy danh mục đầu: một bài có
-   * thể gắn nhiều danh mục, và danh mục đầu có thể chỉ có đúng bài này (vd bài
-   * "Tết 2027" thuộc "Hãng hàng không" mà danh mục đó chỉ có nó). Lấy mỗi danh
-   * mục đầu thì trang chi tiết trống phần liên quan dù vẫn còn danh mục khác có
-   * bài. Thử lần lượt vừa giữ được độ sát chủ đề, vừa không để trống.
-   *
-   * Vì sao lọc `status` ở client: mock trả cả bản nháp, backend thì đã lọc cho
-   * GUEST — lọc ở đây để hai chế độ giống nhau.
-   */
   private loadRelated(current: NewsItem): void {
     const categoryIds = current.categories?.map((c) => c.id) ?? [];
     if (categoryIds.length === 0) {
+      this.related.set([]);
       return;
     }
     this.tryCategory(current, categoryIds, 0);
@@ -120,27 +101,32 @@ export class ClientNewsDetail {
       return;
     }
 
-    // Dùng filter `category_id` — có trong whitelist của `GET /news` (API v0.2
-    // mục 2.9), nên backend lọc sẵn thay vì tải hết rồi lọc.
     this.newsService
       .list({ page: 1, size: 5, category_id: categoryIds[index], sort: 'published_at,desc' })
       .subscribe({
         next: (res) => {
-          const others = res.data.items
+          const others = (res.data?.items ?? [])
             .filter((n) => n.status === 'PUBLISHED' && n.id !== current.id)
-            .slice(0, 3);
+            .slice(0, 4);
 
           if (others.length > 0) {
             this.related.set(others);
             return;
           }
-          // Danh mục này không có bài nào khác — thử danh mục kế tiếp.
           this.tryCategory(current, categoryIds, index + 1);
         },
-        // Lỗi mạng không phải lỗi chí mạng: thử danh mục kế, cuối cùng thì để
-        // trống. Phần còn lại của trang vẫn dùng được.
         error: () => this.tryCategory(current, categoryIds, index + 1),
       });
+  }
+
+  protected shareLink(): void {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (url && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).catch(() => {});
+    }
+    this.copied.set(true);
+    this.snackBar.open('Đã sao chép liên kết bài viết', 'Đóng', { duration: 2500 });
+    setTimeout(() => this.copied.set(false), 2500);
   }
 
   protected formatDate(iso: string): string {

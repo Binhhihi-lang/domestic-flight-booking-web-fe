@@ -58,9 +58,9 @@ function offsetLocalDate(daysFromToday: number): string {
 }
 
 /**
- * Widget tìm chuyến bay — bám mockup P1 (.searchbar / .trip / .searchform).
- * Chọn sân bay nội địa từ danh sách chuẩn (/api/public/airports), độ tuổi hành khách
- * đúng quyết định D2=A (Người lớn >= 12 · Trẻ em 2–11 · Em bé < 2).
+ * Widget tìm chuyến bay — đồng bộ prototype `customer.html` (.cust-search__card).
+ * Chọn sân bay nội địa từ danh sách chuẩn (`/api/public/airports`), giữ nguyên cột
+ * Ngày về ở trạng thái disabled khi chọn Một chiều để bố cục lưới luôn cân đối.
  */
 @Component({
   selector: 'app-flight-search-card',
@@ -85,10 +85,19 @@ export class FlightSearchCard implements OnInit {
 
   protected readonly airports = signal(FALLBACK_AIRPORTS);
   protected readonly tripType = signal<TripType>('oneway');
+  protected readonly fromSignal = signal('HAN');
   protected from = 'HAN';
   protected to = 'SGN';
   protected departDate = offsetLocalDate(1);
   protected returnDate = offsetLocalDate(4);
+
+  /** Loại bỏ điểm đi khỏi danh sách điểm đến để không bao giờ chọn trùng sân bay. */
+  protected readonly destinationAirports = computed(() => {
+    const origin = this.fromSignal();
+    const list = this.airports();
+    const filtered = list.filter((ap) => ap.airport_code !== origin);
+    return filtered.length > 0 ? filtered : list;
+  });
 
   protected readonly adults = signal(1);
   protected readonly children = signal(0);
@@ -125,8 +134,16 @@ export class FlightSearchCard implements OnInit {
 
   ngOnInit(): void {
     this.tripType.set(this.initialTripType());
-    if (this.initialFrom()) this.from = this.initialFrom();
-    if (this.initialTo()) this.to = this.initialTo();
+    if (this.initialFrom()) {
+      this.from = this.initialFrom();
+      this.fromSignal.set(this.from);
+    }
+    if (this.initialTo()) {
+      this.to = this.initialTo();
+    }
+    if (this.to === this.from) {
+      this.to = this.pickAlternativeAirport(this.from);
+    }
     if (this.initialDepartDate()) this.departDate = this.initialDepartDate();
     if (this.initialReturnDate()) this.returnDate = this.initialReturnDate();
     if (this.initialAdults() >= 1) this.adults.set(this.initialAdults());
@@ -151,6 +168,18 @@ export class FlightSearchCard implements OnInit {
   protected airportLabel(ap: Pick<Airport, 'airport_code' | 'airport_name' | 'city'>): string {
     const cityName = ap.city?.city_name;
     return cityName ? `${cityName} (${ap.airport_code})` : `${ap.airport_name} (${ap.airport_code})`;
+  }
+
+  protected onFromChange(code: string): void {
+    this.from = code;
+    this.fromSignal.set(code);
+    if (this.to === code) {
+      this.to = this.pickAlternativeAirport(code);
+    }
+  }
+
+  protected onToChange(code: string): void {
+    this.to = code;
   }
 
   protected togglePax(): void {
@@ -187,6 +216,7 @@ export class FlightSearchCard implements OnInit {
   protected swap(): void {
     const previousFrom = this.from;
     this.from = this.to;
+    this.fromSignal.set(this.from);
     this.to = previousFrom;
   }
 
@@ -203,5 +233,10 @@ export class FlightSearchCard implements OnInit {
         infants: this.infants(),
       },
     });
+  }
+
+  private pickAlternativeAirport(excluded: string): string {
+    const alt = this.airports().find((ap) => ap.airport_code !== excluded);
+    return alt ? alt.airport_code : excluded === 'HAN' ? 'SGN' : 'HAN';
   }
 }

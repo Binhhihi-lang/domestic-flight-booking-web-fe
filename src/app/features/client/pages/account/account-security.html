@@ -6,7 +6,10 @@
 <app-app-card title="Mật khẩu" class="blk">
   <div class="form-grid">
     <div class="field field--full" [class.field--error]="fieldError('current_password')">
-      <label for="sc-cur">Mật khẩu hiện tại <span class="req">*</span></label>
+      <div class="field__lbl-row">
+        <label for="sc-cur">Mật khẩu hiện tại <span class="req">*</span></label>
+        <a class="sc__forgot" routerLink="/forgot-password">Quên mật khẩu?</a>
+      </div>
       <div class="field__pw">
         <input
           id="sc-cur"
@@ -50,10 +53,27 @@
           <mat-icon>{{ showNew() ? 'visibility_off' : 'visibility' }}</mat-icon>
         </button>
       </div>
+
+      @if (strength().score > 0) {
+        <div class="pw-meter" aria-live="polite">
+          <div class="pw-meter__bars">
+            @for (bar of [1, 2, 3, 4]; track bar) {
+              <span
+                class="pw-meter__bar"
+                [class]="'pw-meter__bar' + (bar <= strength().score ? ' pw-meter__bar--' + strength().tone : '')"
+              ></span>
+            }
+          </div>
+          <span class="pw-meter__lbl" [class]="'pw-meter__lbl pw-meter__lbl--' + strength().tone">
+            Độ mạnh: {{ strength().label }}
+          </span>
+        </div>
+      }
+
       @if (fieldError('new_password'); as msg) {
         <span class="field__err">{{ msg }}</span>
       } @else {
-        <span class="hint">Tối thiểu 8 ký tự.</span>
+        <span class="hint">Tối thiểu 8 ký tự, nên kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt.</span>
       }
     </div>
 
@@ -73,16 +93,19 @@
     </div>
   </div>
 
-  <p class="sc__note">
-    <mat-icon>info</mat-icon>
+  <div class="sc__warn" role="note">
+    <mat-icon aria-hidden="true">warning_amber</mat-icon>
     <span>
-      Sau khi đổi, các thiết bị khác đang đăng nhập sẽ bị đăng xuất ở lần làm mới
-      phiên tiếp theo.
+      <strong>Lưu ý bảo mật:</strong> Sau khi đổi mật khẩu thành công, toàn bộ các phiên đăng nhập
+      trên thiết bị khác sẽ tự động bị đăng xuất để bảo vệ tài khoản của bạn.
     </span>
-  </p>
+  </div>
 </app-app-card>
 
 <div class="form-actions">
+  <app-app-button variant="ghost" [disabled]="saving() || !hasInput()" (clicked)="resetForm()">
+    Hủy
+  </app-app-button>
   <app-app-button [disabled]="saving()" (clicked)="submit()">
     {{ saving() ? 'Đang cập nhật…' : 'Đổi mật khẩu' }}
   </app-app-button>

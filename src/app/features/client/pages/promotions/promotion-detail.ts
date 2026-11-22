@@ -3,16 +3,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { Promotion } from '@core/models/promotion.model';
 import { PublicPromotionService } from '@core/services/public-catalog.service';
+import { SanitizeService } from '@core/services/sanitize.service';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { LoadingState } from '@shared/ui/loading-state/loading-state';
 
 /**
  * Chi tiết khuyến mãi — PROMO-02 (API v0.2 mục 2.7).
- *
- * Vì sao hiện cả điều kiện kỹ thuật (trần giảm, giá tối thiểu, loại hành trình):
- * khách cần biết vì sao vé của mình KHÔNG được giảm. Giấu đi thì họ chỉ thấy
- * "khuyến mãi không hoạt động" mà không hiểu lý do.
  */
 @Component({
   selector: 'app-promotion-detail',
@@ -23,15 +20,21 @@ import { LoadingState } from '@shared/ui/loading-state/loading-state';
 })
 export class ClientPromotionDetail {
   private readonly service = inject(PublicPromotionService);
+  private readonly sanitizeService = inject(SanitizeService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   protected readonly loading = signal(true);
   protected readonly promo = signal<Promotion | null>(null);
+  protected readonly otherPromos = signal<Promotion[]>([]);
 
   private static readonly money = new Intl.NumberFormat('vi-VN');
 
-  /** Câu mô tả mức giảm bằng lời, ví dụ "Giảm 15%, tối đa 150.000₫ mỗi vé". */
+  protected readonly safeDescription = computed(() => {
+    const desc = this.promo()?.description;
+    return desc ? this.sanitizeService.sanitizeHtml(desc) : '';
+  });
+
   protected readonly discountText = computed(() => {
     const p = this.promo();
     if (!p) return '';
@@ -39,10 +42,10 @@ export class ClientPromotionDetail {
     const value =
       p.discount_type === 'PERCENT'
         ? `Giảm ${p.discount_value}%`
-        : `Giảm ${ClientPromotionDetail.money.format(p.discount_value)}₫`;
+        : `Giảm ${ClientPromotionDetail.money.format(p.discount_value)}đ`;
 
     if (p.discount_type === 'PERCENT' && p.max_discount_amount) {
-      return `${value}, tối đa ${ClientPromotionDetail.money.format(p.max_discount_amount)}₫ mỗi vé`;
+      return `${value}, tối đa ${ClientPromotionDetail.money.format(p.max_discount_amount)}đ mỗi vé`;
     }
     return value;
   });
@@ -59,26 +62,65 @@ export class ClientPromotionDetail {
   });
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
+    const initialId = this.route.snapshot.paramMap.get('id');
+    if (this.route.paramMap) {
+      this.route.paramMap.subscribe((params) => {
+        const id = params.get('id');
+        this.loadById(id);
+      });
+    } else {
+      this.loadById(initialId);
+    }
+  }
+
+  private loadById(id: string | null): void {
     if (!id) {
       this.router.navigate(['/promotions']);
       return;
     }
-    this.service.getById(Number(id)).subscribe({
+    const numericId = Number(id);
+    this.loading.set(true);
+    this.service.getById(numericId).subscribe({
       next: (res) => {
+        if (!res.data) {
+          this.loading.set(false);
+          this.router.navigate(['/promotions']);
+          return;
+        }
         this.promo.set(res.data);
         this.loading.set(false);
+        this.loadOthers(numericId);
       },
       error: () => {
-        // Không tìm thấy (hoặc lỗi mạng) → về danh sách thay vì đứng ở trang trắng.
         this.loading.set(false);
         this.router.navigate(['/promotions']);
       },
     });
   }
 
+  private loadOthers(currentId: number): void {
+    this.service.list({ page: 1, size: 10, sort: 'start_date,desc' }).subscribe({
+      next: (res) => {
+        const others = (res.data?.items ?? [])
+          .filter((p) => p.status === 'ACTIVE' && p.id !== currentId)
+          .slice(0, 4);
+        this.otherPromos.set(others);
+      },
+      error: () => this.otherPromos.set([]),
+    });
+  }
+
+  protected shortDiscount(p: Promotion): string {
+    if (p.badge_label?.trim()) {
+      return p.badge_label.trim();
+    }
+    return p.discount_type === 'PERCENT'
+      ? `Giảm ${p.discount_value}%`
+      : `Giảm ${ClientPromotionDetail.money.format(p.discount_value)}đ`;
+  }
+
   protected formatMoney(v: number): string {
-    return ClientPromotionDetail.money.format(v);
+    return `${ClientPromotionDetail.money.format(v)}đ`;
   }
 
   protected formatDate(iso: string): string {

@@ -1,9 +1,18 @@
 <div class="wrap">
+  <nav class="crumbs" aria-label="Đường dẫn">
+    <button type="button" class="crumb-btn" (click)="goHome()">Trang chủ</button>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <span>Khuyến mãi</span>
+  </nav>
+
   <header class="page-h">
     <div>
       <h1>Khuyến mãi</h1>
       <p>Các chương trình ưu đãi đang áp dụng cho chuyến bay nội địa</p>
     </div>
+    <app-app-button variant="secondary" size="sm" (clicked)="goVoucherStore()">
+      Kho voucher
+    </app-app-button>
   </header>
 
   @if (loading()) {
@@ -29,7 +38,7 @@
     </app-app-card>
   } @else {
     <div class="promo-grid">
-      @for (item of promos(); track item.promo.id) {
+      @for (item of pagedPromos(); track item.promo.id) {
         <article class="promo">
           <a class="promo__link" [routerLink]="['/promotions', item.promo.id]">
             @if (item.promo.image_url) {
@@ -43,9 +52,8 @@
                 <span class="promo__tag" [class]="'promo__tag--' + item.tone">{{ item.badge }}</span>
               </div>
             } @else {
-              <!-- Chưa có ảnh: nền + icon, KHÔNG để ảnh vỡ. -->
               <div class="promo__img promo__img--ph">
-                <mat-icon>local_offer</mat-icon>
+                <mat-icon aria-hidden="true">local_offer</mat-icon>
                 <span class="promo__tag" [class]="'promo__tag--' + item.tone">{{ item.badge }}</span>
               </div>
             }
@@ -54,16 +62,29 @@
               <div class="promo__nm">{{ item.promo.promotion_name }}</div>
               <p class="promo__ds">{{ item.summary }}</p>
               <div class="promo__meta">
-                <span><mat-icon>event</mat-icon> Đến {{ formatDate(item.promo.end_date) }}</span>
+                <span><mat-icon aria-hidden="true">event</mat-icon> Đến {{ formatDate(item.promo.end_date) }}</span>
                 @if (daysLeft(item.promo.end_date) <= 7) {
                   <span class="promo__soon">Còn {{ daysLeft(item.promo.end_date) }} ngày</span>
                 }
               </div>
-              <div class="promo__lk">Xem chi tiết <mat-icon>arrow_forward</mat-icon></div>
+              <div class="promo__lk">Xem chi tiết <mat-icon aria-hidden="true">arrow_forward</mat-icon></div>
             </div>
           </a>
         </article>
       }
+    </div>
+
+    <div class="promo-pager">
+      <app-server-pager
+        [page]="page()"
+        [size]="pageSize()"
+        [totalItems]="totalItems()"
+        [totalPages]="totalPages()"
+        [pageSizeOptions]="[6, 9, 12]"
+        noun="chương trình"
+        (pageChange)="onPageChange($event)"
+        (sizeChange)="onSizeChange($event)"
+      />
     </div>
   }
 </div>

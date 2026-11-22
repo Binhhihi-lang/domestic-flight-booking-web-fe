@@ -1,21 +1,19 @@
 <div class="store">
   <header class="store__h">
-    <h1>Kho voucher</h1>
-    <p>Nhận voucher vào ví rồi chọn khi thanh toán — không cần nhập mã</p>
+    <div>
+      <h1>Kho voucher</h1>
+      <p>Lưu voucher vào ví rồi chọn trực tiếp khi thanh toán — không cần nhập mã</p>
+    </div>
+    <a routerLink="/account/vouchers">
+      <app-app-button size="sm" variant="secondary">Ví voucher của tôi</app-app-button>
+    </a>
   </header>
 
   @if (loading()) {
-    <div class="v-grid">
-      @for (i of [1, 2, 3]; track i) {
-        <div class="v v--skeleton">
-          <app-skeleton-block height="86px" />
-          <div class="v__bd">
-            <app-skeleton-block width="70%" height="15px" />
-            <div style="height: 8px"></div>
-            <app-skeleton-block width="90%" height="12px" />
-          </div>
-        </div>
-      }
+    <div class="v-list">
+      <app-skeleton-block height="120px" />
+      <app-skeleton-block height="120px" />
+      <app-skeleton-block height="120px" />
     </div>
   } @else if (items().length === 0) {
     <app-app-card>
@@ -26,37 +24,56 @@
       />
     </app-app-card>
   } @else {
-    <div class="v-grid">
+    <div class="v-list">
       @for (v of items(); track v.id) {
-        <article class="v" [class.v--claimed]="v.claimed">
-          <div class="v__top">
-            <div class="v__val">{{ discountText(v) }}</div>
-            @if (v.claimed) {
-              <span class="v__flag"><mat-icon>check_circle</mat-icon> Đã nhận</span>
-            }
+        <article
+          class="v-card"
+          [class.v-card--dim]="v.claimed || isExhausted(v)"
+        >
+          <div class="v-card__stub">
+            <div class="v-card__val tabular">{{ stubValue(v) }}</div>
+            <div class="v-card__type">
+              {{ v.discount_type === 'PERCENT' ? 'Giảm %' : 'Giảm tiền' }}
+            </div>
           </div>
 
-          <div class="v__bd">
-            <h3 class="v__nm">{{ v.voucher_name }}</h3>
+          <div class="v-card__body">
+            <div class="v-card__title-row">
+              <h2 class="v-card__name">{{ v.voucher_name }}</h2>
+              <span class="v-card__code tabular">{{ v.voucher_code }}</span>
+            </div>
+            <div class="v-card__discount">{{ discountText(v) }}</div>
             @if (v.description) {
-              <p class="v__ds">{{ v.description }}</p>
+              <p class="v-card__desc">{{ v.description }}</p>
             }
-            <ul class="v__meta">
-              <li>{{ minOrderText(v) }}</li>
-              <li>HSD: {{ formatDate(v.end_date) }}</li>
-              @if (v.claim_limit !== null) {
-                <li>Còn {{ v.claim_limit - v.claimed_count }} lượt</li>
+            <div class="v-card__meta">
+              <span><mat-icon aria-hidden="true">payments</mat-icon> {{ minOrderText(v) }}</span>
+              <span><mat-icon aria-hidden="true">event</mat-icon> HSD: {{ formatDate(v.end_date) }}</span>
+              @if (remainingCount(v); as rem) {
+                <span><mat-icon aria-hidden="true">confirmation_number</mat-icon> Còn {{ rem }} suất</span>
+              } @else if (isExhausted(v)) {
+                <span class="v-card__out"><mat-icon aria-hidden="true">block</mat-icon> Đã hết suất</span>
               }
-            </ul>
+            </div>
           </div>
 
-          <div class="v__act">
+          <div class="v-card__side">
             @if (v.claimed) {
-              <app-app-button variant="ghost" [disabled]="true">Đã nhận</app-app-button>
+              <app-status-badge tone="success" label="Đã lưu" />
+              <a class="v-card__link" routerLink="/account/vouchers">Xem trong ví</a>
+            } @else if (isExhausted(v)) {
+              <app-status-badge tone="danger" label="Hết suất" />
+              <app-app-button size="sm" variant="ghost" [disabled]="true">Hết suất</app-app-button>
             } @else {
-              <app-app-button [disabled]="isClaiming(v.id)" (clicked)="claim(v)">
-                {{ isClaiming(v.id) ? 'Đang nhận…' : 'Nhận voucher' }}
+              <app-app-button
+                size="sm"
+                variant="primary"
+                [disabled]="isClaiming(v.id)"
+                (clicked)="claim(v)"
+              >
+                {{ isClaiming(v.id) ? 'Đang lưu…' : 'Lưu voucher' }}
               </app-app-button>
+              <a class="v-card__link" [routerLink]="['/account/vouchers', v.id]">Chi tiết</a>
             }
           </div>
         </article>

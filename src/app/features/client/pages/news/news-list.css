@@ -1,46 +1,213 @@
-/* Bộ lọc danh mục — đặt trên lưới, canh trái. */
-.cat-filter {
+.crumbs {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 4px;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+  margin-bottom: var(--sp-md);
 }
 
-.cat-filter__lbl {
-  font-size: 13px;
+.crumbs a {
+  color: var(--color-primary);
   font-weight: 600;
+  text-decoration: none;
+}
+
+.crumbs a:hover {
+  text-decoration: underline;
+}
+
+.crumbs mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.page-h {
+  margin-bottom: var(--sp-xl);
+}
+
+.page-h h1 {
+  font-size: var(--text-h1);
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.page-h p {
+  margin: 0;
+  font-size: var(--text-small);
   color: var(--color-ink-muted);
 }
 
-.cat-filter__sel {
-  font-family: var(--font-body);
-  font-size: 14px;
-  padding: 9px 34px 9px 13px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius);
+/* ---------- 2-column layout ---------- */
+.nl-layout {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  gap: var(--sp-xl);
+  align-items: start;
+}
+
+.nl-layout > * {
+  min-width: 0;
+}
+
+.nl-cat-box {
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.nl-cat-box__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-small);
+  font-weight: 700;
   color: var(--color-ink);
-  outline: none;
-  min-width: 200px;
-  max-width: 100%;
-  /* Mũi tên tự vẽ cho cân đối — mũi tên mặc định của trình duyệt vẽ sát mép. */
-  appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--color-ink-muted) 50%),
-    linear-gradient(135deg, var(--color-ink-muted) 50%, transparent 50%);
-  background-position:
-    calc(100% - 18px) calc(50% + 1px),
-    calc(100% - 13px) calc(50% + 1px);
-  background-size: 5px 5px, 5px 5px;
-  background-repeat: no-repeat;
+  margin-bottom: var(--sp-md);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.nl-cat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nl-cat-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-sm);
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 500;
   cursor: pointer;
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease);
 }
 
-.cat-filter__sel:focus {
-  border-color: var(--color-primary-bright);
-  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+.nl-cat-btn:hover:not(.nl-cat-btn--on) {
+  background: var(--color-surface-alt);
 }
 
-/* Nhãn danh mục trên thẻ tin. */
+.nl-cat-btn--on {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.nl-cat-cnt {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+  color: var(--color-ink-muted);
+}
+
+.nl-cat-btn--on .nl-cat-cnt {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* ---------- Featured article ---------- */
+.feat {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--sp-xl);
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.feat:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.feat__link {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  color: inherit;
+  text-decoration: none;
+}
+
+.feat__media {
+  position: relative;
+  min-height: 240px;
+}
+
+.feat__img {
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  object-fit: cover;
+  display: block;
+}
+
+.feat__img--ph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-dark), var(--color-primary), var(--color-primary-bright));
+  color: var(--color-on-dark);
+}
+
+.feat__img--ph mat-icon {
+  font-size: 52px;
+  width: 52px;
+  height: 52px;
+}
+
+.feat__pill {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-caption);
+  font-weight: 800;
+}
+
+.feat__bd {
+  padding: var(--sp-xl);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.feat__title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 var(--sp-sm);
+}
+
+.feat__excerpt {
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+  line-height: 1.6;
+  margin: 0 0 var(--sp-md);
+}
+
+/* ---------- News grid ---------- */
 .news__cats {
   display: flex;
   gap: 5px;
@@ -57,11 +224,10 @@
   color: var(--color-primary);
 }
 
-/* Lưới thẻ tin — cùng khuôn với lưới thẻ ở trang chủ và trang khuyến mãi. */
 .news-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-lg);
 }
 
 .news {
@@ -94,13 +260,12 @@
   background: var(--color-surface-alt);
 }
 
-/* Nền thay thế khi bài chưa có ảnh. */
 .news__img--ph {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0a4d8c, #0770cd 55%, #0194f3);
-  color: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(135deg, var(--color-dark), var(--color-primary), var(--color-primary-bright));
+  color: var(--color-on-dark);
 }
 
 .news__img--ph mat-icon {
@@ -125,7 +290,6 @@
   font-weight: 700;
   line-height: 1.35;
   margin: 0 0 7px;
-  /* Tối đa 2 dòng để các thẻ trong lưới cao đều nhau. */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -143,7 +307,7 @@
 .news__lk {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--color-primary-bright);
+  color: var(--color-primary);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -153,6 +317,13 @@
   font-size: 16px;
   width: 16px;
   height: 16px;
+}
+
+.nl-pager {
+  margin-top: var(--sp-xl);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .news--skeleton {
@@ -167,6 +338,28 @@
 .news--skeleton:hover {
   transform: none;
   box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .nl-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .nl-cat-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .nl-cat-btn {
+    width: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 6px 12px;
+  }
+
+  .feat__link {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {

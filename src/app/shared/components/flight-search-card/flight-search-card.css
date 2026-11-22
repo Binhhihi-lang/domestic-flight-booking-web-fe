@@ -1,34 +1,32 @@
 .searchbar__card {
   background: var(--color-surface);
   border-radius: var(--radius-xl);
-  box-shadow: 0 14px 40px rgba(3, 18, 26, 0.18);
-  /* KHÔNG dùng `overflow: hidden` ở đây dù nó là cách gọn để bo góc: nó cắt
-     luôn popup chọn hành khách (popup phải tràn ra ngoài thẻ). Bo góc cho
-     `.trip` và bọc đáy cho `.searchform` — xem hai rule dưới. */
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border-soft);
 }
 
 .trip {
   display: flex;
-  gap: 8px;
-  padding: 18px 20px 0;
-  /* Bo góc trên: thay cho `overflow: hidden` ở .searchbar__card (rule đó bị bỏ
-     vì cắt mất popup hành khách). */
+  align-items: center;
+  gap: var(--sp-sm);
+  flex-wrap: wrap;
+  padding: var(--sp-lg) var(--sp-xl) 0;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .chip {
+  height: 36px;
   border: 1.5px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-ink-muted);
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--text-small);
   font-weight: 600;
-  padding: 9px 18px;
+  padding: 0 var(--sp-lg);
   border-radius: 999px;
   cursor: pointer;
   transition: all var(--dur-fast) var(--ease);
   white-space: nowrap;
-  min-height: 40px;
 }
 
 .chip:hover {
@@ -44,12 +42,11 @@
 }
 
 .searchform {
-  /* Bo góc dưới — cùng lý do với .trip. */
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1.3fr auto;
-  gap: 10px;
-  padding: 14px 20px 20px;
+  grid-template-columns: 1.15fr 1.15fr 1fr 1fr 1.15fr auto;
+  gap: var(--sp-md);
+  padding: var(--sp-lg) var(--sp-xl) var(--sp-xl);
   align-items: end;
 }
 
@@ -61,7 +58,7 @@
 }
 
 .field label {
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 600;
   color: var(--color-ink);
 }
@@ -69,8 +66,9 @@
 .field input,
 .field select {
   font-family: var(--font-body);
-  font-size: 14.5px;
-  padding: 11px 13px;
+  font-size: var(--text-body);
+  height: 44px;
+  padding: 0 12px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
@@ -78,6 +76,9 @@
   width: 100%;
   min-width: 0;
   color: var(--color-ink);
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
 }
 
 .field input::placeholder {
@@ -87,16 +88,25 @@
 .field input:focus,
 .field select:focus {
   border-color: var(--color-primary-bright);
-  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
-/* Nút đổi chiều nằm trong ô "Điểm đến", nên ô đó phải chừa chỗ bên phải
-   để chữ không bị nút che. */
+.field--disabled label {
+  color: var(--color-ink-subtle);
+}
+
+.field input:disabled {
+  background: var(--color-surface-alt);
+  color: var(--color-ink-subtle);
+  border-color: var(--color-border-soft);
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
 .swap {
   position: relative;
 }
 
-.swap input,
 .swap select {
   padding-right: 40px;
   text-overflow: ellipsis;
@@ -105,18 +115,20 @@
 .swap__btn {
   position: absolute;
   right: 8px;
-  bottom: 6px;
+  bottom: 8px;
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1.5px solid var(--color-border);
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  display: grid;
+  place-items: center;
   cursor: pointer;
   z-index: 2;
   box-shadow: var(--shadow-sm);
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .swap__btn:hover {
@@ -128,22 +140,22 @@
   font-size: 16px;
   width: 16px;
   height: 16px;
-  color: var(--color-primary-bright);
+  color: var(--color-primary);
 }
 
 .submit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 46px;
-  padding: 0 28px;
+  gap: var(--sp-sm);
+  height: 44px;
+  padding: 0 var(--sp-xl);
   border: 0;
   border-radius: var(--radius);
   background: var(--color-primary);
   color: var(--color-on-primary);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -160,34 +172,29 @@
   height: 20px;
 }
 
-/* Ẩn ô ngày về khi chọn một chiều — nhưng vẫn giữ chỗ trong grid ở màn lớn
-   để nút tìm kiếm không nhảy sang trái. */
-.field--hidden {
-  visibility: hidden;
-}
-
-
 /* ===== Bộ chọn hành khách ===== */
-
 .pax {
   position: relative;
 }
 
-/* Nút mở popup — trông như ô nhập để hàng form đồng đều. */
 .pax__btn {
   display: flex;
   align-items: center;
   gap: 7px;
   width: 100%;
+  height: 44px;
   font-family: var(--font-body);
-  font-size: 14.5px;
-  padding: 11px 13px;
+  font-size: var(--text-body);
+  padding: 0 12px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-ink);
   cursor: pointer;
   text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease);
 }
 
 .pax__btn:hover {
@@ -207,7 +214,6 @@
   flex: 0 0 auto;
 }
 
-/* Nhãn tóm tắt co giãn, cắt bằng ellipsis khi hẹp thay vì đẩy nút mũi tên ra. */
 .pax__sum {
   flex: 1 1 auto;
   min-width: 0;
@@ -220,7 +226,6 @@
   margin-left: auto;
 }
 
-/* Lớp phủ trong suốt bắt click ra ngoài để đóng popup. */
 .pax__scrim {
   position: fixed;
   inset: 0;
@@ -232,9 +237,9 @@
   top: calc(100% + 6px);
   left: 0;
   z-index: 41;
-  width: 320px;
+  width: 316px;
   max-width: calc(100vw - 32px);
-  padding: 14px 16px 12px;
+  padding: var(--sp-md) var(--sp-lg) var(--sp-md);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -245,25 +250,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: var(--sp-md);
   padding: 9px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.pax__row:last-of-type {
+  border-bottom: 0;
 }
 
 .pax__info b {
   display: block;
-  font-size: 13.5px;
+  font-size: var(--text-small);
   font-weight: 600;
+  color: var(--color-ink);
 }
 
 .pax__info span {
-  font-size: 11.5px;
+  font-size: var(--text-caption);
   color: var(--color-ink-muted);
 }
 
 .pax__ctl {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex: 0 0 auto;
 }
 
@@ -273,7 +284,7 @@
   border-radius: 50%;
   border: 1.5px solid var(--color-border);
   background: var(--color-surface);
-  color: var(--color-ink);
+  color: var(--color-primary);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -282,11 +293,12 @@
 
 .pax__ctl button:hover:not(:disabled) {
   border-color: var(--color-primary-bright);
-  color: var(--color-primary);
+  background: var(--color-primary-soft);
 }
 
 .pax__ctl button:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
+  color: var(--color-ink-subtle);
   cursor: not-allowed;
 }
 
@@ -296,20 +308,19 @@
   height: 17px;
 }
 
-/* Số lượng: bề rộng cố định để nút +/- không nhảy khi số đổi 1 -> 2 chữ số. */
 .pax__n {
-  min-width: 26px;
+  min-width: 24px;
   text-align: center;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .pax__note {
-  margin: 8px 0 0;
-  padding-top: 10px;
+  margin: var(--sp-sm) 0 0;
+  padding-top: var(--sp-sm);
   border-top: 1px solid var(--color-border-soft);
-  font-size: 11.5px;
+  font-size: var(--text-caption);
   line-height: 1.5;
   color: var(--color-ink-muted);
 }
@@ -317,53 +328,52 @@
 .pax__done {
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: var(--sp-md);
 }
 
 .pax__done button {
+  width: 100%;
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--text-small);
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 9px var(--sp-lg);
   border-radius: var(--radius);
   border: 0;
-  background: var(--color-primary-bright);
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   cursor: pointer;
 }
 
 .pax__done button:hover {
-  background: var(--color-primary);
+  background: var(--color-primary-hover);
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1180px) {
   .searchform {
     grid-template-columns: 1fr 1fr;
   }
 
-  .field--hidden {
-    display: none;
+  .submit {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 900px) {
   .trip {
-    padding: 14px 14px 0;
+    padding: var(--sp-md) var(--sp-md) 0;
   }
 
   .searchform {
-    padding: 12px 14px 16px;
+    padding: var(--sp-md);
   }
 }
 
 @media (max-width: 620px) {
   .searchform {
     grid-template-columns: 1fr;
-    gap: 11px;
+    gap: var(--sp-md);
   }
 
-  /* Popup rộng bằng ô chứa thay vì 320px cố định — 320px trên màn 375px sẽ
-     tràn ra ngoài lề. */
   .pax__pop {
     width: 100%;
     left: 0;
