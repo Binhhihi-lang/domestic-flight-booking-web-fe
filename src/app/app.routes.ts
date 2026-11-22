@@ -135,6 +135,72 @@ export const routes: Routes = [
           import('@features/client/pages/news/news-detail').then((m) => m.ClientNewsDetail),
         data: { title: 'Chi tiết tin tức' },
       },
+      // ---- 9 trang thông tin công khai (Public Pages) ----
+      {
+        path: 'help',
+        loadComponent: () =>
+          import('@features/client/pages/public/help').then((m) => m.PublicHelpPage),
+        data: { title: 'Trung tâm trợ giúp' },
+      },
+      {
+        path: 'booking-guide',
+        loadComponent: () =>
+          import('@features/client/pages/public/booking-guide').then(
+            (m) => m.PublicBookingGuidePage,
+          ),
+        data: { title: 'Hướng dẫn đặt vé' },
+      },
+      {
+        path: 'refund-policy',
+        loadComponent: () =>
+          import('@features/client/pages/public/refund-policy').then(
+            (m) => m.PublicRefundPolicyPage,
+          ),
+        data: { title: 'Chính sách hoàn & đổi vé' },
+      },
+      {
+        path: 'help-contact',
+        loadComponent: () =>
+          import('@features/client/pages/public/help-contact').then(
+            (m) => m.PublicHelpContactPage,
+          ),
+        data: { title: 'Liên hệ hỗ trợ' },
+      },
+      {
+        path: 'destinations',
+        loadComponent: () =>
+          import('@features/client/pages/public/destinations').then(
+            (m) => m.PublicDestinationsPage,
+          ),
+        data: { title: 'Điểm đến nội địa' },
+      },
+      // `airlines` phải đứng TRƯỚC `airlines/:id`.
+      {
+        path: 'airlines',
+        loadComponent: () =>
+          import('@features/client/pages/public/public-airlines').then((m) => m.PublicAirlinesPage),
+        data: { title: 'Hãng hàng không' },
+      },
+      {
+        path: 'airlines/:id',
+        loadComponent: () =>
+          import('@features/client/pages/public/public-airlines').then(
+            (m) => m.PublicAirlineDetailPage,
+          ),
+        data: { title: 'Chi tiết hãng hàng không' },
+      },
+      {
+        path: 'airports',
+        loadComponent: () =>
+          import('@features/client/pages/public/public-airports').then((m) => m.PublicAirportsPage),
+        data: { title: 'Sân bay nội địa' },
+      },
+      {
+        path: 'cities',
+        loadComponent: () =>
+          import('@features/client/pages/public/public-cities').then((m) => m.PublicCitiesPage),
+        data: { title: 'Thành phố nội địa' },
+      },
       {
         path: 'account',
         canActivate: [authGuard],
@@ -162,6 +228,14 @@ export const routes: Routes = [
             loadComponent: () =>
               import('@features/client/pages/account/my-vouchers').then((m) => m.MyVouchers),
             data: { title: 'Voucher của tôi' },
+          },
+          {
+            path: 'vouchers/:id',
+            loadComponent: () =>
+              import('@features/client/pages/account/voucher-detail').then(
+                (m) => m.VoucherDetailPage,
+              ),
+            data: { title: 'Chi tiết voucher' },
           },
           {
             path: 'voucher-store',

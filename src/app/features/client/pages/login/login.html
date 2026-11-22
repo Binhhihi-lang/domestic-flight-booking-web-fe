@@ -1,19 +1,17 @@
 <div class="auth">
   <app-auth-aside
-    heading="Đăng nhập để đặt vé và quản lý chuyến đi của bạn"
-    subheading="Theo dõi booking, nhận vé điện tử, và dùng voucher đã nhận ngay khi thanh toán."
+    heading="Đăng nhập để giữ chỗ 15 phút và nhận vé điện tử ngay"
+    subheading="Theo dõi đơn đặt chỗ, chọn ghế theo từng chặng và dùng voucher trong ví khi thanh toán."
   />
 
   <div class="auth__form">
     <div class="auth__box">
-      <!-- Chỉ hiện ở ≤880px: khi đó panel trái bị ẩn nên đây là lối về trang chủ
-           duy nhất trên màn hình. -->
       <a class="auth__home" routerLink="/" aria-label="Về trang chủ VinaFly">
         <app-brand-logo size="md" tone="light" [tagline]="''" />
       </a>
 
       <h1>Đăng nhập</h1>
-      <p>Chào mừng trở lại. Nhập thông tin tài khoản của bạn.</p>
+      <p class="auth__lead">Chào mừng trở lại. Nhập thông tin tài khoản để tiếp tục.</p>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="auth__fields">
         <div class="field" [class.err]="showError('email')">

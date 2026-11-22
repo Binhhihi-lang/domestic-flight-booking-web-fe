@@ -1,76 +1,109 @@
-<div class="wrap wrap--narrow">
+<div class="wrap">
   <nav class="crumbs" aria-label="Đường dẫn">
+    <a routerLink="/">Trang chủ</a>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
     <a routerLink="/news">Tin tức</a>
-    <mat-icon>chevron_right</mat-icon>
-    <span>Bài viết</span>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <span>{{ article()?.title || 'Bài viết' }}</span>
   </nav>
 
   @if (loading()) {
     <app-app-card><app-loading-state /></app-app-card>
   } @else if (article(); as a) {
-    <app-app-card>
-      <article class="article">
-        @if (a.thumbnail_url) {
-          <img class="hero-img" [src]="a.thumbnail_url" [alt]="a.title" />
+    <div class="nd-layout">
+      <div class="nd-main">
+        <app-app-card>
+          <article class="article">
+            <header class="head">
+              @if (categoryNames().length > 0) {
+                <div class="cats">
+                  @for (c of categoryNames(); track c) {
+                    <span class="cat">{{ c }}</span>
+                  }
+                </div>
+              }
+              <h1 class="title">{{ a.title }}</h1>
+              <div class="head__meta">
+                @if (a.published_at) {
+                  <time class="date">
+                    <mat-icon aria-hidden="true">schedule</mat-icon>
+                    <span>{{ formatDate(a.published_at) }}</span>
+                  </time>
+                }
+                <button type="button" class="share-btn" (click)="shareLink()">
+                  <mat-icon aria-hidden="true">{{ copied() ? 'check' : 'share' }}</mat-icon>
+                  <span>{{ copied() ? 'Đã sao chép liên kết' : 'Sao chép liên kết' }}</span>
+                </button>
+              </div>
+            </header>
+
+            @if (a.thumbnail_url && !brokenThumbs().has(a.id)) {
+              <img
+                class="hero-img"
+                [src]="a.thumbnail_url"
+                [alt]="a.title"
+                (error)="markBroken(a.id)"
+              />
+            }
+
+            <!-- `safeContent()` đã qua DOMPurify. TUYỆT ĐỐI không bind `a.content` trực tiếp. -->
+            <div class="body" [innerHTML]="safeContent()"></div>
+          </article>
+
+          <div class="actions">
+            <app-app-button variant="ghost" (clicked)="back()">Quay lại danh sách</app-app-button>
+            <button type="button" class="share-btn" (click)="shareLink()">
+              <mat-icon aria-hidden="true">{{ copied() ? 'check' : 'link' }}</mat-icon>
+              <span>{{ copied() ? 'Đã sao chép' : 'Chia sẻ bài viết' }}</span>
+            </button>
+          </div>
+        </app-app-card>
+      </div>
+
+      <aside class="nd-side">
+        @if (related().length > 0) {
+          <app-app-card title="Bài liên quan">
+            <ul class="rel-list">
+              @for (r of related(); track r.id) {
+                <li>
+                  <a class="rel-item" [routerLink]="['/news', r.id]">
+                    @if (r.thumbnail_url && !brokenThumbs().has(r.id)) {
+                      <img
+                        class="rel-item__img"
+                        [src]="r.thumbnail_url"
+                        [alt]="r.title"
+                        loading="lazy"
+                        (error)="markBroken(r.id)"
+                      />
+                    } @else {
+                      <span class="rel-item__img rel-item__img--ph" aria-hidden="true">
+                        <mat-icon>article</mat-icon>
+                      </span>
+                    }
+                    <div class="rel-item__bd">
+                      @if (r.published_at) {
+                        <span class="rel-item__dt">{{ formatDate(r.published_at) }}</span>
+                      }
+                      <strong class="rel-item__tt">{{ r.title }}</strong>
+                    </div>
+                  </a>
+                </li>
+              }
+            </ul>
+          </app-app-card>
         }
 
-        <header class="head">
-          @if (a.published_at) {
-            <time class="date">{{ formatDate(a.published_at) }}</time>
-          }
-          <h1 class="title">{{ a.title }}</h1>
-
-          @if (categoryNames().length > 0) {
-            <div class="cats">
-              @for (c of categoryNames(); track c) {
-                <span class="cat">{{ c }}</span>
-              }
-            </div>
-          }
-        </header>
-
-        <!-- `safeContent()` đã qua DOMPurify. TUYỆT ĐỐI không bind `a.content`
-             trực tiếp ở đây — xem sanitize.service.ts. -->
-        <div class="body" [innerHTML]="safeContent()"></div>
-      </article>
-
-      <div class="actions">
-        <app-app-button variant="ghost" (clicked)="back()">Quay lại danh sách</app-app-button>
-      </div>
-    </app-app-card>
-
-    <!-- ===== Tin liên quan ===== -->
-    @if (related().length > 0) {
-      <section class="related">
-        <h2 class="related__h">Tin liên quan</h2>
-        <div class="related__grid">
-          @for (r of related(); track r.id) {
-            <article class="rcard">
-              <a class="rcard__link" [routerLink]="['/news', r.id]">
-                @if (r.thumbnail_url && !brokenThumbs().has(r.id)) {
-                  <img
-                    class="rcard__img"
-                    [src]="r.thumbnail_url"
-                    [alt]="r.title"
-                    loading="lazy"
-                    (error)="markBroken(r.id)"
-                  />
-                } @else {
-                  <span class="rcard__img rcard__img--ph" aria-hidden="true">
-                    <mat-icon>article</mat-icon>
-                  </span>
-                }
-                <div class="rcard__bd">
-                  @if (r.published_at) {
-                    <div class="rcard__date">{{ formatDate(r.published_at) }}</div>
-                  }
-                  <h3 class="rcard__title">{{ r.title }}</h3>
-                </div>
-              </a>
-            </article>
-          }
+        <div class="cta-card">
+          <h2>Sẵn sàng đặt vé?</h2>
+          <p>
+            So sánh giá vé nội địa từ tất cả các hãng hàng không Việt Nam và nhận ưu đãi mới nhất ngay hôm nay.
+          </p>
+          <a class="cta-btn" routerLink="/flights">
+            <span>Tìm chuyến bay</span>
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </a>
         </div>
-      </section>
-    }
+      </aside>
+    </div>
   }
 </div>

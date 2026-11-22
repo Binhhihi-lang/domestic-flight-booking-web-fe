@@ -1,18 +1,36 @@
 <div class="mv">
   <header class="mv__h">
-    <h1>Voucher của tôi</h1>
-    <p>Voucher đã nhận — chọn từ ví khi thanh toán, không cần nhập mã</p>
+    <div>
+      <h1>Voucher của tôi</h1>
+      <p>Voucher đã lưu — chọn trực tiếp từ ví khi thanh toán đặt chỗ</p>
+    </div>
+    <a routerLink="/account/voucher-store">
+      <app-app-button size="sm" variant="secondary">Khám phá kho voucher</app-app-button>
+    </a>
   </header>
 
-  <div class="mv__stats">
-    <span class="stat"><b>{{ counts().AVAILABLE }}</b> dùng được</span>
-    <span class="stat"><b>{{ counts().USED }}</b> đã dùng</span>
-    <span class="stat"><b>{{ counts().EXPIRED }}</b> hết hạn</span>
+  <div class="mv__summary" aria-label="Thống kê ví voucher">
+    <div class="mv__stat">
+      <span class="mv__stat-val tabular">{{ counts().TOTAL }}</span>
+      <span class="mv__stat-lbl">Tổng đã lưu</span>
+    </div>
+    <div class="mv__stat mv__stat--ok">
+      <span class="mv__stat-val tabular">{{ counts().AVAILABLE }}</span>
+      <span class="mv__stat-lbl">Sẵn sàng dùng</span>
+    </div>
+    <div class="mv__stat">
+      <span class="mv__stat-val tabular">{{ counts().USED }}</span>
+      <span class="mv__stat-lbl">Đã sử dụng</span>
+    </div>
+    <div class="mv__stat">
+      <span class="mv__stat-val tabular">{{ counts().EXPIRED }}</span>
+      <span class="mv__stat-lbl">Hết hạn</span>
+    </div>
   </div>
 
-  <div class="mv__filters">
+  <div class="mv__filters" role="tablist" aria-label="Lọc voucher theo trạng thái">
     <button type="button" class="chip" [class.chip--on]="filter() === ''" (click)="setFilter('')">
-      Tất cả
+      Tất cả ({{ counts().TOTAL }})
     </button>
     <button
       type="button"
@@ -20,7 +38,7 @@
       [class.chip--on]="filter() === 'AVAILABLE'"
       (click)="setFilter('AVAILABLE')"
     >
-      Dùng được
+      Dùng được ({{ counts().AVAILABLE }})
     </button>
     <button
       type="button"
@@ -28,7 +46,7 @@
       [class.chip--on]="filter() === 'RESERVED'"
       (click)="setFilter('RESERVED')"
     >
-      Đang giữ
+      Đang giữ ({{ counts().RESERVED }})
     </button>
     <button
       type="button"
@@ -36,7 +54,7 @@
       [class.chip--on]="filter() === 'USED'"
       (click)="setFilter('USED')"
     >
-      Đã dùng
+      Đã dùng ({{ counts().USED }})
     </button>
     <button
       type="button"
@@ -44,62 +62,66 @@
       [class.chip--on]="filter() === 'EXPIRED'"
       (click)="setFilter('EXPIRED')"
     >
-      Hết hạn
+      Hết hạn ({{ counts().EXPIRED }})
     </button>
   </div>
 
   @if (loading()) {
-    <div class="mv__grid">
-      @for (i of [1, 2]; track i) {
-        <div class="card card--skeleton">
-          <app-skeleton-block height="80px" />
-          <div class="card__bd">
-            <app-skeleton-block width="70%" height="15px" />
-          </div>
-        </div>
-      }
+    <div class="mv__list">
+      <app-skeleton-block height="120px" />
+      <app-skeleton-block height="120px" />
     </div>
   } @else if (filtered().length === 0) {
     <app-app-card>
       <app-empty-state
         icon="card_membership"
         [message]="filter() === '' ? 'Ví chưa có voucher nào' : 'Không có voucher ở trạng thái này'"
-        [hint]="filter() === '' ? 'Vào Kho voucher để nhận ưu đãi' : 'Thử chọn trạng thái khác'"
+        [hint]="filter() === '' ? 'Vào Kho voucher để lưu ưu đãi hấp dẫn' : 'Thử chọn trạng thái khác'"
       />
-      <a class="to-store" routerLink="/account/voucher-store">Đến kho voucher</a>
+      <div class="mv__empty-cta">
+        <a routerLink="/account/voucher-store">
+          <app-app-button size="sm" variant="primary">Đến kho voucher</app-app-button>
+        </a>
+      </div>
     </app-app-card>
   } @else {
-    <div class="mv__grid">
+    <div class="mv__list">
       @for (v of filtered(); track v.id) {
-        <article class="card" [class.card--dim]="isDimmed(v)">
-          <div class="card__top">
-            <span class="card__val">{{ discountText(v) }}</span>
-            <span class="card__st" [class]="'card__st--' + statusTone(v.status)">
-              {{ statusLabel(v.status) }}
-            </span>
+        <article class="v-card" [class.v-card--dim]="isDimmed(v)">
+          <div class="v-card__stub">
+            <div class="v-card__val tabular">{{ stubValue(v) }}</div>
+            <div class="v-card__type">{{ stubType(v) }}</div>
           </div>
 
-          <div class="card__bd">
-            <h3 class="card__nm">{{ v.voucher.voucher_name }}</h3>
+          <div class="v-card__body">
+            <div class="v-card__title-row">
+              <h2 class="v-card__name">{{ v.voucher.voucher_name }}</h2>
+              <span class="v-card__code tabular">{{ v.voucher.voucher_code }}</span>
+            </div>
             @if (v.voucher.description) {
-              <p class="card__ds">{{ v.voucher.description }}</p>
+              <p class="v-card__desc">{{ v.voucher.description }}</p>
             }
-            <ul class="card__meta">
-              <li>
-                <mat-icon>event</mat-icon>
-                HSD: {{ formatDate(v.expires_at) }}
-              </li>
-              <li>
-                <mat-icon>card_giftcard</mat-icon>
-                {{ v.source === 'CLAIMED' ? 'Tự nhận từ kho' : 'Được tặng' }}
-              </li>
-              @if (v.used_at) {
-                <li>
-                  <mat-icon>check</mat-icon>
-                  Dùng lúc {{ formatDate(v.used_at) }}
-                </li>
+            <div class="v-card__meta">
+              <span><mat-icon aria-hidden="true">payments</mat-icon> {{ minOrderText(v) }}</span>
+              <span><mat-icon aria-hidden="true">flight</mat-icon> {{ tripTypeText(v) }}</span>
+              <span><mat-icon aria-hidden="true">event</mat-icon> HSD: {{ formatDate(v.expires_at) }}</span>
+              <span>
+                <mat-icon aria-hidden="true">card_giftcard</mat-icon>
+                {{ v.source === 'CLAIMED' ? 'Tự lưu từ kho' : 'Được tặng' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="v-card__side">
+            <app-status-badge [tone]="statusTone(v.status)" [label]="statusLabel(v.status)" />
+            <div class="v-card__actions">
+              @if (v.status === 'AVAILABLE') {
+                <a routerLink="/flights">
+                  <app-app-button size="sm" variant="primary">Dùng ngay</app-app-button>
+                </a>
               }
-            </ul>
+              <a class="v-card__detail" [routerLink]="['/account/vouchers', v.id]">Chi tiết</a>
+            </div>
           </div>
         </article>
       }

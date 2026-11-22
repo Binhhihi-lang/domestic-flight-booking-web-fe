@@ -1,37 +1,43 @@
 <div class="auth">
   <app-auth-aside
-    heading="Tạo tài khoản để đặt vé chỉ trong vài phút"
-    subheading="Lưu thông tin hành khách, chọn ghế và nhận vé điện tử ngay sau khi thanh toán."
+    heading="Tạo tài khoản, giữ chỗ nhanh hơn ở mọi chuyến sau"
+    subheading="Thông tin hành khách được lưu lại, voucher tự vào ví và vé điện tử luôn nằm trong mục Vé của tôi."
+    [imageUrl]="asideImage"
+    imageAlt="Thành phố Đà Nẵng bên sông Hàn về đêm"
+    [stats]="asideStats"
   />
 
   <div class="auth__form">
     <div class="auth__box">
-      <!-- Chỉ hiện ở ≤880px: khi đó panel trái bị ẩn nên đây là lối về trang chủ
-           duy nhất trên màn hình. -->
       <a class="auth__home" routerLink="/" aria-label="Về trang chủ VinaFly">
         <app-brand-logo size="md" tone="light" [tagline]="''" />
       </a>
 
-      <h1>Tạo tài khoản</h1>
-      <p>Điền thông tin bên dưới để bắt đầu đặt vé.</p>
+      <h1>Đăng ký</h1>
+      <p class="auth__lead">Điền thông tin để tạo tài khoản VinaFly.</p>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="auth__fields">
         <div class="field" [class.err]="showError('full_name')">
-          <label for="rg-name">Họ và tên</label>
-          <input id="rg-name" formControlName="full_name" autocomplete="name" placeholder="Nguyễn Minh Anh" />
+          <label for="rg-name">Họ và tên <span class="req">*</span></label>
+          <input
+            id="rg-name"
+            formControlName="full_name"
+            autocomplete="name"
+            placeholder="VD: Nguyễn Văn An"
+          />
           @if (showError('full_name')) {
             <span class="hint">Họ và tên không được để trống</span>
           }
         </div>
 
         <div class="field" [class.err]="showError('email')">
-          <label for="rg-email">Email</label>
+          <label for="rg-email">Email <span class="req">*</span></label>
           <input
             id="rg-email"
             type="email"
             formControlName="email"
             autocomplete="email"
-            placeholder="ten@example.com"
+            placeholder="email@example.com"
           />
           @if (showError('email')) {
             <span class="hint">Email không đúng định dạng</span>
@@ -40,30 +46,53 @@
 
         <div class="field">
           <label for="rg-phone">Số điện thoại</label>
-          <input id="rg-phone" formControlName="phone" autocomplete="tel" placeholder="0912 345 678" />
+          <input id="rg-phone" formControlName="phone" autocomplete="tel" placeholder="0901 234 567" />
           <span class="hint">Không bắt buộc</span>
         </div>
 
         <div class="field" [class.err]="showError('password')">
-          <label for="rg-pass">Mật khẩu</label>
+          <label for="rg-pass">Mật khẩu <span class="req">*</span></label>
           <input
             id="rg-pass"
             type="password"
             formControlName="password"
             autocomplete="new-password"
-            placeholder="••••••••"
+            placeholder="Tối thiểu 8 ký tự"
           />
           @if (showError('password')) {
             <span class="hint">Mật khẩu phải có ít nhất 8 ký tự</span>
           } @else {
-            <span class="hint">Tối thiểu 8 ký tự, gồm chữ và số</span>
+            <span class="hint">Tối thiểu 8 ký tự, gồm chữ và số.</span>
+          }
+        </div>
+
+        <div class="field" [class.err]="showConfirmError()">
+          <label for="rg-pass2">Nhập lại mật khẩu <span class="req">*</span></label>
+          <input
+            id="rg-pass2"
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            placeholder="Nhập lại mật khẩu"
+          />
+          @if (showConfirmError()) {
+            <span class="hint">
+              {{
+                form.controls.confirmPassword.hasError('required')
+                  ? 'Vui lòng nhập lại mật khẩu'
+                  : 'Mật khẩu nhập lại không khớp'
+              }}
+            </span>
           }
         </div>
 
         <div class="auth__row">
           <label>
             <input type="checkbox" formControlName="terms" />
-            Tôi đồng ý với Điều khoản và Chính sách bảo mật
+            <span>
+              Tôi đồng ý với <a routerLink="/refund-policy">Điều khoản sử dụng</a> và
+              <a routerLink="/help">Chính sách bảo mật</a> của VinaFly.
+            </span>
           </label>
         </div>
 

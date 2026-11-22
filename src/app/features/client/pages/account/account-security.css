@@ -4,7 +4,7 @@
 
 .sc__h h1 {
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -16,13 +16,13 @@
 
 .blk {
   display: block;
-  margin-bottom: 16px;
+  margin-bottom: var(--sp-lg);
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--sp-lg);
 }
 
 .field {
@@ -36,10 +36,28 @@
   grid-column: 1 / -1;
 }
 
+.field__lbl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-sm);
+}
+
 .field label {
   font-size: 12px;
   font-weight: 600;
   color: var(--color-ink);
+}
+
+.sc__forgot {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.sc__forgot:hover {
+  text-decoration: underline;
 }
 
 .req {
@@ -60,14 +78,13 @@
 
 .field input:focus {
   border-color: var(--color-primary-bright);
-  box-shadow: 0 0 0 3px rgba(1, 148, 243, 0.14);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
 }
 
 .field--error input {
   border-color: var(--color-danger);
 }
 
-/* Ô mật khẩu có nút hiện/ẩn — input chừa chỗ bên phải cho nút. */
 .field__pw {
   position: relative;
   display: flex;
@@ -102,6 +119,64 @@
   height: 19px;
 }
 
+/* ---------- 4-bar password strength meter ---------- */
+.pw-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.pw-meter__bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.pw-meter__bar {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--color-border-soft);
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.pw-meter__bar--weak {
+  background: var(--color-danger);
+}
+
+.pw-meter__bar--fair {
+  background: var(--color-warning);
+}
+
+.pw-meter__bar--good {
+  background: var(--color-info);
+}
+
+.pw-meter__bar--strong {
+  background: var(--color-success);
+}
+
+.pw-meter__lbl {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.pw-meter__lbl--weak {
+  color: var(--color-danger);
+}
+
+.pw-meter__lbl--fair {
+  color: var(--color-on-warning-soft);
+}
+
+.pw-meter__lbl--good {
+  color: var(--color-on-info-soft);
+}
+
+.pw-meter__lbl--strong {
+  color: var(--color-on-success-soft);
+}
+
 .field .hint {
   font-size: 11.5px;
   color: var(--color-ink-subtle);
@@ -112,25 +187,27 @@
   color: var(--color-danger);
 }
 
-.sc__note {
+/* ---------- Warning callout ---------- */
+.sc__warn {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: flex-start;
-  margin: 16px 0 0;
-  padding: 11px 13px;
-  background: var(--color-primary-soft);
+  margin: var(--sp-lg) 0 0;
+  padding: 12px 14px;
+  background: var(--color-warning-soft);
+  border-left: 3px solid var(--color-warning);
   border-radius: var(--radius);
   font-size: 12.5px;
   line-height: 1.5;
-  color: var(--color-ink);
+  color: var(--color-on-warning-soft);
 }
 
-.sc__note mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+.sc__warn mat-icon {
+  font-size: 19px;
+  width: 19px;
+  height: 19px;
   flex: 0 0 auto;
-  color: var(--color-primary);
+  color: var(--color-on-warning-soft);
 }
 
 .form-actions {

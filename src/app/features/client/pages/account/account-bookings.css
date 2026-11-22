@@ -1,290 +1,356 @@
-.spaced {
-  margin-top: 30px;
-}
-
-/* ---------- Thẻ vé ---------- */
-.ticket {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 18px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  margin-bottom: 12px;
-  background: var(--color-surface);
-}
-
-.ticket__main {
-  padding: 16px 18px;
-  min-width: 0;
-}
-
-.ticket__code {
-  font-size: 11.5px;
-  color: var(--color-ink-muted);
-  letter-spacing: 0.5px;
-  margin-bottom: 9px;
-}
-
-.ticket__route {
+.mb-page {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 11px;
+  flex-direction: column;
+  gap: var(--sp-lg);
 }
 
-.ticket__pt {
-  font-family: var(--font-heading);
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  line-height: 1.1;
-}
-
-.ticket__pn {
-  font-size: 11.5px;
-  color: var(--color-ink-muted);
-  margin-top: 2px;
-}
-
-.ticket__arrow {
-  flex: 1;
-  text-align: center;
-  color: var(--color-ink-subtle);
-}
-
-.ticket__arrow mat-icon {
-  font-size: 19px;
-  width: 19px;
-  height: 19px;
-}
-
-.ticket__meta {
+.mb-head {
   display: flex;
-  gap: 16px;
   flex-wrap: wrap;
-  font-size: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-md);
+}
+
+.mb-head h1 {
+  font-size: var(--text-h1);
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.mb-sub,
+.mb-muted {
+  margin: var(--sp-xs) 0 0;
+  font-size: var(--text-small);
   color: var(--color-ink-muted);
 }
 
-.ticket__meta span {
+.mb-muted {
+  margin: 0;
+}
+
+.mb-head__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.ticket__meta mat-icon {
-  font-size: 15px;
-  width: 15px;
-  height: 15px;
-}
-
-.ticket__side {
-  border-left: 1px dashed var(--color-border);
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 9px;
-  align-items: flex-end;
-  background: var(--color-surface-alt);
-  min-width: 172px;
-}
-
-.ticket__total {
-  text-align: right;
-}
-
-.ticket__total-l {
-  font-size: 11.5px;
-  color: var(--color-ink-muted);
-}
-
-.ticket__total-v {
-  font-family: var(--font-heading);
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.ticket__note {
-  font-size: 11px;
-  color: var(--color-danger);
-}
-
-.ticket__side .btn {
-  width: 100%;
-}
-
-/* ---------- Voucher ---------- */
-.voucher {
-  display: grid;
-  grid-template-columns: 104px 1fr auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  margin-bottom: 12px;
-  background: var(--color-surface);
-}
-
-.voucher--dim {
-  opacity: 0.6;
-}
-
-.voucher__left {
-  background: linear-gradient(150deg, var(--color-primary), var(--color-primary-bright));
-  color: #fff;
-  padding: 16px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-}
-
-.voucher__val {
-  font-family: var(--font-heading);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-
-.voucher__val small {
-  font-size: 13px;
-}
-
-.voucher__type {
-  font-size: 10.5px;
-  opacity: 0.9;
-}
-
-.voucher__bd {
-  padding: 14px 16px;
-  min-width: 0;
-}
-
-.voucher__nm {
-  font-family: var(--font-heading);
-  font-size: 14.5px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.voucher__ds {
-  font-size: 12px;
-  color: var(--color-ink-muted);
-  margin: 0 0 8px;
-  line-height: 1.45;
-}
-
-.voucher__mt {
-  display: flex;
-  gap: 13px;
+  gap: var(--sp-md);
   flex-wrap: wrap;
-  font-size: 11.5px;
-  color: var(--color-ink-subtle);
 }
 
-.voucher__side {
-  border-left: 1px dashed var(--color-border);
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 8px;
-  background: var(--color-surface-alt);
-  min-width: 150px;
-}
-
-/* ---------- Nút ---------- */
-.btn {
+.mb-lookup-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: 1.5px solid transparent;
+  gap: 5px;
+  padding: 7px 12px;
   border-radius: var(--radius);
-  font-family: var(--font-body);
-  font-size: 13.5px;
-  font-weight: 600;
-  padding: 9px 15px;
-  cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease);
-  white-space: nowrap;
-}
-
-.btn--sm {
-  padding: 7px 13px;
-  font-size: 12.5px;
-}
-
-.btn--primary {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-}
-
-.btn--primary:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-}
-
-.btn--accent {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
-
-.btn--accent:hover:not(:disabled) {
-  background: var(--color-accent-hover);
-}
-
-.btn--secondary {
+  border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-primary);
-  border-color: var(--color-primary);
+  font-size: var(--text-small);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease);
 }
 
-.btn--secondary:hover:not(:disabled) {
+.mb-lookup-link:hover {
   background: var(--color-primary-soft);
 }
 
-.btn:disabled {
-  background: var(--color-border-soft);
-  color: var(--color-ink-subtle);
-  border-color: var(--color-border);
-  cursor: not-allowed;
+.mb-lookup-link mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
-/* =====================================================================
-   Media query đặt SAU tất cả rule gốc.
-   ===================================================================== */
+/* ---------- Tabs ---------- */
+.mb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-sm);
+}
+
+.mb-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.mb-tab:hover:not(.mb-tab--active) {
+  border-color: var(--color-primary-bright);
+  color: var(--color-primary);
+}
+
+.mb-tab__cnt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  background: var(--color-border-soft);
+  color: var(--color-ink-muted);
+}
+
+.mb-tab--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+}
+
+.mb-tab--active .mb-tab__cnt {
+  background: var(--color-primary-hover);
+  color: var(--color-on-primary);
+}
+
+/* ---------- Booking cards ---------- */
+.mb-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+}
+
+.mb-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+}
+
+.mb-card__top,
+.mb-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.mb-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-small);
+}
+
+.mb-pnr {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: var(--text-caption);
+}
+
+.mb-body {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-lg);
+  align-items: center;
+  padding: var(--sp-md) 0;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.mb-route {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-lg);
+  align-items: center;
+}
+
+.mb-point {
+  min-width: 68px;
+}
+
+.mb-point--right {
+  text-align: right;
+}
+
+.mb-time {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1.15;
+}
+
+.mb-airport {
+  font-size: var(--text-small);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-top: 2px;
+}
+
+.mb-city {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+}
+
+.mb-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mb-dur {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.mb-track {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary-bright);
+}
+
+.mb-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary-bright);
+  flex: 0 0 auto;
+}
+
+.mb-bar {
+  flex: 1;
+  height: 1.5px;
+  background: var(--color-border);
+}
+
+.mb-track mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  transform: rotate(90deg);
+  flex: 0 0 auto;
+}
+
+.mb-flight-info {
+  font-size: var(--text-caption);
+  color: var(--color-ink-subtle);
+  text-align: center;
+}
+
+.mb-price-box {
+  padding-left: var(--sp-lg);
+  border-left: 1px dashed var(--color-border);
+  text-align: right;
+  min-width: 160px;
+}
+
+.mb-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+  margin-bottom: 6px;
+}
+
+.mb-date mat-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.mb-total-lbl {
+  font-size: var(--text-caption);
+  color: var(--color-ink-subtle);
+}
+
+.mb-total-val {
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.mb-card__foot {
+  padding-top: var(--sp-md);
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.mb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-primary);
+  font-size: var(--text-small);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.mb-link:hover {
+  text-decoration: underline;
+}
+
+.mb-link mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.mb-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+
+.mb-support {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: var(--sp-md) var(--sp-lg);
+  border-radius: var(--radius);
+  background: var(--color-info-soft);
+  color: var(--color-on-info-soft);
+  font-size: var(--text-small);
+}
+
+.mb-support mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
 @media (max-width: 720px) {
-  .ticket {
+  .mb-body {
     grid-template-columns: 1fr;
+    gap: var(--sp-md);
   }
 
-  .ticket__side {
+  .mb-price-box {
     border-left: 0;
     border-top: 1px dashed var(--color-border);
-    align-items: stretch;
-    min-width: 0;
-  }
-
-  .ticket__total {
+    padding-left: 0;
+    padding-top: var(--sp-md);
     text-align: left;
-  }
-
-  .voucher {
-    grid-template-columns: 82px 1fr;
-  }
-
-  .voucher__side {
-    border-left: 0;
-    border-top: 1px dashed var(--color-border);
-    grid-column: 1 / -1;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
     min-width: 0;
-    padding: 12px 14px;
   }
 }

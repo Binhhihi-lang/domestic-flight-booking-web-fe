@@ -1,123 +1,179 @@
+.store {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-lg);
+}
+
 .store__h {
-  margin-bottom: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-md);
 }
 
 .store__h h1 {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: var(--text-h1);
   font-weight: 700;
   margin: 0 0 4px;
 }
 
 .store__h p {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-small);
   color: var(--color-ink-muted);
 }
 
-.v-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 14px;
-}
-
-.v {
+.v-list {
   display: flex;
   flex-direction: column;
+  gap: var(--sp-md);
+}
+
+.v-card {
+  display: grid;
+  grid-template-columns: 124px 1fr 164px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
-/* Voucher đã nhận: làm mờ để mắt bỏ qua, nhưng vẫn đọc được. */
-.v--claimed {
-  opacity: 0.62;
+.v-card--dim {
+  opacity: 0.68;
 }
 
-.v__top {
+.v-card__stub {
+  background: linear-gradient(150deg, var(--color-primary), var(--color-primary-bright));
+  color: var(--color-on-primary);
+  padding: var(--sp-lg) var(--sp-md);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-bright));
-  color: #fff;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
 }
 
-/* Tiêu đề dài ("Giảm 10%, tối đa 200.000₫") được phép xuống dòng và co lại,
-   nhường chỗ cho nhãn. `min-width: 0` cần thiết vì flex item mặc định không co
-   xuống dưới kích thước nội dung. */
-.v__val {
+.v-card__val {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 700;
-  min-width: 0;
+  line-height: 1.05;
 }
 
-/* Nhãn "Đã nhận" KHÔNG được co và KHÔNG được xuống dòng.
-   Vì sao cần cả hai: trước đây nhãn là flex item mặc định `flex-shrink: 1`, nên
-   khi tiêu đề dài chiếm chỗ thì nhãn bị bóp còn 67px và chữ "Đã nhận" xuống 2
-   dòng, icon lệch khỏi chữ. */
-.v__flag {
+.v-card__type {
+  font-size: var(--text-caption);
+  opacity: 0.92;
+}
+
+.v-card__body {
+  padding: 14px 16px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+
+.v-card__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-sm);
+}
+
+.v-card__name {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-ink);
+}
+
+.v-card__code {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.v-card__discount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.v-card__desc {
+  font-size: 12.5px;
+  color: var(--color-ink-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.v-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 11.5px;
+  color: var(--color-ink-subtle);
+}
+
+.v-card__meta span {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  flex: 0 0 auto;
-  white-space: nowrap;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
 }
 
-.v__flag mat-icon {
+.v-card__meta mat-icon {
   font-size: 14px;
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
 }
 
-/* Phần thân co giãn để nút Nhận luôn nằm sát đáy, các thẻ trong lưới cao đều. */
-.v__bd {
-  flex: 1 1 auto;
+.v-card__out {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.v-card__side {
+  border-left: 1px dashed var(--color-border);
+  background: var(--color-surface-alt);
   padding: 14px 16px;
-}
-
-.v__nm {
-  font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0 0 6px;
-}
-
-.v__ds {
-  font-size: 12.5px;
-  color: var(--color-ink-muted);
-  line-height: 1.55;
-  margin: 0 0 10px;
-}
-
-.v__meta {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  font-size: 11.5px;
-  color: var(--color-ink-subtle);
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
 }
 
-.v__act {
-  padding: 0 16px 15px;
+.v-card__link {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
 }
 
-.v__act app-app-button {
-  display: block;
+.v-card__link:hover {
+  text-decoration: underline;
 }
 
-.v--skeleton {
-  pointer-events: none;
+@media (max-width: 720px) {
+  .v-card {
+    grid-template-columns: 96px 1fr;
+  }
+
+  .v-card__side {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px dashed var(--color-border);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }

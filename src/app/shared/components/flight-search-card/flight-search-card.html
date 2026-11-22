@@ -3,25 +3,31 @@
     <button
       class="chip"
       type="button"
-      [class.on]="tripType() === 'round'"
-      (click)="tripType.set('round')"
-    >
-      Khứ hồi
-    </button>
-    <button
-      class="chip"
-      type="button"
       [class.on]="tripType() === 'oneway'"
       (click)="tripType.set('oneway')"
     >
       Một chiều
+    </button>
+    <button
+      class="chip"
+      type="button"
+      [class.on]="tripType() === 'round'"
+      (click)="tripType.set('round')"
+    >
+      Khứ hồi
     </button>
   </div>
 
   <div class="searchform">
     <div class="field">
       <label for="fs-from">Điểm đi</label>
-      <select id="fs-from" name="from" [(ngModel)]="from" aria-label="Điểm đi">
+      <select
+        id="fs-from"
+        name="from"
+        [ngModel]="from"
+        (ngModelChange)="onFromChange($event)"
+        aria-label="Điểm đi"
+      >
         @for (ap of airports(); track ap.airport_code) {
           <option [value]="ap.airport_code">{{ airportLabel(ap) }}</option>
         }
@@ -30,12 +36,24 @@
 
     <div class="field swap">
       <label for="fs-to">Điểm đến</label>
-      <select id="fs-to" name="to" [(ngModel)]="to" aria-label="Điểm đến">
-        @for (ap of airports(); track ap.airport_code) {
+      <select
+        id="fs-to"
+        name="to"
+        [ngModel]="to"
+        (ngModelChange)="onToChange($event)"
+        aria-label="Điểm đến"
+      >
+        @for (ap of destinationAirports(); track ap.airport_code) {
           <option [value]="ap.airport_code">{{ airportLabel(ap) }}</option>
         }
       </select>
-      <button class="swap__btn" type="button" title="Đổi chiều" (click)="swap()">
+      <button
+        class="swap__btn"
+        type="button"
+        title="Đổi điểm đi và điểm đến"
+        aria-label="Đổi điểm đi và điểm đến"
+        (click)="swap()"
+      >
         <mat-icon>swap_horiz</mat-icon>
       </button>
     </div>
@@ -45,13 +63,19 @@
       <input id="fs-depart" name="departDate" type="date" [(ngModel)]="departDate" />
     </div>
 
-    <div class="field" [class.field--hidden]="tripType() === 'oneway'">
+    <div class="field" [class.field--disabled]="tripType() === 'oneway'">
       <label for="fs-return">Ngày về</label>
-      <input id="fs-return" name="returnDate" type="date" [(ngModel)]="returnDate" />
+      <input
+        id="fs-return"
+        name="returnDate"
+        type="date"
+        [(ngModel)]="returnDate"
+        [disabled]="tripType() === 'oneway'"
+        [title]="tripType() === 'oneway' ? 'Chuyến một chiều không có ngày về' : 'Chọn ngày về'"
+      />
     </div>
 
-    <!-- Bộ chọn hành khách. Dùng nút + popup thay vì <select> vì mỗi loại hành
-         khách cần bộ đếm riêng, không phải chọn một giá trị. -->
+    <!-- Bộ chọn hành khách -->
     <div class="field pax">
       <label for="fs-pax">Hành khách</label>
       <button
@@ -68,7 +92,6 @@
       </button>
 
       @if (paxOpen()) {
-        <!-- Lớp phủ bắt click ra ngoài để đóng popup. -->
         <div class="pax__scrim" (click)="closePax()" aria-hidden="true"></div>
 
         <div class="pax__pop" role="dialog" aria-label="Chọn số hành khách">

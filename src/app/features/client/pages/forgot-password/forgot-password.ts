@@ -1,24 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '@core/services/auth.service';
 import { AuthAside } from '@shared/components/auth-aside/auth-aside';
 import { BrandLogo } from '@shared/components/brand-logo/brand-logo';
 
 /**
- * Quên mật khẩu — AUTH-04 (API v0.4 mục 2.1), hai bước trong một màn.
- *
- * Bước 1 gửi email, bước 2 nhập token + mật khẩu mới. Gom vào một màn vì token
- * chỉ sống trong phiên này; tách route riêng thì người dùng phải mang token
- * sang trang khác, mà với MVP token nằm ngay trong response.
- *
- * VÌ SAO KHÔNG BÁO "EMAIL KHÔNG TỒN TẠI": endpoint luôn trả 200 để chống dò
- * tài khoản. Nếu UI báo lỗi khi email lạ, kẻ tấn công dùng màn này để kiểm tra
- * email nào có tài khoản — đúng thứ mà thiết kế endpoint muốn tránh.
- *
- * `reset_token` là điểm tạm của MVP (BE chưa có mail server). Khi BE tích hợp
- * mail thật, trường này biến mất và khối "mã đặt lại" dưới đây tự ẩn.
+ * Quên mật khẩu — AUTH-04 (API v0.4 mục 2.1), đồng bộ prototype `customer.html`.
  */
 @Component({
   selector: 'app-forgot-password',
@@ -37,10 +26,21 @@ export class ForgotPassword {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
 
-  /** Token do BE trả về ở MVP — hiện ra để người dùng chép sang bước 2. */
   protected readonly issuedToken = signal<string | null>(null);
-  /** Email đã gửi yêu cầu — hiện lại ở bước 2 để người dùng đối chiếu. */
   protected readonly requestedEmail = signal('');
+
+  /** Nấc tiến trình 1 -> 2 -> 3 hiển thị trên thanh `.cust-progress`. */
+  protected readonly progressStep = computed(() => {
+    switch (this.step()) {
+      case 'request':
+        return 1;
+      case 'sent':
+      case 'confirm':
+        return 2;
+      case 'done':
+        return 3;
+    }
+  });
 
   protected readonly requestForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -53,8 +53,6 @@ export class ForgotPassword {
   });
 
   constructor() {
-    // Người dùng bấm liên kết trong email: ?token=<uuid>. Nhảy thẳng sang bước
-    // đặt mật khẩu mới, không bắt họ chép mã bằng tay.
     const token = this.route.snapshot.queryParamMap.get('token');
     if (token) {
       this.confirmForm.controls.token.setValue(token);
@@ -84,12 +82,9 @@ export class ForgotPassword {
         this.issuedToken.set(res.data?.reset_token ?? null);
 
         if (res.data?.reset_token) {
-          // Chỉ có ở môi trường bật AUTH_EXPOSE_RESET_TOKEN (demo/test): không
-          // có hộp thư để mở, nên đưa thẳng sang bước đặt mật khẩu.
           this.confirmForm.controls.token.setValue(res.data.reset_token);
           this.step.set('confirm');
         } else {
-          // Luồng thật: thư đã gửi, người dùng phải mở email bấm liên kết.
           this.step.set('sent');
         }
       },

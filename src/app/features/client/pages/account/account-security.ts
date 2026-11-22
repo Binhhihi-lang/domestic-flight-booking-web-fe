@@ -1,26 +1,25 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '@core/services/auth.service';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
 
+export interface PasswordStrength {
+  score: 0 | 1 | 2 | 3 | 4;
+  label: string;
+  tone: 'empty' | 'weak' | 'fair' | 'good' | 'strong';
+}
+
 /**
  * Đổi mật khẩu — AUTH-05 (API v0.4 mục 2.1).
- *
- * Không có ô "xác nhận mật khẩu mới" ở tầng API, nhưng vẫn cần ở UI: gõ sai
- * một lần là mất luôn quyền truy cập, nên chặn ngay tại form thay vì để người
- * dùng phát hiện ở lần đăng nhập sau.
- *
- * Đổi xong BE thu hồi toàn bộ refresh token của user. FE không tự đăng xuất:
- * access token hiện tại vẫn dùng được tới khi hết hạn, và đá người dùng ra ngay
- * giữa màn hình là hành vi gây bất ngờ.
  */
 @Component({
   selector: 'app-account-security',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, MatIconModule, AppButton, AppCard],
+  imports: [FormsModule, RouterLink, MatIconModule, AppButton, AppCard],
   templateUrl: './account-security.html',
   styleUrl: './account-security.css',
 })
@@ -34,6 +33,29 @@ export class AccountSecurity {
   protected readonly showNew = signal(false);
 
   protected readonly draft = signal({ current_password: '', new_password: '', confirm: '' });
+
+  protected readonly strength = computed<PasswordStrength>(() => {
+    const pw = this.draft().new_password;
+    if (!pw) {
+      return { score: 0, label: '', tone: 'empty' };
+    }
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+    if (/\d/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw) || pw.length >= 12) score++;
+
+    const clamped = Math.min(4, Math.max(1, score)) as 1 | 2 | 3 | 4;
+    if (clamped === 1) return { score: 1, label: 'Yếu', tone: 'weak' };
+    if (clamped === 2) return { score: 2, label: 'Trung bình', tone: 'fair' };
+    if (clamped === 3) return { score: 3, label: 'Khá', tone: 'good' };
+    return { score: 4, label: 'Mạnh', tone: 'strong' };
+  });
+
+  protected readonly hasInput = computed(() => {
+    const d = this.draft();
+    return Boolean(d.current_password || d.new_password || d.confirm);
+  });
 
   protected setField(key: 'current_password' | 'new_password' | 'confirm', value: string): void {
     this.draft.set({ ...this.draft(), [key]: value });
@@ -54,6 +76,11 @@ export class AccountSecurity {
     } else {
       this.showNew.set(!this.showNew());
     }
+  }
+
+  protected resetForm(): void {
+    this.draft.set({ current_password: '', new_password: '', confirm: '' });
+    this.errors.set({});
   }
 
   private validate(): boolean {
@@ -95,13 +122,11 @@ export class AccountSecurity {
       .subscribe({
         next: (res) => {
           this.saving.set(false);
-          // Xóa form sau khi đổi thành công — không để mật khẩu nằm lại trong DOM.
           this.draft.set({ current_password: '', new_password: '', confirm: '' });
           this.snackBar.open(res.message, 'Đóng', { duration: 3500 });
         },
         error: (err: Error) => {
           this.saving.set(false);
-          // Sai mật khẩu hiện tại (1007) là lỗi phổ biến nhất — gắn vào đúng ô.
           this.errors.set({ current_password: err.message });
         },
       });
