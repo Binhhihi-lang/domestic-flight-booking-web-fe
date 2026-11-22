@@ -1,115 +1,179 @@
 <div class="confirm">
-  @if (paymentStatus() === 'failed') {
-    <section class="hero hero--failed" data-testid="confirm-failed">
-      <div class="hero__icon"><mat-icon>cancel</mat-icon></div>
-      <h1>Thanh toán chưa hoàn tất</h1>
-      <p>
-        Giao dịch chưa thành công
-        @if (gatewayCode()) {
-          (mã phản hồi: <b>{{ gatewayCode() }}</b>)
-        }
-        . Bạn có thể thử thanh toán lại trong thời gian giữ chỗ 15 phút.
-      </p>
-      <div class="hero__actions">
-        <a class="btn btn--primary" [routerLink]="['/booking/payment']" [queryParams]="{ bookingId: bookingId() }">
-          Thử thanh toán lại
-        </a>
-        <a class="btn btn--ghost" routerLink="/account">Xem vé của tôi</a>
-      </div>
-    </section>
-  } @else {
-    <section class="hero hero--success" data-testid="confirm-success">
-      <div class="hero__icon"><mat-icon>check_circle</mat-icon></div>
-      <h1>Đặt vé & Xuất vé điện tử thành công!</h1>
-      <p>Email chứa mã đặt chỗ (PNR) và vé điện tử đã được gửi tới hộp thư của quý khách.</p>
-
-      @if (booking(); as b) {
-        <div class="pnr-box">
-          <span>MÃ ĐẶT CHỖ (PNR)</span>
-          <strong data-testid="confirm-pnr">{{ b.booking_code }}</strong>
-        </div>
-      }
-
-      <div class="hero__actions">
-        <button type="button" class="btn btn--primary" (click)="printTickets()">
-          <mat-icon>print</mat-icon>
-          In vé điện tử
-        </button>
-        <a class="btn btn--ghost" routerLink="/account">
-          <mat-icon>confirmation_number</mat-icon>
-          Quản lý vé của tôi
-        </a>
+  @if (error() && !booking() && !loading()) {
+    <section class="card card--empty" data-testid="confirm-empty">
+      <mat-icon>receipt_long</mat-icon>
+      <h1>Không tìm thấy thông tin xác nhận</h1>
+      <p>{{ error() }}</p>
+      <div class="empty__actions">
+        <a class="btn btn--primary" routerLink="/account">Xem vé của tôi</a>
         <a class="btn btn--ghost" routerLink="/">Về trang chủ</a>
       </div>
     </section>
-  }
-
-  @if (loading()) {
-    <div class="card card--state">Đang tải danh sách vé điện tử...</div>
-  } @else if (tickets().length > 0) {
-    <section class="tickets">
-      <h2>Danh sách vé điện tử ({{ tickets().length }} vé)</h2>
-      <div class="tickets__grid">
-        @for (t of tickets(); track t.id) {
-          <article class="boarding" data-testid="eticket-card">
-            <header class="boarding__head">
-              <div>
-                <span class="boarding__airline">{{ t.airline_name }}</span>
-                <b class="boarding__flight">{{ t.flight_number }}</b>
-              </div>
-              <span class="boarding__code tabular">Số vé: {{ t.ticket_code }}</span>
-            </header>
-
-            <div class="boarding__route">
-              <div>
-                <div class="boarding__time tabular">{{ formatTime(t.scheduled_departure) }}</div>
-                <div class="boarding__airport">{{ t.departure_airport_code }}</div>
-                <div class="boarding__city">{{ t.departure_city_name }}</div>
-              </div>
-              <div class="boarding__mid">
-                <span>{{ formatDate(t.scheduled_departure) }}</span>
-                <mat-icon>flight</mat-icon>
-                <span>{{ t.fare_class_name }}</span>
-              </div>
-              <div class="boarding__end">
-                <div class="boarding__time tabular">{{ formatTime(t.scheduled_arrival) }}</div>
-                <div class="boarding__airport">{{ t.arrival_airport_code }}</div>
-                <div class="boarding__city">{{ t.arrival_city_name }}</div>
-              </div>
+  } @else {
+    <div class="confirm__grid">
+      <!-- Cột trái: Trạng thái xác nhận + Danh sách thẻ vé điện tử -->
+      <div class="confirm__main">
+        @if (paymentStatus() === 'failed') {
+          <section class="hero hero--failed" data-testid="confirm-failed">
+            <div class="hero__icon"><mat-icon>cancel</mat-icon></div>
+            <h1>Thanh toán chưa hoàn tất</h1>
+            <p>
+              Giao dịch chưa thành công
+              @if (gatewayCode()) {
+                (mã phản hồi: <b>{{ gatewayCode() }}</b>)
+              }
+              . Bạn có thể thử thanh toán lại trong thời gian giữ chỗ 15 phút.
+            </p>
+            <div class="hero__actions">
+              @if (bookingId(); as id) {
+                <a class="btn btn--primary" [routerLink]="['/booking/payment']" [queryParams]="{ bookingId: id }">
+                  Thử thanh toán lại
+                </a>
+              }
+              <a class="btn btn--ghost" routerLink="/account">Xem vé của tôi</a>
             </div>
+          </section>
+        } @else {
+          <section class="hero hero--success" data-testid="confirm-success">
+            <div class="hero__icon"><mat-icon>check_circle</mat-icon></div>
+            <h1>Đặt vé & Xuất vé điện tử thành công!</h1>
+            <p>Vé điện tử đã được phát hành chính thức. Quý khách vui lòng lưu lại mã đặt chỗ (PNR) để làm thủ tục tại sân bay.</p>
 
-            <footer class="boarding__foot">
-              <div>
-                <small>Hành khách</small>
-                <b>{{ t.passenger_name }}</b>
-                <span>({{ passengerTypeLabel(t.passenger_type) }})</span>
+            @if (booking(); as b) {
+              <div class="hero__codes">
+                <div class="pnr-box">
+                  <span>MÃ ĐẶT CHỖ (PNR)</span>
+                  <strong data-testid="confirm-pnr">{{ b.booking_code }}</strong>
+                </div>
+                <div class="order-ref">
+                  <span>Mã đơn hàng</span>
+                  <b>DH-{{ b.id }}</b>
+                </div>
               </div>
-              <div>
-                <small>Mã PNR</small>
-                <b>{{ t.pnr_code }}</b>
-              </div>
-              <div>
-                <small>Số ghế</small>
-                <b>{{ t.seat_code || 'Đi cùng người lớn' }}</b>
-              </div>
-            </footer>
-          </article>
+            }
+          </section>
+        }
+
+        @if (loading()) {
+          <div class="card card--state">Đang tải danh sách vé điện tử...</div>
+        } @else if (tickets().length > 0) {
+          <section class="tickets">
+            <div class="tickets__head">
+              <h2>Vé điện tử ({{ tickets().length }} vé)</h2>
+              <span class="tickets__sub">Thẻ lên máy bay điện tử theo từng hành khách & chặng bay</span>
+            </div>
+            <div class="tickets__grid">
+              @for (t of tickets(); track t.id) {
+                <article class="boarding" data-testid="eticket-card">
+                  <header class="boarding__head">
+                    <div>
+                      <span class="boarding__airline">{{ t.airline_name }}</span>
+                      <b class="boarding__flight">{{ t.flight_number }}</b>
+                    </div>
+                    <span class="boarding__code tabular">Số vé: {{ t.ticket_code }}</span>
+                  </header>
+
+                  <div class="boarding__route">
+                    <div>
+                      <div class="boarding__time tabular">{{ formatTime(t.scheduled_departure) }}</div>
+                      <div class="boarding__airport">{{ t.departure_airport_code }}</div>
+                      <div class="boarding__city">{{ t.departure_city_name }}</div>
+                    </div>
+                    <div class="boarding__mid">
+                      <span>{{ formatDate(t.scheduled_departure) }}</span>
+                      <mat-icon>flight</mat-icon>
+                      <span>{{ t.fare_class_name }}</span>
+                    </div>
+                    <div class="boarding__end">
+                      <div class="boarding__time tabular">{{ formatTime(t.scheduled_arrival) }}</div>
+                      <div class="boarding__airport">{{ t.arrival_airport_code }}</div>
+                      <div class="boarding__city">{{ t.arrival_city_name }}</div>
+                    </div>
+                  </div>
+
+                  <footer class="boarding__foot">
+                    <div>
+                      <small>Hành khách</small>
+                      <b>{{ t.passenger_name }}</b>
+                      <span>({{ passengerTypeLabel(t.passenger_type) }})</span>
+                    </div>
+                    <div>
+                      <small>Mã PNR</small>
+                      <b>{{ t.pnr_code }}</b>
+                    </div>
+                    <div>
+                      <small>Số ghế</small>
+                      <b>{{ t.seat_code || 'Đi cùng người lớn' }}</b>
+                    </div>
+                  </footer>
+                </article>
+              }
+            </div>
+          </section>
         }
       </div>
-    </section>
-  }
 
-  @if (booking(); as b) {
-    <section class="card summary">
-      <h3>Tóm tắt thanh toán</h3>
-      <div class="summary__row">
-        <span>Khách hàng</span>
-        <b>{{ b.customer_name }} ({{ b.customer_email }})</b>
-      </div>
-      <div class="summary__row">
-        <span>Tổng tiền đã thanh toán</span>
-        <b class="tabular">{{ formatVnd(b.total_amount) }}</b>
-      </div>
-    </section>
+      <!-- Cột phải: Việc cần làm tiếp theo + Tóm tắt thanh toán + Thao tác -->
+      <aside class="confirm__side">
+        <section class="card checklist" data-testid="next-steps-card">
+          <h3><mat-icon>checklist</mat-icon> Việc cần làm tiếp theo</h3>
+          <ul class="checklist__list">
+            <li>
+              <mat-icon>badge</mat-icon>
+              <span>Kiểm tra kỹ họ tên hành khách, ngày giờ bay và lưu mã đặt chỗ (PNR).</span>
+            </li>
+            <li>
+              <mat-icon>credit_card</mat-icon>
+              <span>Mang theo CCCD/Hộ chiếu bản gốc còn hạn (hoặc giấy khai sinh cho trẻ em) khi ra sân bay.</span>
+            </li>
+            <li>
+              <mat-icon>schedule</mat-icon>
+              <span>Có mặt tại quầy làm thủ tục tối thiểu 90 phút trước giờ khởi hành chuyến bay nội địa.</span>
+            </li>
+            <li>
+              <mat-icon>support_agent</mat-icon>
+              <span>Cần hỗ trợ hoàn/đổi vé? Liên hệ hotline <b>1900 1234</b> hoặc <b>hotro&#64;vinafly.vn</b>.</span>
+            </li>
+          </ul>
+        </section>
+
+        @if (booking(); as b) {
+          <section class="card summary">
+            <h3>Tóm tắt thanh toán</h3>
+            <div class="summary__row">
+              <span>Mã đơn hàng</span>
+              <b>DH-{{ b.id }}</b>
+            </div>
+            <div class="summary__row">
+              <span>Khách hàng</span>
+              <b>{{ b.customer_name }}</b>
+            </div>
+            <div class="summary__row">
+              <span>Email</span>
+              <b>{{ b.customer_email }}</b>
+            </div>
+            <div class="summary__row summary__row--total">
+              <span>Tổng tiền đã thanh toán</span>
+              <b class="tabular">{{ formatVnd(b.total_amount) }}</b>
+            </div>
+          </section>
+        }
+
+        <section class="card side-actions">
+          <button type="button" class="btn btn--primary btn--full" (click)="printTickets()">
+            <mat-icon>print</mat-icon>
+            In vé điện tử
+          </button>
+          <a class="btn btn--ghost btn--full" routerLink="/account">
+            <mat-icon>confirmation_number</mat-icon>
+            Xem vé của tôi
+          </a>
+          <a class="btn btn--ghost btn--full" routerLink="/">
+            <mat-icon>home</mat-icon>
+            Về trang chủ
+          </a>
+        </section>
+      </aside>
+    </div>
   }
 </div>

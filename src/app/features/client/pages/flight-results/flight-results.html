@@ -52,6 +52,29 @@
     </div>
   }
 
+  @if (tripType() === 'round') {
+    <nav class="fr-leg-stepper" aria-label="Tiến trình chọn chuyến khứ hồi">
+      <button
+        type="button"
+        class="fr-leg-step"
+        [class.fr-leg-step--active]="!selectingReturn()"
+        [class.fr-leg-step--done]="selectingReturn()"
+        (click)="selectingReturn() && backToOutbound()"
+      >
+        <span class="fr-leg-step__num">{{ selectingReturn() ? '✓' : '1' }}</span>
+        <span>Chặng 1: Chọn chuyến đi ({{ fromCode() }} → {{ toCode() }})</span>
+      </button>
+      <span class="fr-leg-stepper__line" aria-hidden="true"></span>
+      <span
+        class="fr-leg-step"
+        [class.fr-leg-step--active]="selectingReturn()"
+      >
+        <span class="fr-leg-step__num">2</span>
+        <span>Chặng 2: Chọn chuyến về ({{ toCode() }} → {{ fromCode() }})</span>
+      </span>
+    </nav>
+  }
+
   @if (selectingReturn() && bookingFlow.selectedFlight(); as outFl) {
     <div class="fr-outbound-banner">
       <div>
@@ -311,44 +334,134 @@
         </button>
       </header>
 
-      <div class="fr-fares-grid">
-        @for (fare of fl.fares; track fare.fare_class_code) {
-          <div class="fr-fare-col" [class.fr-fare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
-            <div class="fr-fare-col__head">
-              <app-status-badge
-                [tone]="fare.seat_class === 'BUSINESS' ? 'warning' : fare.seat_class === 'PREMIUM_ECONOMY' ? 'info' : 'neutral'"
-                [label]="cabinLabel(fare.seat_class)"
-              />
-              <h3>{{ fare.fare_class_name }}</h3>
-              <div class="fr-fare-code">{{ fare.fare_class_code }}</div>
-              <div class="fr-fare-price tabular">{{ formatMoney(fare.adult_price) }}</div>
-              <small class="fr-muted">
-                Trẻ em (75%): {{ formatMoney(fare.child_price) }} · Em bé (10%): {{ formatMoney(fare.infant_price) }}
-              </small>
-            </div>
-
-            <ul class="fr-fare-list">
-              <li>
-                <mat-icon aria-hidden="true">airline_seat_recline_normal</mat-icon>
-                <span>Khoang {{ cabinLabel(fare.seat_class) }} · Còn {{ fare.seats_available }} chỗ</span>
-              </li>
-              <li>
-                <mat-icon aria-hidden="true">receipt_long</mat-icon>
-                <span>Giá gốc {{ formatMoney(fare.base_fare) }} + Thuế phí {{ formatMoney(fare.tax_fee) }}</span>
-              </li>
-              <li>
-                <mat-icon aria-hidden="true">{{ fare.is_refundable ? 'check_circle' : 'cancel' }}</mat-icon>
-                <span>
-                  {{ fare.refund_description || (fare.is_refundable ? 'Hoàn ' + fare.refund_percent + '% trước ' + (fare.refund_min_hours_before_departure ?? 24) + 'h' : 'Không hỗ trợ hoàn vé') }}
-                </span>
-              </li>
-            </ul>
-
-            <app-app-button variant="primary" size="sm" (clicked)="chooseFare(fl, fare)">
-              Chọn {{ fare.fare_class_name }}
-            </app-app-button>
-          </div>
-        }
+      <div class="fr-compare-wrap">
+        <table class="fr-compare-table">
+          <thead>
+            <tr>
+              <th scope="col" class="fr-compare-table__attr">Quyền lợi &amp; Điều kiện</th>
+              @for (fare of fl.fares; track fare.fare_class_code) {
+                <th
+                  scope="col"
+                  [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'"
+                >
+                  <div class="fr-compare-th">
+                    <app-status-badge
+                      [tone]="fare.seat_class === 'BUSINESS' ? 'warning' : fare.seat_class === 'PREMIUM_ECONOMY' ? 'info' : 'neutral'"
+                      [label]="cabinLabel(fare.seat_class)"
+                    />
+                    <span class="fr-compare-th__name">{{ fare.fare_class_name }}</span>
+                    <span class="fr-fare-code">{{ fare.fare_class_code }}</span>
+                  </div>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Giá vé</th>
+              @for (fare of fl.fares; track fare.fare_class_code) {
+                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+                  <div class="fr-fare-price tabular">{{ formatMoney(fare.adult_price) }}</div>
+                  <div class="fr-compare-sub tabular">
+                    Gốc {{ formatMoney(fare.base_fare) }} + Thuế phí {{ formatMoney(fare.tax_fee) }}
+                  </div>
+                  <div class="fr-compare-sub tabular">
+                    Trẻ em: {{ formatMoney(fare.child_price) }} · Em bé: {{ formatMoney(fare.infant_price) }}
+                  </div>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Hành lý xách tay</th>
+              @for (fare of fl.fares; track fare.fare_class_code) {
+                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+                  <span class="fr-cmp-cell">
+                    <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">check_circle</mat-icon>
+                    {{ carryOnLabel(fare) }}
+                  </span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Hành lý ký gửi</th>
+              @for (fare of fl.fares; track fare.fare_class_code) {
+                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+                  <span class="fr-cmp-cell">
+                    <mat-icon
+                      class="fr-cmp-ic"
+                      [class.fr-cmp-ic--ok]="fare.seat_class !== 'ECONOMY' || fare.is_refundable"
+                      [class.fr-cmp-ic--no]="fare.seat_class === 'ECONOMY' && !fare.is_refundable"
+                      aria-hidden="true"
+                    >
+                      {{ fare.seat_class !== 'ECONOMY' || fare.is_refundable ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                    {{ checkedBaggageLabel(fare) }}
+                  </span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Đổi vé</th>
+              @for (fare of fl.fares; track fare.fare_class_code) {
+                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+                  <span class="fr-cmp-cell">
+                    <mat-icon
+                      class="fr-cmp-ic"
+                      [class.fr-cmp-ic--ok]="fare.is_refundable || fare.seat_class === 'BUSINESS'"
+                      [class.fr-cmp-ic--no]="!fare.is_refundable && fare.seat_class !== 'BUSINESS'"
+                      aria-hidden="true"
+                    >
+                      {{ fare.is_refundable || fare.seat_class === 'BUSINESS' ? 'check_circle' : 'info' }}
+                    </mat-icon>
+                    {{ changePolicyLabel(fare) }}
+                  </span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Hoàn vé</th>
+              @for (fare of fl.fares; track fare.fare_class_code) {
+                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+                  <span class="fr-cmp-cell">
+                    <mat-icon
+                      class="fr-cmp-ic"
+                      [class.fr-cmp-ic--ok]="fare.is_refundable"
+                      [class.fr-cmp-ic--no]="!fare.is_refundable"
+                      aria-hidden="true"
+                    >
+                      {{ fare.is_refundable ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                    {{ refundPolicyLabel(fare) }}
+                  </span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Chọn ghế</th>
+              @for (fare of fl.fares; track fare.fare_class_code) {
+                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+                  <span class="fr-cmp-cell">
+                    <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">event_seat</mat-icon>
+                    {{ seatSelectionLabel(fare) }}
+                  </span>
+                  <div class="fr-compare-sub">Còn {{ fare.seats_available }} chỗ</div>
+                </td>
+              }
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Chọn hạng vé</th>
+              @for (fare of fl.fares; track fare.fare_class_code) {
+                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+                  <app-app-button variant="primary" size="sm" (clicked)="chooseFare(fl, fare)">
+                    Chọn {{ fare.fare_class_name }}
+                  </app-app-button>
+                </td>
+              }
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   </div>

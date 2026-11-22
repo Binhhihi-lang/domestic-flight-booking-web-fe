@@ -42,11 +42,11 @@ const CITY_NAMES: Record<string, string> = {
 };
 
 const AIRLINE_COLORS: Record<string, string> = {
-  VN: '#0b4fa8',
-  VJ: '#e52521',
-  QH: '#0f8a4d',
-  BL: '#1e3a8a',
-  VU: '#d97706',
+  VN: 'var(--color-primary)',
+  VJ: 'var(--color-danger)',
+  QH: 'var(--color-success)',
+  BL: 'var(--color-dark-2)',
+  VU: 'var(--color-warning)',
 };
 
 function defaultTomorrowIso(): string {
@@ -336,11 +336,43 @@ export class FlightResults implements OnInit {
   }
 
   protected airlineColor(code: string): string {
-    return AIRLINE_COLORS[code] ?? '#0770cd';
+    return AIRLINE_COLORS[code] ?? 'var(--color-primary)';
   }
 
   protected cabinLabel(cls: SeatClass | string): string {
     return CABIN_LABELS[cls] ?? cls;
+  }
+
+  protected carryOnLabel(fare: FlightFareOption): string {
+    if (fare.seat_class === 'BUSINESS') return '14 kg xách tay';
+    if (fare.seat_class === 'PREMIUM_ECONOMY') return '10 kg xách tay';
+    return fare.is_refundable ? '10 kg xách tay' : '7 kg xách tay';
+  }
+
+  protected checkedBaggageLabel(fare: FlightFareOption): string {
+    if (fare.seat_class === 'BUSINESS') return '32 kg ký gửi';
+    if (fare.seat_class === 'PREMIUM_ECONOMY') return '23 kg ký gửi';
+    return fare.is_refundable ? '20 kg ký gửi' : 'Không bao gồm (mua thêm)';
+  }
+
+  protected changePolicyLabel(fare: FlightFareOption): string {
+    if (fare.seat_class === 'BUSINESS') return 'Đổi miễn phí (trả chênh lệch)';
+    if (fare.is_refundable) return 'Đổi có phí trước 24h';
+    return 'Hạn chế đổi vé';
+  }
+
+  protected refundPolicyLabel(fare: FlightFareOption): string {
+    if (fare.refund_description) return fare.refund_description;
+    if (fare.is_refundable) {
+      return `Hoàn ${fare.refund_percent}% trước ${fare.refund_min_hours_before_departure ?? 24}h`;
+    }
+    return 'Không hoàn vé';
+  }
+
+  protected seatSelectionLabel(fare: FlightFareOption): string {
+    if (fare.seat_class === 'BUSINESS') return 'Miễn phí trong khoang Thương gia';
+    if (fare.seat_class === 'PREMIUM_ECONOMY') return 'Miễn phí ghế tiêu chuẩn';
+    return fare.is_refundable ? 'Miễn phí ghế giữa · phụ thu cửa sổ' : 'Phụ thu theo vị trí ghế';
   }
 
   protected formatMoney(val: number): string {

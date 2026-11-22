@@ -16,12 +16,13 @@ import { CheckoutService } from '@core/services/checkout.service';
 import { environment } from '@env/environment';
 
 /**
- * Màn 2/3 Cụm B6 — Thanh toán đơn đặt vé với đồng hồ đếm ngược 15:00 (`/booking/payment`).
+ * Màn 2/3 Cụm B6 — Thanh toán đơn đặt vé với đồng hồ đếm ngược 15:00 (`/booking/payment`, Bước 5/5).
  *
- * Hỗ trợ 2 phương thức chuẩn đã chốt (QĐ-11 + VNPay / payOS):
- * - `VNPAY`: Chuyển hướng cổng thanh toán VNPay (hoặc giả lập thành công/thất bại ở Mock mode).
- * - `PAYOS` / `BANK_TRANSFER`: Chuyển khoản VietQR kèm thông tin tài khoản, nút sao chép,
- *   và nút đồng bộ trạng thái `POST /api/payments/{id}/payos/sync` (poll 3s khi chờ chuyển khoản).
+ * Hỗ trợ 2 phương thức chuẩn:
+ * - `VNPAY`: Khởi tạo giao dịch thật (`PENDING`) và chuyển hướng sang `txn.payment_url` khi có.
+ * - `PAYOS`: Chuyển khoản ngân hàng VietQR kèm thông tin tài khoản, nút sao chép,
+ *   và poll đồng bộ `POST /api/payments/{id}/payos/sync` mỗi 3 giây.
+ * - Kèm nút phụ `Xác nhận thanh toán nhanh (Demo)` cho môi trường thử nghiệm nội bộ.
  */
 @Component({
   selector: 'app-booking-payment',
@@ -70,7 +71,9 @@ export class BookingPayment implements OnInit, OnDestroy {
       this.loadBooking();
       return;
     }
-    const isTest = typeof window !== 'undefined' && (window as { __vitest_worker__?: unknown }).__vitest_worker__;
+    const isTest =
+      typeof window !== 'undefined' &&
+      Boolean((window as { __vitest_worker__?: unknown }).__vitest_worker__);
     if (environment.useMock || isTest) {
       this.bookingId.set(1001);
       this.loadBooking();
@@ -121,7 +124,9 @@ export class BookingPayment implements OnInit, OnDestroy {
 
   /**
    * Khởi tạo giao dịch thanh toán:
-   * - `simulate`: `'SUCCESS'` để test nhanh luồng thành công; `'PENDING'` để sinh mã QR / URL thật.
+   * - Luồng chính (`PENDING`): gọi `createPayment` thật; nếu có `payment_url` (VNPay) sẽ chuyển hướng;
+   *   nếu có `viet_qr` (payOS) sẽ hiện mã QR & poll mỗi 3 giây.
+   * - Luồng thử nghiệm (`SUCCESS`): xác nhận nhanh ở môi trường Demo và chuyển thẳng sang `/booking/confirmation`.
    */
   protected submitPayment(simulate?: 'PENDING' | 'SUCCESS' | 'FAILED'): void {
     if (this.processing() || this.isExpired()) return;
@@ -152,15 +157,30 @@ export class BookingPayment implements OnInit, OnDestroy {
         }
 
         if (txn.status === 'FAILED') {
-          this.error.set('Giao dịch thanh toán thất bại. Bạn có thể thử thanh toán lại trong thời gian giữ chỗ.');
+          this.error.set(
+            'Giao dịch thanh toán thất bại. Bạn có thể thử thanh toán lại trong thời gian giữ chỗ.',
+          );
           return;
         }
 
-        // Nếu là VietQR / payOS đang PENDING -> bật poll đồng bộ mỗi 3 giây
+        if (txn.payment_url && this.selectedMethod() === 'VNPAY') {
+          this.redirectToGateway(txn.payment_url);
+          return;
+        }
+
         if (txn.viet_qr) {
           this.startPayosSyncPolling(txn.id, txn.booking_id, txn.booking_code);
         }
       });
+  }
+
+  protected redirectToGateway(url: string): void {
+    const isTest =
+      typeof window !== 'undefined' &&
+      Boolean((window as { __vitest_worker__?: unknown }).__vitest_worker__);
+    if (typeof window !== 'undefined' && !isTest) {
+      window.location.href = url;
+    }
   }
 
   protected checkPayosSyncNow(): void {
@@ -206,6 +226,19 @@ export class BookingPayment implements OnInit, OnDestroy {
         this.copiedField.set(null);
       }
     }, 2000);
+  }
+
+  protected seatsOfPassenger(b: BookingDetail, passengerId: number): string {
+    const codes = b.seat_holds
+      .filter((h) => h.passenger_id === passengerId)
+      .map((h) => h.seat_code);
+    return codes.length > 0 ? codes.join(', ') : 'Chưa chọn';
+  }
+
+  protected passengerTypeLabel(type: string): string {
+    if (type === 'ADULT') return 'Người lớn';
+    if (type === 'CHILD') return 'Trẻ em';
+    return 'Em bé';
   }
 
   protected formatVnd(amount: number | null | undefined): string {

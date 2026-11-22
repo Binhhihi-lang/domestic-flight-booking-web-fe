@@ -1,28 +1,41 @@
 <div class="checkout">
-  <!-- Thanh tiến trình 4 bước -->
-  <ol class="stepper" aria-label="Tiến trình đặt vé">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb" aria-label="Đường dẫn">
+    <a routerLink="/">Trang chủ</a>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <a routerLink="/flights">Đặt vé</a>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <span>Xem lại</span>
+  </nav>
+
+  <!-- Thanh tiến trình thống nhất 5 bước -->
+  <ol class="stepper" aria-label="Tiến trình đặt vé" data-testid="booking-stepper">
     <li class="stepper__item stepper__item--done">
       <span class="stepper__num"><mat-icon>check</mat-icon></span>
-      <span>Hành khách</span>
+      <span>1. Chọn chuyến</span>
     </li>
     <li class="stepper__item stepper__item--done">
       <span class="stepper__num"><mat-icon>check</mat-icon></span>
-      <span>Chọn ghế</span>
+      <span>2. Chọn ghế</span>
     </li>
-    <li class="stepper__item stepper__item--active">
-      <span class="stepper__num">3</span>
-      <span>Xác nhận</span>
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>3. Hành khách</span>
+    </li>
+    <li class="stepper__item stepper__item--active" aria-current="step">
+      <span class="stepper__num">4</span>
+      <span>4. Xem lại</span>
     </li>
     <li class="stepper__item">
-      <span class="stepper__num">4</span>
-      <span>Thanh toán</span>
+      <span class="stepper__num">5</span>
+      <span>5. Thanh toán</span>
     </li>
   </ol>
 
   <header class="checkout__head">
     <div>
-      <h1>Xác nhận thông tin đặt chỗ</h1>
-      <p>Kiểm tra lại hành trình, hành khách, ghế ngồi và áp dụng mã ưu đãi trước khi thanh toán.</p>
+      <h1>Xem lại thông tin đặt chỗ</h1>
+      <p>Kiểm tra kỹ hành trình, danh sách hành khách, ghế ngồi và áp dụng voucher trước khi thanh toán.</p>
     </div>
     <a class="link-back" routerLink="/flights">
       <mat-icon>arrow_back</mat-icon>
@@ -33,13 +46,13 @@
   @if (loading()) {
     <div class="card card--state">Đang tải thông tin đơn đặt chỗ...</div>
   } @else if (error()) {
-    <div class="card card--error">
+    <div class="card card--error" role="alert">
       <mat-icon>error_outline</mat-icon>
       <span>{{ error() }}</span>
     </div>
   } @else if (booking(); as b) {
     <div class="checkout__grid">
-      <!-- Cột trái: Chi tiết hành trình, hành khách, ghế & hành lý -->
+      <!-- Cột trái: Hành trình, bảng hành khách, người liên hệ, voucher & chính sách -->
       <div class="checkout__main">
         <!-- Chặng bay -->
         <section class="card">
@@ -55,8 +68,11 @@
           @for (seg of b.segments; track seg.id) {
             <div class="seg">
               <div class="seg__top">
-                <span class="seg__airline">{{ seg.airline_name }} · <b>{{ seg.flight_number }}</b></span>
-                <span class="seg__fare">{{ seg.fare_class_name }} ({{ seg.seat_class }})</span>
+                <span class="seg__airline">
+                  <span class="seg__leg-tag">{{ seg.segment_order === 1 ? 'Chặng đi' : 'Chặng về' }}</span>
+                  {{ seg.airline_name }} · <b>{{ seg.flight_number }}</b>
+                </span>
+                <span class="seg__fare">{{ seg.fare_class_name }} ({{ seatClassLabel(seg.seat_class) }})</span>
               </div>
               <div class="seg__route">
                 <div>
@@ -90,39 +106,155 @@
           }
         </section>
 
-        <!-- Hành khách & ghế -->
+        <!-- Bảng hành khách & dịch vụ -->
         <section class="card">
           <div class="card__head">
-            <h2><mat-icon>groups</mat-icon> Hành khách & Ghế đã chọn</h2>
+            <h2><mat-icon>groups</mat-icon> Danh sách hành khách</h2>
             <span class="muted">{{ b.passengers.length }} hành khách</span>
           </div>
-          <ul class="pax-list">
-            @for (p of b.passengers; track p.id) {
-              <li class="pax-item">
-                <div>
-                  <div class="pax-item__name">{{ p.full_name }}</div>
-                  <div class="pax-item__meta">
-                    {{ passengerTypeLabel(p.passenger_type) }} · Sinh ngày {{ formatDate(p.birth_date) }}
-                    @if (p.passport_number) {
-                      · CCCD/Hộ chiếu: {{ p.passport_number }}
+
+          <div class="table-wrap">
+            <table class="pax-table" data-testid="review-pax-table">
+              <thead>
+                <tr>
+                  <th>Họ tên</th>
+                  <th>Loại khách</th>
+                  <th>Ngày sinh</th>
+                  <th>Giấy tờ</th>
+                  <th>Ghế</th>
+                  <th>Hành lý</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of b.passengers; track p.id) {
+                  <tr>
+                    <td class="pax-table__name">{{ p.full_name }}</td>
+                    <td>{{ passengerTypeLabel(p.passenger_type) }}</td>
+                    <td class="tabular">{{ formatDate(p.birth_date) }}</td>
+                    <td class="tabular">{{ p.passport_number || 'Không yêu cầu' }}</td>
+                    <td>
+                      <span class="chip chip--primary">{{ seatsOfPassenger(b, p.id) }}</span>
+                    </td>
+                    <td>
+                      <span class="chip">{{ baggageOfPassenger(b, p.id) }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Thông tin người liên hệ -->
+        <section class="card">
+          <div class="card__head">
+            <h2><mat-icon>contact_mail</mat-icon> Người liên hệ</h2>
+          </div>
+          <dl class="contact-grid">
+            <div>
+              <dt>Họ và tên</dt>
+              <dd>{{ b.customer_name }}</dd>
+            </div>
+            <div>
+              <dt>Email nhận vé điện tử</dt>
+              <dd>{{ b.customer_email }}</dd>
+            </div>
+            <div>
+              <dt>Số điện thoại</dt>
+              <dd class="tabular">{{ b.customer_phone || 'Chưa cập nhật' }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- Chọn Voucher ưu đãi (cột trái) -->
+        <section class="card" data-testid="review-voucher-section">
+          <div class="card__head">
+            <h2><mat-icon>redeem</mat-icon> Voucher ưu đãi</h2>
+            <a class="link-inline" routerLink="/account/voucher-store">Săn thêm voucher</a>
+          </div>
+
+          @if (b.applied_voucher; as av) {
+            <div class="voucher-applied" data-testid="voucher-applied">
+              <div>
+                <b>{{ av.voucher_code }} · {{ av.voucher_name }}</b>
+                <span>Đã giảm {{ formatVnd(av.discount_amount) }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn-link"
+                [disabled]="applyingVoucher()"
+                (click)="onRemoveVoucher()"
+              >
+                Gỡ bỏ
+              </button>
+            </div>
+          }
+
+          <form class="voucher-input-row" (ngSubmit)="onApplyManualCode()">
+            <input
+              type="text"
+              class="voucher-input"
+              name="manualVoucherCode"
+              placeholder="Nhập mã voucher (VD: HE2026)"
+              [ngModel]="manualVoucherCode()"
+              (ngModelChange)="manualVoucherCode.set($event)"
+            />
+            <button
+              type="submit"
+              class="btn btn--ghost btn--sm"
+              [disabled]="applyingVoucher()"
+            >
+              Áp dụng mã
+            </button>
+          </form>
+
+          @if (voucherMessage()) {
+            <p class="voucher-msg" role="alert">{{ voucherMessage() }}</p>
+          }
+
+          @if (voucherOptions().length > 0) {
+            <div class="voucher-radios" role="radiogroup" aria-label="Danh sách voucher của bạn">
+              @for (opt of voucherOptions(); track opt.userVoucher.id) {
+                <label
+                  class="voucher-card"
+                  [class.voucher-card--selected]="b.applied_voucher?.user_voucher_id === opt.userVoucher.id"
+                  [class.voucher-card--disabled]="!opt.eligible"
+                  [attr.data-testid]="opt.eligible ? 'voucher-option-eligible' : 'voucher-option-disabled'"
+                >
+                  <input
+                    type="radio"
+                    name="selectedVoucher"
+                    [value]="opt.userVoucher.id"
+                    [checked]="b.applied_voucher?.user_voucher_id === opt.userVoucher.id"
+                    [disabled]="!opt.eligible || applyingVoucher()"
+                    (change)="onApplyVoucher(opt.userVoucher.id)"
+                  />
+                  <div class="voucher-card__body">
+                    <div class="voucher-card__top">
+                      <b>{{ opt.userVoucher.voucher.voucher_code }}</b>
+                      <span class="voucher-card__badge">{{ voucherDiscountLabel(opt.userVoucher) }}</span>
+                    </div>
+                    <div class="voucher-card__name">{{ opt.userVoucher.voucher.voucher_name }}</div>
+                    <div class="voucher-card__meta">
+                      @if (opt.userVoucher.voucher.min_order_amount) {
+                        <span>Đơn tối thiểu {{ formatVnd(opt.userVoucher.voucher.min_order_amount) }}</span>
+                      }
+                      @if (opt.userVoucher.expires_at) {
+                        <span>HSD: {{ formatDate(opt.userVoucher.expires_at) }}</span>
+                      }
+                    </div>
+                    @if (!opt.eligible && opt.reason) {
+                      <div class="voucher-card__reason">{{ opt.reason }}</div>
                     }
                   </div>
-                </div>
-                <div class="pax-item__tags">
-                  @for (hold of b.seat_holds; track hold.id) {
-                    @if (hold.passenger_id === p.id) {
-                      <span class="chip chip--primary">Ghế {{ hold.seat_code }}</span>
-                    }
-                  }
-                  @for (bag of b.baggages; track bag.id) {
-                    @if (bag.passenger_id === p.id) {
-                      <span class="chip">{{ bag.baggage_name }}</span>
-                    }
-                  }
-                </div>
-              </li>
-            }
-          </ul>
+                </label>
+              }
+            </div>
+          } @else {
+            <p class="muted-sm">
+              Bạn chưa có voucher khả dụng trong ví. <a routerLink="/account/voucher-store">Khám phá kho voucher</a>
+            </p>
+          }
         </section>
 
         <!-- Liên hệ đại lý -->
@@ -139,53 +271,9 @@
         </section>
       </div>
 
-      <!-- Cột phải: Voucher + Bảng kê giá + Nút thanh toán -->
+      <!-- Cột phải: Bảng kê giá + Nút tiếp tục thanh toán -->
       <aside class="checkout__side">
-        <section class="card">
-          <div class="card__head">
-            <h2><mat-icon>redeem</mat-icon> Voucher ưu đãi</h2>
-          </div>
-
-          @if (b.applied_voucher; as av) {
-            <div class="voucher-applied" data-testid="voucher-applied">
-              <div>
-                <b>{{ av.voucher_code }}</b>
-                <span>Giảm {{ formatVnd(av.discount_amount) }}</span>
-              </div>
-              <button
-                type="button"
-                class="btn-link"
-                [disabled]="applyingVoucher()"
-                (click)="onRemoveVoucher()"
-              >
-                Gỡ bỏ
-              </button>
-            </div>
-          } @else if (availableVouchers().length > 0) {
-            <div class="voucher-list">
-              @for (uv of availableVouchers(); track uv.id) {
-                <div class="voucher-row">
-                  <div>
-                    <b>{{ uv.voucher.voucher_code }}</b>
-                    <span>{{ uv.voucher.voucher_name }}</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn--sm btn--ghost"
-                    [disabled]="applyingVoucher()"
-                    (click)="onApplyVoucher(uv.id)"
-                  >
-                    Áp dụng
-                  </button>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="muted-sm">Bạn chưa có voucher khả dụng. <a routerLink="/account/voucher-store">Săn voucher ngay</a></p>
-          }
-        </section>
-
-        <section class="card">
+        <section class="card card--sticky">
           <div class="card__head">
             <h2><mat-icon>receipt_long</mat-icon> Chi tiết thanh toán</h2>
           </div>
@@ -193,6 +281,14 @@
             <div>
               <dt>Giá vé (bao gồm thuế, phí)</dt>
               <dd class="tabular">{{ formatVnd(b.fare_amount) }}</dd>
+            </div>
+            <div>
+              <dt>Phụ thu chọn ghế</dt>
+              <dd class="tabular">{{ b.seat_surcharge_amount > 0 ? '+' + formatVnd(b.seat_surcharge_amount) : formatVnd(0) }}</dd>
+            </div>
+            <div>
+              <dt>Hành lý ký gửi</dt>
+              <dd class="tabular">{{ b.baggage_amount > 0 ? '+' + formatVnd(b.baggage_amount) : formatVnd(0) }}</dd>
             </div>
             @if (b.promotion_discount_amount > 0) {
               <div class="price-row--discount">
@@ -204,18 +300,6 @@
               <div class="price-row--discount">
                 <dt>Giảm giá Voucher</dt>
                 <dd class="tabular">−{{ formatVnd(b.voucher_discount_amount) }}</dd>
-              </div>
-            }
-            @if (b.seat_surcharge_amount > 0) {
-              <div>
-                <dt>Phụ thu chọn ghế</dt>
-                <dd class="tabular">+{{ formatVnd(b.seat_surcharge_amount) }}</dd>
-              </div>
-            }
-            @if (b.baggage_amount > 0) {
-              <div>
-                <dt>Hành lý ký gửi mua thêm</dt>
-                <dd class="tabular">+{{ formatVnd(b.baggage_amount) }}</dd>
               </div>
             }
             <div class="price-row--total">

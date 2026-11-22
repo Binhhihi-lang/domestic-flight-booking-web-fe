@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, of } from 'rxjs';
@@ -9,20 +10,25 @@ import { CheckoutService } from '@core/services/checkout.service';
 import { UserVoucherService } from '@core/services/catalog.service';
 import { environment } from '@env/environment';
 
+export interface VoucherCardOption {
+  userVoucher: UserVoucher;
+  eligible: boolean;
+  reason: string | null;
+}
+
 /**
- * Màn 1/3 Cụm B6 — Xác nhận hành trình & Áp dụng Voucher (`/booking/review`).
+ * Màn 1/3 Cụm B6 — Xem lại hành trình & Áp dụng Voucher (`/booking/review`, Bước 4/5).
  *
  * Bám prototype `customer.html`:
- * - Hiển thị thanh tiến trình 4 bước (Hành khách → Chọn ghế → Xác nhận → Thanh toán).
- * - Tóm tắt các chặng bay, chính sách hoàn vé tham khảo (`fare_rule`), danh sách hành khách,
- *   ghế đã chọn và hành lý ký gửi.
- * - Cột phải: Bảng kê giá chi tiết 4 bước + hộp chọn voucher từ ví khách (`GET /api/my-vouchers`)
- *   + nút "Tiếp tục thanh toán" điều hướng sang `/booking/payment`.
+ * - Breadcrumb `Trang chủ / Đặt vé / Xem lại` + thanh tiến trình thống nhất 5 bước.
+ * - Chi tiết chặng bay, bảng hành khách (Họ tên, Loại khách, Ngày sinh, Giấy tờ, Ghế, Hành lý),
+ *   thông tin người liên hệ và danh sách thẻ radio chọn Voucher (khả dụng & không đủ điều kiện kèm lý do).
+ * - Cột phải: Bảng kê giá chi tiết bằng `đ` + xác nhận điều khoản + nút "Tiếp tục thanh toán".
  */
 @Component({
   selector: 'app-booking-review',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MatIconModule],
+  imports: [FormsModule, RouterLink, MatIconModule],
   templateUrl: './booking-review.html',
   styleUrl: './booking-review.css',
 })
@@ -39,11 +45,61 @@ export class BookingReview implements OnInit {
   protected readonly loading = signal<boolean>(true);
   protected readonly applyingVoucher = signal<boolean>(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly voucherMessage = signal<string | null>(null);
+  protected readonly manualVoucherCode = signal<string>('');
   protected readonly agreedTerms = signal<boolean>(true);
 
-  protected readonly availableVouchers = computed(() =>
-    this.vouchers().filter((v) => v.status === 'AVAILABLE'),
-  );
+  protected readonly voucherOptions = computed<VoucherCardOption[]>(() => {
+    const b = this.booking();
+    const list = this.vouchers();
+    const now = Date.now();
+    const orderBase = b ? Math.max(0, b.fare_amount - b.promotion_discount_amount) : 0;
+
+    return list.map((uv) => {
+      if (uv.status !== 'AVAILABLE' && b?.applied_voucher?.user_voucher_id !== uv.id) {
+        return {
+          userVoucher: uv,
+          eligible: false,
+          reason: uv.status === 'EXPIRED' ? 'Voucher đã hết hạn' : 'Voucher không còn khả dụng',
+        };
+      }
+      if (uv.expires_at && new Date(uv.expires_at).getTime() < now) {
+        return {
+          userVoucher: uv,
+          eligible: false,
+          reason: 'Voucher đã hết hạn sử dụng',
+        };
+      }
+      if (
+        b &&
+        uv.voucher.applicable_trip_type &&
+        uv.voucher.applicable_trip_type !== 'ANY' &&
+        uv.voucher.applicable_trip_type !== b.trip_type
+      ) {
+        return {
+          userVoucher: uv,
+          eligible: false,
+          reason:
+            uv.voucher.applicable_trip_type === 'ROUND_TRIP'
+              ? 'Chỉ áp dụng cho vé khứ hồi'
+              : 'Chỉ áp dụng cho vé một chiều',
+        };
+      }
+      const minOrder = uv.voucher.min_order_amount ?? 0;
+      if (b && minOrder > 0 && orderBase < minOrder) {
+        return {
+          userVoucher: uv,
+          eligible: false,
+          reason: `Chưa đạt đơn tối thiểu ${this.formatVnd(minOrder)}`,
+        };
+      }
+      return {
+        userVoucher: uv,
+        eligible: true,
+        reason: null,
+      };
+    });
+  });
 
   ngOnInit(): void {
     const rawParam =
@@ -55,7 +111,9 @@ export class BookingReview implements OnInit {
       this.loadData();
       return;
     }
-    const isTest = typeof window !== 'undefined' && (window as { __vitest_worker__?: unknown }).__vitest_worker__;
+    const isTest =
+      typeof window !== 'undefined' &&
+      Boolean((window as { __vitest_worker__?: unknown }).__vitest_worker__);
     if (environment.useMock || isTest) {
       this.bookingId.set(1001);
       this.loadData();
@@ -81,7 +139,7 @@ export class BookingReview implements OnInit {
       });
 
     this.userVoucherService
-      .myVouchers({ status: 'AVAILABLE' })
+      .myVouchers({ page: 1, size: 50 })
       .pipe(catchError(() => of(null)))
       .subscribe((res) => {
         const items = res?.data?.items ?? [];
@@ -91,21 +149,46 @@ export class BookingReview implements OnInit {
 
   protected onApplyVoucher(userVoucherId: number): void {
     if (this.applyingVoucher()) return;
+    if (this.booking()?.applied_voucher?.user_voucher_id === userVoucherId) return;
     this.applyingVoucher.set(true);
+    this.voucherMessage.set(null);
     this.checkoutService
       .applyVoucher(this.bookingId(), userVoucherId)
       .pipe(catchError(() => of(null)))
       .subscribe((res) => {
         if (res?.data) {
           this.booking.set(res.data);
+        } else {
+          this.voucherMessage.set('Không thể áp dụng voucher này cho đơn đặt chỗ hiện tại.');
         }
         this.applyingVoucher.set(false);
       });
   }
 
+  protected onApplyManualCode(): void {
+    const code = this.manualVoucherCode().trim().toUpperCase();
+    if (!code) {
+      this.voucherMessage.set('Vui lòng nhập mã voucher.');
+      return;
+    }
+    const found = this.voucherOptions().find(
+      (opt) => opt.userVoucher.voucher.voucher_code.toUpperCase() === code,
+    );
+    if (!found) {
+      this.voucherMessage.set(`Không tìm thấy mã "${code}" trong ví voucher của bạn.`);
+      return;
+    }
+    if (!found.eligible) {
+      this.voucherMessage.set(found.reason ?? 'Voucher chưa đủ điều kiện áp dụng.');
+      return;
+    }
+    this.onApplyVoucher(found.userVoucher.id);
+  }
+
   protected onRemoveVoucher(): void {
     if (this.applyingVoucher()) return;
     this.applyingVoucher.set(true);
+    this.voucherMessage.set(null);
     this.checkoutService
       .removeVoucher(this.bookingId())
       .pipe(catchError(() => of(null)))
@@ -123,6 +206,41 @@ export class BookingReview implements OnInit {
     this.router.navigate(['/booking/payment'], {
       queryParams: { bookingId: current.id },
     });
+  }
+
+  protected seatsOfPassenger(b: BookingDetail, passengerId: number): string {
+    const codes = b.seat_holds
+      .filter((h) => h.passenger_id === passengerId)
+      .map((h) => h.seat_code);
+    return codes.length > 0 ? codes.join(', ') : 'Chưa chọn';
+  }
+
+  protected baggageOfPassenger(b: BookingDetail, passengerId: number): string {
+    const items = b.baggages.filter((bg) => bg.passenger_id === passengerId);
+    if (items.length === 0) return 'Chỉ xách tay';
+    return items.map((bg) => bg.baggage_name).join(', ');
+  }
+
+  protected voucherDiscountLabel(uv: UserVoucher): string {
+    if (uv.voucher.discount_type === 'PERCENT') {
+      return `Giảm ${uv.voucher.discount_value}%`;
+    }
+    return `Giảm ${this.formatVnd(uv.voucher.discount_value)}`;
+  }
+
+  protected seatClassLabel(seatClass: string): string {
+    switch (seatClass) {
+      case 'ECONOMY':
+        return 'Phổ thông';
+      case 'PREMIUM_ECONOMY':
+        return 'Phổ thông đặc biệt';
+      case 'BUSINESS':
+        return 'Thương gia';
+      case 'FIRST':
+        return 'Hạng nhất';
+      default:
+        return seatClass;
+    }
   }
 
   protected formatVnd(amount: number | null | undefined): string {
