@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, of } from 'rxjs';
 import {
+  ActionRequiredItem,
   FlightOperationItem,
   OperationalDashboard,
   OverviewDashboard,
@@ -13,14 +14,13 @@ import { PageHeader } from '@shared/components/page-header/page-header';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { CountUpDirective, CountUpFormat } from '@shared/ui/count-up/count-up.directive';
-import { StatusBadge, BadgeTone } from '@shared/ui/status-badge/status-badge';
+import { BadgeTone, StatusBadge } from '@shared/ui/status-badge/status-badge';
 
 interface StatCard {
   label: string;
   value: string;
   numericValue: number;
   format: CountUpFormat;
-  unit?: string;
   icon: string;
   tone: 'primary' | 'success' | 'warning' | 'danger';
   delta: string;
@@ -29,14 +29,38 @@ interface StatCard {
 }
 
 interface BarItem {
+  date: string;
   label: string;
   value: string;
+  fullValue: string;
+  bookingsCount: number;
   height: number;
 }
 
+const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
+  DRAFT: { label: 'Nháp', tone: 'neutral' },
+  SCHEDULED: { label: 'Đúng giờ', tone: 'info' },
+  BOARDING: { label: 'Đang lên tàu', tone: 'warning' },
+  DELAYED: { label: 'Chậm chuyến', tone: 'warning' },
+  DEPARTED: { label: 'Đã cất cánh', tone: 'info' },
+  ARRIVED: { label: 'Đã hạ cánh', tone: 'success' },
+  COMPLETED: { label: 'Hoàn thành', tone: 'success' },
+  CANCELLED: { label: 'Đã hủy', tone: 'danger' },
+};
+
+const BOOKING_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
+  CONFIRMED: { label: 'Đã xác nhận', tone: 'success' },
+  PENDING_PAYMENT: { label: 'Chờ thanh toán', tone: 'warning' },
+  CANCELLED: { label: 'Đã hủy', tone: 'danger' },
+  EXPIRED: { label: 'Hết hạn', tone: 'danger' },
+};
+
 /**
- * Dashboard vận hành & tổng quan — kết nối API thật (`GET /api/admin/dashboard` cho ADMIN,
- * `GET /api/admin/dashboard/operational` cho STAFF — tuyệt đối không hiện doanh thu cho STAFF).
+ * Dashboard tổng quan (ADMIN) & vận hành ca trực (STAFF).
+ * - ADMIN: 4 KPI (Doanh thu hôm nay, Đơn hôm nay, Hành khách hôm nay, Tỷ lệ lấp đầy),
+ *   biểu đồ Doanh thu 7 ngày toàn chiều rộng, lưới 2 cột Top tuyến bay & Đơn gần đây.
+ * - STAFF: tuyệt đối không hiển thị doanh thu; gồm 4 KPI ca trực, bảng Chuyến cần xử lý
+ *   và bảng Booking chờ xác nhận (`pending_actions`).
  */
 @Component({
   selector: 'app-admin-dashboard',
@@ -52,7 +76,6 @@ export class AdminDashboard implements OnInit {
   protected readonly loading = signal(true);
   protected readonly overview = signal<OverviewDashboard | null>(null);
   protected readonly operational = signal<OperationalDashboard | null>(null);
-  protected readonly selectedDays = signal<7 | 30>(7);
 
   protected readonly isAdmin = computed(() => this.authService.isAdmin());
 
@@ -62,7 +85,18 @@ export class AdminDashboard implements OnInit {
       if (!ov) return [];
       return [
         {
-          label: 'Booking hôm nay',
+          label: 'Doanh thu hôm nay',
+          value: this.formatVnd(ov.revenue_today),
+          numericValue: ov.revenue_today,
+          format: 'vnd',
+          icon: 'payments',
+          tone: 'success',
+          delta: `Tháng này: ${this.formatCompactVnd(ov.revenue_month)}`,
+          deltaIcon: 'trending_up',
+          deltaTone: 'up',
+        },
+        {
+          label: 'Đơn hôm nay',
           value: ov.bookings_today.toLocaleString('vi-VN'),
           numericValue: ov.bookings_today,
           format: 'number',
@@ -73,29 +107,18 @@ export class AdminDashboard implements OnInit {
           deltaTone: 'up',
         },
         {
-          label: 'Doanh thu hôm nay',
-          value: this.formatCompactVnd(ov.revenue_today),
-          numericValue: ov.revenue_today,
-          format: 'compact-vnd',
-          icon: 'payments',
-          tone: 'success',
-          delta: `Tháng này: ${this.formatCompactVnd(ov.revenue_month)}`,
-          deltaIcon: 'trending_up',
+          label: 'Hành khách hôm nay',
+          value: ov.pax_today.toLocaleString('vi-VN'),
+          numericValue: ov.pax_today,
+          format: 'number',
+          icon: 'groups',
+          tone: 'warning',
+          delta: `Tháng này: ${ov.pax_month.toLocaleString('vi-VN')} lượt khách`,
+          deltaIcon: 'groups',
           deltaTone: 'up',
         },
         {
-          label: 'Chuyến bay hôm nay',
-          value: ov.flights_today.toLocaleString('vi-VN'),
-          numericValue: ov.flights_today,
-          format: 'number',
-          icon: 'flight',
-          tone: 'warning',
-          delta: `${ov.flights_delayed_today} chuyến trễ giờ`,
-          deltaIcon: ov.flights_delayed_today > 0 ? 'warning' : 'check_circle',
-          deltaTone: ov.flights_delayed_today > 0 ? 'down' : 'up',
-        },
-        {
-          label: 'Hệ số lấp đầy',
+          label: 'Tỷ lệ lấp đầy',
           value: `${ov.occupancy_rate_percent.toFixed(1)}%`,
           numericValue: ov.occupancy_rate_percent,
           format: 'percent',
@@ -134,7 +157,7 @@ export class AdminDashboard implements OnInit {
         deltaTone: 'up',
       },
       {
-        label: 'Đang chờ thanh toán',
+        label: 'Chờ thanh toán',
         value: op.bookings_pending_payment.toLocaleString('vi-VN'),
         numericValue: op.bookings_pending_payment,
         format: 'number',
@@ -151,20 +174,23 @@ export class AdminDashboard implements OnInit {
         format: 'number',
         icon: 'warning',
         tone: 'danger',
-        delta: `${op.flights_delayed} trễ · ${op.flights_cancelled} hủy`,
+        delta: `${op.flights_delayed} chậm · ${op.flights_cancelled} hủy`,
         deltaIcon: 'warning',
         deltaTone: 'down',
       },
     ];
   });
 
-  protected readonly bars = computed<BarItem[]>(() => {
+  protected readonly revenueBars = computed<BarItem[]>(() => {
     const items = this.overview()?.revenue_by_day ?? [];
-    const maxBookings = Math.max(1, ...items.map((i) => i.bookings_count));
+    const maxRev = Math.max(1, ...items.map((i) => i.revenue));
     return items.map((i) => ({
+      date: i.date,
       label: i.day_label,
-      value: i.bookings_count.toLocaleString('vi-VN'),
-      height: Math.max(12, Math.round((i.bookings_count / maxBookings) * 100)),
+      value: this.formatCompactVnd(i.revenue),
+      fullValue: this.formatVnd(i.revenue),
+      bookingsCount: i.bookings_count,
+      height: Math.max(10, Math.round((i.revenue / maxRev) * 100)),
     }));
   });
 
@@ -172,13 +198,11 @@ export class AdminDashboard implements OnInit {
     () => this.operational()?.today_schedule ?? [],
   );
 
-  ngOnInit(): void {
-    this.loadDashboard();
-  }
+  protected readonly pendingActions = computed<ActionRequiredItem[]>(
+    () => this.operational()?.pending_actions ?? [],
+  );
 
-  protected switchRange(days: 7 | 30): void {
-    if (this.selectedDays() === days) return;
-    this.selectedDays.set(days);
+  ngOnInit(): void {
     this.loadDashboard();
   }
 
@@ -186,7 +210,7 @@ export class AdminDashboard implements OnInit {
     this.loading.set(true);
     if (this.isAdmin()) {
       this.dashboardService
-        .getOverview(this.selectedDays())
+        .getOverview(7)
         .pipe(catchError(() => of(null)))
         .subscribe((res) => {
           if (res?.data) {
@@ -194,6 +218,7 @@ export class AdminDashboard implements OnInit {
           }
           this.loading.set(false);
         });
+      return;
     }
 
     this.dashboardService
@@ -203,10 +228,24 @@ export class AdminDashboard implements OnInit {
         if (res?.data) {
           this.operational.set(res.data);
         }
-        if (!this.isAdmin()) {
-          this.loading.set(false);
-        }
+        this.loading.set(false);
       });
+  }
+
+  protected exportCsv(): void {
+    const data = this.overview();
+    if (!data || typeof document === 'undefined') return;
+    const header = 'Ngay,SoDonDatCho,DoanhThuVND\n';
+    const rows = data.revenue_by_day
+      .map((d) => `${d.date},${d.bookings_count},${Math.round(d.revenue)}`)
+      .join('\n');
+    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'vinafly-dashboard-7-ngay.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   protected fillRateOf(f: FlightOperationItem): string {
@@ -222,18 +261,38 @@ export class AdminDashboard implements OnInit {
     return 'success';
   }
 
-  protected opStatusTone(status: string): BadgeTone {
-    if (status === 'CANCELLED') return 'danger';
-    if (status === 'DELAYED') return 'warning';
-    if (status === 'BOARDING') return 'info';
-    return 'success';
+  protected opStatusMeta(status: string): { label: string; tone: BadgeTone } {
+    return OP_STATUS_META[status] ?? { label: status, tone: 'neutral' };
+  }
+
+  protected bookingStatusMeta(status: string): { label: string; tone: BadgeTone } {
+    return BOOKING_STATUS_META[status] ?? { label: status, tone: 'neutral' };
+  }
+
+  protected bookingLinkOf(action: ActionRequiredItem): string[] {
+    const match = action.reference_code?.match(/(\d+)/);
+    if (action.type.toUpperCase().includes('BOOKING') && match) {
+      return ['/admin/bookings', match[1]];
+    }
+    return ['/admin/bookings'];
+  }
+
+  protected formatDateTime(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   protected formatVnd(amount: number): string {
     return `${Math.round(amount).toLocaleString('vi-VN')}đ`;
   }
 
-  private formatCompactVnd(amount: number): string {
+  protected formatCompactVnd(amount: number): string {
     if (amount >= 1_000_000_000) {
       return `${(amount / 1_000_000_000).toFixed(2).replace('.', ',')} tỷ`;
     }

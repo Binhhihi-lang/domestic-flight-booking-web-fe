@@ -3,11 +3,16 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { FlightSeatEntry, FlightSeatMap, FlightSeatStatus } from '@core/models/flight.model';
+import {
+  FlightSeatEntry,
+  FlightSeatMap,
+  FlightSeatStatus,
+  SeatInventoryOverrideItem,
+} from '@core/models/flight.model';
 import { SeatClass } from '@core/models/fleet-news.model';
 import { FlightAdminService, SeatInventoryService } from '@core/services/flight-admin.service';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
+import { FlightSearchPicker } from '@shared/components/flight-search-picker/flight-search-picker';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -23,16 +28,31 @@ const SEAT_STATUS_META: Record<FlightSeatStatus, { label: string; tone: BadgeTon
   BLOCKED: { label: 'Đã khóa', tone: 'danger' },
 };
 
+const CABIN_ORDER: SeatClass[] = ['BUSINESS', 'PREMIUM_ECONOMY', 'ECONOMY'];
+
 const CABIN_LABELS: Record<SeatClass, string> = {
-  ECONOMY: 'Phổ thông',
+  BUSINESS: 'Hạng Thương gia',
   PREMIUM_ECONOMY: 'Phổ thông đặc biệt',
-  BUSINESS: 'Thương gia',
+  ECONOMY: 'Hạng Phổ thông',
 };
+
+interface SeatRowGroup {
+  rowNumber: number;
+  seats: FlightSeatEntry[];
+}
+
+interface CabinSection {
+  seatClass: SeatClass;
+  label: string;
+  columns: string[];
+  rows: SeatRowGroup[];
+}
 
 /**
  * Sơ đồ tồn ghế theo chuyến bay (`/admin/flight-seat-inventory` & `/admin/flights/:id/seat-inventory`).
- * Hiển thị thống kê AVAILABLE/HELD/BOOKED/BLOCKED, lưới ghế 3-3 theo hàng/lối đi,
- * cho phép Admin/Staff Khóa ghế (Block), Mở khóa ghế (Unblock) và cập nhật phụ thu theo chuyến.
+ * Dùng `<app-flight-search-picker>` thay dropdown tĩnh, nhóm ghế theo khoang (BUSINESS → PREMIUM_ECONOMY → ECONOMY)
+ * với đầu máy bay, tiêu đề cột động theo khoang, đa lối đi (`aisle_after`), tô màu loại ghế qua `--seat-color`,
+ * và nút "Đặt lại mặc định" cho phụ thu ghế.
  */
 @Component({
   selector: 'app-admin-flight-seat-inventory',
@@ -44,6 +64,7 @@ const CABIN_LABELS: Record<SeatClass, string> = {
     AppAlert,
     AppButton,
     EmptyState,
+    FlightSearchPicker,
     SkeletonBlock,
     StatusBadge,
   ],
@@ -57,19 +78,15 @@ const CABIN_LABELS: Record<SeatClass, string> = {
           </p>
         </div>
         <div class="inv-head__actions">
-          <select
-            class="inv-select"
-            aria-label="Chọn chuyến bay"
-            [ngModel]="selectedFlightId()"
-            (ngModelChange)="selectFlight(+$event)"
-          >
-            @for (fl of flights(); track fl.id) {
-              <option [ngValue]="fl.id">
-                {{ fl.flight_number }} ({{ fl.departure_airport.airport_code }} →
-                {{ fl.arrival_airport.airport_code }})
-              </option>
-            }
-          </select>
+          <div class="inv-picker">
+            <app-flight-search-picker
+              [multiple]="false"
+              [selectedId]="selectedFlightId()"
+              [selectedLabels]="flightLabels()"
+              placeholder="Tìm chuyến bay để xem tồn ghế..."
+              (selectedIdChange)="onFlightPicked($event)"
+            />
+          </div>
           <a routerLink="/admin/flights" class="inv-link-btn">
             <mat-icon aria-hidden="true">arrow_back</mat-icon>
             Danh sách chuyến
@@ -89,27 +106,27 @@ const CABIN_LABELS: Record<SeatClass, string> = {
       } @else if (!seatMap()) {
         <app-empty-state
           icon="event_seat"
-          message="Chưa có dữ liệu tồn ghế"
-          hint="Chọn một chuyến bay ở thanh trên để xem sơ đồ tồn ghế"
+          message="Chọn chuyến bay để xem tồn ghế"
+          hint="Sử dụng ô tìm kiếm chuyến bay ở góc trên để tải sơ đồ ghế"
         />
       } @else {
         @let map = seatMap()!;
         <div class="inv-stats">
           <div class="inv-stat inv-stat--ok">
             <span>Còn trống</span>
-            <strong>{{ map.available_seats }}</strong>
+            <strong class="tabular">{{ map.available_seats }}</strong>
           </div>
           <div class="inv-stat inv-stat--warn">
             <span>Đang giữ</span>
-            <strong>{{ map.held_seats }}</strong>
+            <strong class="tabular">{{ map.held_seats }}</strong>
           </div>
           <div class="inv-stat inv-stat--info">
             <span>Đã đặt</span>
-            <strong>{{ map.booked_seats }}</strong>
+            <strong class="tabular">{{ map.booked_seats }}</strong>
           </div>
           <div class="inv-stat inv-stat--danger">
             <span>Đã khóa</span>
-            <strong>{{ map.blocked_seats }}</strong>
+            <strong class="tabular">{{ map.blocked_seats }}</strong>
           </div>
         </div>
 
@@ -128,28 +145,68 @@ const CABIN_LABELS: Record<SeatClass, string> = {
               </div>
             </div>
 
-            <div class="inv-grid-wrap">
-              @for (row of seatRows(); track row.rowNumber) {
-                <div class="inv-row">
-                  <span class="inv-row__num">{{ row.rowNumber }}</span>
-                  <div class="inv-row__seats">
-                    @for (seat of row.seats; track seat.id) {
-                      <button
-                        type="button"
-                        class="inv-seat"
-                        [class.inv-seat--available]="seat.status === 'AVAILABLE'"
-                        [class.inv-seat--held]="seat.status === 'HOLD' || seat.status === 'HELD'"
-                        [class.inv-seat--booked]="seat.status === 'BOOKED'"
-                        [class.inv-seat--blocked]="seat.status === 'BLOCKED'"
-                        [class.inv-seat--selected]="selectedSeat()?.id === seat.id"
-                        [attr.aria-label]="'Ghế ' + seat.seat_code + ' - ' + statusMeta(seat.status).label"
-                        (click)="selectSeat(seat)"
-                      >
-                        {{ seat.seat_code }}
-                      </button>
-                      @if (isAisleAfter(seat.seat_column)) {
-                        <span class="inv-aisle" aria-hidden="true"></span>
-                      }
+            <div class="inv-fuselage">
+              <div class="inv-nose" aria-hidden="true">
+                <mat-icon>flight</mat-icon>
+                <span>Đầu máy bay</span>
+              </div>
+
+              @for (cabin of cabinSections(); track cabin.seatClass) {
+                <div class="inv-cabin">
+                  <div class="inv-cabin__title">{{ cabin.label }}</div>
+
+                  <div class="inv-grid-wrap">
+                    <div class="inv-row inv-row--head" aria-hidden="true">
+                      <span class="inv-row__num"></span>
+                      <div class="inv-row__seats">
+                        @for (col of cabin.columns; track col) {
+                          <span class="inv-col-lbl">{{ col }}</span>
+                          @if (isAisleAfter(col)) {
+                            <span class="inv-aisle"></span>
+                          }
+                        }
+                      </div>
+                    </div>
+
+                    @for (row of cabin.rows; track row.rowNumber) {
+                      <div class="inv-row">
+                        <span class="inv-row__num tabular">{{ row.rowNumber }}</span>
+                        <div class="inv-row__seats">
+                          @for (seat of row.seats; track seat.id) {
+                            <button
+                              type="button"
+                              class="inv-seat"
+                              [style.--seat-color]="seat.seat_type.color_hex || 'var(--color-primary)'"
+                              [class.inv-seat--available]="seat.status === 'AVAILABLE'"
+                              [class.inv-seat--held]="seat.status === 'HOLD' || seat.status === 'HELD'"
+                              [class.inv-seat--booked]="seat.status === 'BOOKED'"
+                              [class.inv-seat--blocked]="seat.status === 'BLOCKED'"
+                              [class.inv-seat--selected]="selectedSeat()?.id === seat.id"
+                              [attr.aria-label]="
+                                'Ghế ' +
+                                seat.seat_code +
+                                ' - ' +
+                                seat.seat_type.seat_type_name +
+                                ' - ' +
+                                statusMeta(seat.status).label
+                              "
+                              [title]="
+                                seat.seat_code +
+                                ' · ' +
+                                seat.seat_type.seat_type_name +
+                                ' · ' +
+                                formatMoney(seat.seat_surcharge)
+                              "
+                              (click)="selectSeat(seat)"
+                            >
+                              {{ seat.seat_code }}
+                            </button>
+                            @if (isAisleAfter(seat.seat_column)) {
+                              <span class="inv-aisle" aria-hidden="true"></span>
+                            }
+                          }
+                        </div>
+                      </div>
                     }
                   </div>
                 </div>
@@ -170,16 +227,26 @@ const CABIN_LABELS: Record<SeatClass, string> = {
                 </div>
                 <dl class="inv-dl">
                   <div>
-                    <dt>Khoang dịch vụ</dt>
+                    <dt>Hạng dịch vụ</dt>
                     <dd>{{ cabinLabel(seat.seat_type.seat_class) }}</dd>
                   </div>
                   <div>
                     <dt>Loại ghế</dt>
-                    <dd>{{ seat.seat_type.seat_type_name }}</dd>
+                    <dd class="inv-type-dd">
+                      <span
+                        class="inv-swatch"
+                        [style.--seat-color]="seat.seat_type.color_hex || 'var(--color-primary)'"
+                      ></span>
+                      {{ seat.seat_type.seat_type_name }}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Phụ thu mặc định</dt>
+                    <dd class="tabular">{{ formatMoney(seat.seat_type.surcharge) }}</dd>
                   </div>
                   <div>
                     <dt>Phụ thu hiện tại</dt>
-                    <dd><strong>{{ formatMoney(seat.seat_surcharge) }}</strong></dd>
+                    <dd class="tabular"><strong>{{ formatMoney(seat.seat_surcharge) }}</strong></dd>
                   </div>
                 </dl>
 
@@ -205,6 +272,16 @@ const CABIN_LABELS: Record<SeatClass, string> = {
                     {{ busy() ? 'Đang lưu...' : 'Lưu phụ thu' }}
                   </app-app-button>
 
+                  <app-app-button
+                    variant="ghost"
+                    size="sm"
+                    [disabled]="busy()"
+                    (clicked)="resetSurcharge(seat)"
+                  >
+                    <mat-icon aria-hidden="true">restart_alt</mat-icon>
+                    Đặt lại mặc định
+                  </app-app-button>
+
                   @if (seat.status === 'AVAILABLE') {
                     <app-app-button
                       variant="danger"
@@ -213,7 +290,7 @@ const CABIN_LABELS: Record<SeatClass, string> = {
                       (clicked)="blockSeat(seat)"
                     >
                       <mat-icon aria-hidden="true">lock</mat-icon>
-                      Khóa ghế (Block)
+                      Khóa ghế
                     </app-app-button>
                   } @else if (seat.status === 'BLOCKED') {
                     <app-app-button
@@ -223,7 +300,7 @@ const CABIN_LABELS: Record<SeatClass, string> = {
                       (clicked)="unblockSeat(seat)"
                     >
                       <mat-icon aria-hidden="true">lock_open</mat-icon>
-                      Mở khóa ghế (Unblock)
+                      Mở khóa ghế
                     </app-app-button>
                   } @else {
                     <p class="inv-lock-note">
@@ -233,7 +310,9 @@ const CABIN_LABELS: Record<SeatClass, string> = {
                 </div>
               </div>
             } @else {
-              <p class="inv-muted">Bấm vào một ô ghế trên sơ đồ bên trái để khóa/mở khóa hoặc điều chỉnh phụ thu.</p>
+              <p class="inv-muted">
+                Bấm vào một ô ghế trên sơ đồ bên trái để khóa/mở khóa hoặc điều chỉnh phụ thu.
+              </p>
             }
           </aside>
         </div>
@@ -255,6 +334,7 @@ const CABIN_LABELS: Record<SeatClass, string> = {
     }
     .inv-head h1 {
       margin: 0;
+      font-family: var(--font-heading);
       font-size: var(--text-h1);
       color: var(--color-ink);
     }
@@ -267,28 +347,28 @@ const CABIN_LABELS: Record<SeatClass, string> = {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
-    .inv-select {
-      height: 38px;
-      padding: 0 12px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius);
-      background: var(--color-surface);
-      color: var(--color-ink);
-      font-size: var(--text-small);
+    .inv-picker {
+      width: min(340px, 100%);
+      min-width: 260px;
     }
     .inv-link-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 14px;
+      height: 42px;
+      padding: 0 14px;
       border-radius: var(--radius);
       border: 1px solid var(--color-border);
       background: var(--color-surface);
       color: var(--color-ink);
       font-size: var(--text-small);
       text-decoration: none;
+    }
+    .inv-link-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
     }
     .inv-link-btn mat-icon {
       font-size: 18px;
@@ -329,6 +409,9 @@ const CABIN_LABELS: Record<SeatClass, string> = {
     }
     .inv-stat--danger strong {
       color: var(--color-on-danger-soft);
+    }
+    .tabular {
+      font-variant-numeric: tabular-nums;
     }
     .inv-layout {
       display: grid;
@@ -407,12 +490,57 @@ const CABIN_LABELS: Record<SeatClass, string> = {
       background: var(--color-danger-soft);
       border-color: var(--color-danger);
     }
+    .inv-fuselage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding: 16px 12px;
+      border: 1px solid var(--color-border-soft);
+      border-radius: 42px 42px var(--radius-lg) var(--radius-lg);
+      background: var(--color-surface-alt);
+    }
+    .inv-nose {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+      font-size: var(--text-caption);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .inv-nose mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+    .inv-cabin {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--color-border);
+    }
+    .inv-cabin__title {
+      font-size: var(--text-caption);
+      font-weight: 700;
+      color: var(--color-ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
     .inv-grid-wrap {
       display: flex;
       flex-direction: column;
       gap: 8px;
       overflow-x: auto;
-      padding-bottom: 4px;
+      max-width: 100%;
+      padding: 2px 6px 6px;
     }
     .inv-row {
       display: flex;
@@ -432,15 +560,24 @@ const CABIN_LABELS: Record<SeatClass, string> = {
       align-items: center;
       gap: 6px;
     }
+    .inv-col-lbl {
+      width: 44px;
+      text-align: center;
+      font-size: var(--text-caption);
+      font-weight: 700;
+      color: var(--color-ink-subtle);
+    }
     .inv-aisle {
       width: 20px;
       display: inline-block;
+      flex-shrink: 0;
     }
     .inv-seat {
+      --seat-color: var(--color-primary);
       width: 44px;
       height: 38px;
       border-radius: var(--radius-sm);
-      border: 1px solid var(--color-border);
+      border: 1.5px solid var(--color-border);
       font-size: var(--text-caption);
       font-weight: 700;
       cursor: pointer;
@@ -450,9 +587,9 @@ const CABIN_LABELS: Record<SeatClass, string> = {
       transform: translateY(-1px);
     }
     .inv-seat--available {
-      background: var(--color-success-soft);
-      border-color: var(--color-success);
-      color: var(--color-on-success-soft);
+      background: color-mix(in srgb, var(--seat-color) 14%, var(--color-surface));
+      border-color: var(--seat-color);
+      color: var(--color-ink);
     }
     .inv-seat--held {
       background: var(--color-warning-soft);
@@ -513,6 +650,18 @@ const CABIN_LABELS: Record<SeatClass, string> = {
       color: var(--color-ink);
       font-weight: 500;
     }
+    .inv-type-dd {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .inv-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--seat-color, var(--color-primary));
+      display: inline-block;
+    }
     .inv-field {
       display: flex;
       flex-direction: column;
@@ -550,11 +699,12 @@ export class AdminFlightSeatInventory {
   private readonly inventoryService = inject(SeatInventoryService);
   private readonly snackBar = inject(MatSnackBar);
 
-  private readonly routeId = Number(
-    this.route.snapshot.paramMap.get('id') ?? this.route.snapshot.queryParamMap.get('flight_id') ?? 101,
-  );
+  private readonly routeIdRaw =
+    this.route.snapshot.paramMap.get('id') ?? this.route.snapshot.queryParamMap.get('flight_id');
+  private readonly initialFlightId = this.routeIdRaw ? Number(this.routeIdRaw) || null : null;
 
-  protected readonly selectedFlightId = signal(this.routeId || 101);
+  protected readonly selectedFlightId = signal<number | null>(this.initialFlightId);
+  protected readonly flightLabels = signal<Record<number, string>>({});
   protected readonly loading = signal(true);
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -562,40 +712,92 @@ export class AdminFlightSeatInventory {
   protected readonly selectedSeatId = signal<number | null>(null);
   protected readonly editSurcharge = signal(0);
 
-  private readonly flightsRes = toSignal(this.flightService.list({ page: 1, size: 100 }), {
-    initialValue: null,
-  });
-  protected readonly flights = computed(() => this.flightsRes()?.data.items ?? []);
-
   protected readonly selectedSeat = computed(() => {
     const id = this.selectedSeatId();
     return this.seatMap()?.seats.find((s) => s.id === id) ?? null;
   });
 
-  protected readonly seatRows = computed(() => {
+  protected readonly cabinSections = computed<CabinSection[]>(() => {
     const seats = this.seatMap()?.seats ?? [];
-    const byRow = new Map<number, FlightSeatEntry[]>();
-    for (const s of seats) {
-      const arr = byRow.get(s.seat_row) ?? [];
-      arr.push(s);
-      byRow.set(s.seat_row, arr);
+    if (seats.length === 0) return [];
+
+    const byCabin = new Map<SeatClass, FlightSeatEntry[]>();
+    for (const seat of seats) {
+      const cls = seat.seat_type.seat_class;
+      const list = byCabin.get(cls) ?? [];
+      list.push(seat);
+      byCabin.set(cls, list);
     }
-    return [...byRow.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([rowNumber, rowSeats]) => ({
-        rowNumber,
-        seats: [...rowSeats].sort((a, b) => a.seat_column.localeCompare(b.seat_column)),
-      }));
+
+    const sections: CabinSection[] = [];
+    for (const cls of CABIN_ORDER) {
+      const cabinSeats = byCabin.get(cls);
+      if (!cabinSeats || cabinSeats.length === 0) continue;
+
+      const colSet = new Set<string>();
+      const byRow = new Map<number, FlightSeatEntry[]>();
+      for (const s of cabinSeats) {
+        colSet.add(s.seat_column);
+        const arr = byRow.get(s.seat_row) ?? [];
+        arr.push(s);
+        byRow.set(s.seat_row, arr);
+      }
+
+      const columns = [...colSet].sort((a, b) => a.localeCompare(b));
+      const rows = [...byRow.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([rowNumber, rowSeats]) => ({
+          rowNumber,
+          seats: [...rowSeats].sort((a, b) => a.seat_column.localeCompare(b.seat_column)),
+        }));
+
+      sections.push({
+        seatClass: cls,
+        label: CABIN_LABELS[cls] ?? cls,
+        columns,
+        rows,
+      });
+    }
+    return sections;
   });
 
   constructor() {
-    this.loadSeatMap(this.selectedFlightId());
+    if (this.initialFlightId) {
+      this.loadSeatMap(this.initialFlightId);
+    } else {
+      this.loadFirstAvailableFlight();
+    }
   }
 
-  protected selectFlight(flightId: number): void {
+  private loadFirstAvailableFlight(): void {
+    this.loading.set(true);
+    this.flightService.list({ page: 1, size: 1 }).subscribe({
+      next: (res) => {
+        const first = res.data.items[0];
+        if (first) {
+          this.selectedFlightId.set(first.id);
+          this.flightLabels.set({
+            [first.id]: `${first.flight_number} · ${first.departure_airport.airport_code} → ${first.arrival_airport.airport_code}`,
+          });
+          this.loadSeatMap(first.id);
+        } else {
+          this.loading.set(false);
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+
+  protected onFlightPicked(flightId: number | null): void {
     this.selectedFlightId.set(flightId);
     this.selectedSeatId.set(null);
-    this.loadSeatMap(flightId);
+    if (flightId) {
+      this.loadSeatMap(flightId);
+    } else {
+      this.seatMap.set(null);
+    }
   }
 
   private loadSeatMap(flightId: number): void {
@@ -604,6 +806,12 @@ export class AdminFlightSeatInventory {
     this.inventoryService.getSeatMap(flightId).subscribe({
       next: (res) => {
         this.seatMap.set(res.data);
+        if (!this.flightLabels()[flightId]) {
+          this.flightLabels.set({
+            ...this.flightLabels(),
+            [flightId]: `${res.data.flight_number} · ${res.data.aircraft_code}`,
+          });
+        }
         const cur = this.selectedSeatId();
         if (cur) {
           const found = res.data.seats.find((s) => s.id === cur);
@@ -624,7 +832,8 @@ export class AdminFlightSeatInventory {
   }
 
   protected isAisleAfter(col: string): boolean {
-    const raw = this.seatMap()?.aisle_after ?? 'C';
+    const raw = this.seatMap()?.aisle_after;
+    if (!raw) return false;
     return raw
       .split(',')
       .map((x) => x.trim().toUpperCase())
@@ -644,12 +853,14 @@ export class AdminFlightSeatInventory {
   }
 
   protected blockSeat(seat: FlightSeatEntry): void {
+    const flightId = this.selectedFlightId();
+    if (!flightId) return;
     this.busy.set(true);
     this.inventoryService.blockSeat(seat.id).subscribe({
       next: () => {
         this.busy.set(false);
         this.snackBar.open(`Đã khóa ghế ${seat.seat_code}`, 'Đóng', { duration: 2500 });
-        this.loadSeatMap(this.selectedFlightId());
+        this.loadSeatMap(flightId);
       },
       error: (err: Error) => {
         this.busy.set(false);
@@ -659,12 +870,14 @@ export class AdminFlightSeatInventory {
   }
 
   protected unblockSeat(seat: FlightSeatEntry): void {
+    const flightId = this.selectedFlightId();
+    if (!flightId) return;
     this.busy.set(true);
     this.inventoryService.unblockSeat(seat.id).subscribe({
       next: () => {
         this.busy.set(false);
         this.snackBar.open(`Đã mở khóa ghế ${seat.seat_code}`, 'Đóng', { duration: 2500 });
-        this.loadSeatMap(this.selectedFlightId());
+        this.loadSeatMap(flightId);
       },
       error: (err: Error) => {
         this.busy.set(false);
@@ -674,13 +887,15 @@ export class AdminFlightSeatInventory {
   }
 
   protected saveSurcharge(seat: FlightSeatEntry): void {
+    const flightId = this.selectedFlightId();
+    if (!flightId) return;
     if (this.editSurcharge() < 0) {
       this.snackBar.open('Phụ thu không được âm', 'Đóng', { duration: 3000 });
       return;
     }
     this.busy.set(true);
     this.inventoryService
-      .saveInventory(this.selectedFlightId(), {
+      .saveInventory(flightId, {
         seats: [
           {
             flight_seat_id: seat.id,
@@ -700,5 +915,34 @@ export class AdminFlightSeatInventory {
           this.snackBar.open(err.message || 'Không thể lưu phụ thu', 'Đóng', { duration: 4000 });
         },
       });
+  }
+
+  protected resetSurcharge(seat: FlightSeatEntry): void {
+    const flightId = this.selectedFlightId();
+    if (!flightId) return;
+    this.busy.set(true);
+    const resetItem = {
+      flight_seat_id: seat.id,
+      seat_code: seat.seat_code,
+      seat_surcharge: seat.seat_type.surcharge,
+      surcharge_override: null,
+    } as unknown as SeatInventoryOverrideItem;
+
+    this.inventoryService.saveInventory(flightId, { seats: [resetItem] }).subscribe({
+      next: (res) => {
+        this.busy.set(false);
+        this.seatMap.set(res.data);
+        this.editSurcharge.set(seat.seat_type.surcharge);
+        this.snackBar.open(`Đã đặt lại phụ thu mặc định cho ghế ${seat.seat_code}`, 'Đóng', {
+          duration: 2500,
+        });
+      },
+      error: (err: Error) => {
+        this.busy.set(false);
+        this.snackBar.open(err.message || 'Không thể đặt lại phụ thu mặc định', 'Đóng', {
+          duration: 4000,
+        });
+      },
+    });
   }
 }

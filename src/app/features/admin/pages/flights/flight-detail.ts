@@ -2,30 +2,86 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { FlightDetailRecord, FlightPassengerItem } from '@core/models/flight.model';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import {
+  FlightDetailRecord,
+  FlightOperationStatus,
+  FlightPassengerItem,
+} from '@core/models/flight.model';
 import { FlightAdminService } from '@core/services/flight-admin.service';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
-import { StatusBadge } from '@shared/ui/status-badge/status-badge';
+import { BadgeTone, StatusBadge } from '@shared/ui/status-badge/status-badge';
 
 const moneyFmt = new Intl.NumberFormat('vi-VN');
 
+const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
+  DRAFT: { label: 'Nháp', tone: 'neutral' },
+  SCHEDULED: { label: 'Đúng giờ', tone: 'info' },
+  BOARDING: { label: 'Đang lên tàu', tone: 'warning' },
+  DELAYED: { label: 'Chậm chuyến', tone: 'warning' },
+  DEPARTED: { label: 'Đã cất cánh', tone: 'info' },
+  ARRIVED: { label: 'Đã hạ cánh', tone: 'success' },
+  COMPLETED: { label: 'Hoàn thành', tone: 'success' },
+  CANCELLED: { label: 'Đã hủy', tone: 'danger' },
+};
+
 /**
  * Chi tiết chuyến bay & Danh sách hành khách — Staff/Admin (`/admin/flights/:id`).
- * Bám sát `staff.html` (`flight-detail`): thông tin chặng bay, thống kê tồn ghế,
- * liên kết nhanh tới cập nhật vận hành / tồn ghế / bảng giá, và bảng danh sách hành khách.
+ * Bám sát `admin.html` & `staff.html`: header rõ ràng với trạng thái tiếng Việt,
+ * nút thao tác nhanh (Mở/Đóng bán, Sửa chuyến bay, Cập nhật vận hành, Tồn ghế, Bảng giá),
+ * thông tin chuyến gốc (nếu có) và thống kê ghế trống.
  */
 @Component({
   selector: 'app-admin-flight-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, MatIconModule, AppAlert, StatusBadge, EmptyState, SkeletonBlock],
+  imports: [
+    FormsModule,
+    RouterLink,
+    MatIconModule,
+    AppAlert,
+    StatusBadge,
+    EmptyState,
+    SkeletonBlock,
+  ],
   template: `
     <section class="fd-page">
       <header class="fd-head">
-        <div>
-          <h1>Chi tiết chuyến bay {{ flight()?.flight_number ?? '' }}</h1>
-          <p class="fd-sub">Thông tin khai thác, giá vé đang mở và danh sách hành khách</p>
+        <div class="fd-head__info">
+          <div class="fd-title-row">
+            <h1>Chuyến bay {{ flight()?.flight_number ?? '' }}</h1>
+            @if (flight(); as f) {
+              <app-status-badge
+                [tone]="opStatusMeta(f.operation_status).tone"
+                [label]="opStatusMeta(f.operation_status).label"
+              />
+              <app-status-badge
+                [tone]="f.sales_status === 'OPEN' ? 'success' : 'neutral'"
+                [label]="f.sales_status === 'OPEN' ? 'Đang mở bán' : 'Đóng bán'"
+              />
+            }
+          </div>
+          @if (flight(); as f) {
+            <p class="fd-sub">
+              {{ f.airline.airline_name }} · {{ f.departure_airport.airport_code }} →
+              {{ f.arrival_airport.airport_code }} · Tàu bay {{ f.aircraft.aircraft_code }} ({{
+                f.aircraft.model
+              }})
+              @if (f.parent_flight_number) {
+                · Chuyến gốc:
+                @if (f.parent_flight_id) {
+                  <a [routerLink]="['/admin/flights', f.parent_flight_id]" class="fd-link">
+                    {{ f.parent_flight_number }}
+                  </a>
+                } @else {
+                  <strong>{{ f.parent_flight_number }}</strong>
+                }
+              }
+            </p>
+          } @else {
+            <p class="fd-sub">Thông tin khai thác, bảng giá đang áp dụng và danh sách hành khách</p>
+          }
         </div>
         <div class="fd-head__actions">
           <a routerLink="/admin/flights" class="fd-btn">
@@ -33,6 +89,21 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
             Danh sách chuyến
           </a>
           @if (flight(); as f) {
+            <button
+              type="button"
+              class="fd-btn"
+              [disabled]="togglingSales()"
+              (click)="toggleSales(f)"
+            >
+              <mat-icon aria-hidden="true">
+                {{ f.sales_status === 'OPEN' ? 'pause_circle' : 'play_circle' }}
+              </mat-icon>
+              {{ f.sales_status === 'OPEN' ? 'Đóng bán' : 'Mở bán' }}
+            </button>
+            <a [routerLink]="['/admin/flights', f.id, 'edit']" class="fd-btn">
+              <mat-icon aria-hidden="true">edit</mat-icon>
+              Sửa chuyến bay
+            </a>
             <a [routerLink]="['/admin/flights', f.id, 'operation']" class="fd-btn fd-btn--primary">
               <mat-icon aria-hidden="true">schedule</mat-icon>
               Cập nhật vận hành
@@ -40,6 +111,10 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
             <a [routerLink]="['/admin/flights', f.id, 'seat-inventory']" class="fd-btn">
               <mat-icon aria-hidden="true">event_seat</mat-icon>
               Tồn ghế
+            </a>
+            <a [routerLink]="['/admin/flight-fares']" [queryParams]="{ flight_id: f.id }" class="fd-btn">
+              <mat-icon aria-hidden="true">sell</mat-icon>
+              Bảng giá
             </a>
           }
         </div>
@@ -61,30 +136,28 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
             <strong class="fd-stat__val">
               {{ f.departure_airport.airport_code }} → {{ f.arrival_airport.airport_code }}
             </strong>
-            <span class="fd-stat__note">{{ f.airline.airline_name }} · {{ f.aircraft.aircraft_code }}</span>
+            <span class="fd-stat__note">
+              {{ f.departure_airport.airport_name }} → {{ f.arrival_airport.airport_name }}
+            </span>
           </div>
           <div class="fd-stat">
             <span class="fd-stat__label">Khởi hành dự kiến</span>
             <strong class="fd-stat__val">{{ formatDateTime(f.scheduled_departure) }}</strong>
-            <span class="fd-stat__note">Đến {{ formatTime(f.scheduled_arrival) }}</span>
+            <span class="fd-stat__note">
+              Đến {{ formatTime(f.scheduled_arrival) }} · {{ formatDuration(f.duration_minutes) }}
+            </span>
           </div>
           <div class="fd-stat">
             <span class="fd-stat__label">Ghế còn trống</span>
-            <strong class="fd-stat__val">{{ f.available_seats }} / {{ f.total_seats }}</strong>
-            <span class="fd-stat__note">Sức chứa tàu bay: {{ f.aircraft.seat_capacity }}</span>
+            <strong class="fd-stat__val tabular">
+              {{ f.available_seats }} / {{ seatCapacityOf(f) }}
+            </strong>
+            <span class="fd-stat__note">Sức chứa tàu bay: {{ f.aircraft.seat_capacity }} ghế</span>
           </div>
           <div class="fd-stat">
-            <span class="fd-stat__label">Trạng thái</span>
-            <div class="fd-badges">
-              <app-status-badge
-                [tone]="f.operation_status === 'CANCELLED' ? 'danger' : f.operation_status === 'DELAYED' ? 'warning' : 'info'"
-                [label]="f.operation_status"
-              />
-              <app-status-badge
-                [tone]="f.sales_status === 'OPEN' ? 'success' : 'neutral'"
-                [label]="f.sales_status === 'OPEN' ? 'Đang mở bán' : 'Đóng bán'"
-              />
-            </div>
+            <span class="fd-stat__label">Hãng & Tàu bay</span>
+            <strong class="fd-stat__val">{{ f.airline.airline_name }}</strong>
+            <span class="fd-stat__note">{{ f.aircraft.aircraft_code }} · {{ f.aircraft.model }}</span>
           </div>
         </div>
 
@@ -99,15 +172,6 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                 placeholder="Tìm tên khách, mã đơn, PNR..."
                 aria-label="Tìm kiếm hành khách"
               />
-              <select
-                [ngModel]="checkinFilter()"
-                (ngModelChange)="checkinFilter.set($event)"
-                aria-label="Lọc trạng thái check-in"
-              >
-                <option value="">Tất cả trạng thái</option>
-                <option value="checked">Đã check-in</option>
-                <option value="pending">Chưa check-in</option>
-              </select>
             </div>
           </div>
 
@@ -128,7 +192,6 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                     <th>Hạng vé</th>
                     <th>Số ghế</th>
                     <th>Trạng thái đơn</th>
-                    <th>Check-in</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -144,14 +207,14 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                       <td><strong>{{ p.seat_code ?? '—' }}</strong></td>
                       <td>
                         <app-status-badge
-                          [tone]="p.booking_status === 'CONFIRMED' ? 'success' : p.booking_status === 'CANCELLED' ? 'danger' : 'warning'"
+                          [tone]="
+                            p.booking_status === 'CONFIRMED'
+                              ? 'success'
+                              : p.booking_status === 'CANCELLED'
+                                ? 'danger'
+                                : 'warning'
+                          "
                           [label]="bookingStatusLabel(p.booking_status)"
-                        />
-                      </td>
-                      <td>
-                        <app-status-badge
-                          [tone]="p.checked_in ? 'success' : 'neutral'"
-                          [label]="p.checked_in ? 'Đã check-in' : 'Chưa check-in'"
                         />
                       </td>
                     </tr>
@@ -175,9 +238,9 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                 <thead>
                   <tr>
                     <th>Hạng vé</th>
-                    <th>Giá người lớn</th>
-                    <th>Giá trẻ em (75%)</th>
-                    <th>Giá em bé (10%)</th>
+                    <th class="col-num">Giá người lớn</th>
+                    <th class="col-num">Giá trẻ em (75%)</th>
+                    <th class="col-num">Giá em bé (10%)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -186,9 +249,9 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                       <td>
                         <strong>{{ fare.fare_class_code }}</strong> — {{ fare.fare_class_name }}
                       </td>
-                      <td>{{ formatMoney(fare.adult_price) }}</td>
-                      <td>{{ formatMoney(fare.child_price) }}</td>
-                      <td>{{ formatMoney(fare.infant_price) }}</td>
+                      <td class="col-num tabular"><strong>{{ formatMoney(fare.adult_price) }}</strong></td>
+                      <td class="col-num tabular">{{ formatMoney(fare.child_price) }}</td>
+                      <td class="col-num tabular">{{ formatMoney(fare.infant_price) }}</td>
                     </tr>
                   }
                 </tbody>
@@ -212,13 +275,20 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       justify-content: space-between;
       gap: 12px;
     }
+    .fd-title-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
     .fd-head h1 {
       margin: 0;
+      font-family: var(--font-heading);
       font-size: var(--text-h1);
       color: var(--color-ink);
     }
     .fd-sub {
-      margin: 4px 0 0;
+      margin: 6px 0 0;
       font-size: var(--text-small);
       color: var(--color-ink-muted);
     }
@@ -236,13 +306,31 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       border: 1px solid var(--color-border);
       background: var(--color-surface);
       color: var(--color-ink);
+      font-family: var(--font-body);
       font-size: var(--text-small);
       font-weight: 500;
       text-decoration: none;
+      cursor: pointer;
+      transition:
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
+    }
+    .fd-btn:hover:not(:disabled) {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .fd-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     .fd-btn--primary {
       background: var(--color-primary);
       border-color: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .fd-btn--primary:hover:not(:disabled) {
+      background: var(--color-primary-hover);
+      border-color: var(--color-primary-hover);
       color: var(--color-on-primary);
     }
     .fd-btn mat-icon {
@@ -277,10 +365,8 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       font-size: var(--text-caption);
       color: var(--color-ink-muted);
     }
-    .fd-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
+    .tabular {
+      font-variant-numeric: tabular-nums;
     }
     .fd-card {
       background: var(--color-surface);
@@ -314,9 +400,9 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       flex-wrap: wrap;
       gap: 8px;
     }
-    .fd-pax-filter input,
-    .fd-pax-filter select {
+    .fd-pax-filter input {
       height: 36px;
+      min-width: 240px;
       padding: 0 10px;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-sm);
@@ -330,13 +416,16 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       font-size: var(--text-small);
       font-weight: 500;
     }
+    .fd-link:hover {
+      text-decoration: underline;
+    }
     .fd-table-wrap {
       overflow-x: auto;
     }
     .fd-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 680px;
+      min-width: 640px;
     }
     .fd-table th,
     .fd-table td {
@@ -350,6 +439,9 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       color: var(--color-ink-muted);
       background: var(--color-surface-alt);
     }
+    .col-num {
+      text-align: right;
+    }
     .fd-muted {
       font-size: var(--text-caption);
       color: var(--color-ink-muted);
@@ -359,27 +451,24 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
 export class AdminFlightDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly flightService = inject(FlightAdminService);
+  private readonly snackBar = inject(MatSnackBar);
 
   protected readonly loading = signal(true);
+  protected readonly togglingSales = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly flight = signal<FlightDetailRecord | null>(null);
   protected readonly paxKeyword = signal('');
-  protected readonly checkinFilter = signal('');
 
   protected readonly filteredPassengers = computed<FlightPassengerItem[]>(() => {
     const list = this.flight()?.passengers ?? [];
     const kw = this.paxKeyword().trim().toLowerCase();
-    const cf = this.checkinFilter();
-    return list.filter((p) => {
-      if (cf === 'checked' && !p.checked_in) return false;
-      if (cf === 'pending' && p.checked_in) return false;
-      if (!kw) return true;
-      return (
+    if (!kw) return list;
+    return list.filter(
+      (p) =>
         p.full_name.toLowerCase().includes(kw) ||
         p.booking_code.toLowerCase().includes(kw) ||
-        (p.pnr_code ?? '').toLowerCase().includes(kw)
-      );
-    });
+        (p.pnr_code ?? '').toLowerCase().includes(kw),
+    );
   });
 
   constructor() {
@@ -389,6 +478,11 @@ export class AdminFlightDetail {
       this.loading.set(false);
       return;
     }
+    this.loadFlight(id);
+  }
+
+  private loadFlight(id: number): void {
+    this.loading.set(true);
     this.flightService.getById(id).subscribe({
       next: (res) => {
         this.flight.set(res.data);
@@ -401,6 +495,35 @@ export class AdminFlightDetail {
     });
   }
 
+  protected toggleSales(f: FlightDetailRecord): void {
+    this.togglingSales.set(true);
+    const req$ =
+      f.sales_status === 'OPEN'
+        ? this.flightService.deactivate(f.id)
+        : this.flightService.activate(f.id);
+    req$.subscribe({
+      next: (res) => {
+        this.togglingSales.set(false);
+        this.snackBar.open(res.message || 'Đã cập nhật trạng thái bán', 'Đóng', { duration: 3000 });
+        this.loadFlight(f.id);
+      },
+      error: (err: Error) => {
+        this.togglingSales.set(false);
+        this.snackBar.open(err.message || 'Không thể đổi trạng thái mở bán', 'Đóng', {
+          duration: 4000,
+        });
+      },
+    });
+  }
+
+  protected seatCapacityOf(f: FlightDetailRecord): number {
+    return f.seat_capacity ?? f.total_seats ?? f.aircraft?.seat_capacity ?? 0;
+  }
+
+  protected opStatusMeta(status: FlightOperationStatus | string): { label: string; tone: BadgeTone } {
+    return OP_STATUS_META[status] ?? { label: status, tone: 'neutral' };
+  }
+
   protected passengerTypeLabel(t: FlightPassengerItem['passenger_type']): string {
     return t === 'ADULT' ? 'Người lớn' : t === 'CHILD' ? 'Trẻ em' : 'Em bé';
   }
@@ -411,6 +534,12 @@ export class AdminFlightDetail {
 
   protected formatMoney(val: number): string {
     return `${moneyFmt.format(val)}đ`;
+  }
+
+  protected formatDuration(minutes: number): string {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return h > 0 ? `${h}g ${m}p` : `${m}p`;
   }
 
   protected formatDateTime(iso: string): string {

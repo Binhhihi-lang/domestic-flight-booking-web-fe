@@ -60,7 +60,8 @@
                 <img
                   class="thumb thumb--lg"
                   [src]="draft().image_url"
-                  alt=""
+                  alt="Xem trước ảnh khuyến mãi"
+                  loading="lazy"
                   (error)="markImageBroken()"
                 />
               } @else {
@@ -82,10 +83,15 @@
               />
 
               <div class="imgfield__row">
-                <label class="imgfield__pick">
+                <label class="imgfield__pick" [class.is-busy]="uploadingImage()">
                   <mat-icon>upload</mat-icon>
-                  Chọn ảnh từ máy
-                  <input type="file" accept="image/*" (change)="onPickImage($event)" />
+                  {{ uploadingImage() ? 'Đang tải ảnh lên…' : 'Chọn ảnh từ máy' }}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    [disabled]="uploadingImage()"
+                    (change)="onPickImage($event)"
+                  />
                 </label>
                 @if (draft().image_url) {
                   <button class="imgfield__clear" type="button" (click)="clearImage()">
@@ -95,7 +101,7 @@
               </div>
 
               <span class="hint">
-                Ảnh hiển thị trên thẻ khuyến mãi ở trang chủ. Tối đa 2 MB nếu chọn từ máy.
+                Ảnh hiển thị trên thẻ khuyến mãi ở trang chủ (tải trực tiếp lên Cloudinary, tối đa 5 MB).
               </span>
             </div>
           </div>
@@ -110,7 +116,7 @@
             name="description"
             [ngModel]="draft().description"
             (ngModelChange)="setDraft('description', $event)"
-            placeholder="Ví dụ: Nhập mã DALAT20 giảm ngay 20% khi đặt vé khứ hồi. Áp dụng đến hết 15/11."
+            placeholder="Ví dụ: Giảm ngay 20% khi đặt vé khứ hồi. Áp dụng đến hết 15/11."
           ></textarea>
           <span class="hint">Dòng mô tả hiện trên thẻ khuyến mãi, tối đa 500 ký tự</span>
         </div>
@@ -140,7 +146,7 @@
             (ngModelChange)="setDraft('discount_type', $event)"
           >
             <option value="PERCENT">Theo phần trăm (%)</option>
-            <option value="AMOUNT">Theo số tiền (₫)</option>
+            <option value="AMOUNT">Theo số tiền (đ)</option>
           </select>
         </div>
 
@@ -165,7 +171,7 @@
         </div>
 
         <div class="field">
-          <label for="p-max">Trần giảm mỗi dòng vé (₫)</label>
+          <label for="p-max">Trần giảm mỗi dòng vé (đ)</label>
           <input
             id="p-max"
             type="number"
@@ -185,7 +191,7 @@
         </div>
 
         <div class="field">
-          <label for="p-min">Giá dòng vé tối thiểu (₫)</label>
+          <label for="p-min">Giá dòng vé tối thiểu (đ)</label>
           <input
             id="p-min"
             type="number"
@@ -255,7 +261,7 @@
     </app-app-card>
 
     <!-- ===== Phạm vi áp dụng ===== -->
-    <app-app-card title="Phạm vi áp dụng" class="blk">
+    <app-app-card title="Phạm vi áp dụng" class="blk blk--overflow">
       <app-app-button cardActions size="sm" variant="ghost" (clicked)="addScope()">
         <mat-icon>add</mat-icon>
         Thêm dòng
@@ -276,7 +282,7 @@
       } @else {
         <div class="scope-list">
           @for (s of scopes(); track s.key) {
-            <div class="scope-row">
+            <div class="scope-row" [class.scope-row--route]="s.target_type === 'ROUTE'">
               <select
                 class="scope-row__type"
                 aria-label="Loại phạm vi"
@@ -289,30 +295,50 @@
                 <option value="FLIGHT">Theo chuyến bay</option>
               </select>
 
-              <select
-                class="scope-row__val"
-                aria-label="Giá trị phạm vi"
-                [ngModel]="s.value === null ? '' : s.value"
-                (ngModelChange)="setScopeValue(s.key, 'value', $event)"
-              >
-                <option value="">— Chọn —</option>
-                @for (o of optionsFor(s.target_type); track o.value) {
-                  <option [value]="o.value">{{ o.label }}</option>
+              @switch (s.target_type) {
+                @case ('AIRLINE') {
+                  <app-searchable-select
+                    [options]="airlineOptions()"
+                    [value]="s.value"
+                    placeholder="Chọn hãng hàng không…"
+                    searchPlaceholder="Tìm theo mã hoặc tên hãng…"
+                    (valueChange)="setScopeValue(s.key, 'value', $event)"
+                  />
                 }
-              </select>
-
-              @if (s.target_type === 'ROUTE') {
-                <select
-                  class="scope-row__val"
-                  aria-label="Sân bay đến"
-                  [ngModel]="s.value2 === null ? '' : s.value2"
-                  (ngModelChange)="setScopeValue(s.key, 'value2', $event)"
-                >
-                  <option value="">— Đến (bỏ trống = mọi điểm đến) —</option>
-                  @for (o of optionsFor('ROUTE'); track o.value) {
-                    <option [value]="o.value">{{ o.label }}</option>
-                  }
-                </select>
+                @case ('FARE_CLASS') {
+                  <app-searchable-select
+                    [options]="fareClassOptions()"
+                    [value]="s.value"
+                    placeholder="Chọn hạng vé…"
+                    searchPlaceholder="Tìm theo mã, tên hạng vé hoặc mã hãng…"
+                    (valueChange)="setScopeValue(s.key, 'value', $event)"
+                  />
+                }
+                @case ('ROUTE') {
+                  <app-searchable-select
+                    [options]="airportOptions()"
+                    [value]="s.value"
+                    placeholder="Sân bay đi…"
+                    searchPlaceholder="Tìm sân bay đi theo mã hoặc tên…"
+                    (valueChange)="setScopeValue(s.key, 'value', $event)"
+                  />
+                  <app-searchable-select
+                    [options]="airportOptions()"
+                    [value]="s.value2"
+                    placeholder="Sân bay đến (bỏ trống = mọi điểm đến)…"
+                    searchPlaceholder="Tìm sân bay đến theo mã hoặc tên…"
+                    (valueChange)="setScopeValue(s.key, 'value2', $event)"
+                  />
+                }
+                @case ('FLIGHT') {
+                  <app-flight-search-picker
+                    [multiple]="false"
+                    [selectedId]="s.value"
+                    [selectedLabels]="flightLabels()"
+                    placeholder="Tìm chuyến bay theo số hiệu hoặc tuyến bay…"
+                    (selectedIdChange)="setScopeValue(s.key, 'value', $event)"
+                  />
+                }
               }
 
               <button
@@ -330,29 +356,24 @@
     </app-app-card>
 
     <!-- ===== Loại trừ chuyến bay ===== -->
-    <app-app-card title="Loại trừ chuyến bay" class="blk">
+    <app-app-card title="Loại trừ chuyến bay" class="blk blk--overflow">
       <p class="note">
         Chuyến được chọn ở đây <strong>không bao giờ</strong> được giảm, kể cả khi khớp phạm vi —
         loại trừ luôn thắng phạm vi.
       </p>
 
-      <div class="exclude-grid">
-        @for (f of flights; track f.value) {
-          <label class="exclude-item" [class.exclude-item--on]="isExcluded(f.value)">
-            <input
-              type="checkbox"
-              [checked]="isExcluded(f.value)"
-              (change)="toggleExcluded(f.value)"
-            />
-            <span>{{ f.label }}</span>
-          </label>
-        }
-      </div>
+      <app-flight-search-picker
+        [multiple]="true"
+        [selectedIds]="excludedIds()"
+        [selectedLabels]="flightLabels()"
+        placeholder="Tìm và chọn chuyến bay cần loại trừ (VD: VN210, HAN → SGN)…"
+        (selectedIdsChange)="setExcludedIds($event)"
+      />
     </app-app-card>
 
     <div class="form-actions">
       <app-app-button variant="ghost" (clicked)="cancel()">Hủy</app-app-button>
-      <app-app-button [disabled]="saving()" (clicked)="save()">
+      <app-app-button [disabled]="saving() || uploadingImage()" (clicked)="save()">
         {{ saving() ? 'Đang lưu…' : 'Lưu khuyến mãi' }}
       </app-app-button>
     </div>
