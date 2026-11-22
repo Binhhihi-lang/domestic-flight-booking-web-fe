@@ -42,7 +42,7 @@ export class AdminPromotions {
         value: (r) =>
           r.discount_type === 'PERCENT'
             ? `${r.discount_value}%`
-            : `${AdminPromotions.money.format(r.discount_value)}₫`,
+            : `${AdminPromotions.money.format(r.discount_value)}đ`,
         kind: 'num',
       },
       {

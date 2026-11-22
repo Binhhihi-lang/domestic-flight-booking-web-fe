@@ -8,6 +8,7 @@ import { FlightOperationStatus, FlightSalesStatus } from '@core/models/flight.mo
 import { AirlineService } from '@core/services/airline.service';
 import { AircraftService, AirportService } from '@core/services/catalog.service';
 import { FlightAdminService } from '@core/services/flight-admin.service';
+import { FlightSearchPicker } from '@shared/components/flight-search-picker/flight-search-picker';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -15,12 +16,21 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
 /**
  * Biểu mẫu Tạo / Sửa chuyến bay (`/admin/flights/new`, `/admin/flights/:id/edit`).
  * Bám sát `admin.html` (`flight-form`): chọn hãng bay, tàu bay đang hoạt động,
- * sân bay đi/đến (không trùng nhau), giờ khởi hành/đến dự kiến, trạng thái bán.
+ * sân bay đi/đến (không trùng nhau), giờ khởi hành/đến dự kiến, chuyến gốc tùy chọn,
+ * mặc định tạo mới ở trạng thái Nháp (DRAFT) + Đóng bán (CLOSED).
  */
 @Component({
   selector: 'app-admin-flight-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, MatIconModule, AppAlert, AppButton, SkeletonBlock],
+  imports: [
+    FormsModule,
+    RouterLink,
+    MatIconModule,
+    FlightSearchPicker,
+    AppAlert,
+    AppButton,
+    SkeletonBlock,
+  ],
   template: `
     <section class="ff-page">
       <header class="ff-head">
@@ -104,8 +114,8 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
                   [ngModel]="salesStatus()"
                   (ngModelChange)="salesStatus.set($event)"
                 >
-                  <option value="OPEN">Mở bán (OPEN)</option>
-                  <option value="CLOSED">Đóng bán (CLOSED)</option>
+                  <option value="CLOSED">Đóng bán</option>
+                  <option value="OPEN">Đang mở bán</option>
                 </select>
               </div>
 
@@ -173,14 +183,25 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
                   [ngModel]="operationStatus()"
                   (ngModelChange)="operationStatus.set($event)"
                 >
-                  <option value="SCHEDULED">Đúng giờ (SCHEDULED)</option>
-                  <option value="DRAFT">Bản nháp (DRAFT)</option>
-                  <option value="BOARDING">Đang lên tàu (BOARDING)</option>
-                  <option value="DELAYED">Chậm chuyến (DELAYED)</option>
-                  <option value="DEPARTED">Đã cất cánh (DEPARTED)</option>
-                  <option value="ARRIVED">Đã hạ cánh (ARRIVED)</option>
-                  <option value="CANCELLED">Đã hủy (CANCELLED)</option>
+                  <option value="DRAFT">Nháp</option>
+                  <option value="SCHEDULED">Đúng giờ</option>
+                  <option value="BOARDING">Đang lên tàu</option>
+                  <option value="DELAYED">Chậm chuyến</option>
+                  <option value="DEPARTED">Đã cất cánh</option>
+                  <option value="ARRIVED">Đã hạ cánh</option>
+                  <option value="CANCELLED">Đã hủy</option>
                 </select>
+              </div>
+
+              <div class="ff-field">
+                <label>Chuyến gốc (tùy chọn)</label>
+                <app-flight-search-picker
+                  [multiple]="false"
+                  [selectedId]="parentFlightId()"
+                  [selectedLabels]="parentFlightLabels()"
+                  placeholder="Tìm chuyến gốc nếu là chuyến tăng cường / đổi tàu..."
+                  (selectedIdChange)="parentFlightId.set($event)"
+                />
               </div>
             </div>
 
@@ -211,6 +232,7 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
     }
     .ff-head h1 {
       margin: 0;
+      font-family: var(--font-heading);
       font-size: var(--text-h1);
       color: var(--color-ink);
     }
@@ -265,7 +287,7 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
     }
     .ff-field input,
     .ff-field select {
-      height: 40px;
+      height: 42px;
       padding: 0 12px;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-sm);
@@ -316,8 +338,10 @@ export class AdminFlightForm {
   protected readonly arrivalAirportId = signal(2);
   protected readonly scheduledDeparture = signal('2026-11-28T08:00');
   protected readonly scheduledArrival = signal('2026-11-28T10:10');
-  protected readonly operationStatus = signal<FlightOperationStatus>('SCHEDULED');
-  protected readonly salesStatus = signal<FlightSalesStatus>('OPEN');
+  protected readonly operationStatus = signal<FlightOperationStatus>('DRAFT');
+  protected readonly salesStatus = signal<FlightSalesStatus>('CLOSED');
+  protected readonly parentFlightId = signal<number | null>(null);
+  protected readonly parentFlightLabels = signal<Record<number, string>>({});
 
   private readonly airlinesRes = toSignal(this.airlineService.list({ page: 1, size: 100 }), {
     initialValue: null,
@@ -349,6 +373,10 @@ export class AdminFlightForm {
           this.scheduledArrival.set(f.scheduled_arrival.slice(0, 16));
           this.operationStatus.set(f.operation_status);
           this.salesStatus.set(f.sales_status);
+          this.parentFlightId.set(f.parent_flight_id ?? null);
+          if (f.parent_flight_id && f.parent_flight_number) {
+            this.parentFlightLabels.set({ [f.parent_flight_id]: f.parent_flight_number });
+          }
           this.loading.set(false);
         },
         error: (err: Error) => {
@@ -384,6 +412,7 @@ export class AdminFlightForm {
       scheduled_arrival: `${this.scheduledArrival()}:00`,
       operation_status: this.operationStatus(),
       sales_status: this.salesStatus(),
+      parent_flight_id: this.parentFlightId(),
     };
 
     this.saving.set(true);

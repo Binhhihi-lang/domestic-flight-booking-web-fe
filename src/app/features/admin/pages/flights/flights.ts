@@ -1,35 +1,47 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { FlightOperationStatus, FlightRecord } from '@core/models/flight.model';
 import { AirlineService } from '@core/services/airline.service';
 import { AuthService } from '@core/services/auth.service';
 import { AirportService } from '@core/services/catalog.service';
 import { FlightAdminService } from '@core/services/flight-admin.service';
+import { ConfirmDialog, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
+import { ServerPager } from '@shared/components/server-pager/server-pager';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
 import { BadgeTone, StatusBadge } from '@shared/ui/status-badge/status-badge';
 
-const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: BadgeTone }> = {
-  DRAFT: { label: 'Bản nháp', tone: 'neutral' },
+const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
+  DRAFT: { label: 'Nháp', tone: 'neutral' },
   SCHEDULED: { label: 'Đúng giờ', tone: 'info' },
   BOARDING: { label: 'Đang lên tàu', tone: 'warning' },
   DELAYED: { label: 'Chậm chuyến', tone: 'warning' },
   DEPARTED: { label: 'Đã cất cánh', tone: 'info' },
   ARRIVED: { label: 'Đã hạ cánh', tone: 'success' },
+  COMPLETED: { label: 'Hoàn thành', tone: 'success' },
   CANCELLED: { label: 'Đã hủy', tone: 'danger' },
 };
 
 /**
  * Danh sách chuyến bay — Admin & Staff (`/admin/flights`).
- * Bám sát `admin.html` & `staff.html`: bộ lọc tuyến bay, ngày bay, hãng bay,
- * trạng thái vận hành & trạng thái bán; thao tác mở/đóng bán, xem chi tiết khách,
- * cập nhật vận hành (Staff), cấu hình giá & tồn ghế.
+ * Hỗ trợ phân trang server (`app-server-pager`), tìm kiếm debounce 300ms,
+ * lọc đầy đủ trạng thái vận hành (kể cả DRAFT), cột Ghế trống kèm cảnh báo Sắp hết,
+ * và cho phép cả ADMIN & STAFF thêm/sửa/mở-đóng bán/cập nhật vận hành.
  */
 @Component({
   selector: 'app-admin-flights',
@@ -43,6 +55,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
     StatusBadge,
     EmptyState,
     SkeletonBlock,
+    ServerPager,
   ],
   template: `
     <section class="flt-page">
@@ -60,14 +73,12 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
             <mat-icon aria-hidden="true">event_seat</mat-icon>
             Tồn ghế chuyến
           </a>
-          @if (isAdmin()) {
-            <a routerLink="/admin/flights/new">
-              <app-app-button variant="primary" size="sm">
-                <mat-icon aria-hidden="true">add</mat-icon>
-                Thêm chuyến bay
-              </app-app-button>
-            </a>
-          }
+          <a routerLink="/admin/flights/new" class="flt-add-link">
+            <app-app-button variant="primary" size="sm">
+              <mat-icon aria-hidden="true">add</mat-icon>
+              Thêm chuyến bay
+            </app-app-button>
+          </a>
         </div>
       </header>
 
@@ -79,7 +90,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
               id="flt-kw"
               type="search"
               [ngModel]="keyword()"
-              (ngModelChange)="keyword.set($event); load()"
+              (ngModelChange)="onKeywordInput($event)"
               placeholder="Số hiệu (VD: VN-210), hãng bay, mã sân bay..."
             />
           </div>
@@ -89,7 +100,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
             <select
               id="flt-airline"
               [ngModel]="airlineId()"
-              (ngModelChange)="airlineId.set($event); load()"
+              (ngModelChange)="airlineId.set($event); onFilterChange()"
             >
               <option value="">Tất cả hãng</option>
               @for (a of airlineOptions(); track a.id) {
@@ -103,7 +114,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
             <select
               id="flt-dep"
               [ngModel]="departureAirportId()"
-              (ngModelChange)="departureAirportId.set($event); load()"
+              (ngModelChange)="departureAirportId.set($event); onFilterChange()"
             >
               <option value="">Tất cả</option>
               @for (ap of airportOptions(); track ap.id) {
@@ -117,7 +128,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
             <select
               id="flt-arr"
               [ngModel]="arrivalAirportId()"
-              (ngModelChange)="arrivalAirportId.set($event); load()"
+              (ngModelChange)="arrivalAirportId.set($event); onFilterChange()"
             >
               <option value="">Tất cả</option>
               @for (ap of airportOptions(); track ap.id) {
@@ -132,7 +143,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
               id="flt-date"
               type="date"
               [ngModel]="departureDate()"
-              (ngModelChange)="departureDate.set($event); load()"
+              (ngModelChange)="departureDate.set($event); onFilterChange()"
             />
           </div>
 
@@ -141,14 +152,16 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
             <select
               id="flt-op"
               [ngModel]="operationStatus()"
-              (ngModelChange)="operationStatus.set($event); load()"
+              (ngModelChange)="operationStatus.set($event); onFilterChange()"
             >
               <option value="">Tất cả</option>
+              <option value="DRAFT">Nháp</option>
               <option value="SCHEDULED">Đúng giờ</option>
               <option value="BOARDING">Đang lên tàu</option>
               <option value="DELAYED">Chậm chuyến</option>
               <option value="DEPARTED">Đã cất cánh</option>
               <option value="ARRIVED">Đã hạ cánh</option>
+              <option value="COMPLETED">Hoàn thành</option>
               <option value="CANCELLED">Đã hủy</option>
             </select>
           </div>
@@ -158,7 +171,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
             <select
               id="flt-sales"
               [ngModel]="salesStatus()"
-              (ngModelChange)="salesStatus.set($event); load()"
+              (ngModelChange)="salesStatus.set($event); onFilterChange()"
             >
               <option value="">Tất cả</option>
               <option value="OPEN">Đang mở bán</option>
@@ -194,6 +207,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
                   <th>Hãng & Tàu bay</th>
                   <th>Chặng bay</th>
                   <th>Giờ khởi hành → đến</th>
+                  <th class="col-num">Ghế trống</th>
                   <th>Vận hành</th>
                   <th>Mở bán</th>
                   <th class="col-actions">Thao tác</th>
@@ -206,6 +220,9 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
                       <a [routerLink]="['/admin/flights', row.id]" class="flt-code">
                         {{ row.flight_number }}
                       </a>
+                      @if (row.parent_flight_number) {
+                        <div class="flt-muted">Chuyến gốc: {{ row.parent_flight_number }}</div>
+                      }
                     </td>
                     <td>
                       <div class="flt-primary">{{ row.airline.airline_name }}</div>
@@ -222,6 +239,20 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
                     <td>
                       <div class="flt-primary">{{ formatDateTime(row.scheduled_departure) }}</div>
                       <div class="flt-muted">Đến {{ formatTime(row.scheduled_arrival) }}</div>
+                    </td>
+                    <td class="col-num">
+                      @if (hasSeatStats(row)) {
+                        <div class="flt-seats">
+                          <strong class="tabular">
+                            {{ row.available_seats }} / {{ seatCapacityOf(row) }}
+                          </strong>
+                          @if (isLowSeats(row)) {
+                            <span class="flt-low-badge">Sắp hết</span>
+                          }
+                        </div>
+                      } @else {
+                        <span class="flt-muted">—</span>
+                      }
                     </td>
                     <td>
                       <app-status-badge
@@ -240,9 +271,16 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
                         <a
                           [routerLink]="['/admin/flights', row.id]"
                           class="flt-act"
-                          title="Chi tiết & danh sách hành khách"
+                          title="Chi tiết chuyến bay"
                         >
                           Chi tiết
+                        </a>
+                        <a
+                          [routerLink]="['/admin/flights', row.id, 'edit']"
+                          class="flt-act"
+                          title="Sửa thông tin lịch bay"
+                        >
+                          Sửa
                         </a>
                         <a
                           [routerLink]="['/admin/flights', row.id, 'operation']"
@@ -258,20 +296,21 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
                         >
                           Tồn ghế
                         </a>
+                        <button
+                          type="button"
+                          class="flt-act flt-act--btn"
+                          (click)="toggleSales(row)"
+                        >
+                          {{ row.sales_status === 'OPEN' ? 'Đóng bán' : 'Mở bán' }}
+                        </button>
                         @if (isAdmin()) {
-                          <a
-                            [routerLink]="['/admin/flights', row.id, 'edit']"
-                            class="flt-act"
-                            title="Sửa thông tin lịch bay"
-                          >
-                            Sửa
-                          </a>
                           <button
                             type="button"
-                            class="flt-act flt-act--btn"
-                            (click)="toggleSales(row)"
+                            class="flt-act flt-act--danger"
+                            (click)="confirmDelete(row)"
+                            [attr.aria-label]="'Xóa chuyến bay ' + row.flight_number"
                           >
-                            {{ row.sales_status === 'OPEN' ? 'Đóng bán' : 'Mở bán' }}
+                            Xóa
                           </button>
                         }
                       </div>
@@ -281,9 +320,16 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
               </tbody>
             </table>
           </div>
-          <footer class="flt-foot">
-            <span>Hiển thị {{ rows().length }} / {{ totalItems() }} chuyến bay</span>
-          </footer>
+          <app-server-pager
+            [page]="page()"
+            [size]="size()"
+            [totalItems]="totalItems()"
+            [totalPages]="totalPages()"
+            [pageSizeOptions]="[20, 50, 100]"
+            noun="chuyến bay"
+            (pageChange)="onPageChange($event)"
+            (sizeChange)="onSizeChange($event)"
+          />
         }
       </div>
     </section>
@@ -292,22 +338,23 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
     .flt-page {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: var(--sp-lg);
     }
     .flt-head {
       display: flex;
       flex-wrap: wrap;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 12px;
+      gap: var(--sp-md);
     }
     .flt-head h1 {
       margin: 0;
+      font-family: var(--font-heading);
       font-size: var(--text-h1);
       color: var(--color-ink);
     }
     .flt-sub {
-      margin: 4px 0 0;
+      margin: var(--sp-xs) 0 0;
       color: var(--color-ink-muted);
       font-size: var(--text-small);
     }
@@ -315,7 +362,10 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
+      gap: var(--sp-sm);
+    }
+    .flt-add-link {
+      text-decoration: none;
     }
     .flt-link-btn {
       display: inline-flex;
@@ -329,6 +379,9 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
       font-size: var(--text-small);
       font-weight: 500;
       text-decoration: none;
+      transition:
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
     }
     .flt-link-btn:hover {
       border-color: var(--color-primary);
@@ -348,16 +401,16 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
     }
     .flt-filters {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-      gap: 12px;
-      padding: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--sp-md);
+      padding: var(--sp-lg);
       border-bottom: 1px solid var(--color-border-soft);
       background: var(--color-surface-alt);
     }
     .flt-field {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: var(--sp-xs);
     }
     .flt-field--grow {
       grid-column: span 2;
@@ -383,8 +436,14 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
       font-size: var(--text-small);
       width: 100%;
     }
+    .flt-field input:focus,
+    .flt-field select:focus {
+      outline: none;
+      border-color: var(--color-primary-bright);
+      box-shadow: 0 0 0 2px var(--color-primary-soft);
+    }
     .flt-pad {
-      padding: 16px;
+      padding: var(--sp-lg);
     }
     .flt-skel {
       display: flex;
@@ -397,7 +456,7 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
     .flt-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 820px;
+      min-width: 920px;
     }
     .flt-table th,
     .flt-table td {
@@ -413,6 +472,9 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
       color: var(--color-ink-muted);
       background: var(--color-surface-alt);
       white-space: nowrap;
+    }
+    .flt-table tbody tr:hover {
+      background: var(--color-surface-alt);
     }
     .flt-code {
       font-weight: 700;
@@ -443,6 +505,28 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
       height: 16px;
       color: var(--color-ink-muted);
     }
+    .col-num {
+      text-align: right;
+      white-space: nowrap;
+    }
+    .flt-seats {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+    }
+    .tabular {
+      font-variant-numeric: tabular-nums;
+    }
+    .flt-low-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--color-warning-soft);
+      color: var(--color-on-warning-soft);
+      font-size: var(--text-caption);
+      font-weight: 600;
+    }
     .col-actions {
       text-align: right;
     }
@@ -462,15 +546,23 @@ const OP_STATUS_META: Record<FlightOperationStatus, { label: string; tone: Badge
       font-weight: 500;
       text-decoration: none;
       cursor: pointer;
+      transition:
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease),
+        background-color var(--dur-fast) var(--ease);
     }
     .flt-act:hover {
       border-color: var(--color-primary);
       color: var(--color-primary);
     }
-    .flt-foot {
-      padding: 12px 16px;
-      font-size: var(--text-small);
-      color: var(--color-ink-muted);
+    .flt-act--danger {
+      border-color: var(--color-danger);
+      color: var(--color-danger);
+    }
+    .flt-act--danger:hover {
+      border-color: var(--color-danger);
+      background: var(--color-danger-soft);
+      color: var(--color-on-danger-soft);
     }
   `,
 })
@@ -479,13 +571,19 @@ export class AdminFlights {
   private readonly airlineService = inject(AirlineService);
   private readonly airportService = inject(AirportService);
   private readonly authService = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly isAdmin = computed(() => this.authService.isAdmin());
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly rows = signal<FlightRecord[]>([]);
+
+  protected readonly page = signal(1);
+  protected readonly size = signal(20);
   protected readonly totalItems = signal(0);
+  protected readonly totalPages = signal(1);
 
   protected readonly keyword = signal('');
   protected readonly airlineId = signal('');
@@ -494,6 +592,8 @@ export class AdminFlights {
   protected readonly departureDate = signal('');
   protected readonly operationStatus = signal('');
   protected readonly salesStatus = signal('');
+
+  private readonly search$ = new Subject<string>();
 
   private readonly airlinesRes = toSignal(this.airlineService.list({ page: 1, size: 100 }), {
     initialValue: null,
@@ -506,6 +606,34 @@ export class AdminFlights {
   protected readonly airportOptions = computed(() => this.airportsRes()?.data.items ?? []);
 
   constructor() {
+    this.search$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.page.set(1);
+        this.load();
+      });
+
+    this.load();
+  }
+
+  protected onKeywordInput(value: string): void {
+    this.keyword.set(value);
+    this.search$.next(value);
+  }
+
+  protected onFilterChange(): void {
+    this.page.set(1);
+    this.load();
+  }
+
+  protected onPageChange(nextPage: number): void {
+    this.page.set(nextPage);
+    this.load();
+  }
+
+  protected onSizeChange(nextSize: number): void {
+    this.size.set(nextSize);
+    this.page.set(1);
     this.load();
   }
 
@@ -514,8 +642,8 @@ export class AdminFlights {
     this.error.set(null);
     this.flightService
       .list({
-        page: 1,
-        size: 50,
+        page: this.page(),
+        size: this.size(),
         keyword: this.keyword().trim() || undefined,
         airline_id: this.airlineId() || undefined,
         departure_airport_id: this.departureAirportId() || undefined,
@@ -528,6 +656,7 @@ export class AdminFlights {
         next: (res) => {
           this.rows.set(res.data.items);
           this.totalItems.set(res.data.pagination.total_items);
+          this.totalPages.set(res.data.pagination.total_pages || 1);
           this.loading.set(false);
         },
         error: (err: Error) => {
@@ -537,7 +666,24 @@ export class AdminFlights {
       });
   }
 
-  protected opStatusMeta(status: FlightOperationStatus): { label: string; tone: BadgeTone } {
+  protected hasSeatStats(row: FlightRecord): boolean {
+    return row.available_seats !== undefined && row.available_seats !== null;
+  }
+
+  protected seatCapacityOf(row: FlightRecord): number {
+    return row.seat_capacity ?? row.aircraft?.seat_capacity ?? 0;
+  }
+
+  protected isLowSeats(row: FlightRecord): boolean {
+    const cap = this.seatCapacityOf(row);
+    const avail = row.available_seats;
+    if (avail === undefined || avail === null || cap <= 0) {
+      return false;
+    }
+    return avail <= Math.ceil(cap * 0.15) || avail <= 5;
+  }
+
+  protected opStatusMeta(status: FlightOperationStatus | string): { label: string; tone: BadgeTone } {
     return OP_STATUS_META[status] ?? { label: status, tone: 'neutral' };
   }
 
@@ -581,5 +727,34 @@ export class AdminFlights {
         });
       },
     });
+  }
+
+  protected confirmDelete(row: FlightRecord): void {
+    const data: ConfirmDialogData = {
+      title: `Xóa chuyến bay ${row.flight_number}?`,
+      message: `Chặng ${row.departure_airport.airport_code} → ${row.arrival_airport.airport_code} khởi hành ${this.formatDateTime(row.scheduled_departure)}.`,
+      confirmText: 'Xóa chuyến bay',
+      cancelText: 'Hủy',
+      tone: 'warn',
+    };
+    this.dialog
+      .open(ConfirmDialog, { data, panelClass: 'vf-confirm-panel' })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (!ok) return;
+        this.flightService.remove(row.id).subscribe({
+          next: (res) => {
+            this.snackBar.open(res.message || `Đã xóa chuyến bay ${row.flight_number}`, 'Đóng', {
+              duration: 3000,
+            });
+            this.load();
+          },
+          error: (err: Error) => {
+            this.snackBar.open(err.message || 'Không thể xóa chuyến bay', 'Đóng', {
+              duration: 4000,
+            });
+          },
+        });
+      });
   }
 }

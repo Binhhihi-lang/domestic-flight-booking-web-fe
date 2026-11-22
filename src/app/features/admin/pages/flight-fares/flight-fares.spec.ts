@@ -7,7 +7,7 @@ import { ApiResponse } from '@core/models/api-response.model';
 import { FlightFare } from '@core/models/flight.model';
 import { AdminFlightFares } from '@features/admin/pages/flight-fares/flight-fares';
 
-describe('AdminFlightFares (Bảng giá chuyến bay — Cụm DA2.2)', () => {
+describe('AdminFlightFares (Bảng giá chuyến bay — Cụm DA2.2 / 3A)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminFlightFares],
@@ -19,19 +19,23 @@ describe('AdminFlightFares (Bảng giá chuyến bay — Cụm DA2.2)', () => {
     }).compileComponents();
   });
 
-  it('render bảng giá với đủ 3 mức giá Người lớn, Trẻ em (75%) và Em bé (10%)', async () => {
+  it('render bảng giá với Hạng dịch vụ, ServerPager, FlightSearchPicker và nút Sửa', async () => {
     const fixture = TestBed.createComponent(AdminFlightFares);
     fixture.detectChanges();
     await new Promise((r) => setTimeout(r, 600));
     fixture.detectChanges();
 
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    const el = fixture.nativeElement as HTMLElement;
+    const text = el.textContent ?? '';
     expect(text).toContain('VN-210');
     expect(text).toContain('VN_ECO_SAVER');
-    // 1.150.000 + 490.000 = 1.640.000đ (Người lớn), 75% = 1.230.000đ, 10% = 164.000đ
+    expect(text).toContain('Hạng vé & Hạng dịch vụ');
     expect(text).toContain('1.640.000đ');
     expect(text).toContain('1.230.000đ');
     expect(text).toContain('164.000đ');
+    expect(text).toContain('Sửa');
+    expect(el.querySelector('app-server-pager')).toBeTruthy();
+    expect(el.querySelector('app-flight-search-picker')).toBeTruthy();
   });
 
   it('MockRegistry tự động tính giá trẻ em 75% & em bé 10% khi tạo dòng giá hợp lệ', () => {

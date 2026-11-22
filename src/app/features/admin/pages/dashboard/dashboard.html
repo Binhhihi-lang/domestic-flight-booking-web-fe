@@ -1,17 +1,34 @@
 <div class="wrap">
   <app-page-header
     [title]="isAdmin() ? 'Dashboard tổng quan' : 'Dashboard vận hành'"
-    subtitle="Dữ liệu thời gian thực từ hệ thống bán vé & điều phối chuyến bay"
+    [subtitle]="
+      isAdmin()
+        ? 'Tổng hợp doanh thu, đơn đặt vé, hành khách và hiệu suất khai thác theo thời gian thực'
+        : 'Theo dõi chuyến bay cần xử lý và đơn đặt chỗ chờ xác nhận trong ca trực'
+    "
   >
     @if (isAdmin()) {
-      <app-app-button variant="ghost" (click)="switchRange(selectedDays() === 7 ? 30 : 7)">
-        <mat-icon>calendar_month</mat-icon>
-        {{ selectedDays() === 7 ? '7 ngày qua' : '30 ngày qua' }}
-      </app-app-button>
-      <a routerLink="/admin/reports">
-        <app-app-button>
+      <a routerLink="/admin/reports" class="head-link">
+        <app-app-button variant="ghost" size="sm">
           <mat-icon>bar_chart</mat-icon>
-          Báo cáo doanh thu
+          Xem báo cáo
+        </app-app-button>
+      </a>
+      <app-app-button variant="primary" size="sm" (clicked)="exportCsv()">
+        <mat-icon>download</mat-icon>
+        Xuất CSV
+      </app-app-button>
+    } @else {
+      <a routerLink="/admin/flights" class="head-link">
+        <app-app-button variant="ghost" size="sm">
+          <mat-icon>flight_takeoff</mat-icon>
+          Danh sách chuyến
+        </app-app-button>
+      </a>
+      <a routerLink="/admin/flights/new" class="head-link">
+        <app-app-button variant="primary" size="sm">
+          <mat-icon>add</mat-icon>
+          Thêm chuyến bay
         </app-app-button>
       </a>
     }
@@ -24,7 +41,7 @@
       }
     </div>
   } @else {
-    <!-- ===== Thẻ số liệu ===== -->
+    <!-- ===== 4 Thẻ KPI ===== -->
     <div class="stats">
       @for (s of stats(); track s.label; let idx = $index) {
         <div class="stat stat--anim" [style.animation-delay.ms]="idx * 70">
@@ -33,7 +50,7 @@
           </div>
           <div class="stat__l">{{ s.label }}</div>
           <div class="stat__v tabular">
-            <span [appCountUp]="s.numericValue" [countUpFormat]="s.format">{{ s.value }}</span>@if (s.unit) {<span class="stat__u">{{ s.unit }}</span>}
+            <span [appCountUp]="s.numericValue" [countUpFormat]="s.format">{{ s.value }}</span>
           </div>
           <div class="stat__d" [class.up]="s.deltaTone === 'up'" [class.down]="s.deltaTone === 'down'">
             <mat-icon>{{ s.deltaIcon }}</mat-icon>
@@ -43,14 +60,15 @@
       }
     </div>
 
+    <!-- ===== GIAO DIỆN ADMIN ===== -->
     @if (isAdmin() && overview(); as ov) {
-      <div class="dash-grid">
-        <!-- ===== Biểu đồ cột ===== -->
-        <app-app-card title="Booking theo ngày">
-          <span cardActions class="muted-sm">{{ selectedDays() }} ngày gần nhất</span>
+      <!-- Biểu đồ Doanh thu 7 ngày toàn chiều rộng -->
+      <div class="section-block">
+        <app-app-card title="Doanh thu 7 ngày">
+          <span cardActions class="muted-sm">7 ngày gần nhất</span>
           <div class="bars">
-            @for (b of bars(); track b.label; let idx = $index) {
-              <div class="bar" [title]="b.value + ' booking · ' + b.label">
+            @for (b of revenueBars(); track b.date; let idx = $index) {
+              <div class="bar" [title]="b.label + ': ' + b.fullValue + ' (' + b.bookingsCount + ' đơn)'">
                 <span class="bar__v tabular">{{ b.value }}</span>
                 <div
                   class="bar__b bar__b--anim"
@@ -62,64 +80,189 @@
             }
           </div>
         </app-app-card>
+      </div>
 
-        <!-- ===== Xếp hạng đường bay ===== -->
-        <app-app-card title="Đường bay bán chạy">
-          <a cardActions routerLink="/admin/reports">
-            <app-app-button size="sm" variant="text">Xem báo cáo</app-app-button>
+      <!-- Lưới 2 cột: Trái = Top tuyến bay, Phải = Đơn gần đây -->
+      <div class="dash-grid">
+        <app-app-card title="Top tuyến bay">
+          <a cardActions routerLink="/admin/reports" class="head-link">
+            <app-app-button size="sm" variant="text">Xem chi tiết</app-app-button>
           </a>
-          <div class="rank-list">
-            @for (r of ov.top_routes; track r.route; let i = $index) {
-              <div class="rank">
-                <div class="rank__i">{{ i + 1 }}</div>
-                <div>
-                  <div class="rank__n">{{ r.route }}</div>
-                  <div class="rank__m">Lấp đầy {{ r.load_factor_percent.toFixed(1) }}% · {{ formatVnd(r.revenue) }}</div>
+          <div class="tbl-wrap">
+            <table class="tbl tbl--compact">
+              <thead>
+                <tr>
+                  <th>Tuyến bay</th>
+                  <th>Lấp đầy</th>
+                  <th class="num">Đơn / Khách</th>
+                  <th class="num">Doanh thu</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of ov.top_routes; track r.route) {
+                  <tr>
+                    <td class="code">{{ r.route }}</td>
+                    <td>
+                      <div class="fill-cell">
+                        <div class="fill-bar" aria-hidden="true">
+                          <div class="fill-bar__val" [style.width.%]="r.load_factor_percent"></div>
+                        </div>
+                        <span class="tabular muted-sm">{{ r.load_factor_percent.toFixed(1) }}%</span>
+                      </div>
+                    </td>
+                    <td class="num tabular">
+                      <div>{{ r.bookings_count.toLocaleString('vi-VN') }} đơn</div>
+                      @if (r.flights_count !== undefined || r.pax_count !== undefined) {
+                        <div class="muted-xs">
+                          @if (r.flights_count !== undefined) {
+                            {{ r.flights_count }} chuyến
+                          }
+                          @if (r.flights_count !== undefined && r.pax_count !== undefined) {
+                            ·
+                          }
+                          @if (r.pax_count !== undefined) {
+                            {{ r.pax_count.toLocaleString('vi-VN') }} khách
+                          }
+                        </div>
+                      }
+                    </td>
+                    <td class="num tabular"><strong>{{ formatVnd(r.revenue) }}</strong></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-app-card>
+
+        <app-app-card title="Đơn gần đây">
+          <a cardActions routerLink="/admin/bookings" class="head-link">
+            <app-app-button size="sm" variant="text">Tất cả đơn</app-app-button>
+          </a>
+          <div class="recent-list">
+            @for (bk of ov.recent_bookings; track bk.id) {
+              <a [routerLink]="['/admin/bookings', bk.id]" class="recent-item">
+                <div class="recent-item__left">
+                  <div class="recent-item__code">
+                    <strong class="code">DH-{{ bk.id }}</strong>
+                    <span class="muted-xs">
+                      @if (bk.status === 'CONFIRMED' && bk.booking_code) {
+                        PNR {{ bk.booking_code }}
+                      } @else {
+                        Chờ cấp PNR
+                      }
+                    </span>
+                  </div>
+                  <div class="recent-item__sub">
+                    {{ bk.customer_name }} · {{ bk.primary_route }}
+                  </div>
                 </div>
-                <div class="rank__v">
-                  <b class="tabular">{{ r.bookings_count.toLocaleString('vi-VN') }}</b>
-                  <small>booking</small>
+                <div class="recent-item__right">
+                  <strong class="tabular">{{ formatVnd(bk.total_amount) }}</strong>
+                  <app-status-badge
+                    [tone]="bookingStatusMeta(bk.status).tone"
+                    [label]="bookingStatusMeta(bk.status).label"
+                  />
                 </div>
-              </div>
+              </a>
             }
           </div>
         </app-app-card>
       </div>
     }
 
-    <!-- ===== Bảng lịch khai thác & chuyến cần chú ý ===== -->
-    <div class="attention">
-      <app-app-card title="Lịch bay & tình trạng lấp đầy trong ngày">
-        <app-status-badge cardActions tone="info" [label]="scheduleFlights().length + ' chuyến'" />
-        <div class="tbl-wrap">
-          <table class="tbl">
-            <thead>
-              <tr>
-                <th>Chuyến</th>
-                <th>Tuyến</th>
-                <th>Hãng</th>
-                <th class="num">Ghế trống</th>
-                <th class="num">Tổng ghế</th>
-                <th>Lấp đầy</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (f of scheduleFlights(); track f.flight_id) {
+    <!-- ===== GIAO DIỆN STAFF ===== -->
+    @if (!isAdmin() && operational()) {
+      <div class="section-block">
+        <app-app-card title="Chuyến cần xử lý">
+          <app-status-badge cardActions tone="info" [label]="scheduleFlights().length + ' chuyến'" />
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead>
                 <tr>
-                  <td class="code">{{ f.flight_number }}</td>
-                  <td>{{ f.route }}</td>
-                  <td>{{ f.airline_name }}</td>
-                  <td class="num tabular">{{ f.available_seats }}</td>
-                  <td class="num tabular">{{ f.seat_capacity }}</td>
-                  <td><app-status-badge [tone]="fillToneOf(f)" [label]="fillRateOf(f)" /></td>
-                  <td><app-status-badge [tone]="opStatusTone(f.operation_status)" [label]="f.operation_status" /></td>
+                  <th>Chuyến</th>
+                  <th>Tuyến</th>
+                  <th>Hãng</th>
+                  <th class="num">Ghế trống</th>
+                  <th>Lấp đầy</th>
+                  <th>Trạng thái</th>
+                  <th class="rowacts">Thao tác</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </app-app-card>
-    </div>
+              </thead>
+              <tbody>
+                @for (f of scheduleFlights(); track f.flight_id) {
+                  <tr>
+                    <td class="code">
+                      <a [routerLink]="['/admin/flights', f.flight_id]" class="tbl-link">
+                        {{ f.flight_number }}
+                      </a>
+                    </td>
+                    <td>{{ f.route }}</td>
+                    <td>{{ f.airline_name }}</td>
+                    <td class="num tabular">{{ f.available_seats }} / {{ f.seat_capacity }}</td>
+                    <td><app-status-badge [tone]="fillToneOf(f)" [label]="fillRateOf(f)" /></td>
+                    <td>
+                      <app-status-badge
+                        [tone]="opStatusMeta(f.operation_status).tone"
+                        [label]="opStatusMeta(f.operation_status).label"
+                      />
+                    </td>
+                    <td class="rowacts">
+                      <div class="staff-acts">
+                        <a [routerLink]="['/admin/flights', f.flight_id]" class="staff-act">Chi tiết</a>
+                        <a [routerLink]="['/admin/flights', f.flight_id, 'operation']" class="staff-act">
+                          Vận hành
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-app-card>
+      </div>
+
+      <div class="section-block">
+        <app-app-card title="Booking chờ xác nhận">
+          <a cardActions routerLink="/admin/bookings" class="head-link">
+            <app-app-button size="sm" variant="text">Quản lý đặt chỗ</app-app-button>
+          </a>
+          @if (pendingActions().length === 0) {
+            <p class="empty-note">Không có yêu cầu hoặc booking nào cần xử lý gấp.</p>
+          } @else {
+            <div class="tbl-wrap">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Mã tham chiếu</th>
+                    <th>Nội dung</th>
+                    <th>Thời gian</th>
+                    <th class="rowacts">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (act of pendingActions(); track act.reference_code + act.occurred_at) {
+                    <tr>
+                      <td>
+                        <div class="code">{{ act.reference_code }}</div>
+                        <div class="muted-xs">PNR sau thanh toán</div>
+                      </td>
+                      <td>
+                        <div class="act-title">{{ act.title }}</div>
+                        <div class="muted-xs">{{ act.detail }}</div>
+                      </td>
+                      <td class="tabular">{{ formatDateTime(act.occurred_at) }}</td>
+                      <td class="rowacts">
+                        <a [routerLink]="bookingLinkOf(act)" class="staff-act">Xem đơn</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </app-app-card>
+      </div>
+    }
   }
 </div>

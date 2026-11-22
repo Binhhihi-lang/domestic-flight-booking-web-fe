@@ -34,12 +34,19 @@ export function crudRoutes(
      * biểu diễn được.
      */
     formLoader?: () => Promise<Type<unknown>>;
+    /**
+     * Component riêng cho trang chi tiết (`:id`) — dùng khi màn chi tiết cần
+     * hiển thị bảng con hoặc thao tác nghiệp vụ riêng (Phạm vi khuyến mãi,
+     * Tặng voucher, Lịch sử đặt chỗ của người dùng).
+     */
+    detailLoader?: () => Promise<Type<unknown>>;
   } = {},
 ): Routes {
   const readGuards = options.adminOnly ? [adminGuard] : [];
   const writeGuards = options.adminOnly || options.writeAdminOnly ? [adminGuard] : [];
   const withDetail = options.detail !== false;
   const formComponent = options.formLoader ?? loader;
+  const detailComponent = options.detailLoader ?? loader;
 
   const routes: Routes = [
     {
@@ -61,7 +68,7 @@ export function crudRoutes(
       {
         path: `${path}/:id`,
         canActivate: readGuards,
-        loadComponent: loader,
+        loadComponent: detailComponent,
         data: { title, mode: 'detail' },
       },
       {

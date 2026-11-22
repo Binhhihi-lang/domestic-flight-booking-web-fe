@@ -260,16 +260,29 @@ export const routes: Routes = [
         import('@features/admin/pages/promotions/promotions').then((m) => m.AdminPromotions),
         {
           adminOnly: true,
+          detailLoader: () =>
+            import('@features/admin/pages/promotions/promotion-detail').then(
+              (m) => m.PromotionDetail,
+            ),
           formLoader: () =>
             import('@features/admin/pages/promotions/promotion-form').then(
               (m) => m.PromotionForm,
             ),
         },
       ),
+      {
+        path: 'vouchers/:id/assign',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('@features/admin/pages/vouchers/voucher-assign').then((m) => m.VoucherAssign),
+        data: { title: 'Tặng voucher' },
+      },
       ...crudRoutes('vouchers', 'Voucher', () =>
         import('@features/admin/pages/vouchers/vouchers').then((m) => m.AdminVouchers),
         {
           adminOnly: true,
+          detailLoader: () =>
+            import('@features/admin/pages/vouchers/voucher-detail').then((m) => m.VoucherDetail),
           formLoader: () =>
             import('@features/admin/pages/vouchers/voucher-form').then((m) => m.VoucherForm),
         },
@@ -308,6 +321,8 @@ export const routes: Routes = [
         import('@features/admin/pages/users/users').then((m) => m.AdminUsers),
         {
           adminOnly: true,
+          detailLoader: () =>
+            import('@features/admin/pages/users/user-detail').then((m) => m.UserDetail),
           formLoader: () => import('@features/admin/pages/users/user-form').then((m) => m.UserForm),
         },
       ),
@@ -345,7 +360,6 @@ export const routes: Routes = [
       },
       {
         path: 'flights/:id/edit',
-        canActivate: [adminGuard],
         loadComponent: () =>
           import('@features/admin/pages/flights/flight-form').then((m) => m.AdminFlightForm),
         data: { title: 'Sửa chuyến bay' },

@@ -1,14 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FlightFare } from '@core/models/flight.model';
+import { FlightFare, FlightRecord } from '@core/models/flight.model';
 import { SeatClass } from '@core/models/fleet-news.model';
 import { FareClassService } from '@core/services/catalog.service';
-import { FlightAdminService, FlightFareService } from '@core/services/flight-admin.service';
+import { FlightFareService } from '@core/services/flight-admin.service';
+import { ConfirmDialog, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
+import { FlightSearchPicker } from '@shared/components/flight-search-picker/flight-search-picker';
+import { ServerPager } from '@shared/components/server-pager/server-pager';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -24,8 +28,8 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
 
 /**
  * Quản lý bảng giá theo chuyến bay & hạng vé (`/admin/flight-fares`).
- * Tự động tính giá Người lớn (`base_fare + tax_fee`), Trẻ em (75%) và Em bé (10%),
- * kiểm tra trùng khoảng hiệu lực `[effective_from, effective_to)` và khớp hãng bay.
+ * Hỗ trợ phân trang server (`app-server-pager`), bộ chọn chuyến bay tìm kiếm phía server
+ * (`app-flight-search-picker`), chế độ Thêm & Sửa dòng giá (`POST`/`PUT`), xác nhận xóa bằng `ConfirmDialog`.
  */
 @Component({
   selector: 'app-admin-flight-fares',
@@ -37,6 +41,8 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     AppAlert,
     AppButton,
     EmptyState,
+    FlightSearchPicker,
+    ServerPager,
     SkeletonBlock,
     StatusBadge,
   ],
@@ -54,11 +60,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
             <mat-icon aria-hidden="true">flight_takeoff</mat-icon>
             Danh sách chuyến bay
           </a>
-          <app-app-button
-            variant="primary"
-            size="sm"
-            (clicked)="showForm.set(!showForm()); formError.set(null)"
-          >
+          <app-app-button variant="primary" size="sm" (clicked)="toggleCreateForm()">
             <mat-icon aria-hidden="true">{{ showForm() ? 'close' : 'add' }}</mat-icon>
             {{ showForm() ? 'Đóng biểu mẫu' : 'Thêm dòng giá' }}
           </app-app-button>
@@ -66,28 +68,31 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       </header>
 
       @if (showForm()) {
-        <div class="ffare-card ffare-form-card">
-          <h2>Thêm bảng giá mới</h2>
+        <div class="ffare-card ffare-form-card ffare-card--overflow">
+          <div class="ffare-form-head">
+            <h2>{{ editingFareId() !== null ? 'Cập nhật bảng giá' : 'Thêm bảng giá mới' }}</h2>
+            @if (editingFareId() !== null) {
+              <button type="button" class="ffare-btn-ghost" (click)="closeForm()">Hủy chỉnh sửa</button>
+            }
+          </div>
+
           @if (formError()) {
             <app-alert tone="error" title="Không thể lưu bảng giá" [message]="formError()!" />
           }
-          <form class="ffare-form" (ngSubmit)="createFare()">
+
+          <form class="ffare-form" (ngSubmit)="saveFare()">
             <div class="ffare-grid">
               <div class="ffare-field">
-                <label for="ff-fl">Chuyến bay *</label>
-                <select
-                  id="ff-fl"
-                  name="flight_id"
-                  [ngModel]="formFlightId()"
-                  (ngModelChange)="formFlightId.set(+$event)"
-                >
-                  @for (fl of flights(); track fl.id) {
-                    <option [ngValue]="fl.id">
-                      {{ fl.flight_number }} ({{ fl.departure_airport.airport_code }} →
-                      {{ fl.arrival_airport.airport_code }} · {{ fl.airline.airline_code }})
-                    </option>
-                  }
-                </select>
+                <label>Chuyến bay *</label>
+                <app-flight-search-picker
+                  [multiple]="false"
+                  [selectedId]="formFlightId()"
+                  [selectedLabels]="formFlightLabels()"
+                  [disabled]="editingFareId() !== null"
+                  placeholder="Tìm chuyến bay theo số hiệu hoặc tuyến..."
+                  (selectedIdChange)="formFlightId.set($event)"
+                  (flightSelected)="onFormFlightSelected($event)"
+                />
               </div>
 
               <div class="ffare-field">
@@ -95,9 +100,11 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
                 <select
                   id="ff-fc"
                   name="fare_class_id"
+                  [disabled]="editingFareId() !== null"
                   [ngModel]="formFareClassId()"
                   (ngModelChange)="formFareClassId.set(+$event)"
                 >
+                  <option [ngValue]="0">— Chọn hạng vé —</option>
                   @for (fc of matchingFareClasses(); track fc.id) {
                     <option [ngValue]="fc.id">
                       {{ fc.fare_class_code }} — {{ fc.fare_class_name }}
@@ -158,51 +165,51 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
             <div class="ffare-preview" aria-label="Xem trước giá tự động tính">
               <div class="ffare-preview__item">
                 <span>Người lớn (100%)</span>
-                <strong>{{ formatMoney(previewAdult()) }}</strong>
+                <strong class="tabular">{{ formatMoney(previewAdult()) }}</strong>
               </div>
               <div class="ffare-preview__item">
                 <span>Trẻ em (75%)</span>
-                <strong>{{ formatMoney(previewChild()) }}</strong>
+                <strong class="tabular">{{ formatMoney(previewChild()) }}</strong>
               </div>
               <div class="ffare-preview__item">
                 <span>Em bé (10%)</span>
-                <strong>{{ formatMoney(previewInfant()) }}</strong>
+                <strong class="tabular">{{ formatMoney(previewInfant()) }}</strong>
               </div>
             </div>
 
             <div class="ffare-form-actions">
-              <app-app-button variant="primary" type="submit" [disabled]="saving()">
-                {{ saving() ? 'Đang lưu...' : 'Lưu bảng giá' }}
+              <app-app-button variant="ghost" size="sm" (clicked)="closeForm()">Hủy</app-app-button>
+              <app-app-button variant="primary" size="sm" type="submit" [disabled]="saving()">
+                {{
+                  saving()
+                    ? 'Đang lưu...'
+                    : editingFareId() !== null
+                      ? 'Cập nhật bảng giá'
+                      : 'Lưu bảng giá'
+                }}
               </app-app-button>
             </div>
           </form>
         </div>
       }
 
-      <div class="ffare-card">
+      <div class="ffare-card ffare-card--overflow">
         <div class="ffare-filters">
           <div class="ffare-field">
-            <label for="flt-filter">Lọc theo chuyến bay</label>
-            <select
-              id="flt-filter"
-              [ngModel]="filterFlightId()"
-              (ngModelChange)="filterFlightId.set($event); load()"
-            >
-              <option value="">Tất cả chuyến bay</option>
-              @for (fl of flights(); track fl.id) {
-                <option [value]="fl.id">
-                  {{ fl.flight_number }} ({{ fl.departure_airport.airport_code }} →
-                  {{ fl.arrival_airport.airport_code }})
-                </option>
-              }
-            </select>
+            <label>Lọc theo chuyến bay</label>
+            <app-flight-search-picker
+              [multiple]="false"
+              [selectedId]="filterFlightId()"
+              placeholder="Tìm chuyến bay để lọc bảng giá..."
+              (selectedIdChange)="onFilterFlightChange($event)"
+            />
           </div>
           <div class="ffare-field">
             <label for="fc-filter">Lọc theo hạng vé</label>
             <select
               id="fc-filter"
               [ngModel]="filterFareClassId()"
-              (ngModelChange)="filterFareClassId.set($event); load()"
+              (ngModelChange)="filterFareClassId.set($event); onFilterChange()"
             >
               <option value="">Tất cả hạng vé</option>
               @for (fc of allFareClasses(); track fc.id) {
@@ -236,7 +243,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
               <thead>
                 <tr>
                   <th>Chuyến bay</th>
-                  <th>Hạng vé & Khoang</th>
+                  <th>Hạng vé & Hạng dịch vụ</th>
                   <th class="col-num">Giá cơ bản</th>
                   <th class="col-num">Thuế phí</th>
                   <th class="col-num">Người lớn</th>
@@ -264,20 +271,40 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
                       <span>→ {{ row.effective_to ? formatDate(row.effective_to) : 'Không giới hạn' }}</span>
                     </td>
                     <td class="col-actions">
-                      <button
-                        type="button"
-                        class="ffare-del"
-                        (click)="removeFare(row)"
-                        [attr.aria-label]="'Xóa giá vé ' + row.fare_class_code"
-                      >
-                        Xóa
-                      </button>
+                      <div class="ffare-row-acts">
+                        <button
+                          type="button"
+                          class="ffare-edit"
+                          (click)="startEdit(row)"
+                          [attr.aria-label]="'Sửa giá vé ' + row.fare_class_code"
+                        >
+                          Sửa
+                        </button>
+                        <button
+                          type="button"
+                          class="ffare-del"
+                          (click)="confirmRemoveFare(row)"
+                          [attr.aria-label]="'Xóa giá vé ' + row.fare_class_code"
+                        >
+                          Xóa
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
+          <app-server-pager
+            [page]="page()"
+            [size]="size()"
+            [totalItems]="totalItems()"
+            [totalPages]="totalPages()"
+            [pageSizeOptions]="[20, 50, 100]"
+            noun="dòng giá"
+            (pageChange)="onPageChange($event)"
+            (sizeChange)="onSizeChange($event)"
+          />
         }
       </div>
     </section>
@@ -297,6 +324,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     }
     .ffare-head h1 {
       margin: 0;
+      font-family: var(--font-heading);
       font-size: var(--text-h1);
       color: var(--color-ink);
     }
@@ -323,6 +351,10 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       font-size: var(--text-small);
       text-decoration: none;
     }
+    .ffare-link-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
     .ffare-link-btn mat-icon {
       font-size: 18px;
       width: 18px;
@@ -335,29 +367,48 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       box-shadow: var(--shadow-sm);
       overflow: hidden;
     }
+    .ffare-card--overflow {
+      overflow: visible;
+    }
     .ffare-form-card {
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
+    .ffare-form-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
     .ffare-form-card h2 {
       margin: 0;
       font-size: var(--text-h3);
       color: var(--color-ink);
     }
+    .ffare-btn-ghost {
+      padding: 5px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink-muted);
+      font-size: var(--text-caption);
+      cursor: pointer;
+    }
     .ffare-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 14px;
     }
     .ffare-filters {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 12px;
       padding: 16px;
       background: var(--color-surface-alt);
       border-bottom: 1px solid var(--color-border-soft);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
     .ffare-field {
       display: flex;
@@ -371,13 +422,18 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     }
     .ffare-field input,
     .ffare-field select {
-      height: 38px;
+      height: 42px;
       padding: 0 10px;
       border: 1px solid var(--color-border);
       border-radius: var(--radius-sm);
       background: var(--color-surface);
       color: var(--color-ink);
       font-size: var(--text-small);
+    }
+    .ffare-field select:disabled {
+      background: var(--color-surface-alt);
+      color: var(--color-ink-subtle);
+      cursor: not-allowed;
     }
     .ffare-preview {
       margin-top: 14px;
@@ -406,9 +462,13 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       font-size: var(--text-h3);
       color: var(--color-primary);
     }
+    .tabular {
+      font-variant-numeric: tabular-nums;
+    }
     .ffare-form-actions {
       display: flex;
       justify-content: flex-end;
+      gap: 8px;
       margin-top: 14px;
     }
     .ffare-pad {
@@ -425,7 +485,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     .ffare-table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 860px;
+      min-width: 880px;
     }
     .ffare-table th,
     .ffare-table td {
@@ -461,6 +521,25 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       color: var(--color-ink-muted);
       white-space: nowrap;
     }
+    .ffare-row-acts {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ffare-edit {
+      padding: 4px 10px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-primary);
+      font-size: var(--text-caption);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ffare-edit:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+    }
     .ffare-del {
       padding: 4px 10px;
       border: 1px solid var(--color-danger);
@@ -468,15 +547,20 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       background: var(--color-surface);
       color: var(--color-danger);
       font-size: var(--text-caption);
+      font-weight: 600;
       cursor: pointer;
+    }
+    .ffare-del:hover {
+      background: var(--color-danger-soft);
+      color: var(--color-on-danger-soft);
     }
   `,
 })
 export class AdminFlightFares {
   private readonly route = inject(ActivatedRoute);
   private readonly fareService = inject(FlightFareService);
-  private readonly flightService = inject(FlightAdminService);
   private readonly fareClassService = inject(FareClassService);
+  private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly loading = signal(true);
@@ -484,32 +568,37 @@ export class AdminFlightFares {
   protected readonly error = signal<string | null>(null);
   protected readonly formError = signal<string | null>(null);
   protected readonly showForm = signal(false);
+  protected readonly editingFareId = signal<number | null>(null);
   protected readonly rows = signal<FlightFare[]>([]);
 
-  protected readonly filterFlightId = signal(
-    this.route.snapshot.queryParamMap.get('flight_id') ?? '',
+  protected readonly page = signal(1);
+  protected readonly size = signal(20);
+  protected readonly totalItems = signal(0);
+  protected readonly totalPages = signal(1);
+
+  private readonly initialFlightQuery = this.route.snapshot.queryParamMap.get('flight_id');
+  protected readonly filterFlightId = signal<number | null>(
+    this.initialFlightQuery ? Number(this.initialFlightQuery) || null : null,
   );
   protected readonly filterFareClassId = signal('');
 
-  protected readonly formFlightId = signal(101);
-  protected readonly formFareClassId = signal(1);
+  protected readonly formFlightId = signal<number | null>(null);
+  protected readonly formFlightLabels = signal<Record<number, string>>({});
+  protected readonly selectedFormFlight = signal<FlightRecord | null>(null);
+  protected readonly formFareClassId = signal<number>(0);
   protected readonly formBaseFare = signal(1200000);
   protected readonly formTaxFee = signal(490000);
   protected readonly formEffectiveFrom = signal('2026-12-01T00:00');
   protected readonly formEffectiveTo = signal('');
 
-  private readonly flightsRes = toSignal(this.flightService.list({ page: 1, size: 100 }), {
-    initialValue: null,
-  });
   private readonly fareClassesRes = toSignal(this.fareClassService.list({ page: 1, size: 100 }), {
     initialValue: null,
   });
 
-  protected readonly flights = computed(() => this.flightsRes()?.data.items ?? []);
   protected readonly allFareClasses = computed(() => this.fareClassesRes()?.data.items ?? []);
 
   protected readonly matchingFareClasses = computed(() => {
-    const fl = this.flights().find((f) => f.id === this.formFlightId());
+    const fl = this.selectedFormFlight();
     if (!fl) return this.allFareClasses();
     const byAirline = this.allFareClasses().filter((fc) => fc.airline_id === fl.airline.id);
     return byAirline.length > 0 ? byAirline : this.allFareClasses();
@@ -525,19 +614,89 @@ export class AdminFlightFares {
     this.load();
   }
 
+  protected onFilterFlightChange(flightId: number | null): void {
+    this.filterFlightId.set(flightId);
+    this.onFilterChange();
+  }
+
+  protected onFilterChange(): void {
+    this.page.set(1);
+    this.load();
+  }
+
+  protected onPageChange(nextPage: number): void {
+    this.page.set(nextPage);
+    this.load();
+  }
+
+  protected onSizeChange(nextSize: number): void {
+    this.size.set(nextSize);
+    this.page.set(1);
+    this.load();
+  }
+
+  protected toggleCreateForm(): void {
+    if (this.showForm()) {
+      this.closeForm();
+      return;
+    }
+    this.editingFareId.set(null);
+    this.formError.set(null);
+    this.formFlightId.set(this.filterFlightId());
+    this.selectedFormFlight.set(null);
+    this.formFareClassId.set(this.allFareClasses()[0]?.id ?? 0);
+    this.formBaseFare.set(1200000);
+    this.formTaxFee.set(490000);
+    this.formEffectiveFrom.set('2026-12-01T00:00');
+    this.formEffectiveTo.set('');
+    this.showForm.set(true);
+  }
+
+  protected startEdit(row: FlightFare): void {
+    this.editingFareId.set(row.id);
+    this.formError.set(null);
+    this.formFlightId.set(row.flight_id);
+    this.formFlightLabels.set({ [row.flight_id]: row.flight_number });
+    this.selectedFormFlight.set(null);
+    this.formFareClassId.set(row.fare_class_id);
+    this.formBaseFare.set(row.base_fare);
+    this.formTaxFee.set(row.tax_fee);
+    this.formEffectiveFrom.set(row.effective_from ? row.effective_from.slice(0, 16) : '');
+    this.formEffectiveTo.set(row.effective_to ? row.effective_to.slice(0, 16) : '');
+    this.showForm.set(true);
+  }
+
+  protected closeForm(): void {
+    this.showForm.set(false);
+    this.editingFareId.set(null);
+    this.formError.set(null);
+  }
+
+  protected onFormFlightSelected(flight: FlightRecord | null): void {
+    this.selectedFormFlight.set(flight);
+    if (flight) {
+      const matching = this.matchingFareClasses();
+      if (matching.length > 0 && !matching.some((fc) => fc.id === this.formFareClassId())) {
+        this.formFareClassId.set(matching[0].id);
+      }
+    }
+  }
+
   protected load(): void {
     this.loading.set(true);
     this.error.set(null);
     this.fareService
       .list({
-        page: 1,
-        size: 100,
-        flight_id: this.filterFlightId() || undefined,
+        page: this.page(),
+        size: this.size(),
+        flight_id: this.filterFlightId() ?? undefined,
         fare_class_id: this.filterFareClassId() || undefined,
       })
       .subscribe({
         next: (res) => {
           this.rows.set(res.data.items);
+          this.totalItems.set(res.data.pagination.total_items);
+          this.totalPages.set(res.data.pagination.total_pages || 1);
           this.loading.set(false);
         },
         error: (err: Error) => {
@@ -547,8 +706,17 @@ export class AdminFlightFares {
       });
   }
 
-  protected createFare(): void {
+  protected saveFare(): void {
     this.formError.set(null);
+    const flightId = this.formFlightId();
+    if (!flightId) {
+      this.formError.set('Vui lòng chọn chuyến bay');
+      return;
+    }
+    if (!this.formFareClassId()) {
+      this.formError.set('Vui lòng chọn hạng vé');
+      return;
+    }
     if (this.formBaseFare() < 0 || this.formTaxFee() < 0) {
       this.formError.set('Giá cơ bản và thuế phí không được âm');
       return;
@@ -561,41 +729,67 @@ export class AdminFlightFares {
       this.formError.set('Thời điểm kết thúc phải sau thời điểm bắt đầu');
       return;
     }
-    this.saving.set(true);
-    this.fareService
-      .create({
-        flight_id: this.formFlightId(),
-        fare_class_id: this.formFareClassId(),
-        base_fare: this.formBaseFare(),
-        tax_fee: this.formTaxFee(),
-        currency: 'VND',
-        effective_from: this.formEffectiveFrom() ? `${this.formEffectiveFrom()}:00` : null,
-        effective_to: this.formEffectiveTo() ? `${this.formEffectiveTo()}:00` : null,
-      })
-      .subscribe({
-        next: (res) => {
-          this.saving.set(false);
-          this.showForm.set(false);
-          this.snackBar.open(res.message || 'Đã thêm bảng giá mới', 'Đóng', { duration: 3000 });
-          this.load();
-        },
-        error: (err: Error) => {
-          this.saving.set(false);
-          this.formError.set(err.message || 'Không thể tạo bảng giá');
-        },
-      });
-  }
 
-  protected removeFare(row: FlightFare): void {
-    this.fareService.remove(row.id).subscribe({
-      next: () => {
-        this.snackBar.open('Đã xóa dòng giá vé', 'Đóng', { duration: 2500 });
+    const payload = {
+      flight_id: flightId,
+      fare_class_id: this.formFareClassId(),
+      base_fare: this.formBaseFare(),
+      tax_fee: this.formTaxFee(),
+      currency: 'VND',
+      effective_from: this.formEffectiveFrom() ? `${this.formEffectiveFrom()}:00` : null,
+      effective_to: this.formEffectiveTo() ? `${this.formEffectiveTo()}:00` : null,
+    };
+
+    this.saving.set(true);
+    const editId = this.editingFareId();
+    const req$ =
+      editId !== null ? this.fareService.update(editId, payload) : this.fareService.create(payload);
+
+    req$.subscribe({
+      next: (res) => {
+        this.saving.set(false);
+        this.closeForm();
+        this.snackBar.open(
+          res.message || (editId !== null ? 'Đã cập nhật bảng giá' : 'Đã thêm bảng giá mới'),
+          'Đóng',
+          { duration: 3000 },
+        );
         this.load();
       },
       error: (err: Error) => {
-        this.snackBar.open(err.message || 'Không thể xóa dòng giá', 'Đóng', { duration: 4000 });
+        this.saving.set(false);
+        this.formError.set(
+          err.message || (editId !== null ? 'Không thể cập nhật bảng giá' : 'Không thể tạo bảng giá'),
+        );
       },
     });
+  }
+
+  protected confirmRemoveFare(row: FlightFare): void {
+    const data: ConfirmDialogData = {
+      title: `Xóa dòng giá ${row.fare_class_code}?`,
+      message: `Chuyến bay ${row.flight_number} — ${row.fare_class_name} (${this.formatMoney(row.adult_price)}).`,
+      confirmText: 'Xóa dòng giá',
+      cancelText: 'Hủy',
+      tone: 'warn',
+    };
+    this.dialog
+      .open(ConfirmDialog, { data, panelClass: 'vf-confirm-panel' })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (!ok) return;
+        this.fareService.remove(row.id).subscribe({
+          next: () => {
+            this.snackBar.open('Đã xóa dòng giá vé', 'Đóng', { duration: 2500 });
+            this.load();
+          },
+          error: (err: Error) => {
+            this.snackBar.open(err.message || 'Không thể xóa dòng giá', 'Đóng', {
+              duration: 4000,
+            });
+          },
+        });
+      });
   }
 
   protected seatClassLabel(cls: SeatClass): string {

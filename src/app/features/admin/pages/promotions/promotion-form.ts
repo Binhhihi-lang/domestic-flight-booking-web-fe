@@ -1,10 +1,35 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { catchError, forkJoin, of } from 'rxjs';
+import { Airline } from '@core/models/airline.model';
+import { FareClass } from '@core/models/fare-baggage.model';
+import { FlightDetailRecord } from '@core/models/flight.model';
+import { Airport } from '@core/models/location.model';
 import { PromotionPayload, PromotionScope, TripType } from '@core/models/promotion.model';
-import { PromotionService } from '@core/services/catalog.service';
+import { AirlineService } from '@core/services/airline.service';
+import {
+  AirportService,
+  FareClassService,
+  PromotionService,
+} from '@core/services/catalog.service';
+import { FlightAdminService } from '@core/services/flight-admin.service';
+import { UploadService } from '@core/services/upload.service';
+import { FlightSearchPicker } from '@shared/components/flight-search-picker/flight-search-picker';
+import {
+  SearchableOption,
+  SearchableSelect,
+} from '@shared/components/searchable-select/searchable-select';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { LoadingState } from '@shared/ui/loading-state/loading-state';
@@ -19,68 +44,78 @@ interface ScopeRow {
   value2: number | null;
 }
 
-/** Một lựa chọn trong dropdown phạm vi. */
-interface Option {
-  value: number;
-  label: string;
-}
-
 /**
  * Form khuyến mãi — trang riêng, có PHẠM VI ÁP DỤNG và LOẠI TRỪ CHUYẾN BAY.
  *
- * Vì sao không dùng `CrudPage` chung: khuyến mãi có hai bảng con
- * (`promotion_scopes`, `promotion_excluded_flights`) mà DB v0.4 quy định rõ —
- * không có dòng phạm vi nào nghĩa là áp cho TẤT CẢ chuyến bay, nhiều dòng là
- * điều kiện HOẶC, và loại trừ LUÔN thắng phạm vi. Đây là nghiệp vụ riêng, không
- * biểu diễn được bằng danh sách trường phẳng của form chung.
+ * Nạp danh mục thật từ API (`AirlineService`, `AirportService`, `FareClassService`),
+ * tìm chuyến bay phía server qua `FlightSearchPicker` và tải ảnh banner lên Cloudinary
+ * qua `UploadService.uploadAdminImage`.
  */
 @Component({
   selector: 'app-promotion-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, MatIconModule, AppButton, AppCard, LoadingState],
+  imports: [
+    FormsModule,
+    RouterLink,
+    MatIconModule,
+    AppButton,
+    AppCard,
+    LoadingState,
+    SearchableSelect,
+    FlightSearchPicker,
+  ],
   templateUrl: './promotion-form.html',
   styleUrl: './promotion-form.css',
 })
 export class PromotionForm {
   private readonly service = inject(PromotionService);
+  private readonly airlineService = inject(AirlineService);
+  private readonly airportService = inject(AirportService);
+  private readonly fareClassService = inject(FareClassService);
+  private readonly flightService = inject(FlightAdminService);
+  private readonly uploadService = inject(UploadService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
+  protected readonly uploadingImage = signal(false);
   protected readonly isEdit = signal(false);
   protected readonly promoId = signal<number | null>(null);
 
-  /** Các lựa chọn cho phạm vi — hiện là dữ liệu mẫu vì các module danh mục
-   *  chưa nối API thật ở tầng form này. */
-  protected readonly airlines: Option[] = [
-    { value: 1, label: 'Vietnam Airlines (VN)' },
-    { value: 2, label: 'Vietjet Air (VJ)' },
-    { value: 3, label: 'Bamboo Airways (QH)' },
-    { value: 4, label: 'Vietravel Airlines (VU)' },
-  ];
+  /** Dữ liệu danh mục thật nạp từ API. */
+  protected readonly airlines = signal<Airline[]>([]);
+  protected readonly airports = signal<Airport[]>([]);
+  protected readonly fareClasses = signal<FareClass[]>([]);
+  /** Bộ đệm nhãn chuyến bay để hydrate ngay khi sửa khuyến mãi đã chọn sẵn chuyến. */
+  protected readonly flightLabels = signal<Record<number, string>>({});
 
-  protected readonly fareClasses: Option[] = [
-    { value: 1, label: 'Phổ thông tiết kiệm' },
-    { value: 2, label: 'Phổ thông linh hoạt' },
-    { value: 3, label: 'Thương gia' },
-  ];
+  protected readonly airlineOptions = computed<SearchableOption[]>(() =>
+    this.airlines().map((a) => ({
+      value: a.id,
+      label: `${a.airline_code} — ${a.airline_name}`,
+      sub: a.country ?? undefined,
+    })),
+  );
 
-  protected readonly airports: Option[] = [
-    { value: 1, label: 'Nội Bài (HAN)' },
-    { value: 2, label: 'Tân Sơn Nhất (SGN)' },
-    { value: 3, label: 'Đà Nẵng (DAD)' },
-    { value: 4, label: 'Cam Ranh (CXR)' },
-    { value: 5, label: 'Phú Quốc (PQC)' },
-  ];
+  protected readonly airportOptions = computed<SearchableOption[]>(() =>
+    this.airports().map((a) => ({
+      value: a.id,
+      label: `${a.airport_code} — ${a.airport_name}`,
+      sub: a.city?.city_name ?? undefined,
+    })),
+  );
 
-  protected readonly flights: Option[] = [
-    { value: 101, label: 'VN 165 · HAN → DAD' },
-    { value: 102, label: 'VJ 507 · HAN → DAD' },
-    { value: 103, label: 'QH 205 · HAN → DAD' },
-    { value: 104, label: 'VN 173 · HAN → DAD' },
-  ];
+  protected readonly fareClassOptions = computed<SearchableOption[]>(() =>
+    this.fareClasses().map((fc) => ({
+      value: fc.id,
+      label: `${fc.fare_class_code} — ${fc.fare_class_name} (${fc.airline_code})`,
+      sub: fc.airline_name,
+      group: fc.airline_code,
+    })),
+  );
 
   /** Bản nháp của form. */
   protected readonly draft = signal({
@@ -112,6 +147,7 @@ export class PromotionForm {
   protected readonly isPercent = computed(() => this.draft().discount_type === 'PERCENT');
 
   constructor() {
+    this.loadCatalogs();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit.set(true);
@@ -120,36 +156,100 @@ export class PromotionForm {
     }
   }
 
+  private loadCatalogs(): void {
+    forkJoin({
+      airlines: this.airlineService.list({ page: 1, size: 100 }).pipe(catchError(() => of(null))),
+      airports: this.airportService.list({ page: 1, size: 100 }).pipe(catchError(() => of(null))),
+      fareClasses: this.fareClassService
+        .list({ page: 1, size: 100 })
+        .pipe(catchError(() => of(null))),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ airlines, airports, fareClasses }) => {
+        this.airlines.set(airlines?.data?.items ?? []);
+        this.airports.set(airports?.data?.items ?? []);
+        this.fareClasses.set(fareClasses?.data?.items ?? []);
+      });
+  }
+
   private loadOne(id: number): void {
     this.loading.set(true);
-    this.service.getById(id).subscribe({
-      next: (res) => {
-        const p = res.data;
-        this.draft.set({
-          promotion_code: p.promotion_code,
-          promotion_name: p.promotion_name,
-          image_url: p.image_url ?? '',
-          description: p.description ?? '',
-          badge_label: p.badge_label ?? '',
-          discount_type: p.discount_type,
-          discount_value: p.discount_value,
-          max_discount_amount: p.max_discount_amount,
-          min_fare_amount: p.min_fare_amount,
-          applicable_trip_type: p.applicable_trip_type,
-          start_date: p.start_date,
-          end_date: p.end_date,
-          is_active: p.status === 'ACTIVE',
-        });
-        this.scopes.set((p.scopes ?? []).map((s) => this.toScopeRow(s)));
-        this.excludedIds.set(p.excluded_flight_ids ?? []);
-        this.loading.set(false);
-      },
-      error: (err: Error) => {
-        this.notify(err.message);
-        this.loading.set(false);
-        this.router.navigate(['/admin/promotions']);
-      },
-    });
+    this.service
+      .getById(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const p = res.data;
+          this.draft.set({
+            promotion_code: p.promotion_code,
+            promotion_name: p.promotion_name,
+            image_url: p.image_url ?? '',
+            description: p.description ?? '',
+            badge_label: p.badge_label ?? '',
+            discount_type: p.discount_type,
+            discount_value: p.discount_value,
+            max_discount_amount: p.max_discount_amount,
+            min_fare_amount: p.min_fare_amount,
+            applicable_trip_type: p.applicable_trip_type,
+            start_date: p.start_date,
+            end_date: p.end_date,
+            is_active: p.status === 'ACTIVE',
+          });
+          const rows = (p.scopes ?? []).map((s) => this.toScopeRow(s));
+          const excluded = p.excluded_flight_ids ?? [];
+          this.scopes.set(rows);
+          this.excludedIds.set(excluded);
+          this.hydrateFlightLabels([
+            ...rows
+              .filter((r) => r.target_type === 'FLIGHT' && r.value !== null)
+              .map((r) => r.value as number),
+            ...excluded,
+          ]);
+          this.loading.set(false);
+        },
+        error: (err: Error) => {
+          this.notify(err.message);
+          this.loading.set(false);
+          this.router.navigate(['/admin/promotions']);
+        },
+      });
+  }
+
+  private hydrateFlightLabels(flightIds: number[]): void {
+    const uniqueIds = Array.from(new Set(flightIds)).filter((fid) => fid > 0);
+    if (uniqueIds.length === 0) {
+      return;
+    }
+    forkJoin(
+      uniqueIds.map((fid) => this.flightService.getById(fid).pipe(catchError(() => of(null)))),
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((responses) => {
+        const next: Record<number, string> = { ...this.flightLabels() };
+        for (const res of responses) {
+          if (res?.data) {
+            next[res.data.id] = PromotionForm.formatFlightLabel(res.data);
+          }
+        }
+        this.flightLabels.set(next);
+      });
+  }
+
+  private static formatFlightLabel(f: FlightDetailRecord): string {
+    const dep = f.departure_airport?.airport_code ?? '';
+    const arr = f.arrival_airport?.airport_code ?? '';
+    const d = f.scheduled_departure ? new Date(f.scheduled_departure) : null;
+    const time =
+      d && !Number.isNaN(d.getTime())
+        ? d.toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '';
+    return `${f.flight_number} · ${dep} → ${arr}${time ? ` · ${time}` : ''}`;
   }
 
   /** Chuyển một scope từ API thành dòng có khoá tạm cho giao diện. */
@@ -185,8 +285,7 @@ export class PromotionForm {
     this.scopes.set(this.scopes().filter((s) => s.key !== key));
   }
 
-  /** Đổi loại phạm vi thì xoá giá trị cũ — giá trị của loại này không dùng
-   *  được cho loại khác (id hãng ≠ id sân bay). */
+  /** Đổi loại phạm vi thì xoá giá trị cũ — giá trị của loại này không dùng được cho loại khác. */
   protected setScopeType(key: number, targetType: PromotionScope['target_type']): void {
     this.scopes.set(
       this.scopes().map((s) =>
@@ -195,40 +294,19 @@ export class PromotionForm {
     );
   }
 
-  protected setScopeValue(key: number, field: 'value' | 'value2', value: string): void {
-    const num = value === '' ? null : Number(value);
+  protected setScopeValue(
+    key: number,
+    field: 'value' | 'value2',
+    raw: number | string | null,
+  ): void {
+    const num = raw === null || raw === '' ? null : Number(raw);
     this.scopes.set(this.scopes().map((s) => (s.key === key ? { ...s, [field]: num } : s)));
-  }
-
-  protected optionsFor(type: PromotionScope['target_type']): Option[] {
-    switch (type) {
-      case 'AIRLINE':
-        return this.airlines;
-      case 'FARE_CLASS':
-        return this.fareClasses;
-      case 'FLIGHT':
-        return this.flights;
-      default:
-        return this.airports;
-    }
-  }
-
-  /** Nhãn của dropdown phụ (chỉ ROUTE mới có). */
-  protected secondLabel(type: PromotionScope['target_type']): string {
-    return type === 'ROUTE' ? 'Sân bay đến' : '';
   }
 
   // ---------- Loại trừ chuyến bay ----------
 
-  protected toggleExcluded(id: number): void {
-    const current = this.excludedIds();
-    this.excludedIds.set(
-      current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
-    );
-  }
-
-  protected isExcluded(id: number): boolean {
-    return this.excludedIds().includes(id);
+  protected setExcludedIds(ids: number[]): void {
+    this.excludedIds.set(ids);
   }
 
   // ---------- Ảnh thẻ khuyến mãi ----------
@@ -243,13 +321,7 @@ export class PromotionForm {
     this.imageBroken.set(false);
   }
 
-  /**
-   * Đọc ảnh chọn từ máy thành data URL và lưu vào `image_url`.
-   *
-   * Cùng cách làm với ô ảnh của form CRUD chung: BE chưa có endpoint upload ảnh
-   * cho master data, nên dùng data URL để xem trước ngay mà vẫn gửi được trong
-   * payload JSON. Khi BE có endpoint, chỉ đổi chỗ này thành gọi upload.
-   */
+  /** Tải ảnh banner khuyến mãi lên Cloudinary thông qua `UploadService.uploadAdminImage`. */
   protected onPickImage(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -262,24 +334,35 @@ export class PromotionForm {
       input.value = '';
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      this.notify('Ảnh vượt quá 2 MB. Chọn ảnh nhỏ hơn hoặc dán đường dẫn.');
+    if (file.size > 5 * 1024 * 1024) {
+      this.notify('Ảnh vượt quá 5 MB. Vui lòng chọn ảnh nhỏ hơn.');
       input.value = '';
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.setDraft('image_url', reader.result as string);
-      this.imageBroken.set(false);
-      // Xoá giá trị input file để chọn lại cùng tệp vẫn kích hoạt (change).
-      input.value = '';
-    };
-    reader.onerror = () => {
-      this.notify('Không đọc được tệp ảnh');
-      input.value = '';
-    };
-    reader.readAsDataURL(file);
+    this.uploadingImage.set(true);
+    this.uploadService
+      .uploadAdminImage(file)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.uploadingImage.set(false);
+          const url = res.data?.url ?? '';
+          if (url) {
+            this.setDraft('image_url', url);
+            this.imageBroken.set(false);
+            this.notify('Đã tải ảnh lên thành công');
+          } else {
+            this.notify('Không nhận được đường dẫn ảnh từ máy chủ');
+          }
+          input.value = '';
+        },
+        error: (err: Error) => {
+          this.uploadingImage.set(false);
+          this.notify(err.message || 'Tải ảnh thất bại');
+          input.value = '';
+        },
+      });
   }
 
   // ---------- Lưu ----------
@@ -289,6 +372,9 @@ export class PromotionForm {
     value: ReturnType<typeof this.draft>[K],
   ): void {
     this.draft.set({ ...this.draft(), [key]: value });
+    if (key === 'image_url') {
+      this.imageBroken.set(false);
+    }
     if (this.errors()[key as string]) {
       const next = { ...this.errors() };
       delete next[key as string];
@@ -324,7 +410,6 @@ export class PromotionForm {
     if (d.start_date && d.end_date && d.end_date < d.start_date) {
       errors['end_date'] = 'Ngày kết thúc phải sau ngày bắt đầu';
     }
-    // Mỗi dòng phạm vi phải chọn đủ giá trị, nếu không DB sẽ từ chối (1001/1006).
     for (const s of this.scopes()) {
       if (s.value === null) {
         errors['scopes'] = 'Mỗi dòng phạm vi phải chọn giá trị';
@@ -343,20 +428,16 @@ export class PromotionForm {
     }
 
     const d = this.draft();
-    // `validate()` đã chặn discount_value null/≤ 0, nhưng TypeScript không suy ra
-    // được điều đó qua hàm khác — nên gán tường minh ở đây.
     const discountValue = d.discount_value ?? 0;
 
     const payload: PromotionPayload = {
       promotion_code: d.promotion_code.trim().toUpperCase(),
       promotion_name: d.promotion_name.trim(),
-      // Chuỗi rỗng → null: DB để NULL cho "chưa có", không phải chuỗi rỗng.
       image_url: d.image_url.trim() || null,
       description: d.description.trim() || null,
       badge_label: d.badge_label.trim() || null,
       discount_type: d.discount_type,
       discount_value: discountValue,
-      // Trần giảm chỉ có ý nghĩa với PERCENT — DB v0.4 quy định AMOUNT thì NULL.
       max_discount_amount: d.discount_type === 'PERCENT' ? d.max_discount_amount : null,
       min_fare_amount: d.min_fare_amount,
       applicable_trip_type: d.applicable_trip_type,
@@ -369,11 +450,9 @@ export class PromotionForm {
 
     this.saving.set(true);
     const id = this.promoId();
-    const request$ = id
-      ? this.service.update(id, payload)
-      : this.service.create(payload);
+    const request$ = id ? this.service.update(id, payload) : this.service.create(payload);
 
-    request$.subscribe({
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.saving.set(false);
         this.notify(res.message);
@@ -386,8 +465,6 @@ export class PromotionForm {
     });
   }
 
-  /** Dựng payload scope đúng hình dạng API v0.2 mục 2.7 — chỉ điền cột ứng
-   *  với `target_type`, các cột khác để null (DB có CHECK theo target_type). */
   private toScopePayload(s: ScopeRow): PromotionScope {
     switch (s.target_type) {
       case 'AIRLINE':
@@ -406,7 +483,8 @@ export class PromotionForm {
   }
 
   protected cancel(): void {
-    this.router.navigate(['/admin/promotions']);
+    const id = this.promoId();
+    this.router.navigate(id ? ['/admin/promotions', id] : ['/admin/promotions']);
   }
 
   private notify(message: string): void {

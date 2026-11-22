@@ -7,7 +7,7 @@ import { ApiResponse } from '@core/models/api-response.model';
 import { FlightSeatMap } from '@core/models/flight.model';
 import { AdminFlightSeatInventory } from '@features/admin/pages/flight-seat-inventory/flight-seat-inventory';
 
-describe('AdminFlightSeatInventory (Tồn ghế chuyến bay — Cụm DA2.2)', () => {
+describe('AdminFlightSeatInventory (Tồn ghế chuyến bay — Cụm DA2.2 / 3A)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminFlightSeatInventory],
@@ -19,19 +19,21 @@ describe('AdminFlightSeatInventory (Tồn ghế chuyến bay — Cụm DA2.2)', 
     }).compileComponents();
   });
 
-  it('render sơ đồ tồn ghế 3-3 với 4 chỉ số Trống/Giữ/Đặt/Khóa', async () => {
+  it('render sơ đồ tồn ghế theo khoang với đầu máy bay, FlightSearchPicker và 4 chỉ số', async () => {
     const fixture = TestBed.createComponent(AdminFlightSeatInventory);
     fixture.detectChanges();
-    await new Promise((r) => setTimeout(r, 600));
+    await new Promise((r) => setTimeout(r, 900));
     fixture.detectChanges();
 
     const el = fixture.nativeElement as HTMLElement;
     const text = el.textContent ?? '';
     expect(text).toContain('VN-210');
+    expect(text).toContain('Đầu máy bay');
     expect(text).toContain('Còn trống');
     expect(text).toContain('Đang giữ');
     expect(text).toContain('Đã đặt');
     expect(text).toContain('Đã khóa');
+    expect(el.querySelector('app-flight-search-picker')).toBeTruthy();
     expect(el.querySelectorAll('button.inv-seat').length).toBe(36);
   });
 

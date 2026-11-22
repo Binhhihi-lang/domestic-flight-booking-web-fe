@@ -1,23 +1,45 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlightDetailRecord, FlightOperationStatus } from '@core/models/flight.model';
 import { FlightAdminService } from '@core/services/flight-admin.service';
+import { ConfirmDialog, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
+import { BadgeTone, StatusBadge } from '@shared/ui/status-badge/status-badge';
+
+const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
+  DRAFT: { label: 'Nháp', tone: 'neutral' },
+  SCHEDULED: { label: 'Đúng giờ', tone: 'info' },
+  BOARDING: { label: 'Đang lên tàu', tone: 'warning' },
+  DELAYED: { label: 'Chậm chuyến', tone: 'warning' },
+  DEPARTED: { label: 'Đã cất cánh', tone: 'info' },
+  ARRIVED: { label: 'Đã hạ cánh', tone: 'success' },
+  COMPLETED: { label: 'Hoàn thành', tone: 'success' },
+  CANCELLED: { label: 'Đã hủy', tone: 'danger' },
+};
 
 /**
- * Cập nhật vận hành chuyến bay cho Staff (`/admin/flights/:id/operation`).
- * Bám sát `staff.html` (`flight-edit`): chỉ cho phép điều chỉnh giờ bay thực tế/dự kiến mới
- * và trạng thái vận hành (Đúng giờ, Đang lên tàu, Chậm chuyến, Đã cất cánh, Đã hạ cánh, Hủy chuyến).
+ * Cập nhật vận hành chuyến bay cho Staff/Admin (`/admin/flights/:id/operation`).
+ * Điều chỉnh giờ cất/hạ cánh và trạng thái khai thác với nhãn tiếng Việt rõ ràng;
+ * tách riêng vùng nguy hiểm "Hủy chuyến bay" kèm hộp thoại xác nhận.
  */
 @Component({
   selector: 'app-admin-flight-edit',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, MatIconModule, AppAlert, AppButton, SkeletonBlock],
+  imports: [
+    FormsModule,
+    RouterLink,
+    MatIconModule,
+    AppAlert,
+    AppButton,
+    SkeletonBlock,
+    StatusBadge,
+  ],
   template: `
     <section class="fe-page">
       <header class="fe-head">
@@ -46,6 +68,13 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
             <span><strong>Chặng:</strong> {{ f.departure_airport.airport_code }} → {{ f.arrival_airport.airport_code }}</span>
             <span><strong>Hãng:</strong> {{ f.airline.airline_name }}</span>
             <span><strong>Tàu bay:</strong> {{ f.aircraft.aircraft_code }} ({{ f.aircraft.model }})</span>
+            <span class="fe-info__status">
+              <strong>Hiện tại:</strong>
+              <app-status-badge
+                [tone]="opStatusMeta(f.operation_status).tone"
+                [label]="opStatusMeta(f.operation_status).label"
+              />
+            </span>
           </div>
 
           <form class="fe-form" (ngSubmit)="save()">
@@ -58,12 +87,12 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
                   [ngModel]="operationStatus()"
                   (ngModelChange)="operationStatus.set($event)"
                 >
-                  <option value="SCHEDULED">Đúng giờ (SCHEDULED)</option>
-                  <option value="BOARDING">Đang lên tàu (BOARDING)</option>
-                  <option value="DELAYED">Chậm chuyến (DELAYED)</option>
-                  <option value="DEPARTED">Đã cất cánh (DEPARTED)</option>
-                  <option value="ARRIVED">Đã hạ cánh (ARRIVED)</option>
-                  <option value="CANCELLED">Hủy chuyến (CANCELLED)</option>
+                  <option value="DRAFT">Nháp</option>
+                  <option value="SCHEDULED">Đúng giờ</option>
+                  <option value="BOARDING">Đang lên tàu</option>
+                  <option value="DELAYED">Chậm chuyến</option>
+                  <option value="DEPARTED">Đã cất cánh</option>
+                  <option value="ARRIVED">Đã hạ cánh</option>
                 </select>
               </div>
 
@@ -111,6 +140,31 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
               </app-app-button>
             </div>
           </form>
+
+          @if (f.operation_status !== 'CANCELLED') {
+            <section class="fe-danger" aria-label="Vùng hủy chuyến bay">
+              <div class="fe-danger__body">
+                <div class="fe-danger__title">
+                  <mat-icon aria-hidden="true">warning</mat-icon>
+                  <h2>Hủy chuyến bay</h2>
+                </div>
+                <p>
+                  Hủy chuyến <strong>{{ f.flight_number }}</strong> sẽ tự động đóng bán vé và chuyển trạng
+                  thái vận hành sang <strong>Đã hủy</strong>. Hãy đảm bảo đã thông báo phương án hỗ trợ
+                  cho hành khách bị ảnh hưởng.
+                </p>
+              </div>
+              <app-app-button
+                variant="danger"
+                size="sm"
+                [disabled]="saving()"
+                (clicked)="confirmCancelFlight()"
+              >
+                <mat-icon aria-hidden="true">cancel</mat-icon>
+                Hủy chuyến bay
+              </app-app-button>
+            </section>
+          }
         }
       </div>
     </section>
@@ -131,6 +185,7 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
     }
     .fe-head h1 {
       margin: 0;
+      font-family: var(--font-heading);
       font-size: var(--text-h1);
       color: var(--color-ink);
     }
@@ -166,12 +221,18 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
     .fe-info {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: 16px;
       padding: 12px 14px;
       border-radius: var(--radius);
       background: var(--color-primary-soft);
       color: var(--color-ink);
       font-size: var(--text-small);
+    }
+    .fe-info__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .fe-grid {
       display: grid;
@@ -228,12 +289,51 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
       text-decoration: none;
       font-size: var(--text-small);
     }
+    .fe-danger {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sp-md);
+      margin-top: var(--sp-sm);
+      padding: var(--sp-lg);
+      border: 1px solid var(--color-danger);
+      border-radius: var(--radius);
+      background: var(--color-danger-soft);
+    }
+    .fe-danger__body {
+      flex: 1 1 320px;
+      color: var(--color-on-danger-soft);
+    }
+    .fe-danger__title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .fe-danger__title h2 {
+      margin: 0;
+      font-size: var(--text-body);
+      font-weight: 700;
+      color: var(--color-on-danger-soft);
+    }
+    .fe-danger__title mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    .fe-danger__body p {
+      margin: 0;
+      font-size: var(--text-small);
+      line-height: var(--leading-normal);
+    }
   `,
 })
 export class AdminFlightEdit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly flightService = inject(FlightAdminService);
+  private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly flightId = Number(this.route.snapshot.paramMap.get('id'));
@@ -252,7 +352,7 @@ export class AdminFlightEdit {
       next: (res) => {
         const f = res.data;
         this.flight.set(f);
-        this.operationStatus.set(f.operation_status);
+        this.operationStatus.set(f.operation_status === 'CANCELLED' ? 'SCHEDULED' : f.operation_status);
         this.scheduledDeparture.set(f.scheduled_departure.slice(0, 16));
         this.scheduledArrival.set(f.scheduled_arrival.slice(0, 16));
         this.loading.set(false);
@@ -264,6 +364,10 @@ export class AdminFlightEdit {
     });
   }
 
+  protected opStatusMeta(status: FlightOperationStatus | string): { label: string; tone: BadgeTone } {
+    return OP_STATUS_META[status] ?? { label: status, tone: 'neutral' };
+  }
+
   protected save(): void {
     const f = this.flight();
     if (!f) return;
@@ -272,6 +376,35 @@ export class AdminFlightEdit {
       this.error.set('Giờ đến phải sau giờ khởi hành');
       return;
     }
+    this.submitUpdate(f, this.operationStatus(), f.sales_status);
+  }
+
+  protected confirmCancelFlight(): void {
+    const f = this.flight();
+    if (!f) return;
+    const data: ConfirmDialogData = {
+      title: `Xác nhận hủy chuyến bay ${f.flight_number}?`,
+      message: `Chặng ${f.departure_airport.airport_code} → ${f.arrival_airport.airport_code}. Chuyến bay sẽ đóng bán ngay lập tức và chuyển sang trạng thái Đã hủy.`,
+      confirmText: 'Xác nhận hủy chuyến',
+      cancelText: 'Quay lại',
+      tone: 'warn',
+      warningNote:
+        'Hành động này sẽ đóng mở bán chuyến bay ngay lập tức. Hành khách đã đặt vé cần được bộ phận hỗ trợ liên hệ hoàn/đổi theo quy định.',
+    };
+    this.dialog
+      .open(ConfirmDialog, { data, panelClass: 'vf-confirm-panel' })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (!ok) return;
+        this.submitUpdate(f, 'CANCELLED', 'CLOSED');
+      });
+  }
+
+  private submitUpdate(
+    f: FlightDetailRecord,
+    nextStatus: FlightOperationStatus,
+    nextSales: 'OPEN' | 'CLOSED',
+  ): void {
     this.saving.set(true);
     this.flightService
       .update(f.id, {
@@ -282,15 +415,20 @@ export class AdminFlightEdit {
         arrival_airport_id: f.arrival_airport.id,
         scheduled_departure: `${this.scheduledDeparture()}:00`,
         scheduled_arrival: `${this.scheduledArrival()}:00`,
-        operation_status: this.operationStatus(),
-        sales_status: this.operationStatus() === 'CANCELLED' ? 'CLOSED' : f.sales_status,
+        operation_status: nextStatus,
+        sales_status: nextSales,
+        parent_flight_id: f.parent_flight_id,
       })
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.snackBar.open('Đã cập nhật trạng thái vận hành chuyến bay', 'Đóng', {
-            duration: 3000,
-          });
+          this.snackBar.open(
+            nextStatus === 'CANCELLED'
+              ? `Đã hủy chuyến bay ${f.flight_number}`
+              : 'Đã cập nhật trạng thái vận hành chuyến bay',
+            'Đóng',
+            { duration: 3000 },
+          );
           this.router.navigate(['/admin/flights', f.id]);
         },
         error: (err: Error) => {
