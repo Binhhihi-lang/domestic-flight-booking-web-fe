@@ -19,36 +19,82 @@
   </div>
 
   <div class="searchform">
-    <div class="field">
-      <label for="fs-from">Điểm đi</label>
-      <select
-        id="fs-from"
-        name="from"
-        [ngModel]="from"
-        (ngModelChange)="onFromChange($event)"
-        aria-label="Điểm đi"
-      >
-        @for (ap of airports(); track ap.airport_code) {
-          <option [value]="ap.airport_code">{{ airportLabel(ap) }}</option>
-        }
-      </select>
-    </div>
+    <!-- Cặp Điểm đi & Điểm đến với nút hoán đổi ở chính giữa -->
+    <div class="route-pair">
+      <div class="field dd">
+        <label for="fs-from">Điểm đi</label>
+        <div class="dd__input-wrap">
+          <mat-icon class="dd__lead" aria-hidden="true">flight_takeoff</mat-icon>
+          <input
+            id="fs-from"
+            name="from"
+            type="text"
+            autocomplete="off"
+            role="combobox"
+            aria-label="Điểm đi"
+            aria-autocomplete="list"
+            [attr.aria-expanded]="openField() === 'from'"
+            placeholder="Tìm thành phố hoặc mã sân bay..."
+            [ngModel]="fromDisplayValue()"
+            (focus)="openAirportDropdown('from')"
+            (ngModelChange)="onSearchQueryInput('from', $event)"
+            (keydown)="onAirportKeydown('from', $event)"
+          />
+        </div>
 
-    <div class="field swap">
-      <label for="fs-to">Điểm đến</label>
-      <select
-        id="fs-to"
-        name="to"
-        [ngModel]="to"
-        (ngModelChange)="onToChange($event)"
-        aria-label="Điểm đến"
-      >
-        @for (ap of destinationAirports(); track ap.airport_code) {
-          <option [value]="ap.airport_code">{{ airportLabel(ap) }}</option>
+        @if (openField() === 'from') {
+          <div class="dd__panel" role="listbox" aria-label="Chọn điểm đi">
+            @if (fromRecentOptions().length > 0) {
+              <div class="dd__group-title">Tìm kiếm gần đây</div>
+              @for (ap of fromRecentOptions(); track ap.airport_code; let idx = $index) {
+                <button
+                  type="button"
+                  role="option"
+                  class="dd__opt"
+                  [class.dd__opt--active]="activeOptionIdx() === idx"
+                  [class.dd__opt--sel]="ap.airport_code === fromSignal()"
+                  (mousedown)="$event.preventDefault(); selectAirport('from', ap)"
+                >
+                  <mat-icon class="dd__opt-ic" aria-hidden="true">history</mat-icon>
+                  <div class="dd__opt-main">
+                    <strong>{{ airportTitle(ap) }}</strong>
+                    <span>{{ ap.airport_name }}</span>
+                  </div>
+                  <span class="dd__code">{{ ap.airport_code }}</span>
+                </button>
+              }
+            }
+
+            <div class="dd__group-title">Thành phố hoặc sân bay phổ biến</div>
+            @if (fromPopularOptions().length === 0) {
+              <div class="dd__empty">Không tìm thấy sân bay phù hợp</div>
+            } @else {
+              @for (ap of fromPopularOptions(); track ap.airport_code; let idx = $index) {
+                @let optIdx = fromRecentOptions().length + idx;
+                <button
+                  type="button"
+                  role="option"
+                  class="dd__opt"
+                  [class.dd__opt--active]="activeOptionIdx() === optIdx"
+                  [class.dd__opt--sel]="ap.airport_code === fromSignal()"
+                  (mousedown)="$event.preventDefault(); selectAirport('from', ap)"
+                >
+                  <mat-icon class="dd__opt-ic" aria-hidden="true">flight_takeoff</mat-icon>
+                  <div class="dd__opt-main">
+                    <strong>{{ airportTitle(ap) }}</strong>
+                    <span>{{ ap.airport_name }}</span>
+                  </div>
+                  <span class="dd__code">{{ ap.airport_code }}</span>
+                </button>
+              }
+            }
+          </div>
         }
-      </select>
+      </div>
+
       <button
         class="swap__btn"
+        [class.swap__btn--rot]="swapRotated()"
         type="button"
         title="Đổi điểm đi và điểm đến"
         aria-label="Đổi điểm đi và điểm đến"
@@ -56,6 +102,77 @@
       >
         <mat-icon>swap_horiz</mat-icon>
       </button>
+
+      <div class="field dd">
+        <label for="fs-to">Điểm đến</label>
+        <div class="dd__input-wrap">
+          <mat-icon class="dd__lead" aria-hidden="true">flight_land</mat-icon>
+          <input
+            id="fs-to"
+            name="to"
+            type="text"
+            autocomplete="off"
+            role="combobox"
+            aria-label="Điểm đến"
+            aria-autocomplete="list"
+            [attr.aria-expanded]="openField() === 'to'"
+            placeholder="Tìm thành phố hoặc mã sân bay..."
+            [ngModel]="toDisplayValue()"
+            (focus)="openAirportDropdown('to')"
+            (ngModelChange)="onSearchQueryInput('to', $event)"
+            (keydown)="onAirportKeydown('to', $event)"
+          />
+        </div>
+
+        @if (openField() === 'to') {
+          <div class="dd__panel" role="listbox" aria-label="Chọn điểm đến">
+            @if (toRecentOptions().length > 0) {
+              <div class="dd__group-title">Tìm kiếm gần đây</div>
+              @for (ap of toRecentOptions(); track ap.airport_code; let idx = $index) {
+                <button
+                  type="button"
+                  role="option"
+                  class="dd__opt"
+                  [class.dd__opt--active]="activeOptionIdx() === idx"
+                  [class.dd__opt--sel]="ap.airport_code === toSignal()"
+                  (mousedown)="$event.preventDefault(); selectAirport('to', ap)"
+                >
+                  <mat-icon class="dd__opt-ic" aria-hidden="true">history</mat-icon>
+                  <div class="dd__opt-main">
+                    <strong>{{ airportTitle(ap) }}</strong>
+                    <span>{{ ap.airport_name }}</span>
+                  </div>
+                  <span class="dd__code">{{ ap.airport_code }}</span>
+                </button>
+              }
+            }
+
+            <div class="dd__group-title">Thành phố hoặc sân bay phổ biến</div>
+            @if (toPopularOptions().length === 0) {
+              <div class="dd__empty">Không tìm thấy sân bay phù hợp</div>
+            } @else {
+              @for (ap of toPopularOptions(); track ap.airport_code; let idx = $index) {
+                @let optIdx = toRecentOptions().length + idx;
+                <button
+                  type="button"
+                  role="option"
+                  class="dd__opt"
+                  [class.dd__opt--active]="activeOptionIdx() === optIdx"
+                  [class.dd__opt--sel]="ap.airport_code === toSignal()"
+                  (mousedown)="$event.preventDefault(); selectAirport('to', ap)"
+                >
+                  <mat-icon class="dd__opt-ic" aria-hidden="true">flight_land</mat-icon>
+                  <div class="dd__opt-main">
+                    <strong>{{ airportTitle(ap) }}</strong>
+                    <span>{{ ap.airport_name }}</span>
+                  </div>
+                  <span class="dd__code">{{ ap.airport_code }}</span>
+                </button>
+              }
+            }
+          </div>
+        }
+      </div>
     </div>
 
     <div class="field">

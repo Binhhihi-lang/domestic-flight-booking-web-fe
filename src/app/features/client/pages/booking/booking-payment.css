@@ -547,15 +547,32 @@
   margin-top: var(--sp-md);
   display: inline-flex;
   align-items: center;
-  gap: var(--sp-xs);
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
   font-size: var(--text-small);
   font-weight: 600;
-  color: var(--color-ink-muted);
   text-decoration: none;
+  align-self: flex-start;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .link-back:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-primary-bright);
   color: var(--color-primary);
+}
+
+.link-back mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 @media (max-width: 900px) {

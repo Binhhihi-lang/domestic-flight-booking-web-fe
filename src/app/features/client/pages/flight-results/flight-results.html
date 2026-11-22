@@ -289,6 +289,15 @@
                 {{ best.is_refundable ? 'Hoàn ' + best.refund_percent + '% trước ' + (best.refund_min_hours_before_departure ?? 24) + 'h' : 'Không hoàn vé ở hạng tiết kiệm' }}
               </span>
             }
+            <a
+              class="fr__detail-link"
+              [routerLink]="['/flights', f.id]"
+              [queryParams]="detailQueryParams()"
+              [state]="{ flight: f }"
+            >
+              Chi tiết chuyến bay
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
           </div>
         </article>
       }
@@ -305,7 +314,7 @@
   </div>
 </div>
 
-<!-- Modal so sánh quyền lợi các hạng vé (flight-detail) -->
+<!-- Modal chọn hạng vé 3 tầng W-RT-02a -->
 @if (comparingFlight(); as fl) {
   <div
     class="vf-modal-backdrop"
@@ -317,7 +326,7 @@
     <div class="vf-modal-panel fr-modal" (click)="$event.stopPropagation()">
       <header class="fr-modal__head">
         <div>
-          <h2>So sánh hạng vé — {{ fl.flight_number }}</h2>
+          <h2>Chọn hạng vé — {{ fl.flight_number }}</h2>
           <p class="fr-muted">
             {{ fl.airline.airline_name }} · {{ fl.departure_airport.airport_code }} → {{ fl.arrival_airport.airport_code }}
             ({{ formatTime(fl.scheduled_departure) }} – {{ formatTime(fl.scheduled_arrival) }})
@@ -334,21 +343,103 @@
         </button>
       </header>
 
+      <!-- Tầng 1: Tab khoang dịch vụ -->
+      <div class="cabtabs" role="tablist" aria-label="Khoang dịch vụ">
+        @for (tab of modalCabinTabs(); track tab.key) {
+          <button
+            type="button"
+            role="tab"
+            class="cabtab"
+            [class.cabtab--active]="activeModalCabin() === tab.key"
+            [attr.aria-selected]="activeModalCabin() === tab.key"
+            (click)="activeModalCabin.set(tab.key)"
+          >
+            <span>{{ tab.label }}</span>
+            <span class="cabtab__count">{{ tab.count }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Tầng 2a: Lưới thẻ hạng vé trong khoang đang chọn -->
+      <div class="fdcols">
+        @for (fare of activeModalFares(); track fare.fare_class_code) {
+          @let isCheapest = fare.fare_class_code === cheapestActiveFareCode();
+          <article class="fdcol" [class.fdcol--cheapest]="isCheapest">
+            <div class="fdcol__top">
+              <div>
+                <div class="fdcol__name">{{ fare.fare_class_name }}</div>
+                <div class="fr-fare-code">{{ fare.fare_class_code }}</div>
+              </div>
+              @if (isCheapest) {
+                <span class="fdcol__badge">Rẻ nhất trong hạng</span>
+              }
+            </div>
+
+            <div class="fdcol__price tabular">{{ formatMoney(fare.adult_price) }}</div>
+            <div class="fdcol__seats">Còn {{ fare.seats_available }} ghế trống</div>
+
+            <ul class="fdcol__perks">
+              <li>
+                <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">check_circle</mat-icon>
+                <span>{{ carryOnLabel(fare) }}</span>
+              </li>
+              <li>
+                <mat-icon
+                  class="fr-cmp-ic"
+                  [class.fr-cmp-ic--ok]="fare.seat_class !== 'ECONOMY' || fare.is_refundable"
+                  [class.fr-cmp-ic--no]="fare.seat_class === 'ECONOMY' && !fare.is_refundable"
+                  aria-hidden="true"
+                >
+                  {{ fare.seat_class !== 'ECONOMY' || fare.is_refundable ? 'check_circle' : 'cancel' }}
+                </mat-icon>
+                <span>{{ checkedBaggageLabel(fare) }}</span>
+              </li>
+              <li>
+                <mat-icon
+                  class="fr-cmp-ic"
+                  [class.fr-cmp-ic--ok]="fare.is_refundable || fare.seat_class === 'BUSINESS'"
+                  [class.fr-cmp-ic--no]="!fare.is_refundable && fare.seat_class !== 'BUSINESS'"
+                  aria-hidden="true"
+                >
+                  {{ fare.is_refundable || fare.seat_class === 'BUSINESS' ? 'check_circle' : 'info' }}
+                </mat-icon>
+                <span>{{ changePolicyLabel(fare) }}</span>
+              </li>
+              <li>
+                <mat-icon
+                  class="fr-cmp-ic"
+                  [class.fr-cmp-ic--ok]="fare.is_refundable"
+                  [class.fr-cmp-ic--no]="!fare.is_refundable"
+                  aria-hidden="true"
+                >
+                  {{ fare.is_refundable ? 'check_circle' : 'cancel' }}
+                </mat-icon>
+                <span>{{ refundPolicyLabel(fare) }}</span>
+              </li>
+              <li>
+                <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">event_seat</mat-icon>
+                <span>{{ seatSelectionLabel(fare) }}</span>
+              </li>
+            </ul>
+
+            <div class="fdcol__foot">
+              <app-app-button variant="primary" size="sm" (clicked)="chooseFare(fl, fare)">
+                Chọn hạng này
+              </app-app-button>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- Tầng 2b: Bảng so sánh chi tiết chỉ trong khoang đang chọn -->
       <div class="fr-compare-wrap">
         <table class="fr-compare-table">
           <thead>
             <tr>
               <th scope="col" class="fr-compare-table__attr">Quyền lợi &amp; Điều kiện</th>
-              @for (fare of fl.fares; track fare.fare_class_code) {
-                <th
-                  scope="col"
-                  [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'"
-                >
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <th scope="col">
                   <div class="fr-compare-th">
-                    <app-status-badge
-                      [tone]="fare.seat_class === 'BUSINESS' ? 'warning' : fare.seat_class === 'PREMIUM_ECONOMY' ? 'info' : 'neutral'"
-                      [label]="cabinLabel(fare.seat_class)"
-                    />
                     <span class="fr-compare-th__name">{{ fare.fare_class_name }}</span>
                     <span class="fr-fare-code">{{ fare.fare_class_code }}</span>
                   </div>
@@ -359,8 +450,8 @@
           <tbody>
             <tr>
               <th scope="row">Giá vé</th>
-              @for (fare of fl.fares; track fare.fare_class_code) {
-                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
                   <div class="fr-fare-price tabular">{{ formatMoney(fare.adult_price) }}</div>
                   <div class="fr-compare-sub tabular">
                     Gốc {{ formatMoney(fare.base_fare) }} + Thuế phí {{ formatMoney(fare.tax_fee) }}
@@ -373,8 +464,8 @@
             </tr>
             <tr>
               <th scope="row">Hành lý xách tay</th>
-              @for (fare of fl.fares; track fare.fare_class_code) {
-                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
                   <span class="fr-cmp-cell">
                     <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">check_circle</mat-icon>
                     {{ carryOnLabel(fare) }}
@@ -384,8 +475,8 @@
             </tr>
             <tr>
               <th scope="row">Hành lý ký gửi</th>
-              @for (fare of fl.fares; track fare.fare_class_code) {
-                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
                   <span class="fr-cmp-cell">
                     <mat-icon
                       class="fr-cmp-ic"
@@ -402,8 +493,8 @@
             </tr>
             <tr>
               <th scope="row">Đổi vé</th>
-              @for (fare of fl.fares; track fare.fare_class_code) {
-                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
                   <span class="fr-cmp-cell">
                     <mat-icon
                       class="fr-cmp-ic"
@@ -420,8 +511,8 @@
             </tr>
             <tr>
               <th scope="row">Hoàn vé</th>
-              @for (fare of fl.fares; track fare.fare_class_code) {
-                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
                   <span class="fr-cmp-cell">
                     <mat-icon
                       class="fr-cmp-ic"
@@ -438,8 +529,8 @@
             </tr>
             <tr>
               <th scope="row">Chọn ghế</th>
-              @for (fare of fl.fares; track fare.fare_class_code) {
-                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
                   <span class="fr-cmp-cell">
                     <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">event_seat</mat-icon>
                     {{ seatSelectionLabel(fare) }}
@@ -452,10 +543,10 @@
           <tfoot>
             <tr>
               <th scope="row">Chọn hạng vé</th>
-              @for (fare of fl.fares; track fare.fare_class_code) {
-                <td [class.fr-compare-col--featured]="fare.seat_class === 'PREMIUM_ECONOMY'">
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
                   <app-app-button variant="primary" size="sm" (clicked)="chooseFare(fl, fare)">
-                    Chọn {{ fare.fare_class_name }}
+                    Chọn hạng này
                   </app-app-button>
                 </td>
               }
@@ -463,6 +554,30 @@
           </tfoot>
         </table>
       </div>
+
+      <!-- Tầng 3: Gợi ý nâng hạng dịch vụ cao hơn -->
+      @if (upgradeCabins().length > 0) {
+        <div class="upblk">
+          <div class="upblk__title">Đổi sang hạng dịch vụ cao hơn</div>
+          <div class="upblk__list">
+            @for (up of upgradeCabins(); track up.key) {
+              <div class="upblk__item">
+                <div>
+                  <strong>{{ up.label }}</strong>
+                  <span class="tabular">+{{ formatMoney(up.diff) }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--sm"
+                  (click)="activeModalCabin.set(up.key)"
+                >
+                  Xem
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
   </div>
 }

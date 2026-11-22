@@ -29,10 +29,12 @@ describe('AdminFlightSeatInventory (Tồn ghế chuyến bay — Cụm DA2.2 / 3
     const text = el.textContent ?? '';
     expect(text).toContain('VN-210');
     expect(text).toContain('Đầu máy bay');
-    expect(text).toContain('Còn trống');
+    expect(text).toContain('Tổng');
+    expect(text).toContain('Trống');
     expect(text).toContain('Đang giữ');
-    expect(text).toContain('Đã đặt');
-    expect(text).toContain('Đã khóa');
+    expect(text).toContain('Đã bán');
+    expect(text).toContain('Khoá');
+    expect(text).toContain('Đồng bộ từ sơ đồ');
     expect(el.querySelector('app-flight-search-picker')).toBeTruthy();
     expect(el.querySelectorAll('button.inv-seat').length).toBe(36);
   });

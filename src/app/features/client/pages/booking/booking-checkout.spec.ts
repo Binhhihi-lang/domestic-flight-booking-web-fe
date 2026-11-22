@@ -150,9 +150,10 @@ describe('Luồng Checkout — Review, Payment & Confirmation (Cụm 5B)', () =>
     const steps = el.querySelectorAll('[data-testid="booking-stepper"] .stepper__item');
     expect(steps.length).toBe(5);
     expect(steps[3].classList.contains('stepper__item--active')).toBe(true);
-    expect(el.textContent).toContain('1. Chọn chuyến');
-    expect(el.textContent).toContain('4. Xem lại');
-    expect(el.textContent).toContain('5. Thanh toán');
+    expect(el.textContent).toContain('Chọn chuyến');
+    expect(el.textContent).toContain('Xem lại');
+    expect(el.textContent).toContain('Thanh toán');
+    expect(el.textContent).not.toContain('4. Xem lại');
 
     expect(el.textContent).toContain('DH-1001');
     expect(el.textContent).toContain('VN 214');

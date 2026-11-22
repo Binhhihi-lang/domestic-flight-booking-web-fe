@@ -14,6 +14,13 @@ import { StatusBadge } from '@shared/ui/status-badge/status-badge';
 
 const moneyFmt = new Intl.NumberFormat('vi-VN');
 
+type LegKey = 'OUTBOUND' | 'RETURN';
+
+interface LegBaggagePick {
+  option: BaggageOption;
+  quantity: number;
+}
+
 interface PassengerEditDraft {
   id: number;
   index: number;
@@ -26,12 +33,7 @@ interface PassengerEditDraft {
 }
 
 /**
- * Bước 3 luồng đặt vé: Thông tin hành khách & Hành lý ký gửi (`/booking/passengers`).
- * Bám prototype `customer.html`:
- * - Stepper 5 bước chuẩn
- * - Danh sách hành khách gọn + modal chỉnh sửa từng hành khách (`passenger-edit`)
- * - Card Hành lý ký gửi tách riêng + modal chọn gói & số lượng (`quantity >= 1`)
- * - Thông tin liên hệ + đồng ý điều khoản + Tóm tắt đơn đầy đủ bên phải
+ * Bước 3 luồng đặt vé: Thông tin hành khách & Hành lý ký gửi (`/booking/passengers`) — `W-RT-04` & `W-RT-04a`.
  */
 @Component({
   selector: 'app-booking-passengers',
@@ -42,27 +44,27 @@ interface PassengerEditDraft {
       <nav class="bp-stepper" aria-label="Tiến trình đặt vé">
         <a routerLink="/flights" class="bp-step bp-step--done">
           <span class="bp-step__num">✓</span>
-          <span>1. Chọn chuyến</span>
+          <span>Chọn chuyến</span>
         </a>
         <span class="bp-step-line" aria-hidden="true"></span>
         <a routerLink="/booking/seats" class="bp-step bp-step--done">
           <span class="bp-step__num">✓</span>
-          <span>2. Chọn ghế</span>
+          <span>Chọn ghế</span>
         </a>
         <span class="bp-step-line" aria-hidden="true"></span>
         <span class="bp-step bp-step--active" aria-current="step">
           <span class="bp-step__num">3</span>
-          <span>3. Hành khách</span>
+          <span>Hành khách</span>
         </span>
         <span class="bp-step-line" aria-hidden="true"></span>
         <span class="bp-step">
           <span class="bp-step__num">4</span>
-          <span>4. Xem lại</span>
+          <span>Xem lại</span>
         </span>
         <span class="bp-step-line" aria-hidden="true"></span>
         <span class="bp-step">
           <span class="bp-step__num">5</span>
-          <span>5. Thanh toán</span>
+          <span>Thanh toán</span>
         </span>
       </nav>
 
@@ -73,7 +75,10 @@ interface PassengerEditDraft {
             Họ tên phải trùng giấy tờ tuỳ thân. Vé điện tử sẽ in đúng thông tin bạn đã nhập.
           </p>
         </div>
-        <a routerLink="/booking/seats" class="bp-back">← Quay lại chọn ghế</a>
+        <a routerLink="/booking/seats" class="bp-back">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Quay lại chọn ghế
+        </a>
       </header>
 
       @if (error()) {
@@ -136,7 +141,7 @@ interface PassengerEditDraft {
             </div>
           </section>
 
-          <!-- 2. Card Hành lý ký gửi tách riêng -->
+          <!-- 2. Card Hành lý ký gửi theo chặng (W-RT-04) -->
           <section class="bp-card">
             <div class="bp-card__head">
               <div class="bp-card__title-group">
@@ -148,36 +153,34 @@ interface PassengerEditDraft {
                   <p class="bp-muted">{{ includedBaggageSummary() }}</p>
                 </div>
               </div>
-              <app-status-badge
-                [tone]="baggageTotal() > 0 ? 'info' : 'neutral'"
-                [label]="baggageTotal() > 0 ? '+' + formatMoney(baggageTotal()) : 'Chưa mua thêm'"
-              />
+              <app-app-button size="sm" variant="secondary" class="bagf__btn" (clicked)="openBaggageModal('OUTBOUND')">
+                <mat-icon aria-hidden="true">luggage</mat-icon>
+                Chọn
+              </app-app-button>
             </div>
 
-            <div class="bp-bag-list">
-              @for (p of eligibleBaggagePassengers(); track p.id; let idx = $index) {
-                <div class="bp-bag-row">
-                  <div class="bp-bag-row__info">
-                    <strong>{{ p.full_name.trim() || ('Hành khách ' + (idx + 1)) }}</strong>
-                    <span class="bp-muted">
-                      @if (p.baggage_option_id && p.baggage_name) {
-                        {{ p.baggage_name }} × {{ quantityOf(p.id) }}
-                        (<strong class="tabular">{{ formatMoney(p.baggage_price) }}</strong>)
-                      } @else {
-                        Chỉ dùng hành lý theo hạng vé · Chưa mua thêm
-                      }
+            <div class="bagf" [class.bagf--single]="!hasReturnLeg()">
+              @for (leg of legSummaries(); track leg.key; let idx = $index) {
+                <div class="bagf__c" (click)="openBaggageModal(leg.key)">
+                  <div class="bagf__top">
+                    <strong>{{ idx + 1 }}. {{ leg.routeLabel }}</strong>
+                    <span class="bagf__from tabular">
+                      {{ minBaggagePrice() > 0 ? 'Từ ' + formatMoney(minBaggagePrice()) : 'Theo gói' }}
                     </span>
                   </div>
-                  <app-app-button size="sm" variant="secondary" (clicked)="openBaggageModal(p)">
-                    <mat-icon aria-hidden="true">luggage</mat-icon>
-                    Chọn
-                  </app-app-button>
+                  <div class="bp-muted">
+                    @if (leg.totalCount > 0) {
+                      Đã chọn <strong>{{ leg.totalCount }} kiện</strong> · <strong class="tabular">{{ formatMoney(leg.totalPrice) }}</strong>
+                    } @else {
+                      Chưa mua thêm hành lý ký gửi
+                    }
+                  </div>
                 </div>
               }
             </div>
           </section>
 
-          <!-- 3. Thông tin liên hệ & điều khoản -->
+          <!-- 3. Thông tin liên hệ (3 cột .grid3) & điều khoản -->
           <section class="bp-card">
             <div class="bp-card__head">
               <div>
@@ -186,15 +189,25 @@ interface PassengerEditDraft {
               </div>
             </div>
 
-            <div class="bp-grid">
+            <div class="grid3">
               <div class="bp-field">
-                <label for="c-name">Họ tên người liên hệ *</label>
+                <label for="c-name">Họ tên *</label>
                 <input
                   id="c-name"
                   type="text"
                   placeholder="Nhập họ tên người liên hệ"
                   [ngModel]="contactName()"
                   (ngModelChange)="contactName.set($event)"
+                />
+              </div>
+              <div class="bp-field">
+                <label for="c-email">Email *</label>
+                <input
+                  id="c-email"
+                  type="email"
+                  placeholder="VD: email@example.com"
+                  [ngModel]="contactEmail()"
+                  (ngModelChange)="contactEmail.set($event)"
                 />
               </div>
               <div class="bp-field">
@@ -205,16 +218,6 @@ interface PassengerEditDraft {
                   placeholder="VD: 0912345678"
                   [ngModel]="contactPhone()"
                   (ngModelChange)="contactPhone.set($event)"
-                />
-              </div>
-              <div class="bp-field bp-field--full">
-                <label for="c-email">Email nhận vé điện tử *</label>
-                <input
-                  id="c-email"
-                  type="email"
-                  placeholder="VD: email@example.com"
-                  [ngModel]="contactEmail()"
-                  (ngModelChange)="contactEmail.set($event)"
                 />
               </div>
             </div>
@@ -235,33 +238,62 @@ interface PassengerEditDraft {
 
         <!-- Sidebar Tóm tắt đơn -->
         <aside class="bp-card bp-side">
-          <h2>Tóm tắt đơn đặt chỗ</h2>
+          <div class="bp-side__head">
+            <h2>Tóm tắt đơn đặt chỗ</h2>
+            <span class="bp-side__meta">
+              {{ passengers().length }} hành khách{{ hasReturnLeg() ? ' × 2 chặng' : '' }}
+            </span>
+          </div>
 
           @if (bookingFlow.selectedFlight(); as outFl) {
-            <div class="bp-trip-box">
-              <strong>
-                {{ outFl.departure_airport.airport_code }} → {{ outFl.arrival_airport.airport_code }}
-              </strong>
-              <span class="bp-muted">
-                {{ outFl.flight_number }} · {{ formatTime(outFl.scheduled_departure) }}
-                @if (bookingFlow.selectedFare(); as fare) {
-                  · {{ fare.fare_class_name }}
-                }
-              </span>
+            <div class="flightline">
+              <div class="flightline__leg">Chuyến đi · {{ outFl.flight_number }}</div>
+              <div class="flightline__row">
+                <div>
+                  <strong class="tabular">{{ formatTime(outFl.scheduled_departure) }}</strong>
+                  <span>{{ outFl.departure_airport.airport_code }}</span>
+                </div>
+                <div class="flightline__track">
+                  <span class="flightline__dot"></span>
+                  <span class="flightline__bar"></span>
+                  <mat-icon aria-hidden="true">flight</mat-icon>
+                  <span class="flightline__bar"></span>
+                  <span class="flightline__dot"></span>
+                </div>
+                <div class="flightline__arr">
+                  <strong class="tabular">{{ formatTime(outFl.scheduled_arrival) }}</strong>
+                  <span>{{ outFl.arrival_airport.airport_code }}</span>
+                </div>
+              </div>
+              @if (bookingFlow.selectedFare(); as fare) {
+                <div class="bp-muted">{{ outFl.airline.airline_name }} · {{ fare.fare_class_name }}</div>
+              }
             </div>
           }
 
           @if (bookingFlow.selectedReturnFlight(); as retFl) {
-            <div class="bp-trip-box">
-              <strong>
-                Chặng về: {{ retFl.departure_airport.airport_code }} → {{ retFl.arrival_airport.airport_code }}
-              </strong>
-              <span class="bp-muted">
-                {{ retFl.flight_number }} · {{ formatTime(retFl.scheduled_departure) }}
-                @if (bookingFlow.selectedReturnFare(); as rFare) {
-                  · {{ rFare.fare_class_name }}
-                }
-              </span>
+            <div class="flightline flightline--return">
+              <div class="flightline__leg">Chuyến về · {{ retFl.flight_number }}</div>
+              <div class="flightline__row">
+                <div>
+                  <strong class="tabular">{{ formatTime(retFl.scheduled_departure) }}</strong>
+                  <span>{{ retFl.departure_airport.airport_code }}</span>
+                </div>
+                <div class="flightline__track">
+                  <span class="flightline__dot"></span>
+                  <span class="flightline__bar"></span>
+                  <mat-icon aria-hidden="true">flight</mat-icon>
+                  <span class="flightline__bar"></span>
+                  <span class="flightline__dot"></span>
+                </div>
+                <div class="flightline__arr">
+                  <strong class="tabular">{{ formatTime(retFl.scheduled_arrival) }}</strong>
+                  <span>{{ retFl.arrival_airport.airport_code }}</span>
+                </div>
+              </div>
+              @if (bookingFlow.selectedReturnFare(); as rFare) {
+                <div class="bp-muted">{{ retFl.airline.airline_name }} · {{ rFare.fare_class_name }}</div>
+              }
             </div>
           }
 
@@ -306,7 +338,10 @@ interface PassengerEditDraft {
           <app-app-button variant="primary" [disabled]="submitting()" (clicked)="continueToReview()">
             {{ submitting() ? 'Đang tạo đơn & giữ ghế...' : 'Tiếp tục xem lại đơn →' }}
           </app-app-button>
-          <a routerLink="/booking/seats" class="bp-side__back">← Quay lại chọn ghế</a>
+          <a routerLink="/booking/seats" class="bp-side__back">
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Quay lại chọn ghế
+          </a>
         </aside>
       </div>
     </div>
@@ -413,96 +448,134 @@ interface PassengerEditDraft {
       </div>
     }
 
-    <!-- Popup Chọn gói hành lý ký gửi (kèm số lượng >= 1 hoặc xóa/0) -->
-    @if (baggageModalPax(); as pax) {
+    <!-- Modal Chọn gói hành lý ký gửi chia 2 cột W-RT-04a -->
+    @if (baggageModalOpen()) {
       <div
         class="vf-modal-backdrop"
         role="dialog"
         aria-modal="true"
         aria-label="Chọn gói hành lý ký gửi"
-        (click)="baggageModalPaxId.set(null)"
+        (click)="closeBaggageModal()"
       >
-        <div class="vf-modal-panel bp-modal" (click)="$event.stopPropagation()">
+        <div class="vf-modal-panel bp-modal bp-modal--bag" (click)="$event.stopPropagation()">
           <header class="bp-modal__head">
             <div>
-              <h2>Chọn hành lý ký gửi — {{ pax.full_name.trim() || 'Hành khách' }}</h2>
-              <p class="bp-muted">
-                Chọn một gói hành lý ký gửi và số lượng kiện (≥ 1) hoặc bỏ chọn nếu chỉ mang hành lý theo vé
-              </p>
+              <h2>Chọn hành lý ký gửi</h2>
+              <p class="bp-muted">Chọn chặng bay ở cột trái và gói hành lý cho từng hành khách ở cột phải</p>
             </div>
             <button
               type="button"
               class="bp-close"
               aria-label="Đóng popup hành lý"
-              (click)="baggageModalPaxId.set(null)"
+              (click)="closeBaggageModal()"
             >
               <mat-icon>close</mat-icon>
             </button>
           </header>
 
-          <div class="bp-bag-options">
-            <button
-              type="button"
-              class="bp-bag-opt"
-              [class.bp-bag-opt--sel]="pax.baggage_option_id === null"
-              (click)="selectBaggageOption(pax.id, null)"
-            >
-              <div>
-                <strong>Không mua thêm hành lý ký gửi</strong>
-                <div class="bp-muted">Chỉ dùng hành lý theo tiêu chuẩn hạng vé</div>
-              </div>
-              <strong class="tabular">0đ</strong>
-            </button>
-
-            @for (opt of baggageOptions(); track opt.id) {
-              @let isPicked = pax.baggage_option_id === opt.id;
-              @let qty = isPicked ? quantityOf(pax.id) : 0;
-              <div class="bp-bag-opt" [class.bp-bag-opt--sel]="isPicked">
+          <div class="bagsplit">
+            <!-- Cột trái: Chọn chặng bay -->
+            <div class="baglegs" role="tablist" aria-label="Chọn chặng bay mua hành lý">
+              @for (leg of legSummaries(); track leg.key; let idx = $index) {
                 <button
                   type="button"
-                  class="bp-bag-opt__pick"
-                  (click)="selectBaggageOption(pax.id, opt)"
+                  role="tab"
+                  class="bagleg"
+                  [class.bagleg--active]="activeBaggageLeg() === leg.key"
+                  [attr.aria-selected]="activeBaggageLeg() === leg.key"
+                  (click)="activeBaggageLeg.set(leg.key)"
                 >
-                  <div>
-                    <strong>{{ opt.name }}</strong>
-                    <div class="bp-muted">{{ opt.airline_name }} · {{ opt.weight_kg }} kg / kiện</div>
+                  <div class="bagleg__title">
+                    {{ idx + 1 }}. {{ leg.key === 'OUTBOUND' ? 'Chuyến đi' : 'Chuyến về' }}
                   </div>
-                  <strong class="tabular">{{ formatMoney(opt.price) }}</strong>
+                  <div class="bagleg__route">{{ leg.routeLabel }}</div>
+                  <div class="bagleg__sub tabular">
+                    {{ leg.totalPrice > 0 ? formatMoney(leg.totalPrice) : '0đ' }}
+                  </div>
                 </button>
+              }
+            </div>
 
-                @if (isPicked) {
-                  <div class="bp-qty" aria-label="Số lượng kiện hành lý">
-                    <button
-                      type="button"
-                      class="bp-qty__btn"
-                      aria-label="Giảm số kiện"
-                      (click)="changeBaggageQuantity(pax.id, opt, qty - 1)"
-                    >
-                      −
-                    </button>
-                    <span class="bp-qty__val tabular">{{ qty }}</span>
-                    <button
-                      type="button"
-                      class="bp-qty__btn"
-                      aria-label="Tăng số kiện"
-                      (click)="changeBaggageQuantity(pax.id, opt, qty + 1)"
-                    >
-                      +
-                    </button>
+            <!-- Cột phải: Danh sách hành khách & gói hành lý của chặng đang chọn -->
+            <div class="bagbody">
+              @for (pax of eligibleBaggagePassengers(); track pax.id; let idx = $index) {
+                @let currentPick = pickFor(activeBaggageLeg(), pax.id);
+                <div class="bagpax">
+                  <div class="bagpax__hd">
+                    <div>
+                      <strong>{{ pax.full_name.trim() || ('Hành khách ' + (idx + 1)) }}</strong>
+                      <span class="bp-muted"> · {{ includedAllowanceShort(activeBaggageLeg()) }}</span>
+                    </div>
+                    <strong class="tabular">
+                      {{ currentPick ? formatMoney(currentPick.option.price * currentPick.quantity) : '0đ' }}
+                    </strong>
                   </div>
-                }
-              </div>
-            }
+
+                  <div class="bp-bag-options">
+                    <button
+                      type="button"
+                      class="bp-bag-opt"
+                      [class.bp-bag-opt--sel]="!currentPick"
+                      (click)="selectLegBaggage(activeBaggageLeg(), pax.id, null)"
+                    >
+                      <div>
+                        <strong>Không mua thêm</strong>
+                        <div class="bp-muted">Chỉ dùng hành lý theo tiêu chuẩn hạng vé</div>
+                      </div>
+                      <strong class="tabular">0đ</strong>
+                    </button>
+
+                    @for (opt of baggageOptions(); track opt.id) {
+                      @let isPicked = currentPick?.option?.id === opt.id;
+                      @let qty = isPicked ? (currentPick?.quantity ?? 1) : 0;
+                      <div class="bp-bag-opt" [class.bp-bag-opt--sel]="isPicked">
+                        <button
+                          type="button"
+                          class="bp-bag-opt__pick"
+                          (click)="selectLegBaggage(activeBaggageLeg(), pax.id, opt)"
+                        >
+                          <div>
+                            <strong>{{ opt.name }}</strong>
+                            <div class="bp-muted">{{ opt.weight_kg }} kg / kiện</div>
+                          </div>
+                          <strong class="tabular">{{ formatMoney(opt.price) }}</strong>
+                        </button>
+
+                        @if (isPicked) {
+                          <div class="bp-qty" aria-label="Số lượng kiện hành lý">
+                            <button
+                              type="button"
+                              class="bp-qty__btn"
+                              aria-label="Giảm số kiện"
+                              (click)="changeLegBaggageQty(activeBaggageLeg(), pax.id, opt, qty - 1)"
+                            >
+                              −
+                            </button>
+                            <span class="bp-qty__val tabular">{{ qty }}</span>
+                            <button
+                              type="button"
+                              class="bp-qty__btn"
+                              aria-label="Tăng số kiện"
+                              (click)="changeLegBaggageQty(activeBaggageLeg(), pax.id, opt, qty + 1)"
+                            >
+                              +
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
           </div>
 
           <footer class="bp-modal__foot">
             <div class="bp-muted">
-              Đang chọn:
-              <strong class="tabular">
-                {{ pax.baggage_option_id ? pax.baggage_name + ' × ' + quantityOf(pax.id) + ' (' + formatMoney(pax.baggage_price) + ')' : '0đ' }}
-              </strong>
+              Tổng hành lý tất cả chặng:
+              <strong class="tabular">{{ formatMoney(baggageTotal()) }}</strong>
             </div>
-            <app-app-button variant="primary" size="sm" (clicked)="baggageModalPaxId.set(null)">
+            <app-app-button variant="primary" size="sm" (clicked)="closeBaggageModal()">
               Xong
             </app-app-button>
           </footer>
@@ -593,11 +666,36 @@ interface PassengerEditDraft {
       font-size: var(--text-small);
       color: var(--color-ink-muted);
     }
-    .bp-back {
-      color: var(--color-primary);
-      text-decoration: none;
+    .bp-back,
+    .bp-side__back {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-ink);
       font-size: var(--text-small);
       font-weight: 600;
+      text-decoration: none;
+      transition:
+        background-color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
+    }
+    .bp-back:hover,
+    .bp-side__back:hover {
+      background: var(--color-surface-alt);
+      border-color: var(--color-primary-bright);
+      color: var(--color-primary);
+    }
+    .bp-back mat-icon,
+    .bp-side__back mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
     .bp-layout {
       display: grid;
@@ -712,27 +810,55 @@ interface PassengerEditDraft {
       font-style: italic;
       font-weight: 500;
     }
-    .bp-bag-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* W-RT-04: Leg summary cards */
+    .bagf {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
     }
-    .bp-bag-row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
+    .bagf--single {
+      grid-template-columns: 1fr;
+    }
+    @media (max-width: 640px) {
+      .bagf {
+        grid-template-columns: 1fr;
+      }
+    }
+    .bagf__c {
       padding: 12px 14px;
       border-radius: var(--radius);
-      border: 1px solid var(--color-border-soft);
+      border: 1px solid var(--color-border);
       background: var(--color-surface-alt);
-      font-size: var(--text-small);
-    }
-    .bp-bag-row__info {
+      cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
+      transition: border-color var(--dur-fast) var(--ease);
+    }
+    .bagf__c:hover {
+      border-color: var(--color-primary-bright);
+    }
+    .bagf__top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--text-small);
+    }
+    .bagf__from {
+      font-size: var(--text-caption);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 720px) {
+      .grid3 {
+        grid-template-columns: 1fr;
+      }
     }
     .bp-grid {
       display: grid;
@@ -748,6 +874,7 @@ interface PassengerEditDraft {
       display: flex;
       flex-direction: column;
       gap: 5px;
+      min-width: 0;
     }
     .bp-field--full {
       grid-column: 1 / -1;
@@ -766,6 +893,8 @@ interface PassengerEditDraft {
       background: var(--color-surface);
       color: var(--color-ink);
       font-size: var(--text-small);
+      width: 100%;
+      min-width: 0;
     }
     .bp-terms {
       display: flex;
@@ -780,15 +909,76 @@ interface PassengerEditDraft {
       accent-color: var(--color-primary);
       flex-shrink: 0;
     }
-    .bp-trip-box {
+    .bp-side__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .bp-side__meta {
+      font-size: var(--text-caption);
+      font-weight: 600;
+      color: var(--color-ink-muted);
+    }
+    .flightline {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 6px;
       padding: 10px 12px;
       border-radius: var(--radius);
       background: var(--color-surface-alt);
       border: 1px solid var(--color-border-soft);
       font-size: var(--text-small);
+    }
+    .flightline--return {
+      border-top: 1.5px dashed var(--color-border);
+    }
+    .flightline__leg {
+      font-size: var(--text-caption);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .flightline__row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .flightline__row strong {
+      display: block;
+      font-size: var(--text-body);
+      color: var(--color-ink);
+    }
+    .flightline__row span {
+      font-size: var(--text-caption);
+      color: var(--color-ink-muted);
+    }
+    .flightline__arr {
+      text-align: right;
+    }
+    .flightline__track {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .flightline__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-primary-bright);
+      flex: 0 0 auto;
+    }
+    .flightline__bar {
+      flex: 1 1 auto;
+      height: 1.5px;
+      background: var(--color-border);
+    }
+    .flightline__track mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: var(--color-primary);
+      transform: rotate(90deg);
     }
     .bp-dl {
       margin: 0;
@@ -827,13 +1017,6 @@ interface PassengerEditDraft {
       font-size: var(--text-caption);
       margin: 0;
     }
-    .bp-side__back {
-      text-align: center;
-      font-size: var(--text-small);
-      font-weight: 600;
-      color: var(--color-primary);
-      text-decoration: none;
-    }
     .bp-modal {
       max-width: 560px;
       width: 100%;
@@ -841,6 +1024,9 @@ interface PassengerEditDraft {
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+    .bp-modal--bag {
+      max-width: 880px;
     }
     .bp-modal__head {
       display: flex;
@@ -878,6 +1064,78 @@ interface PassengerEditDraft {
       justify-content: center;
       cursor: pointer;
     }
+    /* W-RT-04a Split modal */
+    .bagsplit {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 16px;
+      max-height: 62vh;
+      overflow: hidden;
+    }
+    @media (max-width: 720px) {
+      .bagsplit {
+        grid-template-columns: 1fr;
+        max-height: 70vh;
+      }
+    }
+    .baglegs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .bagleg {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--color-border);
+      background: var(--color-surface);
+      text-align: left;
+      cursor: pointer;
+      font-family: var(--font-body);
+    }
+    .bagleg--active {
+      border-color: var(--color-primary);
+      background: var(--color-primary-soft);
+    }
+    .bagleg__title {
+      font-size: var(--text-small);
+      font-weight: 700;
+      color: var(--color-ink);
+    }
+    .bagleg__route {
+      font-size: var(--text-caption);
+      color: var(--color-ink-muted);
+    }
+    .bagleg__sub {
+      font-size: var(--text-small);
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .bagbody {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-right: 4px;
+    }
+    .bagpax {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border-soft);
+      background: var(--color-surface-alt);
+    }
+    .bagpax__hd {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--text-small);
+    }
     .bp-bag-options {
       display: flex;
       flex-direction: column;
@@ -888,7 +1146,7 @@ interface PassengerEditDraft {
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-radius: var(--radius);
       border: 1px solid var(--color-border);
       background: var(--color-surface);
@@ -952,14 +1210,18 @@ export class BookingPassengers {
   protected readonly submitting = signal(false);
 
   protected readonly editingPax = signal<PassengerEditDraft | null>(null);
-  protected readonly baggageModalPaxId = signal<number | null>(null);
-  protected readonly baggageQuantities = signal<Record<number, number>>({});
-
-  protected readonly baggageModalPax = computed<DraftPassenger | null>(() => {
-    const id = this.baggageModalPaxId();
-    if (id === null) return null;
-    return this.passengers().find((p) => p.id === id) ?? null;
+  protected readonly baggageModalOpen = signal(false);
+  protected readonly activeBaggageLeg = signal<LegKey>('OUTBOUND');
+  protected readonly legBaggageMap = signal<Record<LegKey, Record<number, LegBaggagePick>>>({
+    OUTBOUND: {},
+    RETURN: {},
   });
+
+  protected readonly hasReturnLeg = computed(
+    () =>
+      this.bookingFlow.tripType() === 'ROUND_TRIP' &&
+      this.bookingFlow.selectedReturnFlight() !== null,
+  );
 
   private readonly baggageRes = toSignal(
     this.bookingFlow
@@ -972,9 +1234,40 @@ export class BookingPassengers {
     (this.baggageRes()?.data?.items ?? []).filter((b) => b.status === 'ACTIVE'),
   );
 
+  protected readonly minBaggagePrice = computed(() => {
+    const opts = this.baggageOptions();
+    return opts.length > 0 ? Math.min(...opts.map((o) => o.price)) : 0;
+  });
+
   protected readonly eligibleBaggagePassengers = computed(() =>
     this.passengers().filter((p) => p.passenger_type !== 'INFANT'),
   );
+
+  protected readonly legSummaries = computed(() => {
+    const outFl = this.bookingFlow.selectedFlight();
+    const retFl = this.bookingFlow.selectedReturnFlight();
+    const map = this.legBaggageMap();
+
+    const buildLeg = (key: LegKey, routeLabel: string) => {
+      const picks = Object.values(map[key]);
+      const totalCount = picks.reduce((sum, p) => sum + p.quantity, 0);
+      const totalPrice = picks.reduce((sum, p) => sum + p.option.price * p.quantity, 0);
+      return { key, routeLabel, totalCount, totalPrice };
+    };
+
+    const outRoute = outFl
+      ? `${outFl.departure_airport.airport_code} — ${outFl.arrival_airport.airport_code}`
+      : 'HAN — SGN';
+    const list = [buildLeg('OUTBOUND', outRoute)];
+
+    if (this.hasReturnLeg()) {
+      const retRoute = retFl
+        ? `${retFl.departure_airport.airport_code} — ${retFl.arrival_airport.airport_code}`
+        : 'SGN — HAN';
+      list.push(buildLeg('RETURN', retRoute));
+    }
+    return list;
+  });
 
   protected readonly adultCount = computed(
     () => this.passengers().filter((p) => p.passenger_type === 'ADULT').length,
@@ -1009,7 +1302,7 @@ export class BookingPassengers {
   );
 
   protected readonly baggageTotal = computed(() =>
-    this.passengers().reduce((sum, p) => sum + p.baggage_price, 0),
+    this.legSummaries().reduce((sum, leg) => sum + leg.totalPrice, 0),
   );
 
   protected readonly grandSubtotal = computed(
@@ -1037,7 +1330,6 @@ export class BookingPassengers {
   });
 
   constructor() {
-    // Làm sạch dữ liệu mẫu cũ từ BookingFlowService (không tự điền tên/CCCD giả)
     this.passengers.update((list) =>
       list.map((p) => {
         const isDummyAdult =
@@ -1125,38 +1417,78 @@ export class BookingPassengers {
     this.editingPax.set(null);
   }
 
-  protected openBaggageModal(pax: DraftPassenger): void {
-    this.baggageModalPaxId.set(pax.id);
+  protected openBaggageModal(leg: LegKey = 'OUTBOUND'): void {
+    this.activeBaggageLeg.set(leg);
+    this.baggageModalOpen.set(true);
   }
 
-  protected quantityOf(paxId: number): number {
-    return this.baggageQuantities()[paxId] ?? 1;
+  protected closeBaggageModal(): void {
+    this.baggageModalOpen.set(false);
   }
 
-  protected selectBaggageOption(paxId: number, opt: BaggageOption | null): void {
-    if (!opt) {
-      this.baggageQuantities.update((m) => {
-        const next = { ...m };
-        delete next[paxId];
-        return next;
-      });
-      this.bookingFlow.assignBaggage(paxId, null, null, 0);
-      return;
-    }
-    const existingPax = this.passengers().find((p) => p.id === paxId);
-    const qty = existingPax?.baggage_option_id === opt.id ? this.quantityOf(paxId) : 1;
-    this.baggageQuantities.update((m) => ({ ...m, [paxId]: qty }));
-    this.bookingFlow.assignBaggage(paxId, opt.id, opt.name, opt.price * qty);
+  protected pickFor(leg: LegKey, paxId: number): LegBaggagePick | null {
+    return this.legBaggageMap()[leg][paxId] ?? null;
   }
 
-  protected changeBaggageQuantity(paxId: number, opt: BaggageOption, nextQty: number): void {
+  protected includedAllowanceShort(leg: LegKey): string {
+    const fare = leg === 'RETURN' ? this.bookingFlow.selectedReturnFare() : this.bookingFlow.selectedFare();
+    if (!fare) return '7 kg xách tay';
+    if (fare.seat_class === 'BUSINESS') return '32 kg ký gửi + 14 kg xách tay';
+    if (fare.seat_class === 'PREMIUM_ECONOMY') return '23 kg ký gửi + 10 kg xách tay';
+    return fare.is_refundable ? '20 kg ký gửi + 10 kg xách tay' : '7 kg xách tay';
+  }
+
+  protected selectLegBaggage(leg: LegKey, paxId: number, opt: BaggageOption | null): void {
+    this.legBaggageMap.update((prev) => {
+      const nextLeg = { ...prev[leg] };
+      if (!opt) {
+        delete nextLeg[paxId];
+      } else {
+        const cur = nextLeg[paxId];
+        const qty = cur?.option.id === opt.id ? cur.quantity : 1;
+        nextLeg[paxId] = { option: opt, quantity: qty };
+      }
+      return { ...prev, [leg]: nextLeg };
+    });
+    this.syncPassengerBaggageSummary(paxId);
+  }
+
+  protected changeLegBaggageQty(
+    leg: LegKey,
+    paxId: number,
+    opt: BaggageOption,
+    nextQty: number,
+  ): void {
     if (nextQty <= 0) {
-      this.selectBaggageOption(paxId, null);
+      this.selectLegBaggage(leg, paxId, null);
       return;
     }
     const clamped = Math.min(nextQty, 5);
-    this.baggageQuantities.update((m) => ({ ...m, [paxId]: clamped }));
-    this.bookingFlow.assignBaggage(paxId, opt.id, opt.name, opt.price * clamped);
+    this.legBaggageMap.update((prev) => ({
+      ...prev,
+      [leg]: {
+        ...prev[leg],
+        [paxId]: { option: opt, quantity: clamped },
+      },
+    }));
+    this.syncPassengerBaggageSummary(paxId);
+  }
+
+  private syncPassengerBaggageSummary(paxId: number): void {
+    const map = this.legBaggageMap();
+    const outPick = map.OUTBOUND[paxId];
+    const retPick = this.hasReturnLeg() ? map.RETURN[paxId] : undefined;
+    const primary = outPick ?? retPick;
+    const totalPrice =
+      (outPick ? outPick.option.price * outPick.quantity : 0) +
+      (retPick ? retPick.option.price * retPick.quantity : 0);
+
+    this.bookingFlow.assignBaggage(
+      paxId,
+      primary ? primary.option.id : null,
+      primary ? primary.option.name : null,
+      totalPrice,
+    );
   }
 
   protected continueToReview(): void {
@@ -1240,18 +1572,31 @@ export class BookingPassengers {
             }
           });
 
-          const baggageItems = booking.passengers
-            .map((createdPax, index) => {
-              const draft = paxList[index];
-              if (!draft?.baggage_option_id || createdPax.passenger_type === 'INFANT') return null;
-              return {
-                passenger_id: createdPax.id,
-                baggage_option_id: draft.baggage_option_id,
-                quantity: Math.max(1, this.quantityOf(draft.id)),
-              };
-            })
-            .filter((item): item is NonNullable<typeof item> => item !== null);
+          const aggregated = new Map<string, { passenger_id: number; baggage_option_id: number; quantity: number }>();
+          const map = this.legBaggageMap();
+          const activeLegs: LegKey[] = isRoundTrip ? ['OUTBOUND', 'RETURN'] : ['OUTBOUND'];
 
+          booking.passengers.forEach((createdPax, index) => {
+            const draft = paxList[index];
+            if (!draft || createdPax.passenger_type === 'INFANT') return;
+            for (const leg of activeLegs) {
+              const pick = map[leg][draft.id];
+              if (!pick) continue;
+              const key = `${createdPax.id}-${pick.option.id}`;
+              const existing = aggregated.get(key);
+              if (existing) {
+                existing.quantity += pick.quantity;
+              } else {
+                aggregated.set(key, {
+                  passenger_id: createdPax.id,
+                  baggage_option_id: pick.option.id,
+                  quantity: pick.quantity,
+                });
+              }
+            }
+          });
+
+          const baggageItems = [...aggregated.values()];
           if (baggageItems.length > 0) {
             postActions.push(this.bookingFlow.addBaggages(booking.id, baggageItems));
           }

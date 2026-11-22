@@ -90,8 +90,68 @@ export class FlightResults implements OnInit {
   protected readonly selectedTimeSlots = signal<Set<string>>(new Set());
   protected readonly maxPriceFilter = signal<number>(10_000_000);
   protected readonly comparingFlight = signal<PublicFlightSearchItem | null>(null);
+  protected readonly activeModalCabin = signal<SeatClass>('ECONOMY');
   protected readonly showSearchEditor = signal(false);
   protected readonly visibleLimit = signal(10);
+
+  private readonly cabinOrder: SeatClass[] = ['ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS'];
+
+  protected readonly modalCabinTabs = computed(() => {
+    const fl = this.comparingFlight();
+    if (!fl) return [];
+    return this.cabinOrder
+      .map((key) => {
+        const fares = fl.fares.filter((f) => f.seat_class === key);
+        if (fares.length === 0) return null;
+        return {
+          key,
+          label: this.cabinLabel(key),
+          count: fares.length,
+          minPrice: Math.min(...fares.map((f) => f.adult_price)),
+        };
+      })
+      .filter((t): t is NonNullable<typeof t> => t !== null);
+  });
+
+  protected readonly activeModalFares = computed(() => {
+    const fl = this.comparingFlight();
+    if (!fl) return [];
+    const cabin = this.activeModalCabin();
+    return fl.fares
+      .filter((f) => f.seat_class === cabin)
+      .sort((a, b) => a.adult_price - b.adult_price);
+  });
+
+  protected readonly cheapestActiveFareCode = computed(() => {
+    const fares = this.activeModalFares();
+    return fares.length > 0 ? fares[0].fare_class_code : null;
+  });
+
+  protected readonly upgradeCabins = computed(() => {
+    const tabs = this.modalCabinTabs();
+    const active = this.activeModalCabin();
+    const activeTab = tabs.find((t) => t.key === active);
+    const activeIdx = this.cabinOrder.indexOf(active);
+    if (!activeTab || activeIdx < 0) return [];
+    return tabs
+      .filter((t) => this.cabinOrder.indexOf(t.key) > activeIdx)
+      .map((t) => ({
+        key: t.key,
+        label: t.label,
+        diff: Math.max(0, t.minPrice - activeTab.minPrice),
+      }));
+  });
+
+  protected readonly detailQueryParams = computed(() => ({
+    tripType: this.tripType(),
+    from: this.fromCode(),
+    to: this.toCode(),
+    depart: this.departDate(),
+    returnDate: this.tripType() === 'round' ? this.returnDate() || null : null,
+    adults: this.adultsCount(),
+    children: this.childrenCount() || null,
+    infants: this.infantsCount() || null,
+  }));
 
   // Tham số tìm kiếm từ URL
   protected readonly tripType = signal<TripType>('oneway');
@@ -311,6 +371,13 @@ export class FlightResults implements OnInit {
 
   protected openCompareModal(fl: PublicFlightSearchItem): void {
     this.comparingFlight.set(fl);
+    const filterCabin = this.selectedCabin() as SeatClass | '';
+    if (filterCabin && fl.fares.some((f) => f.seat_class === filterCabin)) {
+      this.activeModalCabin.set(filterCabin);
+      return;
+    }
+    const firstCabin = this.cabinOrder.find((c) => fl.fares.some((f) => f.seat_class === c));
+    this.activeModalCabin.set(firstCabin ?? 'ECONOMY');
   }
 
   protected closeCompareModal(): void {

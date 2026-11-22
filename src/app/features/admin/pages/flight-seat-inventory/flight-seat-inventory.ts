@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -21,11 +21,11 @@ import { BadgeTone, StatusBadge } from '@shared/ui/status-badge/status-badge';
 const moneyFmt = new Intl.NumberFormat('vi-VN');
 
 const SEAT_STATUS_META: Record<FlightSeatStatus, { label: string; tone: BadgeTone }> = {
-  AVAILABLE: { label: 'Còn trống', tone: 'success' },
-  HOLD: { label: 'Đang giữ (15p)', tone: 'warning' },
-  HELD: { label: 'Đang giữ (15p)', tone: 'warning' },
-  BOOKED: { label: 'Đã đặt', tone: 'info' },
-  BLOCKED: { label: 'Đã khóa', tone: 'danger' },
+  AVAILABLE: { label: 'Trống', tone: 'success' },
+  HOLD: { label: 'Đang giữ', tone: 'warning' },
+  HELD: { label: 'Đang giữ', tone: 'warning' },
+  BOOKED: { label: 'Đã bán', tone: 'info' },
+  BLOCKED: { label: 'Khoá', tone: 'danger' },
 };
 
 const CABIN_ORDER: SeatClass[] = ['BUSINESS', 'PREMIUM_ECONOMY', 'ECONOMY'];
@@ -50,16 +50,15 @@ interface CabinSection {
 
 /**
  * Sơ đồ tồn ghế theo chuyến bay (`/admin/flight-seat-inventory` & `/admin/flights/:id/seat-inventory`).
- * Dùng `<app-flight-search-picker>` thay dropdown tĩnh, nhóm ghế theo khoang (BUSINESS → PREMIUM_ECONOMY → ECONOMY)
- * với đầu máy bay, tiêu đề cột động theo khoang, đa lối đi (`aisle_after`), tô màu loại ghế qua `--seat-color`,
- * và nút "Đặt lại mặc định" cho phụ thu ghế.
+ * Bám sát `admin.html`: một thẻ thống nhất với `.adm-deckbar` trên cùng (chọn chuyến + 5 badge
+ * Tổng / Trống / Đang giữ / Đã bán / Khoá + nút `Đồng bộ từ sơ đồ`), sơ đồ thân máy bay toàn chiều rộng,
+ * và ngăn chỉnh sửa ghế gọn khi bấm vào từng ghế.
  */
 @Component({
   selector: 'app-admin-flight-seat-inventory',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    RouterLink,
     MatIconModule,
     AppAlert,
     AppButton,
@@ -74,11 +73,18 @@ interface CabinSection {
         <div>
           <h1>Tồn ghế chuyến bay</h1>
           <p class="inv-sub">
-            Theo dõi trạng thái ghế theo chuyến, khóa/mở khóa ghế và điều chỉnh phụ thu theo chuyến
+            Theo dõi trạng thái ghế theo chuyến, đồng bộ từ sơ đồ tàu bay và điều chỉnh phụ thu ghế
           </p>
         </div>
-        <div class="inv-head__actions">
-          <div class="inv-picker">
+      </header>
+
+      @if (error()) {
+        <app-alert tone="error" title="Không tải được tồn ghế" [message]="error()!" />
+      }
+
+      <div class="inv-card">
+        <div class="adm-deckbar">
+          <div class="adm-deckbar__picker">
             <app-flight-search-picker
               [multiple]="false"
               [selectedId]="selectedFlightId()"
@@ -87,171 +93,160 @@ interface CabinSection {
               (selectedIdChange)="onFlightPicked($event)"
             />
           </div>
-          <a routerLink="/admin/flights" class="inv-link-btn">
-            <mat-icon aria-hidden="true">arrow_back</mat-icon>
-            Danh sách chuyến
-          </a>
-        </div>
-      </header>
 
-      @if (error()) {
-        <app-alert tone="error" title="Không tải được tồn ghế" [message]="error()!" />
-      }
-
-      @if (loading()) {
-        <div class="inv-card inv-skel">
-          <app-skeleton-block height="70px" />
-          <app-skeleton-block height="240px" />
-        </div>
-      } @else if (!seatMap()) {
-        <app-empty-state
-          icon="event_seat"
-          message="Chọn chuyến bay để xem tồn ghế"
-          hint="Sử dụng ô tìm kiếm chuyến bay ở góc trên để tải sơ đồ ghế"
-        />
-      } @else {
-        @let map = seatMap()!;
-        <div class="inv-stats">
-          <div class="inv-stat inv-stat--ok">
-            <span>Còn trống</span>
-            <strong class="tabular">{{ map.available_seats }}</strong>
-          </div>
-          <div class="inv-stat inv-stat--warn">
-            <span>Đang giữ</span>
-            <strong class="tabular">{{ map.held_seats }}</strong>
-          </div>
-          <div class="inv-stat inv-stat--info">
-            <span>Đã đặt</span>
-            <strong class="tabular">{{ map.booked_seats }}</strong>
-          </div>
-          <div class="inv-stat inv-stat--danger">
-            <span>Đã khóa</span>
-            <strong class="tabular">{{ map.blocked_seats }}</strong>
-          </div>
-        </div>
-
-        <div class="inv-layout">
-          <div class="inv-card inv-map-card">
-            <div class="inv-map-head">
-              <div>
-                <h2>Sơ đồ ghế {{ map.flight_number }}</h2>
-                <p class="inv-muted">{{ map.aircraft_code }} · {{ map.model }} ({{ map.total_seats }} ghế)</p>
-              </div>
-              <div class="inv-legend">
-                <span class="inv-leg"><i class="dot dot--available"></i>Trống</span>
-                <span class="inv-leg"><i class="dot dot--held"></i>Đang giữ</span>
-                <span class="inv-leg"><i class="dot dot--booked"></i>Đã đặt</span>
-                <span class="inv-leg"><i class="dot dot--blocked"></i>Đã khóa</span>
-              </div>
+          @if (seatMap(); as map) {
+            <div class="adm-deckbar__badges" aria-label="Tóm tắt tồn ghế">
+              <span class="deck-badge">
+                Tổng <strong class="tabular">{{ map.total_seats }}</strong>
+              </span>
+              <span class="deck-badge deck-badge--ok">
+                Trống <strong class="tabular">{{ map.available_seats }}</strong>
+              </span>
+              <span class="deck-badge deck-badge--warn">
+                Đang giữ <strong class="tabular">{{ map.held_seats }}</strong>
+              </span>
+              <span class="deck-badge deck-badge--info">
+                Đã bán <strong class="tabular">{{ map.booked_seats }}</strong>
+              </span>
+              <span class="deck-badge deck-badge--danger">
+                Khoá <strong class="tabular">{{ map.blocked_seats }}</strong>
+              </span>
             </div>
 
-            <div class="inv-fuselage">
-              <div class="inv-nose" aria-hidden="true">
-                <mat-icon>flight</mat-icon>
-                <span>Đầu máy bay</span>
-              </div>
+            <app-app-button
+              variant="ghost"
+              size="sm"
+              [disabled]="busy()"
+              (clicked)="syncFromSeatMap()"
+            >
+              <mat-icon aria-hidden="true">sync</mat-icon>
+              Đồng bộ từ sơ đồ
+            </app-app-button>
+          }
+        </div>
 
-              @for (cabin of cabinSections(); track cabin.seatClass) {
-                <div class="inv-cabin">
-                  <div class="inv-cabin__title">{{ cabin.label }}</div>
+        @if (loading()) {
+          <div class="inv-skel">
+            <app-skeleton-block height="70px" />
+            <app-skeleton-block height="240px" />
+          </div>
+        } @else if (!seatMap()) {
+          <app-empty-state
+            icon="event_seat"
+            message="Chọn chuyến bay để xem tồn ghế"
+            hint="Sử dụng ô tìm kiếm chuyến bay phía trên để tải sơ đồ ghế"
+          />
+        } @else {
+          @let map = seatMap()!;
+          <div class="inv-map-head">
+            <div>
+              <h2>Sơ đồ ghế {{ map.flight_number }}</h2>
+              <p class="inv-muted">{{ map.aircraft_code }} · {{ map.model }} ({{ map.total_seats }} ghế)</p>
+            </div>
+            <div class="inv-legend">
+              <span class="inv-leg"><i class="dot dot--available"></i>Trống</span>
+              <span class="inv-leg"><i class="dot dot--held"></i>Đang giữ</span>
+              <span class="inv-leg"><i class="dot dot--booked"></i>Đã bán</span>
+              <span class="inv-leg"><i class="dot dot--blocked"></i>Khoá</span>
+            </div>
+          </div>
 
-                  <div class="inv-grid-wrap">
-                    <div class="inv-row inv-row--head" aria-hidden="true">
-                      <span class="inv-row__num"></span>
+          <div class="inv-fuselage">
+            <div class="inv-nose" aria-hidden="true">
+              <mat-icon>flight</mat-icon>
+              <span>Đầu máy bay</span>
+            </div>
+
+            @for (cabin of cabinSections(); track cabin.seatClass) {
+              <div class="inv-cabin">
+                <div class="inv-cabin__title">{{ cabin.label }}</div>
+
+                <div class="inv-grid-wrap">
+                  <div class="inv-row inv-row--head" aria-hidden="true">
+                    <span class="inv-row__num"></span>
+                    <div class="inv-row__seats">
+                      @for (col of cabin.columns; track col) {
+                        <span class="inv-col-lbl">{{ col }}</span>
+                        @if (isAisleAfter(col)) {
+                          <span class="inv-aisle"></span>
+                        }
+                      }
+                    </div>
+                  </div>
+
+                  @for (row of cabin.rows; track row.rowNumber) {
+                    <div class="inv-row">
+                      <span class="inv-row__num tabular">{{ row.rowNumber }}</span>
                       <div class="inv-row__seats">
-                        @for (col of cabin.columns; track col) {
-                          <span class="inv-col-lbl">{{ col }}</span>
-                          @if (isAisleAfter(col)) {
-                            <span class="inv-aisle"></span>
+                        @for (seat of row.seats; track seat.id) {
+                          <button
+                            type="button"
+                            class="inv-seat"
+                            [style.--seat-color]="seat.seat_type.color_hex || 'var(--color-primary)'"
+                            [class.inv-seat--available]="seat.status === 'AVAILABLE'"
+                            [class.inv-seat--held]="seat.status === 'HOLD' || seat.status === 'HELD'"
+                            [class.inv-seat--booked]="seat.status === 'BOOKED'"
+                            [class.inv-seat--blocked]="seat.status === 'BLOCKED'"
+                            [class.inv-seat--selected]="selectedSeat()?.id === seat.id"
+                            [attr.aria-label]="
+                              'Ghế ' +
+                              seat.seat_code +
+                              ' - ' +
+                              seat.seat_type.seat_type_name +
+                              ' - ' +
+                              statusMeta(seat.status).label
+                            "
+                            [title]="
+                              seat.seat_code +
+                              ' · ' +
+                              seat.seat_type.seat_type_name +
+                              ' · ' +
+                              formatMoney(seat.seat_surcharge)
+                            "
+                            (click)="selectSeat(seat)"
+                          >
+                            {{ seat.seat_code }}
+                          </button>
+                          @if (isAisleAfter(seat.seat_column)) {
+                            <span class="inv-aisle" aria-hidden="true"></span>
                           }
                         }
                       </div>
                     </div>
-
-                    @for (row of cabin.rows; track row.rowNumber) {
-                      <div class="inv-row">
-                        <span class="inv-row__num tabular">{{ row.rowNumber }}</span>
-                        <div class="inv-row__seats">
-                          @for (seat of row.seats; track seat.id) {
-                            <button
-                              type="button"
-                              class="inv-seat"
-                              [style.--seat-color]="seat.seat_type.color_hex || 'var(--color-primary)'"
-                              [class.inv-seat--available]="seat.status === 'AVAILABLE'"
-                              [class.inv-seat--held]="seat.status === 'HOLD' || seat.status === 'HELD'"
-                              [class.inv-seat--booked]="seat.status === 'BOOKED'"
-                              [class.inv-seat--blocked]="seat.status === 'BLOCKED'"
-                              [class.inv-seat--selected]="selectedSeat()?.id === seat.id"
-                              [attr.aria-label]="
-                                'Ghế ' +
-                                seat.seat_code +
-                                ' - ' +
-                                seat.seat_type.seat_type_name +
-                                ' - ' +
-                                statusMeta(seat.status).label
-                              "
-                              [title]="
-                                seat.seat_code +
-                                ' · ' +
-                                seat.seat_type.seat_type_name +
-                                ' · ' +
-                                formatMoney(seat.seat_surcharge)
-                              "
-                              (click)="selectSeat(seat)"
-                            >
-                              {{ seat.seat_code }}
-                            </button>
-                            @if (isAisleAfter(seat.seat_column)) {
-                              <span class="inv-aisle" aria-hidden="true"></span>
-                            }
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
+                  }
                 </div>
-              }
-            </div>
+              </div>
+            }
           </div>
 
-          <aside class="inv-card inv-inspector">
-            <h2>Chi tiết ghế đang chọn</h2>
-            @if (selectedSeat(); as seat) {
-              <div class="inv-detail">
+          @if (selectedSeat(); as seat) {
+            <div class="inv-drawer" role="region" aria-label="Chỉnh sửa ghế đang chọn">
+              <div class="inv-drawer__head">
                 <div class="inv-detail__top">
                   <strong class="inv-seat-title">Ghế {{ seat.seat_code }}</strong>
                   <app-status-badge
                     [tone]="statusMeta(seat.status).tone"
                     [label]="statusMeta(seat.status).label"
                   />
+                  <span class="inv-muted">
+                    {{ cabinLabel(seat.seat_type.seat_class) }} · {{ seat.seat_type.seat_type_name }}
+                  </span>
                 </div>
-                <dl class="inv-dl">
-                  <div>
-                    <dt>Hạng dịch vụ</dt>
-                    <dd>{{ cabinLabel(seat.seat_type.seat_class) }}</dd>
-                  </div>
-                  <div>
-                    <dt>Loại ghế</dt>
-                    <dd class="inv-type-dd">
-                      <span
-                        class="inv-swatch"
-                        [style.--seat-color]="seat.seat_type.color_hex || 'var(--color-primary)'"
-                      ></span>
-                      {{ seat.seat_type.seat_type_name }}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Phụ thu mặc định</dt>
-                    <dd class="tabular">{{ formatMoney(seat.seat_type.surcharge) }}</dd>
-                  </div>
-                  <div>
-                    <dt>Phụ thu hiện tại</dt>
-                    <dd class="tabular"><strong>{{ formatMoney(seat.seat_surcharge) }}</strong></dd>
-                  </div>
-                </dl>
+                <button
+                  type="button"
+                  class="inv-drawer__close"
+                  aria-label="Đóng chi tiết ghế"
+                  (click)="selectedSeatId.set(null)"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
 
+              <div class="inv-drawer__body">
                 <div class="inv-field">
-                  <label for="inv-sur">Cập nhật phụ thu ghế (VNĐ)</label>
+                  <label for="inv-sur">
+                    Phụ thu ghế (VNĐ) — mặc định {{ formatMoney(seat.seat_type.surcharge) }}
+                  </label>
                   <input
                     id="inv-sur"
                     type="number"
@@ -262,7 +257,7 @@ interface CabinSection {
                   />
                 </div>
 
-                <div class="inv-inspector__actions">
+                <div class="inv-drawer__actions">
                   <app-app-button
                     variant="primary"
                     size="sm"
@@ -303,34 +298,23 @@ interface CabinSection {
                       Mở khóa ghế
                     </app-app-button>
                   } @else {
-                    <p class="inv-lock-note">
+                    <span class="inv-lock-note">
                       Ghế đang có khách đặt/giữ nên không thể khóa hoặc mở khóa thủ công.
-                    </p>
+                    </span>
                   }
                 </div>
               </div>
-            } @else {
-              <p class="inv-muted">
-                Bấm vào một ô ghế trên sơ đồ bên trái để khóa/mở khóa hoặc điều chỉnh phụ thu.
-              </p>
-            }
-          </aside>
-        </div>
-      }
+            </div>
+          }
+        }
+      </div>
     </section>
   `,
   styles: `
     .inv-page {
       display: flex;
       flex-direction: column;
-      gap: 20px;
-    }
-    .inv-head {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
+      gap: 18px;
     }
     .inv-head h1 {
       margin: 0;
@@ -343,93 +327,85 @@ interface CabinSection {
       font-size: var(--text-small);
       color: var(--color-ink-muted);
     }
-    .inv-head__actions {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
-    }
-    .inv-picker {
-      width: min(340px, 100%);
-      min-width: 260px;
-    }
-    .inv-link-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      height: 42px;
-      padding: 0 14px;
-      border-radius: var(--radius);
-      border: 1px solid var(--color-border);
-      background: var(--color-surface);
-      color: var(--color-ink);
-      font-size: var(--text-small);
-      text-decoration: none;
-    }
-    .inv-link-btn:hover {
-      border-color: var(--color-primary);
-      color: var(--color-primary);
-    }
-    .inv-link-btn mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
-    .inv-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-    }
-    .inv-stat {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .inv-stat span {
-      font-size: var(--text-caption);
-      color: var(--color-ink-muted);
-      font-weight: 600;
-    }
-    .inv-stat strong {
-      font-size: var(--text-h2);
-      color: var(--color-ink);
-    }
-    .inv-stat--ok strong {
-      color: var(--color-on-success-soft);
-    }
-    .inv-stat--warn strong {
-      color: var(--color-on-warning-soft);
-    }
-    .inv-stat--info strong {
-      color: var(--color-on-info-soft);
-    }
-    .inv-stat--danger strong {
-      color: var(--color-on-danger-soft);
-    }
-    .tabular {
-      font-variant-numeric: tabular-nums;
-    }
-    .inv-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 320px;
-      gap: 16px;
-      align-items: start;
-    }
-    @media (max-width: 960px) {
-      .inv-layout {
-        grid-template-columns: 1fr;
-      }
-    }
     .inv-card {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-sm);
       padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .adm-deckbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--color-border-soft);
+    }
+    .adm-deckbar__picker {
+      flex: 1 1 260px;
+      min-width: 240px;
+      max-width: 340px;
+    }
+    .adm-deckbar__badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-right: auto;
+    }
+    .deck-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-alt);
+      font-size: var(--text-caption);
+      color: var(--color-ink-muted);
+    }
+    .deck-badge strong {
+      font-size: var(--text-small);
+      color: var(--color-ink);
+    }
+    .deck-badge--ok {
+      background: var(--color-success-soft);
+      border-color: var(--color-success);
+      color: var(--color-on-success-soft);
+    }
+    .deck-badge--ok strong {
+      color: var(--color-on-success-soft);
+    }
+    .deck-badge--warn {
+      background: var(--color-warning-soft);
+      border-color: var(--color-warning);
+      color: var(--color-on-warning-soft);
+    }
+    .deck-badge--warn strong {
+      color: var(--color-on-warning-soft);
+    }
+    .deck-badge--info {
+      background: var(--color-info-soft);
+      border-color: var(--color-info);
+      color: var(--color-on-info-soft);
+    }
+    .deck-badge--info strong {
+      color: var(--color-on-info-soft);
+    }
+    .deck-badge--danger {
+      background: var(--color-danger-soft);
+      border-color: var(--color-danger);
+      color: var(--color-on-danger-soft);
+    }
+    .deck-badge--danger strong {
+      color: var(--color-on-danger-soft);
+    }
+    .tabular {
+      font-variant-numeric: tabular-nums;
     }
     .inv-skel {
       display: flex;
@@ -442,16 +418,14 @@ interface CabinSection {
       justify-content: space-between;
       align-items: flex-start;
       gap: 12px;
-      margin-bottom: 16px;
     }
-    .inv-map-head h2,
-    .inv-inspector h2 {
+    .inv-map-head h2 {
       margin: 0;
       font-size: var(--text-h3);
       color: var(--color-ink);
     }
     .inv-muted {
-      margin: 4px 0 0;
+      margin: 2px 0 0;
       font-size: var(--text-small);
       color: var(--color-ink-muted);
     }
@@ -495,7 +469,7 @@ interface CabinSection {
       flex-direction: column;
       align-items: center;
       gap: 18px;
-      padding: 16px 12px;
+      padding: 18px 12px;
       border: 1px solid var(--color-border-soft);
       border-radius: 42px 42px var(--radius-lg) var(--radius-lg);
       background: var(--color-surface-alt);
@@ -610,62 +584,56 @@ interface CabinSection {
       outline: 2px solid var(--color-primary);
       outline-offset: 2px;
     }
-    .inv-inspector {
+    .inv-drawer {
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-primary-bright);
+      background: var(--color-surface-alt);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
-    .inv-detail {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .inv-detail__top {
+    .inv-drawer__head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 12px;
+    }
+    .inv-detail__top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
     }
     .inv-seat-title {
       font-size: var(--text-h3);
       color: var(--color-ink);
     }
-    .inv-dl {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-size: var(--text-small);
-    }
-    .inv-dl div {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    .inv-dl dt {
+    .inv-drawer__close {
+      border: 0;
+      background: transparent;
       color: var(--color-ink-muted);
-    }
-    .inv-dl dd {
-      margin: 0;
-      color: var(--color-ink);
-      font-weight: 500;
-    }
-    .inv-type-dd {
+      cursor: pointer;
       display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      padding: 4px;
+      border-radius: var(--radius-sm);
     }
-    .inv-swatch {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--seat-color, var(--color-primary));
-      display: inline-block;
+    .inv-drawer__close:hover {
+      background: var(--color-border-soft);
+      color: var(--color-ink);
+    }
+    .inv-drawer__body {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
     }
     .inv-field {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
+      min-width: 240px;
     }
     .inv-field label {
       font-size: var(--text-caption);
@@ -681,13 +649,13 @@ interface CabinSection {
       color: var(--color-ink);
       font-size: var(--text-small);
     }
-    .inv-inspector__actions {
+    .inv-drawer__actions {
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      align-items: center;
       gap: 8px;
     }
     .inv-lock-note {
-      margin: 0;
       font-size: var(--text-caption);
       color: var(--color-ink-muted);
     }
@@ -798,6 +766,23 @@ export class AdminFlightSeatInventory {
     } else {
       this.seatMap.set(null);
     }
+  }
+
+  protected syncFromSeatMap(): void {
+    const flightId = this.selectedFlightId();
+    if (!flightId) return;
+    this.busy.set(true);
+    this.inventoryService.saveInventory(flightId, { seats: [] }).subscribe({
+      next: (res) => {
+        this.busy.set(false);
+        this.seatMap.set(res.data);
+        this.snackBar.open('Đã đồng bộ tồn ghế từ sơ đồ tàu bay', 'Đóng', { duration: 2500 });
+      },
+      error: (err: Error) => {
+        this.busy.set(false);
+        this.snackBar.open(err.message || 'Không thể đồng bộ tồn ghế', 'Đóng', { duration: 4000 });
+      },
+    });
   }
 
   private loadSeatMap(flightId: number): void {

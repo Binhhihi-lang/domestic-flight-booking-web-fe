@@ -127,7 +127,7 @@ describe('AdminDashboard & AdminReports (Cụm B6.2 / 3A)', () => {
     expect(text).toContain('Vietnam Airlines');
     expect(text).toContain('Hiệu quả khai thác tuyến bay');
     expect(text).toContain('HAN → SGN');
-    expect(text).toContain('VF882194');
+    expect(text).not.toContain('Đơn đặt vé gần đây');
     expect(el.querySelector('.donut')).toBeTruthy();
 
     // Chuyển sang chế độ Booking

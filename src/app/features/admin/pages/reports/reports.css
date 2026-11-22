@@ -9,6 +9,26 @@
   gap: 18px;
 }
 
+/* ---------- Filter card (.adm-filter--card) ---------- */
+.adm-filter--card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 /* ---------- Segmented mode switch ---------- */
 .seg {
   display: inline-flex;
@@ -39,17 +59,6 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* ---------- Filter bar ---------- */
-.filter-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px 16px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
 .presets {
   display: flex;
   flex-wrap: wrap;
@@ -66,6 +75,15 @@
   font-size: var(--text-caption);
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.preset-btn:hover {
+  border-color: var(--color-primary-bright);
+  color: var(--color-primary);
 }
 
 .preset-btn.is-on {
@@ -92,7 +110,7 @@
 
 .field input,
 .field select {
-  height: 36px;
+  height: 38px;
   padding: 0 10px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -100,6 +118,14 @@
   color: var(--color-ink);
   font-family: var(--font-body);
   font-size: var(--text-small);
+  min-width: 150px;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--color-primary-bright);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
 }
 
 .state {
@@ -167,37 +193,53 @@
 
 .bars {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  height: 210px;
-  padding-top: 16px;
-  overflow-x: auto;
+  align-items: stretch;
+  gap: 8px;
+  height: 224px;
+  padding-top: 8px;
+  overflow: hidden;
 }
 
 .bar {
-  flex: 1 0 32px;
+  flex: 1 1 0;
+  min-width: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
   gap: 6px;
 }
 
 .bar__val {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--color-ink-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.bar__track {
+  flex: 1;
+  width: 100%;
+  min-height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 .bar__col {
   width: 100%;
-  max-width: 36px;
+  max-width: 34px;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: linear-gradient(180deg, var(--color-primary-bright), var(--color-primary));
   transform-origin: bottom;
   transition: opacity var(--dur), transform var(--dur) var(--ease);
+}
+
+.bar__col--peak {
+  background: linear-gradient(180deg, var(--color-accent), var(--color-accent-hover));
 }
 
 .bar__col--anim {
@@ -213,6 +255,9 @@
   font-size: 11px;
   color: var(--color-ink-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* ---------- Pure-CSS Donut Chart ---------- */
@@ -337,9 +382,30 @@
   text-align: right;
 }
 
-.sub-code {
-  font-size: var(--text-caption);
-  color: var(--color-ink-muted);
+.tbl-row-link {
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.tbl-row-link:hover {
+  background: var(--color-surface-alt);
+}
+
+.col-arrow {
+  width: 32px;
+  text-align: right;
+  color: var(--color-ink-subtle);
+}
+
+.row-arrow {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+.tbl-row-link:hover .row-arrow {
+  color: var(--color-primary);
 }
 
 .fill-cell {

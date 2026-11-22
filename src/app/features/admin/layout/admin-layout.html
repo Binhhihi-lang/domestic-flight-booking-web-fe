@@ -9,18 +9,18 @@
       <a class="sidebar__brand" routerLink="/admin/dashboard" (click)="sidebarOpen.set(false)">
         <app-brand-logo size="md" tone="dark" [markOnly]="collapsed()" />
       </a>
-
-      <!-- Nút thu gọn: chỉ hiện trên desktop; mobile đã có hamburger. -->
-      <button
-        class="sidebar__collapse"
-        type="button"
-        [attr.aria-label]="collapsed() ? 'Mở rộng menu' : 'Thu gọn menu'"
-        [attr.aria-expanded]="!collapsed()"
-        (click)="toggleCollapse()"
-      >
-        <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
-      </button>
     </div>
+
+    <!-- Nút thu gọn nổi mép phải sidebar: chỉ hiện trên desktop; mobile đã có hamburger. -->
+    <button
+      class="sidebar__collapse"
+      type="button"
+      [attr.aria-label]="collapsed() ? 'Mở rộng menu' : 'Thu gọn menu'"
+      [attr.aria-expanded]="!collapsed()"
+      (click)="toggleCollapse()"
+    >
+      <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
 
     <nav class="sidebar__nav" aria-label="Điều hướng khu vực vận hành">
       @for (group of visibleGroups(); track group.label) {
