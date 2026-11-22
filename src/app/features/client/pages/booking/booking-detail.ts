@@ -34,7 +34,8 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
         </div>
         <div class="bd-head__actions">
           <a [routerLink]="isAdminMode() ? '/admin/bookings' : '/account'" class="bd-back">
-            ← Quay lại danh sách đặt chỗ
+            <mat-icon aria-hidden="true">arrow_back</mat-icon>
+            Quay lại danh sách đặt chỗ
           </a>
           @if (booking(); as b) {
             @if (b.status !== 'CANCELLED' && b.status !== 'EXPIRED') {
@@ -340,13 +341,31 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       flex-wrap: wrap;
     }
     .bd-back {
-      color: var(--color-primary);
-      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-ink);
       font-size: var(--text-small);
       font-weight: 600;
+      text-decoration: none;
+      transition:
+        background-color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
     }
     .bd-back:hover {
-      text-decoration: underline;
+      background: var(--color-surface-alt);
+      border-color: var(--color-primary-bright);
+      color: var(--color-primary);
+    }
+    .bd-back mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
     .bd-grid {
       display: grid;

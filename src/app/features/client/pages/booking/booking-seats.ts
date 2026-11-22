@@ -41,27 +41,27 @@ interface CabinSeatTypeLegend {
       <nav class="bs-stepper" aria-label="Tiến trình đặt vé">
         <a routerLink="/flights" class="bs-step bs-step--done">
           <span class="bs-step__num">✓</span>
-          <span>1. Chọn chuyến</span>
+          <span>Chọn chuyến</span>
         </a>
         <span class="bs-step-line" aria-hidden="true"></span>
         <span class="bs-step bs-step--active" aria-current="step">
           <span class="bs-step__num">2</span>
-          <span>2. Chọn ghế</span>
+          <span>Chọn ghế</span>
         </span>
         <span class="bs-step-line" aria-hidden="true"></span>
         <span class="bs-step">
           <span class="bs-step__num">3</span>
-          <span>3. Hành khách</span>
+          <span>Hành khách</span>
         </span>
         <span class="bs-step-line" aria-hidden="true"></span>
         <span class="bs-step">
           <span class="bs-step__num">4</span>
-          <span>4. Xem lại</span>
+          <span>Xem lại</span>
         </span>
         <span class="bs-step-line" aria-hidden="true"></span>
         <span class="bs-step">
           <span class="bs-step__num">5</span>
-          <span>5. Thanh toán</span>
+          <span>Thanh toán</span>
         </span>
       </nav>
 
@@ -84,7 +84,10 @@ interface CabinSeatTypeLegend {
             Chỉ hiển thị sơ đồ ghế thuộc <strong>Khoang {{ cabinLabel(purchasedCabin()) }}</strong>
           </p>
         </div>
-        <a routerLink="/flights" class="bs-back">← Đổi chuyến bay</a>
+        <a routerLink="/flights" class="bs-back">
+          <mat-icon aria-hidden="true">arrow_back</mat-icon>
+          Đổi chuyến bay
+        </a>
       </header>
 
       @if (hasReturnLeg()) {
@@ -402,10 +405,31 @@ interface CabinSeatTypeLegend {
       color: var(--color-ink-muted);
     }
     .bs-back {
-      color: var(--color-primary);
-      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-ink);
       font-size: var(--text-small);
       font-weight: 600;
+      text-decoration: none;
+      transition:
+        background-color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
+    }
+    .bs-back:hover {
+      background: var(--color-surface-alt);
+      border-color: var(--color-primary-bright);
+      color: var(--color-primary);
+    }
+    .bs-back mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
     .bs-legs {
       display: flex;

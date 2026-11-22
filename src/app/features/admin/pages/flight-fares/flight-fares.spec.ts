@@ -29,7 +29,9 @@ describe('AdminFlightFares (Bảng giá chuyến bay — Cụm DA2.2 / 3A)', () 
     const text = el.textContent ?? '';
     expect(text).toContain('VN-210');
     expect(text).toContain('VN_ECO_SAVER');
-    expect(text).toContain('Hạng vé & Hạng dịch vụ');
+    expect(text).toContain('Hạng vé');
+    expect(text).toContain('Hạng dịch vụ');
+    expect(text).toContain('Sao chép từ chuyến khác');
     expect(text).toContain('1.640.000đ');
     expect(text).toContain('1.230.000đ');
     expect(text).toContain('164.000đ');

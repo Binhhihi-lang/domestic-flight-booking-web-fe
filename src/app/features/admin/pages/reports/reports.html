@@ -3,70 +3,80 @@
     title="Báo cáo & Thống kê"
     subtitle="Phân tích doanh thu, cơ cấu hãng bay, trạng thái booking và hiệu quả từng tuyến bay"
   >
-    <div class="seg" role="tablist" aria-label="Chế độ báo cáo">
-      <button
-        type="button"
-        role="tab"
-        class="seg__btn"
-        [class.is-on]="mode() === 'revenue'"
-        [attr.aria-selected]="mode() === 'revenue'"
-        (click)="setMode('revenue')"
-      >
-        Doanh thu
-      </button>
-      <button
-        type="button"
-        role="tab"
-        class="seg__btn"
-        [class.is-on]="mode() === 'booking'"
-        [attr.aria-selected]="mode() === 'booking'"
-        (click)="setMode('booking')"
-      >
-        Booking
-      </button>
-    </div>
-
     <app-app-button variant="primary" size="sm" (clicked)="exportCsv()">
       <mat-icon>download</mat-icon>
       Xuất CSV
     </app-app-button>
   </app-page-header>
 
-  <!-- Thanh bộ lọc -->
-  <section class="filter-bar" aria-label="Bộ lọc báo cáo">
-    <div class="presets" role="group" aria-label="Khoảng thời gian nhanh">
-      <button
-        type="button"
-        class="preset-btn"
-        [class.is-on]="activePreset() === '7d'"
-        (click)="applyPreset('7d')"
-      >
-        7 ngày
-      </button>
-      <button
-        type="button"
-        class="preset-btn"
-        [class.is-on]="activePreset() === '30d'"
-        (click)="applyPreset('30d')"
-      >
-        30 ngày
-      </button>
-      <button
-        type="button"
-        class="preset-btn"
-        [class.is-on]="activePreset() === 'quarter'"
-        (click)="applyPreset('quarter')"
-      >
-        Quý
-      </button>
-      <button
-        type="button"
-        class="preset-btn"
-        [class.is-on]="activePreset() === 'year'"
-        (click)="applyPreset('year')"
-      >
-        Năm
-      </button>
+  <!-- Thanh bộ lọc chuẩn .adm-filter--card -->
+  <section class="adm-filter adm-filter--card" aria-label="Bộ lọc báo cáo">
+    <div class="filter-top">
+      <div class="seg" role="tablist" aria-label="Chế độ báo cáo">
+        <button
+          type="button"
+          role="tab"
+          class="seg__btn"
+          [class.is-on]="mode() === 'revenue'"
+          [attr.aria-selected]="mode() === 'revenue'"
+          (click)="setMode('revenue')"
+        >
+          Doanh thu
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="seg__btn"
+          [class.is-on]="mode() === 'booking'"
+          [attr.aria-selected]="mode() === 'booking'"
+          (click)="setMode('booking')"
+        >
+          Booking
+        </button>
+      </div>
+
+      <div class="presets" role="group" aria-label="Khoảng thời gian nhanh">
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === 'day'"
+          (click)="applyPreset('day')"
+        >
+          Theo ngày
+        </button>
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === '7d'"
+          (click)="applyPreset('7d')"
+        >
+          7 ngày
+        </button>
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === '30d'"
+          (click)="applyPreset('30d')"
+        >
+          30 ngày
+        </button>
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === 'quarter'"
+          (click)="applyPreset('quarter')"
+        >
+          Quý
+        </button>
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === 'year'"
+          (click)="applyPreset('year')"
+        >
+          Năm
+        </button>
+      </div>
     </div>
 
     <div class="filter-fields">
@@ -103,17 +113,17 @@
 
       <label class="field">
         <span>Tuyến bay</span>
-        <input
-          type="text"
-          [ngModel]="routeFilter()"
-          (ngModelChange)="routeFilter.set($event)"
-          placeholder="VD: HAN-SGN"
-        />
+        <select [ngModel]="routeFilter()" (ngModelChange)="routeFilter.set($event)">
+          <option value="">Tất cả tuyến</option>
+          @for (rt of routeOptions(); track rt.value) {
+            <option [value]="rt.value">{{ rt.label }}</option>
+          }
+        </select>
       </label>
 
-      <app-app-button size="sm" (clicked)="loadReport()">
-        <mat-icon>filter_list</mat-icon>
-        Áp dụng
+      <app-app-button variant="primary" size="sm" (clicked)="loadReport()">
+        <mat-icon>assessment</mat-icon>
+        Xem báo cáo
       </app-app-button>
     </div>
   </section>
@@ -136,16 +146,19 @@
 
     <!-- 2 biểu đồ cạnh nhau: Trái = Biểu đồ cột, Phải = Donut chart conic-gradient -->
     <div class="rep-grid">
-      <app-app-card [title]="mode() === 'revenue' ? 'Doanh thu theo ngày' : 'Booking theo ngày'">
+      <app-app-card [title]="mode() === 'revenue' ? 'Doanh thu theo kỳ' : 'Booking theo kỳ'">
         <div class="bars">
           @for (b of chartBars(); track b.date; let idx = $index) {
             <div class="bar" [title]="b.tooltip">
               <span class="bar__val tabular">{{ b.displayVal }}</span>
-              <div
-                class="bar__col bar__col--anim"
-                [style.height.%]="b.heightPercent"
-                [style.animation-delay.ms]="idx * 45"
-              ></div>
+              <div class="bar__track">
+                <div
+                  class="bar__col bar__col--anim"
+                  [class.bar__col--peak]="b.isPeak"
+                  [style.height.%]="b.heightPercent"
+                  [style.animation-delay.ms]="idx * 45"
+                ></div>
+              </div>
               <span class="bar__lbl">{{ b.day_label }}</span>
             </div>
           }
@@ -204,11 +217,17 @@
               <th class="num">Hành khách</th>
               <th>Lấp đầy</th>
               <th class="num">Doanh thu</th>
+              <th class="col-arrow" aria-label="Xem đơn đặt vé"></th>
             </tr>
           </thead>
           <tbody>
             @for (route of r.top_routes; track route.route; let idx = $index) {
-              <tr>
+              <tr
+                class="tbl-row-link"
+                tabindex="0"
+                (click)="goToRouteBookings()"
+                (keydown.enter)="goToRouteBookings()"
+              >
                 <td class="tabular">{{ idx + 1 }}</td>
                 <td><b>{{ route.route }}</b></td>
                 <td class="num tabular">
@@ -226,53 +245,14 @@
                   </div>
                 </td>
                 <td class="num tabular"><strong>{{ formatVnd(route.revenue) }}</strong></td>
+                <td class="col-arrow">
+                  <mat-icon class="row-arrow" aria-hidden="true">chevron_right</mat-icon>
+                </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
     </app-app-card>
-
-    <!-- Đơn đặt vé gần đây -->
-    @if (r.recent_bookings.length > 0) {
-      <app-app-card title="Đơn đặt vé gần đây">
-        <div class="tbl-wrap">
-          <table class="tbl">
-            <thead>
-              <tr>
-                <th>Mã đơn / PNR</th>
-                <th>Khách hàng</th>
-                <th>Tuyến</th>
-                <th class="num">Hành khách</th>
-                <th class="num">Tổng tiền</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (bk of r.recent_bookings; track bk.id) {
-                <tr>
-                  <td>
-                    <b>DH-{{ bk.id }}</b>
-                    <div class="sub-code">
-                      {{ bk.status === 'CONFIRMED' && bk.booking_code ? bk.booking_code : 'Chờ cấp PNR' }}
-                    </div>
-                  </td>
-                  <td>{{ bk.customer_name }}</td>
-                  <td>{{ bk.primary_route }}</td>
-                  <td class="num tabular">{{ bk.passenger_count }}</td>
-                  <td class="num tabular">{{ formatVnd(bk.total_amount) }}</td>
-                  <td>
-                    <app-status-badge
-                      [tone]="bookingStatusMeta(bk.status).tone"
-                      [label]="bookingStatusMeta(bk.status).label"
-                    />
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </app-app-card>
-    }
   }
 </div>

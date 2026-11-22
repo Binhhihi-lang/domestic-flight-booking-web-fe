@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { OverviewDashboard } from '@core/models/dashboard.model';
 import { AirlineService } from '@core/services/airline.service';
@@ -10,10 +11,9 @@ import { PageHeader } from '@shared/components/page-header/page-header';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { CountUpDirective, CountUpFormat } from '@shared/ui/count-up/count-up.directive';
-import { BadgeTone, StatusBadge } from '@shared/ui/status-badge/status-badge';
 
 type ReportMode = 'revenue' | 'booking';
-type TimePreset = '7d' | '30d' | 'quarter' | 'year' | 'custom';
+type TimePreset = 'day' | '7d' | '30d' | 'quarter' | 'year' | 'custom';
 
 interface ReportKpi {
   label: string;
@@ -29,6 +29,22 @@ interface DonutSlice {
   percentage: number;
   colorVar: string;
 }
+
+interface RouteOption {
+  value: string;
+  label: string;
+}
+
+const COMMON_ROUTES: RouteOption[] = [
+  { value: 'HAN-SGN', label: 'HAN → SGN' },
+  { value: 'SGN-HAN', label: 'SGN → HAN' },
+  { value: 'HAN-DAD', label: 'HAN → DAD' },
+  { value: 'DAD-SGN', label: 'DAD → SGN' },
+  { value: 'HAN-PQC', label: 'HAN → PQC' },
+  { value: 'SGN-PQC', label: 'SGN → PQC' },
+  { value: 'SGN-CXR', label: 'SGN → CXR' },
+  { value: 'HAN-CXR', label: 'HAN → CXR' },
+];
 
 const AIRLINE_COLOR_VARS = [
   'var(--color-primary)',
@@ -46,29 +62,23 @@ const REAL_BOOKING_STATUSES: { key: string; label: string; colorVar: string }[] 
   { key: 'EXPIRED', label: 'Hết hạn', colorVar: 'var(--color-ink-subtle)' },
 ];
 
-const BOOKING_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
-  CONFIRMED: { label: 'Đã xác nhận', tone: 'success' },
-  PENDING_PAYMENT: { label: 'Chờ thanh toán', tone: 'warning' },
-  CANCELLED: { label: 'Đã hủy', tone: 'danger' },
-  EXPIRED: { label: 'Hết hạn', tone: 'danger' },
-};
-
 /**
  * Màn Báo cáo & Thống kê (ADMIN) — `/admin/reports`.
- * Hỗ trợ chuyển chế độ `Doanh thu | Booking`, preset thời gian (`7 ngày`, `30 ngày`, `Quý`, `Năm`),
- * bộ lọc Từ/Đến ngày + Hãng khai thác + Tuyến bay, 2 biểu đồ cạnh nhau (Cột + Donut CSS conic-gradient),
- * bảng Hiệu quả tuyến bay và xuất CSV.
+ * Hỗ trợ chuyển chế độ `Doanh thu | Booking`, preset thời gian (`Theo ngày`, `7 ngày`, `30 ngày`, `Quý`, `Năm`),
+ * bộ lọc Từ/Đến ngày + Hãng khai thác + Tuyến bay trong `.adm-filter--card`, 2 biểu đồ cạnh nhau
+ * (Cột với `.bar__track` + Donut CSS conic-gradient), bảng Hiệu quả tuyến bay clickable và xuất CSV.
  */
 @Component({
   selector: 'app-admin-reports',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, MatIconModule, PageHeader, AppButton, AppCard, StatusBadge, CountUpDirective],
+  imports: [FormsModule, MatIconModule, PageHeader, AppButton, AppCard, CountUpDirective],
   templateUrl: './reports.html',
   styleUrl: './reports.css',
 })
 export class AdminReports implements OnInit {
   private readonly dashboardService = inject(DashboardService);
   private readonly airlineService = inject(AirlineService, { optional: true });
+  private readonly router = inject(Router);
 
   protected readonly mode = signal<ReportMode>('revenue');
   protected readonly activePreset = signal<TimePreset>('7d');
@@ -87,6 +97,24 @@ export class AdminReports implements OnInit {
   );
 
   protected readonly airlines = computed(() => this.airlinesRes()?.data.items ?? []);
+
+  protected readonly routeOptions = computed<RouteOption[]>(() => {
+    const map = new Map<string, string>();
+    for (const rt of COMMON_ROUTES) {
+      map.set(rt.value, rt.label);
+    }
+    for (const r of this.report()?.top_routes ?? []) {
+      const dep = r.departure_airport_code?.trim();
+      const arr = r.arrival_airport_code?.trim();
+      if (dep && arr) {
+        const val = `${dep}-${arr}`;
+        if (!map.has(val)) {
+          map.set(val, `${dep} → ${arr}`);
+        }
+      }
+    }
+    return [...map.entries()].map(([value, label]) => ({ value, label }));
+  });
 
   protected readonly kpis = computed<ReportKpi[]>(() => {
     const r = this.report();
@@ -112,7 +140,7 @@ export class AdminReports implements OnInit {
           value: `${r.occupancy_rate_percent.toFixed(1)}%`,
           numericValue: r.occupancy_rate_percent,
           format: 'percent',
-          sub: `${r.pax_month.toLocaleString('vi-VN')} lượt khách trong tháng`,
+          sub: `${r.pax_month.toLocaleString('vi-VN')} lượt khách trong kỳ`,
         },
         {
           label: 'Tổng đơn đặt vé',
@@ -140,7 +168,7 @@ export class AdminReports implements OnInit {
         sub: `${r.flights_today.toLocaleString('vi-VN')} chuyến khai thác`,
       },
       {
-        label: 'Hành khách tháng này',
+        label: 'Hành khách trong kỳ',
         value: r.pax_month.toLocaleString('vi-VN'),
         numericValue: r.pax_month,
         format: 'number',
@@ -168,7 +196,8 @@ export class AdminReports implements OnInit {
         tooltip: isRev
           ? `${d.day_label}: ${this.formatVnd(d.revenue)} (${d.bookings_count} đơn)`
           : `${d.day_label}: ${d.bookings_count.toLocaleString('vi-VN')} đơn`,
-        heightPercent: Math.max(10, Math.round((raw / maxVal) * 100)),
+        heightPercent: raw <= 0 ? 4 : Math.max(8, Math.round((raw / maxVal) * 100)),
+        isPeak: raw > 0 && raw === maxVal,
       };
     });
   });
@@ -229,6 +258,7 @@ export class AdminReports implements OnInit {
   protected applyPreset(preset: Exclude<TimePreset, 'custom'>): void {
     this.activePreset.set(preset);
     const daysMap: Record<Exclude<TimePreset, 'custom'>, number> = {
+      day: 0,
       '7d': 6,
       '30d': 29,
       quarter: 89,
@@ -261,6 +291,10 @@ export class AdminReports implements OnInit {
       });
   }
 
+  protected goToRouteBookings(): void {
+    this.router.navigate(['/admin/bookings']);
+  }
+
   protected exportCsv(): void {
     const data = this.report();
     if (!data || typeof document === 'undefined') return;
@@ -291,12 +325,12 @@ export class AdminReports implements OnInit {
     return this.formatVnd(amount);
   }
 
-  protected bookingStatusMeta(status: string): { label: string; tone: BadgeTone } {
-    return BOOKING_STATUS_META[status] ?? { label: status, tone: 'neutral' };
-  }
-
   private daysAgoIso(daysAgo: number): string {
-    const d = new Date(Date.now() - daysAgo * 86400_000);
-    return d.toISOString().slice(0, 10);
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 }

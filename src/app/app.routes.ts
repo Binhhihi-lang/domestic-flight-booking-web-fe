@@ -52,6 +52,14 @@ export const routes: Routes = [
         data: { title: 'Kết quả tìm chuyến' },
       },
       {
+        path: 'flights/:id',
+        loadComponent: () =>
+          import('@features/client/pages/flight-results/client-flight-detail').then(
+            (m) => m.ClientFlightDetail,
+          ),
+        data: { title: 'Chi tiết chuyến bay' },
+      },
+      {
         path: 'lookup',
         loadComponent: () =>
           import('@features/client/pages/booking/booking-lookup').then((m) => m.BookingLookup),

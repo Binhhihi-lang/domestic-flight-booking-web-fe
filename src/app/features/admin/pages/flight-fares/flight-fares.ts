@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, forkJoin, of } from 'rxjs';
 import { FlightFare, FlightRecord } from '@core/models/flight.model';
 import { SeatClass } from '@core/models/fleet-news.model';
 import { FareClassService } from '@core/services/catalog.service';
@@ -28,15 +29,16 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
 
 /**
  * Quản lý bảng giá theo chuyến bay & hạng vé (`/admin/flight-fares`).
- * Hỗ trợ phân trang server (`app-server-pager`), bộ chọn chuyến bay tìm kiếm phía server
- * (`app-flight-search-picker`), chế độ Thêm & Sửa dòng giá (`POST`/`PUT`), xác nhận xóa bằng `ConfirmDialog`.
+ * Bám sát `admin.html`: bộ lọc `.adm-filter--card` với `<app-flight-search-picker>`,
+ * lọc hạng vé, nút `Sao chép từ chuyến khác` (modal sao chép hàng loạt),
+ * và bảng 9 cột: `Hạng vé`, `Hạng dịch vụ`, `Giá cơ bản`, `Thuế & phí`,
+ * `Giá người lớn`, `Trẻ em 75%`, `Em bé 10%`, `Hiệu lực`, `Thao tác`.
  */
 @Component({
   selector: 'app-admin-flight-fares',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    RouterLink,
     MatIconModule,
     AppAlert,
     AppButton,
@@ -56,16 +58,41 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
           </p>
         </div>
         <div class="ffare-head__actions">
-          <a routerLink="/admin/flights" class="ffare-link-btn">
-            <mat-icon aria-hidden="true">flight_takeoff</mat-icon>
-            Danh sách chuyến bay
-          </a>
+          <app-app-button variant="ghost" size="sm" (clicked)="openCopyModal()">
+            <mat-icon aria-hidden="true">content_copy</mat-icon>
+            Sao chép từ chuyến khác
+          </app-app-button>
           <app-app-button variant="primary" size="sm" (clicked)="toggleCreateForm()">
             <mat-icon aria-hidden="true">{{ showForm() ? 'close' : 'add' }}</mat-icon>
             {{ showForm() ? 'Đóng biểu mẫu' : 'Thêm dòng giá' }}
           </app-app-button>
         </div>
       </header>
+
+      <div class="adm-filter adm-filter--card" role="search" aria-label="Bộ lọc bảng giá">
+        <div class="ffare-field ffare-field--picker">
+          <label>Chuyến bay</label>
+          <app-flight-search-picker
+            [multiple]="false"
+            [selectedId]="filterFlightId()"
+            placeholder="Tìm chuyến bay để lọc bảng giá..."
+            (selectedIdChange)="onFilterFlightChange($event)"
+          />
+        </div>
+        <div class="ffare-field ffare-field--select">
+          <label for="fc-filter">Hạng vé</label>
+          <select
+            id="fc-filter"
+            [ngModel]="filterFareClassId()"
+            (ngModelChange)="filterFareClassId.set($event); onFilterChange()"
+          >
+            <option value="">Tất cả hạng vé</option>
+            @for (fc of allFareClasses(); track fc.id) {
+              <option [value]="fc.id">{{ fc.fare_class_code }} — {{ fc.fare_class_name }}</option>
+            }
+          </select>
+        </div>
+      </div>
 
       @if (showForm()) {
         <div class="ffare-card ffare-form-card ffare-card--overflow">
@@ -127,7 +154,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
               </div>
 
               <div class="ffare-field">
-                <label for="ff-tax">Thuế và phí (VNĐ) *</label>
+                <label for="ff-tax">Thuế & phí (VNĐ) *</label>
                 <input
                   id="ff-tax"
                   name="tax_fee"
@@ -193,32 +220,7 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
         </div>
       }
 
-      <div class="ffare-card ffare-card--overflow">
-        <div class="ffare-filters">
-          <div class="ffare-field">
-            <label>Lọc theo chuyến bay</label>
-            <app-flight-search-picker
-              [multiple]="false"
-              [selectedId]="filterFlightId()"
-              placeholder="Tìm chuyến bay để lọc bảng giá..."
-              (selectedIdChange)="onFilterFlightChange($event)"
-            />
-          </div>
-          <div class="ffare-field">
-            <label for="fc-filter">Lọc theo hạng vé</label>
-            <select
-              id="fc-filter"
-              [ngModel]="filterFareClassId()"
-              (ngModelChange)="filterFareClassId.set($event); onFilterChange()"
-            >
-              <option value="">Tất cả hạng vé</option>
-              @for (fc of allFareClasses(); track fc.id) {
-                <option [value]="fc.id">{{ fc.fare_class_code }} — {{ fc.fare_class_name }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
+      <div class="ffare-card">
         @if (error()) {
           <div class="ffare-pad">
             <app-alert tone="error" title="Không thể tải bảng giá" [message]="error()!" />
@@ -235,20 +237,20 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
           <app-empty-state
             icon="sell"
             message="Chưa có bảng giá cho bộ lọc hiện tại"
-            hint="Bấm 'Thêm dòng giá' để cấu hình giá bán theo chuyến và hạng vé"
+            hint="Bấm 'Thêm dòng giá' hoặc 'Sao chép từ chuyến khác' để cấu hình giá bán"
           />
         } @else {
           <div class="ffare-table-wrap">
             <table class="ffare-table">
               <thead>
                 <tr>
-                  <th>Chuyến bay</th>
-                  <th>Hạng vé & Hạng dịch vụ</th>
+                  <th>Hạng vé</th>
+                  <th>Hạng dịch vụ</th>
                   <th class="col-num">Giá cơ bản</th>
-                  <th class="col-num">Thuế phí</th>
-                  <th class="col-num">Người lớn</th>
-                  <th class="col-num">Trẻ em (75%)</th>
-                  <th class="col-num">Em bé (10%)</th>
+                  <th class="col-num">Thuế & phí</th>
+                  <th class="col-num">Giá người lớn</th>
+                  <th class="col-num">Trẻ em 75%</th>
+                  <th class="col-num">Em bé 10%</th>
                   <th>Hiệu lực</th>
                   <th class="col-actions">Thao tác</th>
                 </tr>
@@ -256,9 +258,11 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
               <tbody>
                 @for (row of rows(); track row.id) {
                   <tr>
-                    <td><strong>{{ row.flight_number }}</strong></td>
                     <td>
                       <div class="ffare-primary">{{ row.fare_class_code }} — {{ row.fare_class_name }}</div>
+                      <div class="ffare-flight-sub">{{ row.flight_number }}</div>
+                    </td>
+                    <td>
                       <app-status-badge tone="info" [label]="seatClassLabel(row.seat_class)" />
                     </td>
                     <td class="col-num">{{ formatMoney(row.base_fare) }}</td>
@@ -307,13 +311,91 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
           />
         }
       </div>
+
+      @if (copyModalOpen()) {
+        <div class="vf-modal-backdrop" (click)="closeCopyModal()">
+          <div
+            class="vf-modal-panel ffare-copy-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="copy-fare-title"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="ffare-modal-head">
+              <h2 id="copy-fare-title">Sao chép bảng giá từ chuyến khác</h2>
+              <button
+                type="button"
+                class="ffare-modal-close"
+                aria-label="Đóng"
+                (click)="closeCopyModal()"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <div class="ffare-modal-body">
+              @if (copyError()) {
+                <app-alert tone="error" title="Không thể sao chép" [message]="copyError()!" />
+              }
+
+              <div class="ffare-field">
+                <label>Chuyến bay nguồn *</label>
+                <app-flight-search-picker
+                  [multiple]="false"
+                  [selectedId]="copySourceFlightId()"
+                  placeholder="Chọn chuyến bay đã có bảng giá..."
+                  (selectedIdChange)="onCopySourceChange($event)"
+                />
+              </div>
+
+              <div class="ffare-field">
+                <label>Chuyến bay đích *</label>
+                <app-flight-search-picker
+                  [multiple]="false"
+                  [selectedId]="copyTargetFlightId()"
+                  placeholder="Chọn chuyến bay nhận bảng giá..."
+                  (selectedIdChange)="copyTargetFlightId.set($event)"
+                />
+              </div>
+
+              @if (copySourceFares().length > 0) {
+                <div class="ffare-copy-preview">
+                  <span class="ffare-copy-lbl">
+                    Sẽ sao chép {{ copySourceFares().length }} dòng giá:
+                  </span>
+                  <ul>
+                    @for (f of copySourceFares(); track f.id) {
+                      <li>
+                        <strong>{{ f.fare_class_code }}</strong> · Người lớn
+                        <span class="tabular">{{ formatMoney(f.adult_price) }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+
+            <div class="ffare-modal-foot">
+              <app-app-button variant="ghost" size="sm" (clicked)="closeCopyModal()">Hủy</app-app-button>
+              <app-app-button
+                variant="primary"
+                size="sm"
+                [disabled]="copying() || copySourceFares().length === 0 || !copyTargetFlightId()"
+                (clicked)="executeCopyFares()"
+              >
+                {{ copying() ? 'Đang sao chép...' : 'Xác nhận sao chép' }}
+              </app-app-button>
+            </div>
+          </div>
+        </div>
+      }
     </section>
   `,
   styles: `
     .ffare-page {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
     }
     .ffare-head {
       display: flex;
@@ -339,26 +421,24 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       align-items: center;
       gap: 8px;
     }
-    .ffare-link-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      border-radius: var(--radius);
-      border: 1px solid var(--color-border);
+    .adm-filter--card {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: var(--sp-md);
+      padding: var(--sp-md) var(--sp-lg);
       background: var(--color-surface);
-      color: var(--color-ink);
-      font-size: var(--text-small);
-      text-decoration: none;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
     }
-    .ffare-link-btn:hover {
-      border-color: var(--color-primary);
-      color: var(--color-primary);
+    .ffare-field--picker {
+      flex: 1 1 300px;
+      min-width: 240px;
     }
-    .ffare-link-btn mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
+    .ffare-field--select {
+      flex: 0 1 240px;
+      min-width: 200px;
     }
     .ffare-card {
       background: var(--color-surface);
@@ -400,15 +480,6 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 14px;
-    }
-    .ffare-filters {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
-      padding: 16px;
-      background: var(--color-surface-alt);
-      border-bottom: 1px solid var(--color-border-soft);
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
     .ffare-field {
       display: flex;
@@ -512,7 +583,11 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
     .ffare-primary {
       font-weight: 600;
       color: var(--color-ink);
-      margin-bottom: 4px;
+    }
+    .ffare-flight-sub {
+      margin-top: 2px;
+      font-size: var(--text-caption);
+      color: var(--color-ink-muted);
     }
     .ffare-eff {
       display: flex;
@@ -554,6 +629,68 @@ const SEAT_CLASS_LABELS: Record<SeatClass, string> = {
       background: var(--color-danger-soft);
       color: var(--color-on-danger-soft);
     }
+    .ffare-copy-modal {
+      max-width: 520px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .ffare-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .ffare-modal-head h2 {
+      margin: 0;
+      font-size: var(--text-h3);
+      color: var(--color-ink);
+    }
+    .ffare-modal-close {
+      border: 0;
+      background: transparent;
+      color: var(--color-ink-muted);
+      cursor: pointer;
+      display: inline-flex;
+      padding: 4px;
+      border-radius: var(--radius-sm);
+    }
+    .ffare-modal-close:hover {
+      background: var(--color-surface-alt);
+      color: var(--color-ink);
+    }
+    .ffare-modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .ffare-copy-preview {
+      padding: 12px;
+      border-radius: var(--radius);
+      background: var(--color-surface-alt);
+      border: 1px solid var(--color-border-soft);
+      font-size: var(--text-small);
+    }
+    .ffare-copy-lbl {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--color-ink);
+    }
+    .ffare-copy-preview ul {
+      margin: 0;
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      color: var(--color-ink-muted);
+    }
+    .ffare-modal-foot {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
   `,
 })
 export class AdminFlightFares {
@@ -590,6 +727,13 @@ export class AdminFlightFares {
   protected readonly formTaxFee = signal(490000);
   protected readonly formEffectiveFrom = signal('2026-12-01T00:00');
   protected readonly formEffectiveTo = signal('');
+
+  protected readonly copyModalOpen = signal(false);
+  protected readonly copySourceFlightId = signal<number | null>(null);
+  protected readonly copyTargetFlightId = signal<number | null>(null);
+  protected readonly copySourceFares = signal<FlightFare[]>([]);
+  protected readonly copyError = signal<string | null>(null);
+  protected readonly copying = signal(false);
 
   private readonly fareClassesRes = toSignal(this.fareClassService.list({ page: 1, size: 100 }), {
     initialValue: null,
@@ -633,6 +777,72 @@ export class AdminFlightFares {
     this.size.set(nextSize);
     this.page.set(1);
     this.load();
+  }
+
+  protected openCopyModal(): void {
+    this.copyError.set(null);
+    this.copySourceFlightId.set(null);
+    this.copyTargetFlightId.set(this.filterFlightId());
+    this.copySourceFares.set([]);
+    this.copyModalOpen.set(true);
+  }
+
+  protected closeCopyModal(): void {
+    this.copyModalOpen.set(false);
+  }
+
+  protected onCopySourceChange(flightId: number | null): void {
+    this.copySourceFlightId.set(flightId);
+    this.copyError.set(null);
+    this.copySourceFares.set([]);
+    if (!flightId) return;
+    this.fareService.list({ page: 1, size: 100, flight_id: flightId }).subscribe({
+      next: (res) => {
+        this.copySourceFares.set(res.data.items);
+        if (res.data.items.length === 0) {
+          this.copyError.set('Chuyến bay nguồn chưa có dòng giá nào.');
+        }
+      },
+      error: (err: Error) => {
+        this.copyError.set(err.message || 'Không tải được bảng giá chuyến nguồn');
+      },
+    });
+  }
+
+  protected executeCopyFares(): void {
+    const targetId = this.copyTargetFlightId();
+    const sourceId = this.copySourceFlightId();
+    const fares = this.copySourceFares();
+    if (!targetId || !sourceId || fares.length === 0) return;
+    if (targetId === sourceId) {
+      this.copyError.set('Chuyến bay đích phải khác chuyến bay nguồn.');
+      return;
+    }
+    this.copying.set(true);
+    this.copyError.set(null);
+    const reqs = fares.map((f) =>
+      this.fareService
+        .create({
+          flight_id: targetId,
+          fare_class_id: f.fare_class_id,
+          base_fare: f.base_fare,
+          tax_fee: f.tax_fee,
+          currency: f.currency || 'VND',
+          effective_from: f.effective_from,
+          effective_to: f.effective_to,
+        })
+        .pipe(catchError(() => of(null))),
+    );
+    forkJoin(reqs).subscribe((results) => {
+      this.copying.set(false);
+      const okCount = results.filter(Boolean).length;
+      this.closeCopyModal();
+      this.filterFlightId.set(targetId);
+      this.snackBar.open(`Đã sao chép ${okCount}/${fares.length} dòng giá`, 'Đóng', {
+        duration: 3000,
+      });
+      this.load();
+    });
   }
 
   protected toggleCreateForm(): void {

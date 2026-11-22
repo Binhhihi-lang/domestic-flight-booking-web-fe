@@ -762,3 +762,207 @@ button.fr-leg-step {
   font-weight: 700;
   color: var(--color-primary);
 }
+
+.fr__detail-link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.fr__detail-link:hover {
+  text-decoration: underline;
+}
+
+.fr__detail-link mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- W-RT-02a: Modal 3 tầng ---------- */
+.cabtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-sm);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-sm);
+}
+
+.cabtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink-muted);
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.cabtab:hover {
+  border-color: var(--color-primary-bright);
+  color: var(--color-primary);
+}
+
+.cabtab--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.cabtab__count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--color-surface-alt);
+  color: var(--color-ink);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+
+.cabtab--active .cabtab__count {
+  background: var(--color-on-primary);
+  color: var(--color-primary);
+}
+
+.fdcols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--sp-md);
+}
+
+.fdcol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.fdcol--cheapest {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.fdcol__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.fdcol__name {
+  font-family: var(--font-heading);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.fdcol__badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--color-success-soft);
+  color: var(--color-on-success-soft);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fdcol__price {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.fdcol__seats {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+}
+
+.fdcol__perks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--text-small);
+  color: var(--color-ink);
+  flex: 1 1 auto;
+}
+
+.fdcol__perks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.fdcol__foot {
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-soft);
+  display: flex;
+}
+
+.upblk {
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1.5px dashed var(--color-primary-bright);
+  background: var(--color-surface-alt);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upblk__title {
+  font-size: var(--text-small);
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.upblk__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.upblk__item {
+  flex: 1 1 220px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.upblk__item > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-small);
+}
+
+.upblk__item span {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.btn--sm {
+  padding: 6px 12px;
+  font-size: var(--text-small);
+}
