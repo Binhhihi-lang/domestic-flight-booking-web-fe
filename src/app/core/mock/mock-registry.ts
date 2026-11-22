@@ -489,8 +489,54 @@ export class MockRegistry {
     if (path === '/api/public/flights/search' && m === 'GET') {
       return this.searchPublicFlights(url);
     }
+    const publicSeatMapMatch = path.match(/^\/api\/public\/flights\/(\d+)\/seat-map$/);
+    if (publicSeatMapMatch && m === 'GET') {
+      return this.getFlightSeatMap(Number(publicSeatMapMatch[1]));
+    }
+    if (path === '/api/public/baggage-options' && m === 'GET') {
+      const params = readParams(url);
+      const airlineId = params.get('airline_id');
+      let rows = BAGGAGE_OPTIONS_MOCK.filter((b) => b.status === 'ACTIVE');
+      if (airlineId) rows = rows.filter((b) => String(b.airline_id) === airlineId);
+      return ok(paginate(rows, Number(params.get('page') ?? 1), Number(params.get('size') ?? 50)));
+    }
+    if (path === '/api/public/bookings/lookup' && m === 'GET') {
+      const params = readParams(url);
+      const code = (params.get('booking_code') ?? '').trim().toUpperCase();
+      const email = (params.get('email') ?? '').trim().toLowerCase();
+      const found = this.mockBookingsList.find(
+        (b) =>
+          (b.booking_code.toUpperCase() === code || `DH-${b.id}` === code) &&
+          (!email || b.customer_email.toLowerCase() === email),
+      );
+      return found ? ok(found) : notFound('Không tìm thấy đơn đặt chỗ khớp thông tin');
+    }
     if (path === '/api/bookings' && m === 'GET') {
       return this.listBookings(url);
+    }
+    if (path === '/api/bookings' && m === 'POST') {
+      return this.createMockBooking(body);
+    }
+    const seatHoldMatch = path.match(/^\/api\/bookings\/(\d+)\/seats\/hold$/);
+    if (seatHoldMatch && m === 'POST') {
+      const payload = (body ?? {}) as { passenger_id?: number; flight_seat_id?: number };
+      return ok({
+        id: Date.now(),
+        booking_id: Number(seatHoldMatch[1]),
+        flight_seat_id: payload.flight_seat_id ?? 1,
+        seat_code: '3A',
+        seat_type_name: 'Ghế tiêu chuẩn',
+        seat_class: 'ECONOMY',
+        passenger_id: payload.passenger_id ?? 301,
+        passenger_name: 'Hành khách',
+        surcharge_at_booking: 0,
+        status: 'HOLD',
+        hold_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+      });
+    }
+    const addBagMatch = path.match(/^\/api\/bookings\/(\d+)\/baggages$/);
+    if (addBagMatch && m === 'POST') {
+      return ok(this.mockBooking, 'Cập nhật hành lý thành công');
     }
     const bookingCancelMatch = path.match(/^\/api\/bookings\/(\d+)\/cancel$/);
     if (bookingCancelMatch && m === 'POST') {
@@ -538,7 +584,7 @@ export class MockRegistry {
     if (path === '/api/admin/dashboard/operational' && m === 'GET') {
       return ok(OPERATIONAL_DASHBOARD_MOCK);
     }
-    if ((path === '/api/admin/dashboard' || path === '/api/admin/dashboard/overview' || path === '/api/admin/reports') && m === 'GET') {
+    if ((path === '/api/admin/dashboard' || path === '/api/admin/dashboard/overview' || path === '/api/admin/dashboard/reports' || path === '/api/admin/reports') && m === 'GET') {
       return ok(OVERVIEW_DASHBOARD_MOCK);
     }
 
@@ -1714,11 +1760,34 @@ export class MockRegistry {
     return [confirmed, pending, cancelled];
   }
 
+  private createMockBooking(body: unknown): unknown {
+    const req = (body ?? {}) as { passengers?: { full_name: string; passenger_type: 'ADULT' | 'CHILD' | 'INFANT'; gender: 'MALE' | 'FEMALE' | 'OTHER'; birth_date: string }[] };
+    const base = buildMockBookingDetail();
+    const createdId = this.nextId++;
+    const created: BookingDetail = {
+      ...base,
+      id: createdId,
+      booking_code: `VF${createdId}`,
+      passengers: (req.passengers ?? []).map((p, idx) => ({
+        id: 300 + idx + 1,
+        full_name: p.full_name,
+        gender: p.gender,
+        birth_date: p.birth_date,
+        passenger_type: p.passenger_type,
+        passport_number: null,
+        phone: null,
+        email: null,
+      })),
+    };
+    this.mockBooking = created;
+    this.mockBookingsList.unshift(created);
+    return ok(created, 'Tạo đơn đặt vé thành công');
+  }
+
   private searchPublicFlights(url: string): unknown {
     const params = readParams(url);
     const dep = (params.get('departure_airport_code') ?? '').trim().toUpperCase();
     const arr = (params.get('arrival_airport_code') ?? '').trim().toUpperCase();
-    const seatClass = (params.get('seat_class') ?? '').trim().toUpperCase();
 
     const openFlights = this.aliveFlights().filter(
       (f) => f.sales_status === 'OPEN' && f.operation_status !== 'CANCELLED',
@@ -1734,65 +1803,100 @@ export class MockRegistry {
         const seatMap = this.ensureFlightSeatMap(f);
         const fares = [
           {
+            flight_fare_id: f.id * 10 + 1,
             fare_class_id: f.airline.id === 2 ? 5 : 1,
-            fare_class_code: `${f.airline.airline_code}_ECO_SAVER`,
+            fare_class_code: `${f.airline.airline_code}_ECON_SAVER`,
             fare_class_name: 'Phổ thông tiết kiệm',
             seat_class: 'ECONOMY' as const,
+            base_fare: f.airline.id === 2 ? 950000 : 1320000,
+            tax_fee: 320000,
             adult_price: f.airline.id === 2 ? 1270000 : 1640000,
             child_price: f.airline.id === 2 ? 952500 : 1230000,
             infant_price: f.airline.id === 2 ? 127000 : 164000,
-            cabin_baggage: '7kg xách tay',
-            checked_baggage: 'Không gồm ký gửi (mua thêm)',
-            refundable: false,
-            refund_summary: 'Không hỗ trợ hoàn vé',
-            change_summary: 'Đổi chuyến thu phí 360.000đ + chênh lệch',
+            currency: 'VND',
+            seats_available: seatMap.available_seats,
+            is_refundable: false,
+            refund_min_hours_before_departure: 0,
+            refund_percent: 0,
+            refund_description: 'Không hỗ trợ hoàn vé',
           },
           {
+            flight_fare_id: f.id * 10 + 2,
             fare_class_id: f.airline.id === 2 ? 6 : 3,
-            fare_class_code: `${f.airline.airline_code}_PREM_ECO`,
+            fare_class_code: `${f.airline.airline_code}_PREM_ECO_FLEX`,
             fare_class_name: 'Phổ thông đặc biệt',
             seat_class: 'PREMIUM_ECONOMY' as const,
+            base_fare: f.airline.id === 2 ? 1550000 : 2320000,
+            tax_fee: 320000,
             adult_price: f.airline.id === 2 ? 1870000 : 2640000,
             child_price: f.airline.id === 2 ? 1402500 : 1980000,
             infant_price: f.airline.id === 2 ? 187000 : 264000,
-            cabin_baggage: '10kg xách tay',
-            checked_baggage: '23kg ký gửi miễn phí',
-            refundable: true,
-            refund_summary: 'Hoàn 85% trước 12 giờ bay',
-            change_summary: 'Miễn phí đổi ngày trước 24 giờ',
+            currency: 'VND',
+            seats_available: Math.max(4, Math.floor(seatMap.available_seats / 3)),
+            is_refundable: true,
+            refund_min_hours_before_departure: 24,
+            refund_percent: 95,
+            refund_description: 'Hoàn 95% giá vé trước 24 giờ khởi hành',
           },
           {
+            flight_fare_id: f.id * 10 + 3,
             fare_class_id: f.airline.id === 2 ? 7 : 4,
-            fare_class_code: `${f.airline.airline_code}_BUS_FLEX`,
+            fare_class_code: `${f.airline.airline_code}_BIZ_FLEX`,
             fare_class_name: 'Thương gia linh hoạt',
             seat_class: 'BUSINESS' as const,
+            base_fare: f.airline.id === 2 ? 3150000 : 3620000,
+            tax_fee: 320000,
             adult_price: f.airline.id === 2 ? 3470000 : 3940000,
             child_price: f.airline.id === 2 ? 2602500 : 2955000,
             infant_price: f.airline.id === 2 ? 347000 : 394000,
-            cabin_baggage: '14kg xách tay + phòng chờ',
-            checked_baggage: '32kg ký gửi miễn phí',
-            refundable: true,
-            refund_summary: 'Hoàn 100% trước 3 giờ bay',
-            change_summary: 'Đổi giờ bay miễn phí không giới hạn',
+            currency: 'VND',
+            seats_available: Math.max(2, Math.floor(seatMap.available_seats / 5)),
+            is_refundable: true,
+            refund_min_hours_before_departure: 24,
+            refund_percent: 100,
+            refund_description: 'Hoàn 100% giá vé trước 24 giờ khởi hành',
           },
-        ].filter((fc) => !seatClass || fc.seat_class === seatClass);
+        ];
 
         return {
           id: f.id,
+          flight_id: f.id,
           flight_number: f.flight_number,
-          airline_id: f.airline.id,
-          airline_code: f.airline.airline_code,
-          airline_name: f.airline.airline_name,
-          aircraft_model: f.aircraft.model,
-          departure_airport_code: f.departure_airport.airport_code,
-          departure_airport_name: f.departure_airport.airport_name,
-          arrival_airport_code: f.arrival_airport.airport_code,
-          arrival_airport_name: f.arrival_airport.airport_name,
+          airline: {
+            id: f.airline.id,
+            airline_code: f.airline.airline_code,
+            airline_name: f.airline.airline_name,
+            logo_url: f.airline.logo_url ?? null,
+          },
+          aircraft: {
+            id: f.aircraft.id,
+            aircraft_code: f.aircraft.aircraft_code,
+            model: f.aircraft.model,
+            seat_capacity: f.aircraft.seat_capacity,
+            aisle_after: f.aircraft.aisle_after ?? 'C',
+          },
+          departure_airport: {
+            id: f.departure_airport.id,
+            airport_code: f.departure_airport.airport_code,
+            airport_name: f.departure_airport.airport_name,
+            city_code: f.departure_airport.city?.city_code ?? null,
+            city_name: f.departure_airport.city?.city_name ?? null,
+          },
+          arrival_airport: {
+            id: f.arrival_airport.id,
+            airport_code: f.arrival_airport.airport_code,
+            airport_name: f.arrival_airport.airport_name,
+            city_code: f.arrival_airport.city?.city_code ?? null,
+            city_name: f.arrival_airport.city?.city_name ?? null,
+          },
           scheduled_departure: f.scheduled_departure,
           scheduled_arrival: f.scheduled_arrival,
           duration_minutes: f.duration_minutes,
-          available_seats: seatMap.available_seats,
-          min_price: fares[0]?.adult_price ?? 1640000,
+          operation_status: f.operation_status,
+          sales_status: f.sales_status,
+          lowest_adult_price: fares[0].adult_price,
+          lowest_fare_class_code: fares[0].fare_class_code,
+          lowest_fare_class_name: fares[0].fare_class_name,
           fares,
         };
       });

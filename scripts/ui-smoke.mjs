@@ -1,21 +1,29 @@
 #!/usr/bin/env node
 /**
- * Script kiểm thử UI tốc độ cao qua Chrome DevTools Protocol (CDP) — KHÔNG cần
- * cài thêm package (dùng trực tiếp Node 24 WebSocket + Google Chrome có sẵn).
+ * Script kiểm thử UI & Fullstack API tốc độ cao qua Chrome DevTools Protocol (CDP)
+ * — KHÔNG cần cài thêm package (dùng trực tiếp Node 24 WebSocket + Google Chrome).
  *
  * Cách dùng:
- *   node scripts/ui-smoke.mjs --role=admin --routes=/admin/dashboard,/admin/reports
- *   node scripts/ui-smoke.mjs --role=customer --routes=/booking/review,/booking/payment --shot-dir=.tmp-shots
+ *   node scripts/ui-smoke.mjs --role=admin --routes=/admin/dashboard,/admin/flights
+ *   node scripts/ui-smoke.mjs --role=customer --routes=/,/flights,/lookup --shot-dir=.tmp-shots
+ *   node scripts/ui-smoke.mjs --role=admin --auth-mode=mock --routes=/admin/dashboard
  *
- * Đặc điểm tối ưu:
- * - Tự nạp sẵn `fb_access_token` và `fb_current_user` vào localStorage (bỏ qua bước gõ form /login).
- * - Chỉ xuất JSON metrics gọn (overflow 1440/768/375, số lỗi console, text heading, HTTP >= 400).
- * - Chỉ chụp ảnh màn hình khi truyền `--shot-dir=<dir>` lúc nghiệm thu cuối.
+ * Chế độ xác thực:
+ * - Mặc định (`--auth-mode=live`): Gọi thật `POST <api-base>/auth/login` với tài khoản seed
+ *   (`admin@flightbooking.local`, `staff@flightbooking.local`, `customer@flightbooking.local`)
+ *   để lấy JWT thật nạp vào `fb_access_token` & `fb_current_user`.
+ * - `--auth-mode=mock`: Nạp token giả (chỉ dùng khi test UI cô lập không bật Backend).
+ *
+ * Kiểm soát chất lượng bắt buộc:
+ * - Theo dõi `Network.responseReceived` để bắt mọi HTTP status >= 400 (kể cả API lẫn asset).
+ * - Theo dõi `Runtime.consoleAPICalled` (error) & `Runtime.exceptionThrown`.
+ * - Kiểm tra `overflow: false` ở 1440x900, 768x1024, 375x812.
  */
 
 import { spawn } from 'child_process';
 import fs from 'fs';
 import http from 'http';
+import https from 'https';
 import os from 'os';
 import path from 'path';
 
@@ -39,6 +47,8 @@ const args = Object.fromEntries(
 );
 
 const BASE_URL = args.base || 'http://localhost:4200';
+const API_BASE = (args['api-base'] || 'http://localhost:8080/api').replace(/\/$/, '');
+const AUTH_MODE = (args['auth-mode'] || 'live').toLowerCase();
 const ROLE = (args.role || 'admin').toUpperCase();
 const ROUTES = (args.routes || '/').split(',').map((r) => r.trim()).filter(Boolean);
 const VIEWPORTS = (args.viewports || '1440x900,768x1024,375x812')
@@ -50,10 +60,25 @@ const VIEWPORTS = (args.viewports || '1440x900,768x1024,375x812')
 const SHOT_DIR = args['shot-dir'] ? path.resolve(args['shot-dir']) : null;
 const PORT = Number(args.port || (9230 + Math.floor(Math.random() * 400)));
 
+const SEED_CREDENTIALS = {
+  ADMIN: {
+    email: process.env.SMOKE_ADMIN_EMAIL || 'admin@flightbooking.local',
+    password: process.env.SMOKE_ADMIN_PASSWORD || 'Admin@12345',
+  },
+  STAFF: {
+    email: process.env.SMOKE_STAFF_EMAIL || 'staff@flightbooking.local',
+    password: process.env.SMOKE_STAFF_PASSWORD || 'Staff@12345',
+  },
+  CUSTOMER: {
+    email: process.env.SMOKE_CUSTOMER_EMAIL || 'customer@flightbooking.local',
+    password: process.env.SMOKE_CUSTOMER_PASSWORD || 'Customer@12345',
+  },
+};
+
 const MOCK_USERS = {
   ADMIN: {
     id: 1,
-    email: 'admin@demo.local',
+    email: 'admin@flightbooking.local',
     full_name: 'Quản trị viên',
     phone: '0901234567',
     avatar_url: null,
@@ -75,7 +100,7 @@ const MOCK_USERS = {
   },
   STAFF: {
     id: 2,
-    email: 'staff@demo.local',
+    email: 'staff@flightbooking.local',
     full_name: 'Nhân viên vận hành',
     phone: '0912345678',
     avatar_url: null,
@@ -93,10 +118,10 @@ const MOCK_USERS = {
     ],
   },
   CUSTOMER: {
-    id: 10,
-    email: 'customer@demo.local',
-    full_name: 'Nguyễn Minh Anh',
-    phone: '0912345678',
+    id: 3,
+    email: 'customer@flightbooking.local',
+    full_name: 'Nguyễn Minh Hoàng',
+    phone: '0987654321',
     avatar_url: null,
     status: 'ACTIVE',
     roles: ['CUSTOMER'],
@@ -132,12 +157,45 @@ function getJson(url) {
   });
 }
 
+function postJson(url, payload) {
+  const body = JSON.stringify(payload);
+  const parsed = new URL(url);
+  const client = parsed.protocol === 'https:' ? https : http;
+  return new Promise((resolve, reject) => {
+    const req = client.request(
+      parsed,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body),
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (c) => (data += c));
+        res.on('end', () => {
+          try {
+            resolve({ status: res.statusCode || 0, body: JSON.parse(data) });
+          } catch {
+            resolve({ status: res.statusCode || 0, body: data });
+          }
+        });
+      },
+    );
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 class CdpClient {
   constructor(wsUrl) {
     this.ws = new WebSocket(wsUrl);
     this.seq = 1;
     this.pending = new Map();
     this.consoleErrors = [];
+    this.httpErrors = [];
   }
 
   async connect() {
@@ -158,6 +216,16 @@ class CdpClient {
         );
       } else if (msg.method === 'Runtime.exceptionThrown') {
         this.consoleErrors.push(msg.params?.exceptionDetails?.text || 'Uncaught exception');
+      } else if (msg.method === 'Network.responseReceived') {
+        const resp = msg.params?.response;
+        if (resp && resp.status >= 400 && !resp.url?.endsWith('/favicon.ico')) {
+          this.httpErrors.push(`${resp.status} ${resp.url}`);
+        }
+      } else if (msg.method === 'Network.loadingFailed') {
+        const errorText = msg.params?.errorText || 'net::FAILED';
+        if (errorText !== 'net::ERR_ABORTED') {
+          this.httpErrors.push(`FAILED ${msg.params?.type || ''} ${errorText}`.trim());
+        }
       }
     });
   }
@@ -191,6 +259,18 @@ class CdpClient {
 }
 
 (async () => {
+  let liveSession = null;
+  if (ROLE !== 'GUEST' && AUTH_MODE === 'live' && SEED_CREDENTIALS[ROLE]) {
+    const creds = SEED_CREDENTIALS[ROLE];
+    const loginRes = await postJson(`${API_BASE}/auth/login`, creds);
+    if (loginRes.status !== 200 || !loginRes.body?.data?.access_token) {
+      throw new Error(
+        `Đăng nhập thật thất bại cho role=${ROLE} (${creds.email}): HTTP ${loginRes.status} ${JSON.stringify(loginRes.body)}`,
+      );
+    }
+    liveSession = loginRes.body.data;
+  }
+
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vinafly-cdp-'));
   const chrome = spawn(
     CHROME,
@@ -227,25 +307,40 @@ class CdpClient {
   await cdp.connect();
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
+  await cdp.send('Network.enable');
   await sleep(1000);
 
-  // Nạp sẵn phiên đăng nhập vào localStorage (bỏ qua form /login)
-  if (ROLE !== 'GUEST' && MOCK_USERS[ROLE]) {
-    const userJson = JSON.stringify(MOCK_USERS[ROLE]);
-    await cdp.eval(`
-      localStorage.setItem('fb_access_token', 'mock-access-token');
-      localStorage.setItem('fb_current_user', ${JSON.stringify(userJson)});
-    `);
+  if (ROLE !== 'GUEST') {
+    if (liveSession) {
+      const userJson = JSON.stringify(liveSession.user);
+      await cdp.eval(`
+        localStorage.setItem('fb_access_token', ${JSON.stringify(liveSession.access_token)});
+        localStorage.setItem('fb_current_user', ${JSON.stringify(userJson)});
+      `);
+    } else if (AUTH_MODE === 'mock' && MOCK_USERS[ROLE]) {
+      const userJson = JSON.stringify(MOCK_USERS[ROLE]);
+      await cdp.eval(`
+        localStorage.setItem('fb_access_token', 'mock-access-token');
+        localStorage.setItem('fb_current_user', ${JSON.stringify(userJson)});
+      `);
+    }
   }
 
   const report = [];
   for (const route of ROUTES) {
     cdp.consoleErrors = [];
+    cdp.httpErrors = [];
     const targetUrl = `${BASE_URL}${route.startsWith('/') ? route : '/' + route}`;
     await cdp.send('Page.navigate', { url: targetUrl });
-    await sleep(1200);
+    await sleep(1400);
 
-    const routeResult = { route, viewports: {}, heading: '', consoleErrors: [] };
+    const routeResult = {
+      route,
+      viewports: {},
+      heading: '',
+      consoleErrors: [],
+      httpErrors: [],
+    };
 
     for (const vp of VIEWPORTS) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -280,10 +375,13 @@ class CdpClient {
     }
 
     routeResult.consoleErrors = [...cdp.consoleErrors];
+    routeResult.httpErrors = [...cdp.httpErrors];
     report.push(routeResult);
   }
 
-  console.log(JSON.stringify({ role: ROLE, baseUrl: BASE_URL, results: report }, null, 2));
+  console.log(
+    JSON.stringify({ role: ROLE, authMode: AUTH_MODE, baseUrl: BASE_URL, results: report }, null, 2),
+  );
 
   cdp.close();
   chrome.kill();
@@ -296,6 +394,7 @@ class CdpClient {
   const hasErrors = report.some(
     (r) =>
       r.consoleErrors.length > 0 ||
+      r.httpErrors.length > 0 ||
       Object.values(r.viewports).some((v) => v.overflow),
   );
   process.exit(hasErrors ? 1 : 0);

@@ -18,6 +18,7 @@
       Trang chủ
     </a>
     <a routerLink="/flights" routerLinkActive="on">Đặt vé</a>
+    <a routerLink="/lookup" routerLinkActive="on">Tra cứu đặt chỗ</a>
     <a routerLink="/promotions" routerLinkActive="on">Khuyến mãi</a>
     <a routerLink="/news" routerLinkActive="on">Tin tức</a>
   </nav>
@@ -64,6 +65,7 @@
   <nav class="drawer" aria-label="Menu di động">
     <a routerLink="/" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }" (click)="menuOpen.set(false)">Trang chủ</a>
     <a routerLink="/flights" routerLinkActive="on" (click)="menuOpen.set(false)">Đặt vé</a>
+    <a routerLink="/lookup" routerLinkActive="on" (click)="menuOpen.set(false)">Tra cứu đặt chỗ</a>
     <a routerLink="/promotions" routerLinkActive="on" (click)="menuOpen.set(false)">Khuyến mãi</a>
     <a routerLink="/news" routerLinkActive="on" (click)="menuOpen.set(false)">Tin tức</a>
   </nav>
@@ -115,7 +117,7 @@
       <h4>Liên hệ</h4>
       <ul>
         <li><mat-icon>call</mat-icon> 1900 1234</li>
-        <li><mat-icon>mail</mat-icon> support&#64;vedi.local</li>
+        <li><mat-icon>mail</mat-icon> hotro&#64;vinafly.vn</li>
         <li><mat-icon>place</mat-icon> Hoàn Kiếm, Hà Nội</li>
       </ul>
     </div>
@@ -124,7 +126,7 @@
   <div class="foot__bot">
     <span>© 2026 VinaFly. Bản quyền thuộc về Công ty Cổ phần Công nghệ.</span>
     <div class="foot__pay">
-      <span>VISA</span><span>Napas</span><span>MoMo</span>
+      <span>VNPay</span><span>VietQR</span><span>Napas 247</span>
     </div>
   </div>
 </footer>

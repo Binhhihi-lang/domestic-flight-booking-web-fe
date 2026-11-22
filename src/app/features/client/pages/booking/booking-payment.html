@@ -188,8 +188,13 @@
       <aside class="pay__side">
         <section class="card">
           <div class="summary__head">
-            <span>Mã đặt chỗ</span>
-            <b>{{ b.booking_code }}</b>
+            @if (b.status === 'CONFIRMED') {
+              <span>Mã đặt chỗ (PNR)</span>
+              <b>{{ b.booking_code }}</b>
+            } @else {
+              <span>Mã đơn hàng</span>
+              <b>DH-{{ b.id }}</b>
+            }
           </div>
 
           @for (seg of b.segments; track seg.id) {

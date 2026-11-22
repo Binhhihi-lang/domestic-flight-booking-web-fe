@@ -3,9 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { BookingCreatePayload } from '@core/models/booking.model';
 import { BaggageOption } from '@core/models/fare-baggage.model';
+import { AuthService } from '@core/services/auth.service';
 import { BookingFlowService, DraftPassenger } from '@core/services/booking-flow.service';
-import { BaggageOptionService } from '@core/services/catalog.service';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { StatusBadge } from '@shared/ui/status-badge/status-badge';
@@ -14,7 +16,8 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
 
 /**
  * Bước 3 luồng đặt vé: Nhập thông tin hành khách & Chọn gói hành lý ký gửi (`/booking/passengers`).
- * Popup chọn hành lý (`baggage`) dùng hiệu ứng chuyển động mượt mà (`vf-modal-backdrop` + `vf-modal-panel`).
+ * Khi bấm Tiếp tục: gọi API thật `POST /api/bookings` → giữ ghế `POST /api/bookings/{id}/seats/hold`
+ * → gắn hành lý `POST /api/bookings/{id}/baggages` → chuyển sang `/booking/review?bookingId=...`.
  */
 @Component({
   selector: 'app-booking-passengers',
@@ -25,13 +28,13 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       <nav class="bp-steps" aria-label="Tiến trình đặt vé">
         <span class="bp-step bp-step--done">1. Chọn chuyến</span>
         <span class="bp-step bp-step--done">2. Chọn ghế</span>
-        <span class="bp-step bp-step--active">3. Hành khách & Hành lý</span>
-        <span class="bp-step">4. Xem lại & Thanh toán</span>
+        <span class="bp-step bp-step--active">3. Hành khách &amp; Hành lý</span>
+        <span class="bp-step">4. Xem lại &amp; Thanh toán</span>
       </nav>
 
       <header class="bp-head">
         <div>
-          <h1>Thông tin hành khách & Hành lý ký gửi</h1>
+          <h1>Thông tin hành khách &amp; Hành lý ký gửi</h1>
           <p class="bp-sub">Nhập chính xác họ tên khớp CCCD/Hộ chiếu và mua thêm hành lý ký gửi nếu cần</p>
         </div>
         <a routerLink="/booking/seats" class="bp-back">← Quay lại chọn ghế</a>
@@ -48,11 +51,16 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
               <div class="bp-card__head">
                 <h2>
                   Hành khách {{ i + 1 }} —
-                  {{ p.passenger_type === 'ADULT' ? 'Người lớn' : p.passenger_type === 'CHILD' ? 'Trẻ em' : 'Em bé' }}
+                  {{ p.passenger_type === 'ADULT' ? 'Người lớn (≥ 12 tuổi)' : p.passenger_type === 'CHILD' ? 'Trẻ em (2–11 tuổi)' : 'Em bé (< 2 tuổi)' }}
                 </h2>
-                @if (p.seat_code) {
-                  <app-status-badge tone="info" [label]="'Ghế ' + p.seat_code" />
-                }
+                <div class="bp-seat-badges">
+                  @if (p.seat_code) {
+                    <app-status-badge tone="info" [label]="'Ghế đi ' + p.seat_code" />
+                  }
+                  @if (p.return_seat_code) {
+                    <app-status-badge tone="info" [label]="'Ghế về ' + p.return_seat_code" />
+                  }
+                </div>
               </div>
 
               <div class="bp-grid">
@@ -98,18 +106,20 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                 </div>
               </div>
 
-              <div class="bp-bag-row">
-                <div>
-                  <strong>Hành lý ký gửi:</strong>
-                  <span class="bp-muted">
-                    {{ p.baggage_name ? p.baggage_name + ' (' + formatMoney(p.baggage_price) + ')' : 'Chưa mua thêm' }}
-                  </span>
+              @if (p.passenger_type !== 'INFANT') {
+                <div class="bp-bag-row">
+                  <div>
+                    <strong>Hành lý ký gửi:</strong>
+                    <span class="bp-muted">
+                      {{ p.baggage_name ? p.baggage_name + ' (' + formatMoney(p.baggage_price) + ')' : 'Chưa mua thêm' }}
+                    </span>
+                  </div>
+                  <app-app-button size="sm" variant="secondary" (clicked)="openBaggageModal(p)">
+                    <mat-icon aria-hidden="true">luggage</mat-icon>
+                    Chọn hành lý
+                  </app-app-button>
                 </div>
-                <app-app-button size="sm" variant="secondary" (clicked)="openBaggageModal(p)">
-                  <mat-icon aria-hidden="true">luggage</mat-icon>
-                  Chọn hành lý
-                </app-app-button>
-              </div>
+              }
             </section>
           }
 
@@ -136,13 +146,19 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
           <h2>Tạm tính đơn đặt chỗ</h2>
           <dl class="bp-dl">
             <div>
-              <dt>Chuyến bay</dt>
-              <dd>{{ bookingFlow.selectedFlight()?.flight_number ?? 'VN-210' }}</dd>
+              <dt>Chặng đi</dt>
+              <dd>{{ bookingFlow.selectedFlight()?.flight_number ?? 'Chưa chọn' }}</dd>
             </div>
             <div>
               <dt>Hạng vé</dt>
-              <dd>{{ bookingFlow.selectedFare()?.fare_class_name ?? 'Phổ thông tiết kiệm' }}</dd>
+              <dd>{{ bookingFlow.selectedFare()?.fare_class_name ?? 'Chưa chọn' }}</dd>
             </div>
+            @if (bookingFlow.selectedReturnFlight(); as retFl) {
+              <div>
+                <dt>Chặng về</dt>
+                <dd>{{ retFl.flight_number }}</dd>
+              </div>
+            }
             <div>
               <dt>Phụ thu chọn ghế</dt>
               <dd class="tabular">{{ formatMoney(seatTotal()) }}</dd>
@@ -152,14 +168,14 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
               <dd class="tabular">{{ formatMoney(baggageTotal()) }}</dd>
             </div>
           </dl>
-          <app-app-button variant="primary" (clicked)="continueToReview()">
-            Tiếp tục xem lại đơn →
+          <app-app-button variant="primary" [disabled]="submitting()" (clicked)="continueToReview()">
+            {{ submitting() ? 'Đang tạo đơn & giữ ghế...' : 'Tiếp tục xem lại đơn →' }}
           </app-app-button>
         </aside>
       </div>
     </div>
 
-    <!-- Popup chọn gói hành lý ký gửi mượt mà -->
+    <!-- Popup chọn gói hành lý ký gửi -->
     @if (baggageModalPax(); as pax) {
       <div
         class="vf-modal-backdrop"
@@ -171,7 +187,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
         <div class="vf-modal-panel bp-modal" (click)="$event.stopPropagation()">
           <header class="bp-modal__head">
             <div>
-              <h2>Chọn hành lý ký gửi — {{ pax.full_name }}</h2>
+              <h2>Chọn hành lý ký gửi — {{ pax.full_name || 'Hành khách' }}</h2>
               <p class="bp-muted">Chọn một gói hành lý ký gửi hoặc bỏ chọn nếu chỉ mang hành lý xách tay</p>
             </div>
             <button
@@ -218,6 +234,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       display: flex;
       flex-direction: column;
       gap: 18px;
+      padding: 20px 16px 40px;
     }
     .bp-steps {
       display: flex;
@@ -298,7 +315,13 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
+    }
+    .bp-seat-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
     }
     .bp-grid {
       display: grid;
@@ -410,25 +433,33 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
 })
 export class BookingPassengers {
   protected readonly bookingFlow = inject(BookingFlowService);
-  private readonly baggageService = inject(BaggageOptionService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   protected readonly passengers = this.bookingFlow.draftPassengers;
-  protected readonly contactName = signal('Nguyễn Minh Anh');
-  protected readonly contactPhone = signal('0912345678');
-  protected readonly contactEmail = signal('customer@demo.local');
+  protected readonly contactName = signal(
+    this.authService.currentUser()?.full_name || 'Nguyễn Minh Anh',
+  );
+  protected readonly contactPhone = signal(this.authService.currentUser()?.phone || '0987654321');
+  protected readonly contactEmail = signal(
+    this.authService.currentUser()?.email || 'customer@flightbooking.local',
+  );
   protected readonly error = signal<string | null>(null);
+  protected readonly submitting = signal(false);
   protected readonly baggageModalPax = signal<DraftPassenger | null>(null);
 
-  private readonly baggageRes = toSignal(this.baggageService.list({ page: 1, size: 50 }), {
-    initialValue: null,
-  });
+  private readonly baggageRes = toSignal(
+    this.bookingFlow
+      .listPublicBaggageOptions(this.bookingFlow.selectedFlight()?.airline.id)
+      .pipe(catchError(() => of(null))),
+    { initialValue: null },
+  );
   protected readonly baggageOptions = computed(() =>
-    (this.baggageRes()?.data.items ?? []).filter((b) => b.status === 'ACTIVE'),
+    (this.baggageRes()?.data?.items ?? []).filter((b) => b.status === 'ACTIVE'),
   );
 
   protected readonly seatTotal = computed(() =>
-    this.passengers().reduce((sum, p) => sum + p.seat_surcharge, 0),
+    this.passengers().reduce((sum, p) => sum + p.seat_surcharge + p.return_seat_surcharge, 0),
   );
   protected readonly baggageTotal = computed(() =>
     this.passengers().reduce((sum, p) => sum + p.baggage_price, 0),
@@ -455,16 +486,114 @@ export class BookingPassengers {
 
   protected continueToReview(): void {
     this.error.set(null);
-    const missingName = this.passengers().some((p) => !p.full_name.trim());
-    if (missingName) {
-      this.error.set('Vui lòng nhập đầy đủ họ tên cho tất cả hành khách');
+    const paxList = this.passengers();
+    if (paxList.some((p) => !p.full_name.trim() || !p.birth_date)) {
+      this.error.set('Vui lòng nhập đầy đủ họ tên và ngày sinh cho tất cả hành khách');
       return;
     }
     if (!this.contactEmail().trim() || !this.contactPhone().trim()) {
       this.error.set('Vui lòng nhập số điện thoại và email liên hệ');
       return;
     }
-    this.router.navigate(['/booking/review']);
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login'], { queryParams: { redirect: '/booking/passengers' } });
+      return;
+    }
+
+    const outFlight = this.bookingFlow.selectedFlight();
+    const outFare = this.bookingFlow.selectedFare();
+    if (!outFlight || !outFare) {
+      this.error.set('Vui lòng chọn chuyến bay và hạng vé trước khi tạo đơn đặt chỗ.');
+      return;
+    }
+
+    const retFlight = this.bookingFlow.selectedReturnFlight();
+    const retFare = this.bookingFlow.selectedReturnFare();
+    const isRoundTrip = this.bookingFlow.tripType() === 'ROUND_TRIP' && !!retFlight && !!retFare;
+
+    const segments: BookingCreatePayload['segments'] = [
+      { flight_id: outFlight.id, fare_class_id: outFare.fare_class_id, segment_order: 1 },
+    ];
+    if (isRoundTrip) {
+      segments.push({
+        flight_id: retFlight.id,
+        fare_class_id: retFare.fare_class_id,
+        segment_order: 2,
+      });
+    }
+
+    const payload: BookingCreatePayload = {
+      trip_type: isRoundTrip ? 'ROUND_TRIP' : 'ONE_WAY',
+      segments,
+      passengers: paxList.map((p, idx) => ({
+        full_name: p.full_name.trim(),
+        gender: p.gender,
+        birth_date: p.birth_date,
+        passenger_type: p.passenger_type,
+        passport_number: p.passport_number.trim() || null,
+        phone: idx === 0 ? this.contactPhone().trim() : null,
+        email: idx === 0 ? this.contactEmail().trim() : null,
+      })),
+    };
+
+    this.submitting.set(true);
+    this.bookingFlow
+      .createBooking(payload)
+      .pipe(
+        switchMap((res) => {
+          const booking = res.data;
+          const postActions = [];
+
+          // Giữ ghế thật theo passenger_id từ Backend trả về
+          booking.passengers.forEach((createdPax, index) => {
+            const draft = paxList[index];
+            if (!draft || createdPax.passenger_type === 'INFANT') return;
+            if (draft.flight_seat_id) {
+              postActions.push(
+                this.bookingFlow.holdSeat(booking.id, createdPax.id, draft.flight_seat_id),
+              );
+            }
+            if (isRoundTrip && draft.return_flight_seat_id) {
+              postActions.push(
+                this.bookingFlow.holdSeat(booking.id, createdPax.id, draft.return_flight_seat_id),
+              );
+            }
+          });
+
+          // Gắn gói hành lý ký gửi nếu có
+          const baggageItems = booking.passengers
+            .map((createdPax, index) => {
+              const draft = paxList[index];
+              if (!draft?.baggage_option_id || createdPax.passenger_type === 'INFANT') return null;
+              return {
+                passenger_id: createdPax.id,
+                baggage_option_id: draft.baggage_option_id,
+                quantity: 1,
+              };
+            })
+            .filter((item): item is NonNullable<typeof item> => item !== null);
+
+          if (baggageItems.length > 0) {
+            postActions.push(this.bookingFlow.addBaggages(booking.id, baggageItems));
+          }
+
+          if (postActions.length === 0) {
+            return of(booking.id);
+          }
+          return forkJoin(postActions).pipe(switchMap(() => of(booking.id)));
+        }),
+      )
+      .subscribe({
+        next: (bookingId) => {
+          this.submitting.set(false);
+          this.bookingFlow.activeBookingId.set(bookingId);
+          this.router.navigate(['/booking/review'], { queryParams: { bookingId } });
+        },
+        error: (err: Error) => {
+          this.submitting.set(false);
+          this.error.set(err.message || 'Không thể tạo đơn đặt chỗ. Vui lòng thử lại.');
+        },
+      });
   }
 
   protected formatMoney(val: number): string {

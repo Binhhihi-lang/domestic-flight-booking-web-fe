@@ -1,7 +1,7 @@
 <div class="shell" [class.shell--collapsed]="collapsed()">
   <!-- ============ SIDEBAR ============ -->
   @if (sidebarOpen()) {
-    <div class="scrim" (click)="sidebarOpen.set(false)" aria-hidden="true"></div>
+  <div class="scrim" (click)="sidebarOpen.set(false)" aria-hidden="true"></div>
   }
 
   <aside class="sidebar" [class.sidebar--collapsed]="collapsed()" [class.sidebar--open]="sidebarOpen()">
@@ -11,55 +11,39 @@
       </a>
 
       <!-- Nút thu gọn: chỉ hiện trên desktop; mobile đã có hamburger. -->
-      <button
-        class="sidebar__collapse"
-        type="button"
-        [attr.aria-label]="collapsed() ? 'Mở rộng menu' : 'Thu gọn menu'"
-        [attr.aria-expanded]="!collapsed()"
-        (click)="toggleCollapse()"
-      >
+      <button class="sidebar__collapse" type="button" [attr.aria-label]="collapsed() ? 'Mở rộng menu' : 'Thu gọn menu'"
+        [attr.aria-expanded]="!collapsed()" (click)="toggleCollapse()">
         <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
       </button>
     </div>
 
     <nav class="sidebar__nav">
       @for (group of visibleGroups(); track group.label) {
-        <div class="sidebar__group">
+      <div class="sidebar__group">
+        @if (!collapsed()) {
+        <div class="sidebar__label">{{ group.label }}</div>
+        } @else {
+        <div class="sidebar__sep" aria-hidden="true"></div>
+        }
+        @for (item of group.items; track item.path) {
+        <a class="sidebar__item" [routerLink]="item.path" routerLinkActive="on"
+          [matTooltip]="collapsed() ? item.label : ''" matTooltipPosition="right" (click)="sidebarOpen.set(false)">
+          <mat-icon>{{ item.icon }}</mat-icon>
           @if (!collapsed()) {
-            <div class="sidebar__label">{{ group.label }}</div>
-          } @else {
-            <div class="sidebar__sep" aria-hidden="true"></div>
+          <span>{{ item.label }}</span>
           }
-          @for (item of group.items; track item.path) {
-            <a
-              class="sidebar__item"
-              [routerLink]="item.path"
-              routerLinkActive="on"
-              [matTooltip]="collapsed() ? item.label : ''"
-              matTooltipPosition="right"
-              (click)="sidebarOpen.set(false)"
-            >
-              <mat-icon>{{ item.icon }}</mat-icon>
-              @if (!collapsed()) {
-                <span>{{ item.label }}</span>
-              }
-            </a>
-          }
-        </div>
+        </a>
+        }
+      </div>
       }
     </nav>
 
     <div class="sidebar__foot">
-      <a
-        class="sidebar__item"
-        routerLink="/"
-        [matTooltip]="collapsed() ? 'Về trang khách hàng' : ''"
-        matTooltipPosition="right"
-        (click)="sidebarOpen.set(false)"
-      >
+      <a class="sidebar__item" routerLink="/" [matTooltip]="collapsed() ? 'Về trang khách hàng' : ''"
+        matTooltipPosition="right" (click)="sidebarOpen.set(false)">
         <mat-icon>storefront</mat-icon>
         @if (!collapsed()) {
-          <span>Về trang khách hàng</span>
+        <span>Về trang khách hàng</span>
         }
       </a>
     </div>
@@ -77,21 +61,16 @@
     </div>
 
     <header class="header">
-      <button
-        class="header__menu"
-        type="button"
-        aria-label="Mở menu"
-        [attr.aria-expanded]="sidebarOpen()"
-        (click)="sidebarOpen.set(!sidebarOpen())"
-      >
+      <button class="header__menu" type="button" aria-label="Mở menu" [attr.aria-expanded]="sidebarOpen()"
+        (click)="sidebarOpen.set(!sidebarOpen())">
         <mat-icon>menu</mat-icon>
       </button>
 
       <nav class="crumbs" aria-label="Đường dẫn">
         <a routerLink="/admin/dashboard">Vận hành</a>
         @if (pageTitle()) {
-          <mat-icon>chevron_right</mat-icon>
-          <span class="crumbs__here">{{ pageTitle() }}</span>
+        <mat-icon>chevron_right</mat-icon>
+        <span class="crumbs__here">{{ pageTitle() }}</span>
         }
       </nav>
 
@@ -135,7 +114,7 @@
 
     <footer class="foot">
       <span>© 2026 VinaFly — Khu vực vận hành.</span>
-      <span class="foot__v">Phiên bản 0.2 · Phase 1</span>
+      <span class="foot__v">VinaFly Operations · 2026</span>
     </footer>
   </div>
 </div>

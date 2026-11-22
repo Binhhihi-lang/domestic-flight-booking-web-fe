@@ -196,3 +196,67 @@ export interface ETicketItem {
   flight_seat_id: number | null;
   seat_code: string | null;
 }
+
+/** Tóm tắt một chặng trong danh sách đơn đặt chỗ (`BookingSummaryResponse`). */
+export interface BookingSegmentSummary {
+  segment_id: number;
+  segment_order: number;
+  flight_id: number;
+  flight_number: string;
+  airline_code: string;
+  airline_name: string;
+  departure_airport_code: string;
+  departure_city_name: string;
+  arrival_airport_code: string;
+  arrival_city_name: string;
+  scheduled_departure: string;
+  scheduled_arrival: string;
+  fare_class_code: string;
+  fare_class_name: string;
+  seat_class: string;
+}
+
+/** Tóm tắt đơn đặt chỗ trả về từ `GET /api/bookings` và `GET /api/admin/bookings`. */
+export interface BookingSummary {
+  id: number;
+  booking_code: string;
+  user_id: number;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  trip_type: TripType;
+  status: BookingStatus;
+  passenger_count?: number;
+  passengers?: BookingPassengerDetail[];
+  fare_amount: number;
+  promotion_discount_amount: number;
+  voucher_discount_amount: number;
+  seat_surcharge_amount: number;
+  baggage_amount: number;
+  total_amount: number;
+  currency: string;
+  payment_expires_at: string;
+  cancelled_at: string | null;
+  cancel_reason: string | null;
+  created_at: string;
+  segments: BookingSegmentSummary[];
+}
+
+export interface BookingCreatePayload {
+  trip_type: TripType;
+  segments: {
+    flight_id: number;
+    fare_class_id: number;
+    segment_order: number;
+  }[];
+  passengers: {
+    full_name: string;
+    gender: 'MALE' | 'FEMALE' | 'OTHER';
+    birth_date: string;
+    passenger_type: 'ADULT' | 'CHILD' | 'INFANT';
+    passport_number?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  }[];
+  user_voucher_id?: number | null;
+}

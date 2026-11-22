@@ -25,12 +25,14 @@ export class DashboardService {
   getReports(from?: string, to?: string): Observable<ApiResponse<OverviewDashboard>> {
     let params = new HttpParams();
     if (from) {
-      params = params.set('from', from);
+      params = params.set('from_date', from);
     }
     if (to) {
-      params = params.set('to', to);
+      params = params.set('to_date', to);
     }
-    return this.http.get<ApiResponse<OverviewDashboard>>(`${this.baseUrl}/reports`, { params });
+    return this.http.get<ApiResponse<OverviewDashboard>>(`${this.baseUrl}/dashboard/reports`, {
+      params,
+    });
   }
 
   getOperational(): Observable<ApiResponse<OperationalDashboard>> {

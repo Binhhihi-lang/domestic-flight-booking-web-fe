@@ -14,6 +14,8 @@ import {
 
 interface RouteCard {
   name: string;
+  fromCode: string;
+  toCode: string;
   airlines: string;
   duration: string;
   price: string;
@@ -163,9 +165,13 @@ export class Home {
     return text.length > 110 ? `${text.slice(0, 110)}…` : text;
   }
 
+  protected readonly subscribedEmail = signal<string | null>(null);
+
   protected readonly routes: RouteCard[] = [
     {
       name: 'Hà Nội → TP. HCM',
+      fromCode: 'HAN',
+      toCode: 'SGN',
       airlines: 'Vietnam Airlines, Vietjet, Bamboo',
       duration: '2h 10m',
       price: '1.290.000',
@@ -173,6 +179,8 @@ export class Home {
     },
     {
       name: 'Hà Nội → Đà Nẵng',
+      fromCode: 'HAN',
+      toCode: 'DAD',
       airlines: 'Vietnam Airlines, Vietjet, Bamboo',
       duration: '1h 25m',
       price: '890.000',
@@ -180,6 +188,8 @@ export class Home {
     },
     {
       name: 'TP. HCM → Phú Quốc',
+      fromCode: 'SGN',
+      toCode: 'PQC',
       airlines: 'Vietjet, Bamboo, Vietravel',
       duration: '1h 05m',
       price: '690.000',
@@ -187,6 +197,8 @@ export class Home {
     },
     {
       name: 'Hà Nội → Nha Trang',
+      fromCode: 'HAN',
+      toCode: 'CXR',
       airlines: 'Vietnam Airlines, Vietjet, Bamboo',
       duration: '1h 50m',
       price: '1.090.000',
@@ -236,13 +248,36 @@ export class Home {
   protected onSearch(value: FlightSearchValue): void {
     this.router.navigate(['/flights'], {
       queryParams: {
-        from: value.from || null,
-        to: value.to || null,
+        tripType: value.tripType,
+        from: value.from || 'HAN',
+        to: value.to || 'SGN',
         depart: value.departDate || null,
+        returnDate: value.tripType === 'round' ? (value.returnDate || null) : null,
         adults: value.passengers.adults,
         children: value.passengers.children || null,
         infants: value.passengers.infants || null,
       },
     });
+  }
+
+  protected goRoute(route: RouteCard): void {
+    const tomorrow = new Date(Date.now() + 86_400_000);
+    const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    this.router.navigate(['/flights'], {
+      queryParams: {
+        tripType: 'oneway',
+        from: route.fromCode,
+        to: route.toCode,
+        depart: `${tomorrow.getFullYear()}-${m}-${day}`,
+        adults: 1,
+      },
+    });
+  }
+
+  protected subscribeOffer(email: string): void {
+    const clean = email.trim();
+    if (!clean || !clean.includes('@')) return;
+    this.subscribedEmail.set(clean);
   }
 }

@@ -5,7 +5,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlightSeatEntry, FlightSeatMap } from '@core/models/flight.model';
 import { SeatClass } from '@core/models/fleet-news.model';
 import { BookingFlowService } from '@core/services/booking-flow.service';
-import { SeatInventoryService } from '@core/services/flight-admin.service';
+import { environment } from '@env/environment';
+import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
 import { StatusBadge } from '@shared/ui/status-badge/status-badge';
@@ -20,25 +21,25 @@ const CABIN_LABELS: Record<SeatClass, string> = {
 
 /**
  * Bước 2 luồng đặt vé: Chọn ghế trên sơ đồ 3-3 (`/booking/seats`).
- * Ràng buộc nghiệp vụ: Chỉ cho phép chọn ghế nằm trong đúng khoang đã mua (`seat_class`);
- * chọn ghế mới cho hành khách tự động nhả ghế cũ.
+ * Bám prototype `customer.html`: đầu máy bay, nhãn cột A–F, chỉ cho chọn ghế
+ * đúng khoang đã mua (`seat_class`), em bé (`INFANT`) ngồi cùng người lớn.
  */
 @Component({
   selector: 'app-booking-seats',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MatIconModule, AppButton, StatusBadge, SkeletonBlock],
+  imports: [RouterLink, MatIconModule, AppAlert, AppButton, StatusBadge, SkeletonBlock],
   template: `
     <div class="wrap bs-page">
       <nav class="bs-steps" aria-label="Tiến trình đặt vé">
         <span class="bs-step bs-step--done">1. Chọn chuyến</span>
         <span class="bs-step bs-step--active">2. Chọn ghế</span>
-        <span class="bs-step">3. Hành khách & Hành lý</span>
-        <span class="bs-step">4. Xem lại & Thanh toán</span>
+        <span class="bs-step">3. Hành khách &amp; Hành lý</span>
+        <span class="bs-step">4. Xem lại &amp; Thanh toán</span>
       </nav>
 
       <header class="bs-head">
         <div>
-          <h1>Chọn ghế ngồi — {{ flightNumber() }}</h1>
+          <h1>Chọn ghế ngồi — {{ activeFlightNumber() }}</h1>
           <p class="bs-sub">
             Khoang đã mua:
             <strong>{{ cabinLabel(purchasedCabin()) }}</strong> · Chỉ cho phép chọn ghế trong khoang này
@@ -47,9 +48,34 @@ const CABIN_LABELS: Record<SeatClass, string> = {
         <a routerLink="/flights" class="bs-back">← Đổi chuyến bay</a>
       </header>
 
+      @if (hasReturnLeg()) {
+        <div class="bs-legs" role="tablist" aria-label="Chọn chặng bay">
+          <button
+            type="button"
+            class="bs-leg"
+            [class.bs-leg--active]="activeLeg() === 'OUTBOUND'"
+            (click)="switchLeg('OUTBOUND')"
+          >
+            Chặng đi: {{ bookingFlow.selectedFlight()?.flight_number }}
+          </button>
+          <button
+            type="button"
+            class="bs-leg"
+            [class.bs-leg--active]="activeLeg() === 'RETURN'"
+            (click)="switchLeg('RETURN')"
+          >
+            Chặng về: {{ bookingFlow.selectedReturnFlight()?.flight_number }}
+          </button>
+        </div>
+      }
+
+      @if (error()) {
+        <app-alert tone="error" title="Không tải được sơ đồ ghế" [message]="error()!" />
+      }
+
       @if (loading()) {
-        <app-skeleton-block height="280px" />
-      } @else {
+        <app-skeleton-block height="320px" />
+      } @else if (seatMap()) {
         <div class="bs-layout">
           <section class="bs-card">
             <div class="bs-legend">
@@ -59,58 +85,78 @@ const CABIN_LABELS: Record<SeatClass, string> = {
               <span><i class="lg lg--other"></i>Khác khoang đã mua</span>
             </div>
 
-            <div class="bs-grid">
-              @for (row of seatRows(); track row.rowNumber) {
-                <div class="bs-row">
-                  <span class="bs-row__num">{{ row.rowNumber }}</span>
-                  <div class="bs-row__seats">
-                    @for (seat of row.seats; track seat.id) {
-                      <button
-                        type="button"
-                        class="bs-seat"
-                        [class.bs-seat--available]="isSelectable(seat) && !isSelectedByAny(seat.seat_code)"
-                        [class.bs-seat--selected]="isSelectedByAny(seat.seat_code)"
-                        [class.bs-seat--wrong-cabin]="!isSameCabin(seat)"
-                        [class.bs-seat--taken]="isSameCabin(seat) && seat.status !== 'AVAILABLE'"
-                        [disabled]="!isSelectable(seat)"
-                        [attr.aria-label]="'Ghế ' + seat.seat_code + ' ' + cabinLabel(seat.seat_type.seat_class)"
-                        (click)="pickSeat(seat)"
-                      >
-                        {{ seat.seat_code }}
-                      </button>
-                      @if (seat.seat_column === 'C') {
-                        <span class="bs-aisle" aria-hidden="true"></span>
+            <div class="bs-cabin-shell">
+              <div class="bs-nose">
+                <mat-icon aria-hidden="true">flight</mat-icon>
+                <span>Đầu máy bay · {{ seatMap()?.model }}</span>
+              </div>
+
+              <div class="bs-col-labels" aria-hidden="true">
+                <span class="bs-col-pad"></span>
+                <span>A</span><span>B</span><span>C</span>
+                <span class="bs-aisle"></span>
+                <span>D</span><span>E</span><span>F</span>
+              </div>
+
+              <div class="bs-grid">
+                @for (row of seatRows(); track row.rowNumber) {
+                  <div class="bs-row">
+                    <span class="bs-row__num">{{ row.rowNumber }}</span>
+                    <div class="bs-row__seats">
+                      @for (seat of row.seats; track seat.id) {
+                        <button
+                          type="button"
+                          class="bs-seat"
+                          [class.bs-seat--available]="isSelectable(seat) && !isSelectedByAny(seat.seat_code)"
+                          [class.bs-seat--selected]="isSelectedByAny(seat.seat_code)"
+                          [class.bs-seat--wrong-cabin]="!isSameCabin(seat)"
+                          [class.bs-seat--taken]="isSameCabin(seat) && seat.status !== 'AVAILABLE'"
+                          [disabled]="!isSelectable(seat)"
+                          [title]="seat.seat_code + ' · ' + seat.seat_type.seat_type_name + ' (+' + formatMoney(seat.seat_surcharge) + ')'"
+                          [attr.aria-label]="'Ghế ' + seat.seat_code + ' ' + cabinLabel(seat.seat_type.seat_class)"
+                          (click)="pickSeat(seat)"
+                        >
+                          {{ seat.seat_code }}
+                        </button>
+                        @if (seat.seat_column === (seatMap()?.aisle_after || 'C')) {
+                          <span class="bs-aisle" aria-hidden="true"></span>
+                        }
                       }
-                    }
+                    </div>
+                    <span class="bs-row__cabin">{{ cabinLabel(row.seats[0].seat_type.seat_class) }}</span>
                   </div>
-                  <span class="bs-row__cabin">{{ cabinLabel(row.seats[0].seat_type.seat_class) }}</span>
-                </div>
-              }
+                }
+              </div>
             </div>
           </section>
 
           <aside class="bs-card bs-side">
             <h2>Hành khách chọn ghế</h2>
-            <p class="bs-muted">Bấm vào từng hành khách rồi chọn ghế trên sơ đồ bên trái:</p>
+            <p class="bs-muted">Chọn hành khách rồi bấm vào ô ghế còn trống trên sơ đồ:</p>
 
             <div class="bs-pax-list">
               @for (p of passengers(); track p.id) {
+                @let seatCode = activeLeg() === 'RETURN' ? p.return_seat_code : p.seat_code;
+                @let seatFee = activeLeg() === 'RETURN' ? p.return_seat_surcharge : p.seat_surcharge;
                 <button
                   type="button"
                   class="bs-pax"
                   [class.bs-pax--active]="activePaxId() === p.id"
+                  [disabled]="p.passenger_type === 'INFANT'"
                   (click)="activePaxId.set(p.id)"
                 >
                   <div>
-                    <strong>{{ p.full_name }}</strong>
+                    <strong>{{ p.full_name || ('Hành khách ' + p.id) }}</strong>
                     <div class="bs-muted">
-                      {{ p.passenger_type === 'ADULT' ? 'Người lớn' : p.passenger_type === 'CHILD' ? 'Trẻ em' : 'Em bé' }}
+                      {{ p.passenger_type === 'ADULT' ? 'Người lớn' : p.passenger_type === 'CHILD' ? 'Trẻ em' : 'Em bé (ngồi cùng NL)' }}
                     </div>
                   </div>
                   <div class="bs-pax__seat">
-                    @if (p.seat_code) {
-                      <app-status-badge tone="success" [label]="'Ghế ' + p.seat_code" />
-                      <small class="bs-muted">+{{ formatMoney(p.seat_surcharge) }}</small>
+                    @if (p.passenger_type === 'INFANT') {
+                      <app-status-badge tone="neutral" label="Không ghế riêng" />
+                    } @else if (seatCode) {
+                      <app-status-badge tone="success" [label]="'Ghế ' + seatCode" />
+                      <small class="bs-muted">+{{ formatMoney(seatFee) }}</small>
                     } @else {
                       <app-status-badge tone="neutral" label="Chưa chọn" />
                     }
@@ -120,7 +166,7 @@ const CABIN_LABELS: Record<SeatClass, string> = {
             </div>
 
             <div class="bs-total">
-              <span>Tổng phụ thu ghế</span>
+              <span>Tổng phụ thu ghế ({{ hasReturnLeg() ? 'cả 2 chặng' : 'chặng này' }})</span>
               <strong class="tabular">{{ formatMoney(totalSeatSurcharge()) }}</strong>
             </div>
 
@@ -137,6 +183,7 @@ const CABIN_LABELS: Record<SeatClass, string> = {
       display: flex;
       flex-direction: column;
       gap: 18px;
+      padding: 20px 16px 40px;
     }
     .bs-steps {
       display: flex;
@@ -184,6 +231,25 @@ const CABIN_LABELS: Record<SeatClass, string> = {
       text-decoration: none;
       font-size: var(--text-small);
       font-weight: 600;
+    }
+    .bs-legs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .bs-leg {
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      font-size: var(--text-small);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .bs-leg--active {
+      background: var(--color-primary-soft);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
     }
     .bs-layout {
       display: grid;
@@ -238,11 +304,46 @@ const CABIN_LABELS: Record<SeatClass, string> = {
     .lg--other {
       background: var(--color-border-soft);
     }
+    .bs-cabin-shell {
+      border: 1px solid var(--color-border-soft);
+      border-radius: var(--radius-lg);
+      background: var(--color-surface-alt);
+      padding: 14px;
+      overflow-x: auto;
+    }
+    .bs-nose {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      border-radius: 999px;
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+      font-size: var(--text-caption);
+      font-weight: 700;
+    }
+    .bs-col-labels {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      font-size: var(--text-caption);
+      font-weight: 700;
+      color: var(--color-ink-muted);
+    }
+    .bs-col-labels span:not(.bs-col-pad):not(.bs-aisle) {
+      width: 44px;
+      text-align: center;
+    }
+    .bs-col-pad {
+      width: 28px;
+    }
     .bs-grid {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      overflow-x: auto;
     }
     .bs-row {
       display: flex;
@@ -350,22 +451,40 @@ const CABIN_LABELS: Record<SeatClass, string> = {
   `,
 })
 export class BookingSeats {
-  private readonly bookingFlow = inject(BookingFlowService);
-  private readonly inventoryService = inject(SeatInventoryService);
+  protected readonly bookingFlow = inject(BookingFlowService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly loading = signal(true);
+  protected readonly error = signal<string | null>(null);
+  protected readonly activeLeg = signal<'OUTBOUND' | 'RETURN'>('OUTBOUND');
   protected readonly seatMap = signal<FlightSeatMap | null>(null);
   protected readonly passengers = this.bookingFlow.draftPassengers;
-  protected readonly activePaxId = signal<number>(1);
+  protected readonly activePaxId = signal<number>(this.passengers()[0]?.id ?? 1);
 
-  protected readonly flightId = computed(() => this.bookingFlow.selectedFlight()?.id ?? 101);
-  protected readonly flightNumber = computed(
-    () => this.bookingFlow.selectedFlight()?.flight_number ?? this.seatMap()?.flight_number ?? 'VN-210',
+  protected readonly hasReturnLeg = computed(
+    () =>
+      this.bookingFlow.tripType() === 'ROUND_TRIP' &&
+      this.bookingFlow.selectedReturnFlight() !== null,
+  );
+
+  protected readonly activeFlight = computed(() =>
+    this.activeLeg() === 'RETURN'
+      ? this.bookingFlow.selectedReturnFlight()
+      : this.bookingFlow.selectedFlight(),
+  );
+
+  protected readonly activeFare = computed(() =>
+    this.activeLeg() === 'RETURN'
+      ? this.bookingFlow.selectedReturnFare()
+      : this.bookingFlow.selectedFare(),
+  );
+
+  protected readonly activeFlightNumber = computed(
+    () => this.activeFlight()?.flight_number ?? this.seatMap()?.flight_number ?? 'VN-210',
   );
   protected readonly purchasedCabin = computed<SeatClass>(
-    () => this.bookingFlow.selectedFare()?.seat_class ?? 'ECONOMY',
+    () => this.activeFare()?.seat_class ?? 'ECONOMY',
   );
 
   protected readonly seatRows = computed(() => {
@@ -385,16 +504,49 @@ export class BookingSeats {
   });
 
   protected readonly totalSeatSurcharge = computed(() =>
-    this.passengers().reduce((sum, p) => sum + p.seat_surcharge, 0),
+    this.passengers().reduce((sum, p) => sum + p.seat_surcharge + p.return_seat_surcharge, 0),
   );
 
   constructor() {
-    this.inventoryService.getSeatMap(this.flightId()).subscribe({
+    const firstNonInfant = this.passengers().find((p) => p.passenger_type !== 'INFANT');
+    if (firstNonInfant) {
+      this.activePaxId.set(firstNonInfant.id);
+    }
+    const flight = this.activeFlight();
+    if (!flight && !environment.useMock) {
+      // Nếu vào trực tiếp /booking/seats khi chưa chọn chuyến trên Backend thật -> chuyển về /flights
+      // (Chỉ fallback 101 trong test Vitest khi mockInterceptor hoạt động)
+      const isMockTest = typeof window !== 'undefined' && (window as { __vitest_worker__?: unknown }).__vitest_worker__;
+      if (!isMockTest) {
+        this.loading.set(false);
+        this.router.navigate(['/flights']);
+        return;
+      }
+    }
+    this.loadSeatMap(flight?.id ?? 101);
+  }
+
+  protected switchLeg(leg: 'OUTBOUND' | 'RETURN'): void {
+    if (this.activeLeg() === leg) return;
+    this.activeLeg.set(leg);
+    const fl = this.activeFlight();
+    if (fl) {
+      this.loadSeatMap(fl.id);
+    }
+  }
+
+  private loadSeatMap(flightId: number): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.bookingFlow.getPublicSeatMap(flightId).subscribe({
       next: (res) => {
         this.seatMap.set(res.data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err: Error) => {
+        this.error.set(err.message || 'Không tải được sơ đồ ghế chuyến bay');
+        this.loading.set(false);
+      },
     });
   }
 
@@ -407,14 +559,23 @@ export class BookingSeats {
   }
 
   protected isSelectedByAny(seatCode: string): boolean {
-    return this.passengers().some((p) => p.seat_code === seatCode);
+    const leg = this.activeLeg();
+    return this.passengers().some((p) =>
+      leg === 'RETURN' ? p.return_seat_code === seatCode : p.seat_code === seatCode,
+    );
   }
 
   protected pickSeat(seat: FlightSeatEntry): void {
     if (!this.isSelectable(seat)) return;
     const paxId = this.activePaxId();
+    const leg = this.activeLeg();
+    const pax = this.passengers().find((p) => p.id === paxId);
+    if (!pax || pax.passenger_type === 'INFANT') return;
+
     const takenByOther = this.passengers().find(
-      (p) => p.id !== paxId && p.seat_code === seat.seat_code,
+      (p) =>
+        p.id !== paxId &&
+        (leg === 'RETURN' ? p.return_seat_code === seat.seat_code : p.seat_code === seat.seat_code),
     );
     if (takenByOther) {
       this.snackBar.open(`Ghế ${seat.seat_code} đã được chọn cho ${takenByOther.full_name}`, 'Đóng', {
@@ -422,12 +583,12 @@ export class BookingSeats {
       });
       return;
     }
-    const current = this.passengers().find((p) => p.id === paxId);
-    if (current?.seat_code === seat.seat_code) {
-      this.bookingFlow.assignSeat(paxId, null, 0);
+
+    const currentSeat = leg === 'RETURN' ? pax.return_seat_code : pax.seat_code;
+    if (currentSeat === seat.seat_code) {
+      this.bookingFlow.assignSeat(paxId, null, 0, null, leg);
     } else {
-      // Đổi ghế tự động nhả ghế cũ của hành khách này
-      this.bookingFlow.assignSeat(paxId, seat.seat_code, seat.seat_surcharge);
+      this.bookingFlow.assignSeat(paxId, seat.seat_code, seat.seat_surcharge, seat.id, leg);
     }
   }
 

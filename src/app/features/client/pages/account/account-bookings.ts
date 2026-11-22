@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { BookingDetail, BookingStatus } from '@core/models/booking.model';
+import { BookingStatus, BookingSummary } from '@core/models/booking.model';
 import { BookingFlowService } from '@core/services/booking-flow.service';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { AppButton } from '@shared/ui/app-button/app-button';
@@ -68,8 +68,11 @@ const STATUS_TABS: { key: BookingStatus | ''; label: string }[] = [
             <article class="mb-card">
               <div class="mb-card__top">
                 <div class="mb-code">
-                  <strong>Mã đơn {{ b.booking_code }}</strong>
-                  <span class="mb-muted">· {{ b.passengers.length }} hành khách</span>
+                  <strong>Mã đơn DH-{{ b.id }}</strong>
+                  @if (b.status === 'CONFIRMED' && b.booking_code) {
+                    <span class="mb-muted">· PNR {{ b.booking_code }}</span>
+                  }
+                  <span class="mb-muted">· {{ b.passenger_count ?? b.passengers?.length ?? 0 }} hành khách</span>
                 </div>
                 <app-status-badge [tone]="statusTone(b.status)" [label]="statusLabel(b.status)" />
               </div>
@@ -207,7 +210,7 @@ export class AccountBookings {
   protected readonly tabs = STATUS_TABS;
   protected readonly activeStatus = signal<BookingStatus | ''>('');
   protected readonly loading = signal(true);
-  protected readonly bookings = signal<BookingDetail[]>([]);
+  protected readonly bookings = signal<BookingSummary[]>([]);
 
   constructor() {
     this.load();

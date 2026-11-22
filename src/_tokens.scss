@@ -111,6 +111,16 @@
   --dur-fast: 130ms;
   --dur: 200ms;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  // ---------- Khoảng cách (thang 4px, đồng bộ prototype tokens.css) ----------
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-lg: 16px;
+  --sp-xl: 24px;
+  --sp-2xl: 32px;
+  --sp-3xl: 48px;
+  --sp-4xl: 64px;
 }
 
 // =====================================================================

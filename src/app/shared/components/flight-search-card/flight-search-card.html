@@ -21,12 +21,20 @@
   <div class="searchform">
     <div class="field">
       <label for="fs-from">Điểm đi</label>
-      <input id="fs-from" name="from" [(ngModel)]="from" placeholder="Chọn điểm khởi hành" />
+      <select id="fs-from" name="from" [(ngModel)]="from" aria-label="Điểm đi">
+        @for (ap of airports(); track ap.airport_code) {
+          <option [value]="ap.airport_code">{{ airportLabel(ap) }}</option>
+        }
+      </select>
     </div>
 
     <div class="field swap">
       <label for="fs-to">Điểm đến</label>
-      <input id="fs-to" name="to" [(ngModel)]="to" placeholder="Chọn điểm đến" />
+      <select id="fs-to" name="to" [(ngModel)]="to" aria-label="Điểm đến">
+        @for (ap of airports(); track ap.airport_code) {
+          <option [value]="ap.airport_code">{{ airportLabel(ap) }}</option>
+        }
+      </select>
       <button class="swap__btn" type="button" title="Đổi chiều" (click)="swap()">
         <mat-icon>swap_horiz</mat-icon>
       </button>
@@ -67,7 +75,7 @@
           <div class="pax__row">
             <div class="pax__info">
               <b>Người lớn</b>
-              <span>Từ 13 tuổi trở lên</span>
+              <span>Từ 12 tuổi trở lên</span>
             </div>
             <div class="pax__ctl">
               <button
@@ -93,7 +101,7 @@
           <div class="pax__row">
             <div class="pax__info">
               <b>Trẻ em</b>
-              <span>2 – 12 tuổi</span>
+              <span>2 – 11 tuổi</span>
             </div>
             <div class="pax__ctl">
               <button
