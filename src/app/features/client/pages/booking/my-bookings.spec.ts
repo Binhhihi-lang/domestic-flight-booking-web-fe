@@ -9,7 +9,7 @@ import { AdminBookings } from '@features/admin/pages/bookings/bookings';
 import { AccountBookings } from '@features/client/pages/account/account-bookings';
 import { BookingDetailPage } from '@features/client/pages/booking/booking-detail';
 
-describe('Quản lý Đặt chỗ Khách hàng & Admin/Staff (Cụm DA3.2)', () => {
+describe('Quản lý Đặt chỗ Khách hàng & Admin/Staff (Cụm DA3.2 / 5B)', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AccountBookings, BookingDetailPage, AdminBookings],
@@ -34,7 +34,7 @@ describe('Quản lý Đặt chỗ Khách hàng & Admin/Staff (Cụm DA3.2)', () 
     expect(text).toContain('Đã hủy');
   });
 
-  it('BookingDetailPage mở modal hủy vé ghi rõ không tự hoàn tiền và thông tin đại lý 1900 1234', async () => {
+  it('BookingDetailPage hiển thị bảng hành khách tiếng Việt và mở modal hủy vé có checkbox xác nhận + 1900 1234', async () => {
     TestBed.overrideProvider(ActivatedRoute, {
       useValue: {
         snapshot: {
@@ -52,6 +52,11 @@ describe('Quản lý Đặt chỗ Khách hàng & Admin/Staff (Cụm DA3.2)', () 
     expect(el.textContent).toContain('DH-1049');
     expect(el.textContent).toContain('2.959.000đ');
 
+    const paxTable = el.querySelector('[data-testid="detail-pax-table"]');
+    expect(paxTable).not.toBeNull();
+    expect(paxTable?.textContent).toContain('Người lớn');
+    expect(paxTable?.textContent).not.toContain('ADULT');
+
     const cancelBtn = el.querySelector('.bd-head__actions button') as HTMLButtonElement;
     cancelBtn.click();
     fixture.detectChanges();
@@ -61,6 +66,17 @@ describe('Quản lý Đặt chỗ Khách hàng & Admin/Staff (Cụm DA3.2)', () 
     expect(modal?.textContent).toContain('KHÔNG tự động hoàn tiền');
     expect(modal?.textContent).toContain('1900 1234');
     expect(modal?.textContent).toContain('hotro@vinafly.vn');
+    expect(el.querySelector('[data-testid="cancel-refund-estimate"]')).not.toBeNull();
+
+    // Checkbox xác nhận bắt buộc phải được tích trước khi mở khóa nút xác nhận hủy
+    const checkbox = el.querySelector('[data-testid="cancel-confirm-checkbox"]') as HTMLInputElement;
+    const confirmBtn = el.querySelector('[data-testid="btn-confirm-cancel"] button') as HTMLButtonElement;
+    expect(checkbox).not.toBeNull();
+    expect(confirmBtn.disabled).toBe(true);
+
+    checkbox.click();
+    fixture.detectChanges();
+    expect(confirmBtn.disabled).toBe(false);
   });
 
   it('AdminBookings hiển thị danh sách đơn đặt chỗ cho Admin/Staff', async () => {

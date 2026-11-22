@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
-import { BookingDetail } from '@core/models/booking.model';
+import { BookingDetail, BookingSeatHoldDetail } from '@core/models/booking.model';
 import { BookingFlowService } from '@core/services/booking-flow.service';
 import { BookingLookup } from './booking-lookup';
 
@@ -90,6 +90,45 @@ const SAMPLE_BOOKING: BookingDetail = {
   baggages: [],
 };
 
+const ROUND_TRIP_BOOKING: BookingDetail = {
+  ...SAMPLE_BOOKING,
+  id: 2050,
+  booking_code: 'VN7788RT',
+  trip_type: 'ROUND_TRIP',
+  segments: [
+    SAMPLE_BOOKING.segments[0],
+    {
+      ...SAMPLE_BOOKING.segments[0],
+      id: 2,
+      segment_order: 2,
+      flight_id: 20,
+      flight_number: 'VN-216',
+      departure_airport_code: 'SGN',
+      departure_city_name: 'TP. Hồ Chí Minh',
+      arrival_airport_code: 'HAN',
+      arrival_city_name: 'Hà Nội',
+      scheduled_departure: '2026-11-28T14:00:00+07:00',
+      scheduled_arrival: '2026-11-28T16:10:00+07:00',
+    },
+  ],
+  seat_holds: [
+    {
+      ...SAMPLE_BOOKING.seat_holds[0],
+      id: 1,
+      flight_seat_id: 99,
+      seat_code: '3A',
+      flight_id: 10,
+    } as BookingSeatHoldDetail & { flight_id: number },
+    {
+      ...SAMPLE_BOOKING.seat_holds[0],
+      id: 2,
+      flight_seat_id: 188,
+      seat_code: '14F',
+      flight_id: 20,
+    } as BookingSeatHoldDetail & { flight_id: number },
+  ],
+};
+
 describe('BookingLookup', () => {
   let fixture: ComponentFixture<BookingLookup>;
   let lookupMock: ReturnType<typeof vi.fn>;
@@ -128,6 +167,28 @@ describe('BookingLookup', () => {
     expect(text).toContain('VN9988AA');
     expect(text).toContain('Nguyễn Văn An');
     expect(text).toContain('Ghế 3A');
+  });
+
+  it('hiển thị đúng ghế riêng biệt cho từng chặng ở vé khứ hồi (fix lỗi trùng ghế)', () => {
+    lookupMock.mockReturnValueOnce(of({ code: 1000, message: 'OK', data: ROUND_TRIP_BOOKING }));
+    const comp = fixture.componentInstance as unknown as {
+      bookingCode: string;
+      email: string;
+      submitLookup: () => void;
+    };
+    comp.bookingCode = 'VN7788RT';
+    comp.email = 'an@vinafly.vn';
+    comp.submitLookup();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const outboundLeg = el.querySelector('[data-testid="lookup-segment-10"]');
+    const returnLeg = el.querySelector('[data-testid="lookup-segment-20"]');
+
+    expect(outboundLeg?.textContent).toContain('Ghế 3A');
+    expect(outboundLeg?.textContent).not.toContain('Ghế 14F');
+    expect(returnLeg?.textContent).toContain('Ghế 14F');
+    expect(returnLeg?.textContent).not.toContain('Ghế 3A');
   });
 
   it('hiển thị thông báo lỗi khi API tra cứu thất bại', () => {

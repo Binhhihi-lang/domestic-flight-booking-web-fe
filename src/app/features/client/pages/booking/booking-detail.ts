@@ -3,8 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { BookingDetail, BookingStatus } from '@core/models/booking.model';
+import { catchError, of } from 'rxjs';
+import { BookingDetail, BookingStatus, ETicketItem } from '@core/models/booking.model';
 import { BookingFlowService } from '@core/services/booking-flow.service';
+import { CheckoutService } from '@core/services/checkout.service';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -13,10 +15,11 @@ import { BadgeTone, StatusBadge } from '@shared/ui/status-badge/status-badge';
 const moneyFmt = new Intl.NumberFormat('vi-VN');
 
 /**
- * Chi tiết đặt chỗ (`/account/bookings/:id` & `/admin/bookings/:id`) — DA3.2.
- * Hiển thị toàn bộ hành trình, hành khách, ghế ngồi, hành lý, hóa đơn thanh toán,
- * quy định hoàn vé và Modal xác nhận hủy vé mượt mà (ghi rõ không tự hoàn tiền,
- * liên hệ đại lý 1900 1234 / hotro@vinafly.vn).
+ * Chi tiết đặt chỗ (`/account/bookings/:id` & `/admin/bookings/:id`) — DA3.2 / Cluster 5B.
+ * - Hiển thị hành trình, bảng hành khách (nhãn tiếng Việt), ghế ngồi, hành lý, hóa đơn thanh toán,
+ *   và danh sách Vé điện tử thật (`GET /api/bookings/{id}/e-tickets`) kèm nút In vé điện tử khi `CONFIRMED`.
+ * - Modal xác nhận hủy vé chuẩn D1: tiêu đề dùng `DH-{id}` khi chưa có PNR (`PENDING_PAYMENT`) hoặc `PNR` khi đã xác nhận,
+ *   ước tính hoàn tiền/phí hủy theo hạng vé, lưu ý không tự hoàn tiền + hotline 1900 1234, và checkbox xác nhận bắt buộc.
  */
 @Component({
   selector: 'app-booking-detail',
@@ -27,15 +30,15 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       <header class="bd-head">
         <div>
           <h1>Chi tiết đặt chỗ {{ booking() ? ('DH-' + booking()!.id) : '' }}</h1>
-          <p class="bd-sub">Hành trình, danh sách hành khách, ghế ngồi, hành lý và quy định hoàn vé</p>
+          <p class="bd-sub">Hành trình, danh sách hành khách, ghế ngồi, hành lý, vé điện tử và quy định hoàn vé</p>
         </div>
         <div class="bd-head__actions">
           <a [routerLink]="isAdminMode() ? '/admin/bookings' : '/account'" class="bd-back">
-            ← Quay lại danh sách
+            ← Quay lại danh sách đặt chỗ
           </a>
           @if (booking(); as b) {
             @if (b.status !== 'CANCELLED' && b.status !== 'EXPIRED') {
-              <app-app-button size="sm" variant="danger" (clicked)="showCancelModal.set(true)">
+              <app-app-button size="sm" variant="danger" (clicked)="openCancelModal()">
                 Hủy vé
               </app-app-button>
             }
@@ -55,8 +58,13 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
             <section class="bd-card">
               <div class="bd-row-between">
                 <div>
-                  <strong>Mã đơn: DH-{{ b.id }}@if (b.status === 'CONFIRMED' && b.booking_code) { · PNR: {{ b.booking_code }} }</strong>
-                  <div class="bd-muted">Khách đặt: {{ b.customer_name }} · {{ b.customer_email }}</div>
+                  <strong>
+                    Mã đơn: DH-{{ b.id }}@if (b.status === 'CONFIRMED' && b.booking_code) { · PNR: {{ b.booking_code }} }
+                  </strong>
+                  <div class="bd-muted">
+                    Khách đặt: {{ b.customer_name }} · {{ b.customer_email }}
+                    @if (b.customer_phone) { · {{ b.customer_phone }} }
+                  </div>
                 </div>
                 <app-status-badge [tone]="statusTone(b.status)" [label]="statusLabel(b.status)" />
               </div>
@@ -73,9 +81,9 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
               @for (seg of b.segments; track seg.id) {
                 <div class="bd-seg">
                   <div>
-                    <strong>{{ seg.flight_number }} · {{ seg.airline_name }}</strong>
+                    <strong>{{ seg.segment_order === 1 ? 'Chặng đi' : 'Chặng về' }} · {{ seg.flight_number }} · {{ seg.airline_name }}</strong>
                     <div>{{ seg.departure_airport_code }} → {{ seg.arrival_airport_code }}</div>
-                    <div class="bd-muted">{{ seg.fare_class_name }} ({{ seg.seat_class }})</div>
+                    <div class="bd-muted">{{ seg.fare_class_name }} ({{ seatClassLabel(seg.seat_class) }})</div>
                   </div>
                   @if (seg.fare_rule; as rule) {
                     <div class="bd-rule">
@@ -89,21 +97,78 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
               }
             </section>
 
+            <!-- Vé điện tử thật khi đã xác nhận -->
+            @if (b.status === 'CONFIRMED') {
+              <section class="bd-card" data-testid="detail-etickets-section">
+                <div class="bd-row-between">
+                  <h3>Vé điện tử ({{ tickets().length }})</h3>
+                  <button type="button" class="bd-print-btn" (click)="printTickets()">
+                    <mat-icon>print</mat-icon>
+                    In vé điện tử
+                  </button>
+                </div>
+
+                @if (ticketsLoading()) {
+                  <app-skeleton-block height="96px" />
+                } @else if (tickets().length > 0) {
+                  <div class="bd-eticket-list">
+                    @for (t of tickets(); track t.id) {
+                      <article class="bd-eticket" data-testid="detail-eticket-card">
+                        <div class="bd-eticket__top">
+                          <span><b>{{ t.airline_name }}</b> · {{ t.flight_number }}</span>
+                          <span class="tabular">Số vé: <b>{{ t.ticket_code }}</b></span>
+                        </div>
+                        <div class="bd-eticket__body">
+                          <div>
+                            <div class="bd-eticket__route">
+                              {{ t.departure_airport_code }} → {{ t.arrival_airport_code }}
+                            </div>
+                            <div class="bd-muted">
+                              {{ formatTime(t.scheduled_departure) }} – {{ formatTime(t.scheduled_arrival) }} · {{ formatDate(t.scheduled_departure) }}
+                            </div>
+                          </div>
+                          <div class="bd-eticket__meta">
+                            <span><b>{{ t.passenger_name }}</b> ({{ passengerTypeLabel(t.passenger_type) }})</span>
+                            <span class="bd-muted">PNR: {{ t.pnr_code }} · Ghế: {{ t.seat_code || 'Đi cùng người lớn' }} · {{ t.fare_class_name }}</span>
+                          </div>
+                        </div>
+                      </article>
+                    }
+                  </div>
+                } @else {
+                  <p class="bd-muted">Chưa có dữ liệu vé điện tử cho đơn đặt chỗ này.</p>
+                }
+              </section>
+            }
+
+            <!-- Bảng hành khách -->
             <section class="bd-card">
               <h3>Hành khách, ghế ngồi & hành lý ({{ b.passengers.length }})</h3>
-              <div class="bd-pax-list">
-                @for (p of b.passengers; track p.id) {
-                  <div class="bd-pax">
-                    <div>
-                      <strong>{{ p.full_name }}</strong>
-                      <div class="bd-muted">{{ p.passenger_type }} · Sinh ngày {{ p.birth_date }}</div>
-                    </div>
-                    <div class="bd-pax__meta">
-                      <span>Ghế: <strong>{{ seatOf(b, p.id) }}</strong></span>
-                      <span>Hành lý: <strong>{{ baggageOf(b, p.id) }}</strong></span>
-                    </div>
-                  </div>
-                }
+              <div class="bd-table-wrap">
+                <table class="bd-table" data-testid="detail-pax-table">
+                  <thead>
+                    <tr>
+                      <th>Họ tên</th>
+                      <th>Loại khách</th>
+                      <th>Ngày sinh</th>
+                      <th>Giấy tờ</th>
+                      <th>Ghế</th>
+                      <th>Hành lý</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (p of b.passengers; track p.id) {
+                      <tr>
+                        <td class="bd-table__name">{{ p.full_name }}</td>
+                        <td>{{ passengerTypeLabel(p.passenger_type) }}</td>
+                        <td class="tabular">{{ formatDate(p.birth_date) }}</td>
+                        <td class="tabular">{{ p.passport_number || 'Không yêu cầu' }}</td>
+                        <td><strong>{{ seatOf(b, p.id) }}</strong></td>
+                        <td>{{ baggageOf(b, p.id) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             </section>
           </div>
@@ -126,13 +191,13 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
               @if (b.promotion_discount_amount > 0) {
                 <div>
                   <dt>Khuyến mãi</dt>
-                  <dd class="tabular">-{{ formatMoney(b.promotion_discount_amount) }}</dd>
+                  <dd class="tabular">−{{ formatMoney(b.promotion_discount_amount) }}</dd>
                 </div>
               }
               @if (b.voucher_discount_amount > 0) {
                 <div>
                   <dt>Voucher</dt>
-                  <dd class="tabular">-{{ formatMoney(b.voucher_discount_amount) }}</dd>
+                  <dd class="tabular">−{{ formatMoney(b.voucher_discount_amount) }}</dd>
                 </div>
               }
               <div class="bd-total">
@@ -149,23 +214,23 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       }
     </section>
 
-    <!-- Modal xác nhận hủy vé (cancel-booking-modal) với chuyển động mượt mà -->
+    <!-- Modal xác nhận hủy vé -->
     @if (showCancelModal() && booking(); as b) {
       <div
         class="vf-modal-backdrop"
         role="dialog"
         aria-modal="true"
         aria-label="Xác nhận hủy đặt chỗ"
-        (click)="showCancelModal.set(false)"
+        (click)="closeCancelModal()"
       >
         <div class="vf-modal-panel bd-modal" (click)="$event.stopPropagation()">
           <header class="bd-modal__head">
-            <h2>Xác nhận hủy vé — {{ b.booking_code }}</h2>
+            <h2 data-testid="cancel-modal-title">Xác nhận hủy đặt chỗ — {{ cancelModalRef(b) }}</h2>
             <button
               type="button"
               class="bd-close"
               aria-label="Đóng hộp thoại hủy vé"
-              (click)="showCancelModal.set(false)"
+              (click)="closeCancelModal()"
             >
               <mat-icon>close</mat-icon>
             </button>
@@ -177,12 +242,33 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
             message="Hệ thống KHÔNG tự động hoàn tiền khi hủy vé. Sau khi hủy, vui lòng liên hệ tổng đài đại lý 1900 1234 hoặc email hotro@vinafly.vn để kiểm tra điều kiện và nhận hỗ trợ hoàn vé theo quy định của hạng vé đã mua."
           />
 
-          @if (b.segments[0]?.fare_rule; as rule) {
-            <div class="bd-rule-box">
-              <strong>Quy định hạng vé đã mua:</strong>
-              <p>{{ rule.description || (rule.is_refundable ? 'Hỗ trợ hoàn ' + rule.refund_percent + '%' : 'Hạng vé không hoàn tiền') }}</p>
-            </div>
-          }
+          <div class="bd-rule-box" data-testid="cancel-refund-estimate">
+            <strong>Ước tính phí hủy & hoàn vé (tham khảo):</strong>
+            @if (b.status === 'PENDING_PAYMENT') {
+              <p>Đơn hàng đang ở trạng thái chờ thanh toán — hủy đơn sẽ giải phóng ghế giữ tạm và không phát sinh phí.</p>
+            } @else if (b.segments[0]?.fare_rule; as rule) {
+              @if (rule.is_refundable) {
+                <p>
+                  Hạng vé hỗ trợ hoàn <b>{{ rule.refund_percent }}%</b> giá vé cơ bản (trước tối thiểu
+                  <b>{{ rule.refund_min_hours_before_departure ?? 24 }} giờ</b> khởi hành).
+                </p>
+                <div class="bd-estimate-rows">
+                  <div>
+                    <span>Tiền hoàn dự kiến:</span>
+                    <strong class="tabular">{{ formatMoney(estimatedRefund(b)) }}</strong>
+                  </div>
+                  <div>
+                    <span>Phí hủy dự kiến:</span>
+                    <strong class="tabular">{{ formatMoney(estimatedCancelFee(b)) }}</strong>
+                  </div>
+                </div>
+              } @else {
+                <p>Hạng vé đã mua không hỗ trợ hoàn tiền (phí hủy dự kiến 100% giá vé). {{ rule.description || '' }}</p>
+              }
+            } @else {
+              <p>Vui lòng liên hệ tổng đài 1900 1234 để được kiểm tra chính xác điều kiện hoàn/hủy theo hãng bay.</p>
+            }
+          </div>
 
           <div class="bd-field">
             <label for="cancel-reason">Lý do hủy vé</label>
@@ -195,14 +281,26 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
             ></textarea>
           </div>
 
+          <label class="bd-confirm-check">
+            <input
+              type="checkbox"
+              id="cancel-confirm-check"
+              data-testid="cancel-confirm-checkbox"
+              [checked]="confirmCancelChecked()"
+              (change)="confirmCancelChecked.set(!confirmCancelChecked())"
+            />
+            <span>Tôi xác nhận muốn hủy đặt chỗ này và hiểu rằng hệ thống không tự động hoàn tiền.</span>
+          </label>
+
           <footer class="bd-modal__foot">
-            <app-app-button size="sm" variant="ghost" (clicked)="showCancelModal.set(false)">
+            <app-app-button size="sm" variant="ghost" (clicked)="closeCancelModal()">
               Quay lại
             </app-app-button>
             <app-app-button
               size="sm"
               variant="danger"
-              [disabled]="cancelling()"
+              data-testid="btn-confirm-cancel"
+              [disabled]="cancelling() || !confirmCancelChecked()"
               (clicked)="confirmCancel(b.id)"
             >
               {{ cancelling() ? 'Đang xử lý...' : 'Xác nhận hủy vé' }}
@@ -216,28 +314,30 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
     .bd-page {
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: var(--sp-lg);
     }
     .bd-head {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
+      gap: var(--sp-md);
     }
     .bd-head h1 {
       font-size: var(--text-h1);
+      color: var(--color-ink);
     }
     .bd-sub,
     .bd-muted {
-      margin: 4px 0 0;
+      margin: var(--sp-xs) 0 0;
       font-size: var(--text-small);
       color: var(--color-ink-muted);
     }
     .bd-head__actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--sp-md);
+      flex-wrap: wrap;
     }
     .bd-back {
       color: var(--color-primary);
@@ -245,10 +345,13 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       font-size: var(--text-small);
       font-weight: 600;
     }
+    .bd-back:hover {
+      text-decoration: underline;
+    }
     .bd-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 330px;
-      gap: 18px;
+      gap: var(--sp-lg);
       align-items: start;
     }
     @media (max-width: 900px) {
@@ -259,50 +362,39 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
     .bd-main {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: var(--sp-lg);
     }
     .bd-card {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
-      padding: 18px;
+      padding: var(--sp-lg);
       box-shadow: var(--shadow-sm);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: var(--sp-md);
     }
     .bd-card h3 {
       font-size: var(--text-h3);
+      color: var(--color-ink);
     }
     .bd-row-between {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: var(--sp-sm);
     }
-    .bd-seg,
-    .bd-pax {
-      padding: 12px;
+    .bd-seg {
+      padding: var(--sp-md);
       border-radius: var(--radius);
       background: var(--color-surface-alt);
       border: 1px solid var(--color-border-soft);
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
-      gap: 10px;
+      gap: var(--sp-sm);
       font-size: var(--text-small);
-    }
-    .bd-pax-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .bd-pax__meta {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
     }
     .bd-rule {
       font-size: var(--text-caption);
@@ -311,11 +403,102 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       flex-direction: column;
       align-items: flex-end;
     }
+    .bd-print-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-xs);
+      padding: var(--sp-xs) var(--sp-md);
+      border: 1px solid var(--color-primary);
+      border-radius: var(--radius);
+      background: var(--color-primary-soft);
+      color: var(--color-primary);
+      font-family: var(--font-body);
+      font-size: var(--text-small);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .bd-print-btn mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    .bd-eticket-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-sm);
+    }
+    .bd-eticket {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--color-surface-alt);
+    }
+    .bd-eticket__top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-sm);
+      padding: var(--sp-sm) var(--sp-md);
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+      font-size: var(--text-small);
+    }
+    .bd-eticket__body {
+      padding: var(--sp-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-md);
+    }
+    .bd-eticket__route {
+      font-weight: 700;
+      font-size: var(--text-body);
+      color: var(--color-ink);
+    }
+    .bd-eticket__meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      font-size: var(--text-small);
+    }
+    .bd-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .bd-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-small);
+      min-width: 520px;
+    }
+    .bd-table th,
+    .bd-table td {
+      text-align: left;
+      padding: var(--sp-sm) var(--sp-md);
+      border-bottom: 1px solid var(--color-border-soft);
+    }
+    .bd-table th {
+      font-size: var(--text-caption);
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--color-ink-muted);
+      background: var(--color-surface-alt);
+    }
+    .bd-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .bd-table__name {
+      font-weight: 700;
+      color: var(--color-ink);
+    }
     .bd-dl {
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--sp-sm);
       font-size: var(--text-small);
     }
     .bd-dl div {
@@ -328,41 +511,48 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
     .bd-dl dd {
       margin: 0;
       font-weight: 600;
+      color: var(--color-ink);
     }
     .bd-total {
-      padding-top: 10px;
+      padding-top: var(--sp-sm);
       border-top: 1px solid var(--color-border);
       font-size: var(--text-h3);
       color: var(--color-primary);
     }
+    .bd-total dd {
+      color: var(--color-primary);
+    }
     .bd-contact {
-      padding: 12px;
+      padding: var(--sp-md);
       border-radius: var(--radius);
       background: var(--color-primary-soft);
       font-size: var(--text-caption);
+      color: var(--color-ink);
     }
     .bd-contact p {
-      margin: 4px 0 0;
+      margin: var(--sp-xs) 0 0;
     }
     .bd-modal {
-      max-width: 520px;
-      padding: 20px;
+      max-width: 540px;
+      padding: var(--sp-lg);
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: var(--sp-md);
     }
     .bd-modal__head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: var(--sp-sm);
     }
     .bd-modal__head h2 {
       font-size: var(--text-h3);
+      color: var(--color-ink);
     }
     .bd-close {
       border: 1px solid var(--color-border);
       background: var(--color-surface-alt);
+      color: var(--color-ink);
       border-radius: 999px;
       width: 34px;
       height: 34px;
@@ -372,47 +562,89 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       cursor: pointer;
     }
     .bd-rule-box {
-      padding: 12px;
+      padding: var(--sp-md);
       border-radius: var(--radius);
       background: var(--color-surface-alt);
       border: 1px solid var(--color-border-soft);
       font-size: var(--text-small);
     }
     .bd-rule-box p {
-      margin: 4px 0 0;
+      margin: var(--sp-xs) 0 0;
       color: var(--color-ink-muted);
+    }
+    .bd-estimate-rows {
+      margin-top: var(--sp-sm);
+      padding-top: var(--sp-sm);
+      border-top: 1px dashed var(--color-border);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-xs);
+    }
+    .bd-estimate-rows > div {
+      display: flex;
+      justify-content: space-between;
+      color: var(--color-ink);
     }
     .bd-field {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: var(--sp-xs);
       font-size: var(--text-small);
     }
     .bd-field textarea {
-      padding: 8px 10px;
+      padding: var(--sp-sm) var(--sp-md);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      color: var(--color-ink);
       font-family: inherit;
       font-size: var(--text-small);
+    }
+    .bd-confirm-check {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-sm);
+      font-size: var(--text-small);
+      color: var(--color-ink);
+      cursor: pointer;
+    }
+    .bd-confirm-check input[type='checkbox'] {
+      margin-top: 3px;
+      accent-color: var(--color-danger);
     }
     .bd-modal__foot {
       display: flex;
       justify-content: flex-end;
-      gap: 8px;
+      gap: var(--sp-sm);
+    }
+    @media (max-width: 600px) {
+      .bd-eticket__meta {
+        align-items: flex-start;
+      }
+    }
+    @media print {
+      .bd-head__actions,
+      .bd-print-btn {
+        display: none;
+      }
     }
   `,
 })
 export class BookingDetailPage {
   private readonly route = inject(ActivatedRoute);
   private readonly bookingFlow = inject(BookingFlowService);
+  private readonly checkoutService = inject(CheckoutService);
   private readonly snackBar = inject(MatSnackBar);
 
   protected readonly isAdminMode = computed(() => Boolean(this.route.snapshot.data['adminMode']));
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly booking = signal<BookingDetail | null>(null);
+  protected readonly tickets = signal<ETicketItem[]>([]);
+  protected readonly ticketsLoading = signal(false);
   protected readonly showCancelModal = signal(false);
   protected readonly cancelReason = signal('');
+  protected readonly confirmCancelChecked = signal(false);
   protected readonly cancelling = signal(false);
 
   constructor() {
@@ -424,6 +656,9 @@ export class BookingDetailPage {
       next: (res) => {
         this.booking.set(res.data);
         this.loading.set(false);
+        if (res.data?.status === 'CONFIRMED') {
+          this.loadETickets(res.data.id);
+        }
       },
       error: (err: Error) => {
         this.error.set(err.message || 'Không tải được chi tiết đơn');
@@ -432,7 +667,47 @@ export class BookingDetailPage {
     });
   }
 
+  private loadETickets(bookingId: number): void {
+    this.ticketsLoading.set(true);
+    this.checkoutService
+      .getETickets(bookingId)
+      .pipe(catchError(() => of(null)))
+      .subscribe((res) => {
+        this.tickets.set(res?.data ?? []);
+        this.ticketsLoading.set(false);
+      });
+  }
+
+  protected openCancelModal(): void {
+    this.confirmCancelChecked.set(false);
+    this.cancelReason.set('');
+    this.showCancelModal.set(true);
+  }
+
+  protected closeCancelModal(): void {
+    this.showCancelModal.set(false);
+    this.confirmCancelChecked.set(false);
+  }
+
+  protected cancelModalRef(b: BookingDetail): string {
+    if (b.status === 'CONFIRMED' && b.booking_code) {
+      return b.booking_code;
+    }
+    return `DH-${b.id}`;
+  }
+
+  protected estimatedRefund(b: BookingDetail): number {
+    const rule = b.segments[0]?.fare_rule;
+    if (!rule || !rule.is_refundable) return 0;
+    return Math.round(b.fare_amount * (rule.refund_percent / 100));
+  }
+
+  protected estimatedCancelFee(b: BookingDetail): number {
+    return Math.max(0, b.fare_amount - this.estimatedRefund(b));
+  }
+
   protected confirmCancel(id: number): void {
+    if (!this.confirmCancelChecked() || this.cancelling()) return;
     this.cancelling.set(true);
     const req$ = this.isAdminMode()
       ? this.bookingFlow.cancelAdminBooking(id, this.cancelReason())
@@ -440,8 +715,9 @@ export class BookingDetailPage {
     req$.subscribe({
       next: (res) => {
         this.cancelling.set(false);
-        this.showCancelModal.set(false);
+        this.closeCancelModal();
         this.booking.set(res.data);
+        this.tickets.set([]);
         this.snackBar.open('Đã hủy đơn đặt chỗ. Liên hệ 1900 1234 để được hỗ trợ hoàn vé.', 'Đóng', {
           duration: 4500,
         });
@@ -453,13 +729,41 @@ export class BookingDetailPage {
     });
   }
 
+  protected printTickets(): void {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
+  }
+
   protected seatOf(b: BookingDetail, paxId: number): string {
-    return b.seat_holds.find((h) => h.passenger_id === paxId)?.seat_code ?? 'Chưa chọn';
+    const codes = b.seat_holds.filter((h) => h.passenger_id === paxId).map((h) => h.seat_code);
+    return codes.length > 0 ? codes.join(', ') : 'Chưa chọn';
   }
 
   protected baggageOf(b: BookingDetail, paxId: number): string {
     const bg = b.baggages.find((x) => x.passenger_id === paxId);
     return bg ? `${bg.baggage_name} (${bg.weight_kg}kg)` : 'Chỉ xách tay';
+  }
+
+  protected passengerTypeLabel(type: string): string {
+    if (type === 'ADULT') return 'Người lớn';
+    if (type === 'CHILD') return 'Trẻ em';
+    return 'Em bé';
+  }
+
+  protected seatClassLabel(seatClass: string): string {
+    switch (seatClass) {
+      case 'ECONOMY':
+        return 'Phổ thông';
+      case 'PREMIUM_ECONOMY':
+        return 'Phổ thông đặc biệt';
+      case 'BUSINESS':
+        return 'Thương gia';
+      case 'FIRST':
+        return 'Hạng nhất';
+      default:
+        return seatClass;
+    }
   }
 
   protected statusLabel(s: BookingStatus): string {
@@ -477,6 +781,22 @@ export class BookingDetailPage {
   }
 
   protected formatMoney(val: number): string {
-    return `${moneyFmt.format(val)}đ`;
+    return `${moneyFmt.format(Math.round(val ?? 0))}đ`;
+  }
+
+  protected formatTime(iso: string): string {
+    if (!iso) return '--:--';
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime())
+      ? iso.slice(11, 16)
+      : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  protected formatDate(iso: string): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime())
+      ? iso.slice(0, 10)
+      : d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 }
