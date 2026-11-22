@@ -26,10 +26,10 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, RouterLink, MatIconModule, AppAlert, AppButton, StatusBadge, SkeletonBlock],
   template: `
-    <section class="bd-page">
+    <section class="bd-page" [class.wrap]="isAdminMode()">
       <header class="bd-head">
         <div>
-          <h1>Chi tiết đặt chỗ {{ booking() ? ('DH-' + booking()!.id) : '' }}</h1>
+          <h1>Chi tiết đặt chỗ {{ booking() ? (booking()!.order_code || ('DH-' + booking()!.id)) : '' }}</h1>
           <p class="bd-sub">Hành trình, danh sách hành khách, ghế ngồi, hành lý, vé điện tử và quy định hoàn vé</p>
         </div>
         <div class="bd-head__actions">
@@ -60,7 +60,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
               <div class="bd-row-between">
                 <div>
                   <strong>
-                    Mã đơn: DH-{{ b.id }}@if (b.status === 'CONFIRMED' && b.booking_code) { · PNR: {{ b.booking_code }} }
+                    Mã đơn: {{ b.order_code || ('DH-' + b.id) }}@if (b.status === 'CONFIRMED' && b.booking_code) { · PNR: {{ b.booking_code }} }
                   </strong>
                   <div class="bd-muted">
                     Khách đặt: {{ b.customer_name }} · {{ b.customer_email }}
@@ -642,9 +642,42 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       }
     }
     @media print {
+      .bd-page {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        gap: 12px;
+      }
       .bd-head__actions,
-      .bd-print-btn {
-        display: none;
+      .bd-print-btn,
+      .bd-side,
+      .vf-modal-backdrop {
+        display: none !important;
+      }
+      .bd-grid {
+        display: block;
+      }
+      .bd-card {
+        box-shadow: none;
+        border: 1.5px solid var(--color-border);
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .bd-eticket {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border: 1.5px solid var(--color-border);
+      }
+      .bd-eticket__top {
+        background: var(--color-primary-soft) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .bd-table {
+        min-width: 0;
+        font-size: 12px;
       }
     }
   `,
@@ -712,7 +745,7 @@ export class BookingDetailPage {
     if (b.status === 'CONFIRMED' && b.booking_code) {
       return b.booking_code;
     }
-    return `DH-${b.id}`;
+    return b.order_code || `DH-${b.id}`;
   }
 
   protected estimatedRefund(b: BookingDetail): number {

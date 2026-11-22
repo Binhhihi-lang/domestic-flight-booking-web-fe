@@ -147,6 +147,10 @@
           <mat-icon>person</mat-icon>
           <span>Hồ sơ cá nhân</span>
         </button>
+        <button mat-menu-item type="button" (click)="openSupport()">
+          <mat-icon>support_agent</mat-icon>
+          <span>Liên hệ hỗ trợ</span>
+        </button>
         <button mat-menu-item type="button" (click)="goToClient()">
           <mat-icon>open_in_new</mat-icon>
           <span>Về trang khách hàng</span>
@@ -167,4 +171,71 @@
       <span class="foot__v">VinaFly Operations · 2026</span>
     </footer>
   </div>
+
+  <!-- Hộp thoại Liên hệ hỗ trợ (đồng bộ #ov-support trong prototype admin.html) -->
+  @if (supportOpen()) {
+    <div class="vf-modal-backdrop" (click)="closeSupport()">
+      <div
+        class="vf-modal-panel adm-support"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="adm-support-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="adm-support__head">
+          <div class="adm-support__title">
+            <span class="adm-support__ic" aria-hidden="true">
+              <mat-icon>support_agent</mat-icon>
+            </span>
+            <div>
+              <h3 id="adm-support-title">Liên hệ hỗ trợ</h3>
+              <p>Gặp vướng khi vận hành? Gọi hoặc gửi thư cho bộ phận hỗ trợ kỹ thuật.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="adm-support__close"
+            aria-label="Đóng"
+            (click)="closeSupport()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="adm-support__body">
+          <div class="adm-contact">
+            <span class="avatar" aria-hidden="true">LN</span>
+            <div class="adm-contact__bd">
+              <b>Lê Hoàng Nam — Hỗ trợ kỹ thuật hệ thống</b>
+              <span>nam.le&#64;vinafly.vn · 090 123 4567</span>
+            </div>
+          </div>
+          <div class="adm-contact">
+            <span class="avatar" aria-hidden="true">PT</span>
+            <div class="adm-contact__bd">
+              <b>Phạm Thu Trang — Điều phối vận hành &amp; Hoàn vé</b>
+              <span>trang.pham&#64;vinafly.vn · 091 234 5678</span>
+            </div>
+          </div>
+          <div class="adm-contact">
+            <span class="avatar" aria-hidden="true">VF</span>
+            <div class="adm-contact__bd">
+              <b>Tổng đài đại lý VinaFly</b>
+              <span>hotro&#64;vinafly.vn · Hotline 1900 1234</span>
+            </div>
+          </div>
+          <div class="adm-support__note">
+            <mat-icon aria-hidden="true">schedule</mat-icon>
+            <span>
+              Thời gian hỗ trợ: 08:00 – 17:30, thứ Hai – thứ Sáu. Ngoài giờ, gửi thư và sẽ được phản hồi sáng hôm sau.
+            </span>
+          </div>
+        </div>
+
+        <div class="adm-support__foot">
+          <button type="button" class="adm-support__btn" (click)="closeSupport()">Đóng</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

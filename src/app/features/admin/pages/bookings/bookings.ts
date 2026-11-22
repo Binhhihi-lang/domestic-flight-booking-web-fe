@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { BookingStatus, BookingSummary } from '@core/models/booking.model';
 import { BookingFlowService } from '@core/services/booking-flow.service';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
+import { PageHeader } from '@shared/components/page-header/page-header';
 import { ServerPager } from '@shared/components/server-pager/server-pager';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -26,26 +27,25 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    RouterLink,
     MatIconModule,
     AppButton,
+    PageHeader,
     StatusBadge,
     EmptyState,
     ServerPager,
     SkeletonBlock,
   ],
   template: `
-    <section class="ab-page">
-      <header class="ab-head">
-        <div>
-          <h1>Quản lý đặt chỗ</h1>
-          <p class="ab-sub">Tra cứu đơn đặt vé, kiểm tra thanh toán và hỗ trợ hủy vé cho hành khách</p>
-        </div>
-        <app-app-button variant="primary" size="sm" (clicked)="exportCsv()">
+    <section class="wrap ab-page">
+      <app-page-header
+        title="Quản lý đặt chỗ"
+        subtitle="Tra cứu đơn đặt vé, kiểm tra thanh toán và hỗ trợ hủy vé cho hành khách"
+      >
+        <app-app-button variant="primary" (clicked)="exportCsv()">
           <mat-icon aria-hidden="true">download</mat-icon>
           Xuất CSV
         </app-app-button>
-      </header>
+      </app-page-header>
 
       <div class="adm-filter adm-filter--card" role="search" aria-label="Bộ lọc đặt chỗ">
         <div class="ab-search">
@@ -116,7 +116,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                   <th class="col-num">Khách</th>
                   <th class="col-num">Tổng tiền</th>
                   <th>Trạng thái</th>
-                  <th class="col-actions">Thao tác</th>
+                  <th class="col-actions"></th>
                 </tr>
               </thead>
               <tbody>
@@ -128,7 +128,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                     (keydown.enter)="goToDetail(b.id)"
                   >
                     <td>
-                      <strong class="ab-code">DH-{{ b.id }}</strong>
+                      <strong class="ab-code">{{ b.order_code || ('DH-' + b.id) }}</strong>
                       <div class="ab-pnr">
                         {{ b.status === 'CONFIRMED' && b.booking_code ? b.booking_code : 'Chờ cấp PNR' }}
                       </div>
@@ -164,10 +164,8 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                     <td>
                       <app-status-badge [tone]="statusTone(b.status)" [label]="statusLabel(b.status)" />
                     </td>
-                    <td class="col-actions" (click)="$event.stopPropagation()">
-                      <a [routerLink]="['/admin/bookings', b.id]" class="ab-act">
-                        Chi tiết
-                      </a>
+                    <td class="col-actions">
+                      <mat-icon class="rowchev" aria-hidden="true">chevron_right</mat-icon>
                     </td>
                   </tr>
                 }
@@ -306,7 +304,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
     }
     .ab-table th,
     .ab-table td {
-      padding: 12px 14px;
+      padding: var(--sp-md) var(--sp-lg);
       text-align: left;
       border-bottom: 1px solid var(--color-border-soft);
       font-size: var(--text-small);
@@ -314,8 +312,12 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
     }
     .ab-table th {
       font-size: var(--text-caption);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       color: var(--color-ink-muted);
       background: var(--color-surface-alt);
+      border-bottom: 1px solid var(--color-border);
       white-space: nowrap;
     }
     .ab-row {
@@ -323,7 +325,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
       transition: background-color var(--dur-fast) var(--ease);
     }
     .ab-row:hover {
-      background: var(--color-surface-alt);
+      background: var(--color-primary-soft);
     }
     .tabular {
       font-variant-numeric: tabular-nums;
@@ -335,21 +337,22 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
     }
     .col-actions {
       text-align: right;
+      width: 48px;
       white-space: nowrap;
     }
-    .ab-act {
-      padding: 5px 10px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--color-border);
-      background: var(--color-surface);
-      color: var(--color-primary);
-      text-decoration: none;
-      font-size: var(--text-caption);
-      font-weight: 600;
+    .rowchev {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--color-ink-subtle);
+      opacity: 0;
+      vertical-align: middle;
+      transition: opacity var(--dur-fast) var(--ease);
     }
-    .ab-act:hover {
-      border-color: var(--color-primary);
-      background: var(--color-primary-soft);
+    .ab-row:hover .rowchev,
+    .ab-row:focus-visible .rowchev {
+      opacity: 1;
+      color: var(--color-primary);
     }
   `,
 })
@@ -438,7 +441,8 @@ export class AdminBookings {
         const fl = seg?.flight_number ?? '';
         const dep = seg ? this.formatDateTime(seg.scheduled_departure) : '';
         const pnr = b.status === 'CONFIRMED' && b.booking_code ? b.booking_code : '';
-        return `DH-${b.id},${pnr},"${b.customer_name}",${route},${fl},"${dep}",${b.passenger_count ?? 0},${Math.round(b.total_amount)},${this.statusLabel(b.status)}`;
+        const orderRef = b.order_code || `DH-${b.id}`;
+        return `${orderRef},${pnr},"${b.customer_name}",${route},${fl},"${dep}",${b.passenger_count ?? 0},${Math.round(b.total_amount)},${this.statusLabel(b.status)}`;
       })
       .join('\n');
     const blob = new Blob([header + csvRows], { type: 'text/csv;charset=utf-8;' });

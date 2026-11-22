@@ -46,7 +46,7 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
     SkeletonBlock,
   ],
   template: `
-    <section class="fd-page">
+    <section class="wrap fd-page">
       <header class="fd-head">
         <div class="fd-head__info">
           <div class="fd-title-row">

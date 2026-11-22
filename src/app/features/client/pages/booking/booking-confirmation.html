@@ -47,7 +47,7 @@
                 </div>
                 <div class="order-ref">
                   <span>Mã đơn hàng</span>
-                  <b>DH-{{ b.id }}</b>
+                  <b>{{ b.order_code || ('DH-' + b.id) }}</b>
                 </div>
               </div>
             }
@@ -142,7 +142,7 @@
             <h3>Tóm tắt thanh toán</h3>
             <div class="summary__row">
               <span>Mã đơn hàng</span>
-              <b>DH-{{ b.id }}</b>
+              <b>{{ b.order_code || ('DH-' + b.id) }}</b>
             </div>
             <div class="summary__row">
               <span>Khách hàng</span>

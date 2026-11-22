@@ -3,19 +3,15 @@
 }
 
 .shell {
-  display: grid;
-  grid-template-columns: var(--sidebar-w, 248px) 1fr;
   min-height: 100vh;
   background: var(--color-bg);
 }
 
-/* Thu gọn: chỉ còn cột icon. */
-.shell--collapsed {
-  --sidebar-w: 76px;
-}
-
 /* ---------- Sidebar ---------- */
 .sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 248px;
   background: linear-gradient(
     180deg,
     var(--color-sidebar-top) 0%,
@@ -24,12 +20,19 @@
   color: var(--color-sidebar-item);
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 0;
   height: 100vh;
   overflow: visible;
   z-index: 50;
   transition: width var(--dur) var(--ease);
+}
+
+/* Thu gọn: chỉ còn cột icon, trượt mượt mà giống prototype. */
+.shell--collapsed .sidebar {
+  width: 76px;
+}
+
+.shell--collapsed .main {
+  margin-left: 76px;
 }
 
 .sidebar__head {
@@ -61,25 +64,31 @@
   border: 1.5px solid var(--color-primary-bright);
   background: var(--color-surface);
   color: var(--color-primary);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition:
-    background var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease),
     box-shadow var(--dur-fast) var(--ease);
 }
 
 .sidebar__collapse:hover {
-  background: var(--color-primary-soft);
-  box-shadow: var(--shadow);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.06);
 }
 
 .sidebar__collapse mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 .sidebar__nav {
@@ -132,10 +141,11 @@
 .sidebar__item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-md);
   margin: 2px var(--sp-sm);
-  padding: 10px var(--sp-md);
-  font-size: var(--text-small);
+  min-height: 42px;
+  padding: 0 var(--sp-md);
+  font-size: var(--text-body);
   font-weight: 500;
   color: var(--color-sidebar-item);
   text-decoration: none;
@@ -285,10 +295,12 @@
 
 /* ---------- Cột phải ---------- */
 .main {
+  margin-left: 248px;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 100vh;
+  transition: margin-left var(--dur) var(--ease);
 }
 
 .header {
@@ -506,16 +518,19 @@
 
 /* ≤1024px: sidebar trượt ra ngoài, mở bằng hamburger + lớp phủ. */
 @media (max-width: 1024px) {
-  .shell {
-    grid-template-columns: 1fr;
+  .main,
+  .shell--collapsed .main {
+    margin-left: 0;
   }
 
-  .sidebar {
+  .sidebar,
+  .shell--collapsed .sidebar {
     position: fixed;
     top: 0;
     left: 0;
     width: 264px;
     transform: translateX(-100%);
+    transition: transform var(--dur) var(--ease);
   }
 
   .sidebar--open {
@@ -554,5 +569,160 @@
     padding: 14px;
     justify-content: center;
     text-align: center;
+  }
+}
+
+/* ---------- Modal Liên hệ hỗ trợ (đồng bộ #ov-support trong admin.html) ---------- */
+.adm-support {
+  max-width: 500px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.adm-support__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-md);
+  padding: var(--sp-lg) var(--sp-xl);
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.adm-support__title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-md);
+}
+
+.adm-support__ic {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.adm-support__title h3 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
+  color: var(--color-ink);
+}
+
+.adm-support__title p {
+  margin: 4px 0 0;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.adm-support__close {
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+}
+
+.adm-support__close:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-ink);
+}
+
+.adm-support__body {
+  padding: var(--sp-lg) var(--sp-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+}
+
+.adm-contact {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  padding: var(--sp-md);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius);
+  background: var(--color-surface-alt);
+}
+
+.adm-contact__bd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.adm-contact__bd b {
+  font-size: var(--text-small);
+  color: var(--color-ink);
+}
+
+.adm-contact__bd span {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+}
+
+.adm-support__note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-sm);
+  padding: var(--sp-md);
+  border-radius: var(--radius);
+  background: var(--color-warning-soft);
+  color: var(--color-on-warning-soft);
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+
+.adm-support__note mat-icon {
+  font-size: 19px;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.adm-support__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--sp-md) var(--sp-xl);
+  border-top: 1px solid var(--color-border-soft);
+  background: var(--color-surface-alt);
+}
+
+.adm-support__btn {
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  border: 0;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.adm-support__btn:hover {
+  background: var(--color-primary-hover);
+}
+
+@media print {
+  .sidebar,
+  .sidebar__collapse,
+  .header,
+  .foot,
+  .scrim {
+    display: none !important;
+  }
+
+  .main,
+  .shell--collapsed .main {
+    margin-left: 0 !important;
   }
 }

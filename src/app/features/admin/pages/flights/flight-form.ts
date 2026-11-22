@@ -32,7 +32,7 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
     SkeletonBlock,
   ],
   template: `
-    <section class="ff-page">
+    <section class="wrap ff-page">
       <header class="ff-head">
         <div>
           <h1>{{ isEdit() ? 'Sửa chuyến bay' : 'Thêm chuyến bay mới' }}</h1>
@@ -245,10 +245,28 @@ import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: var(--color-primary);
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-ink);
       text-decoration: none;
       font-size: var(--text-small);
-      font-weight: 500;
+      font-weight: 600;
+      transition:
+        background-color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
+    }
+    .ff-back:hover {
+      background: var(--color-surface-alt);
+      border-color: var(--color-primary-bright);
+      color: var(--color-primary);
+    }
+    .ff-back mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
     .ff-card {
       background: var(--color-surface);

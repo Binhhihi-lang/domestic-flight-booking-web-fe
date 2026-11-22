@@ -41,7 +41,7 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
     StatusBadge,
   ],
   template: `
-    <section class="fe-page">
+    <section class="wrap fe-page">
       <header class="fe-head">
         <div>
           <h1>Cập nhật vận hành chuyến {{ flight()?.flight_number ?? '' }}</h1>
@@ -198,10 +198,28 @@ const OP_STATUS_META: Record<string, { label: string; tone: BadgeTone }> = {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: var(--color-primary);
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-ink);
       text-decoration: none;
       font-size: var(--text-small);
-      font-weight: 500;
+      font-weight: 600;
+      transition:
+        background-color var(--dur-fast) var(--ease),
+        border-color var(--dur-fast) var(--ease),
+        color var(--dur-fast) var(--ease);
+    }
+    .fe-back:hover {
+      background: var(--color-surface-alt);
+      border-color: var(--color-primary-bright);
+      color: var(--color-primary);
+    }
+    .fe-back mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
     .fe-card {
       background: var(--color-surface);

@@ -103,6 +103,7 @@ export interface AgencyContactInfo {
 export interface BookingDetail {
   id: number;
   booking_code: string;
+  order_code?: string;
   user_id: number;
   customer_name: string;
   customer_email: string;
@@ -220,6 +221,7 @@ export interface BookingSegmentSummary {
 export interface BookingSummary {
   id: number;
   booking_code: string;
+  order_code?: string;
   user_id: number;
   customer_name: string;
   customer_email: string;
