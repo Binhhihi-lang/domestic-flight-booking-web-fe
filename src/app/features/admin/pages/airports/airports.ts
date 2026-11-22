@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Airport } from '@core/models/location.model';
 import { AirportService, CityService } from '@core/services/catalog.service';
@@ -8,7 +8,7 @@ import { CrudPage } from '@shared/crud/crud-page';
 /**
  * Quản lý sân bay — APT-01→05 (API v0.2 mục 2.5).
  *
- * Khác City ở chỗ có FK `city_id` và toạ độ. Dropdown thành phố lấy từ
+ * Khác City ở chỗ có FK `city_id` và toạ độ. Dropdown & bộ lọc thành phố lấy từ
  * CityService nên thêm thành phố mới là dùng được ngay, không phải sửa màn này.
  */
 @Component({
@@ -21,19 +21,25 @@ export class AdminAirports {
   protected readonly service = inject(AirportService);
   private readonly cityService = inject(CityService);
 
-  /** Danh mục thành phố cho dropdown — nạp một lần khi mở màn. */
+  /** Danh mục thành phố cho dropdown và bộ lọc — nạp một lần khi mở màn. */
   private readonly cities = toSignal(
     this.cityService.list({ page: 1, size: 100 }),
     { initialValue: null },
   );
 
-  protected readonly config = () => {
+  protected readonly config = computed<CrudConfig<Airport, Partial<Airport>>>(() => {
+    const cityList = this.cities()?.data.items ?? [];
+    const cityLabelById = new Map(cityList.map((c) => [c.id, `${c.city_name} (${c.city_code})`]));
     const cityOptions = [
       { value: null as number | null, label: '— Chọn thành phố —' },
-      ...(this.cities()?.data.items ?? []).map((c) => ({ value: c.id, label: `${c.city_name} (${c.city_code})` })),
+      ...cityList.map((c) => ({ value: c.id, label: `${c.city_name} (${c.city_code})` })),
+    ];
+    const cityFilterOptions = [
+      { value: '', label: 'Tất cả thành phố' },
+      ...cityList.map((c) => ({ value: String(c.id), label: `${c.city_name} (${c.city_code})` })),
     ];
 
-    const config: CrudConfig<Airport, Partial<Airport>> = {
+    return {
       title: 'Sân bay',
       subtitle: 'Danh mục sân bay nội địa kèm toạ độ',
       createLabel: 'Thêm sân bay',
@@ -42,12 +48,20 @@ export class AdminAirports {
       emptyMessage: 'Chưa có sân bay',
       emptyHint: 'Thêm sân bay đầu tiên để bắt đầu',
       editTitle: 'Sửa sân bay',
+      detailTitle: (r) => r.airport_name,
       deleteTitle: () => 'Xóa sân bay?',
       deleteMessage: (r) =>
         `Bạn có chắc muốn xóa "${r.airport_name}"? Bản ghi vẫn được giữ lại để tra lịch sử.`,
       columns: [
         { label: 'Mã', value: (r) => r.airport_code, kind: 'code', width: '110px' },
         { label: 'Tên sân bay', value: (r) => r.airport_name },
+        {
+          label: 'Thành phố',
+          value: (r) =>
+            r.city
+              ? `${r.city.city_name} (${r.city.city_code})`
+              : (r.city_id !== undefined ? cityLabelById.get(r.city_id) : undefined) ?? '—',
+        },
         {
           label: 'Toạ độ',
           value: (r) =>
@@ -63,13 +77,36 @@ export class AdminAirports {
         },
       ],
       fields: [
-        { key: 'airport_code', shownInTable: true, label: 'Mã sân bay', type: 'text', required: true, maxLength: 10, hint: 'Mã IATA, ví dụ HAN' },
-        { key: 'airport_name', shownInTable: true, label: 'Tên sân bay', type: 'text', required: true, maxLength: 150 },
-        { key: 'city_id', label: 'Thành phố', type: 'select', required: true, options: cityOptions },
+        {
+          key: 'airport_code',
+          shownInTable: true,
+          label: 'Mã sân bay',
+          type: 'text',
+          required: true,
+          maxLength: 10,
+          hint: 'Mã IATA, ví dụ HAN',
+        },
+        {
+          key: 'airport_name',
+          shownInTable: true,
+          label: 'Tên sân bay',
+          type: 'text',
+          required: true,
+          maxLength: 150,
+        },
+        {
+          key: 'city_id',
+          shownInTable: true,
+          label: 'Thành phố',
+          type: 'select',
+          required: true,
+          options: cityOptions,
+        },
         { key: 'latitude', shownInTable: true, label: 'Vĩ độ', type: 'number', hint: 'Ví dụ 21.2212' },
         { key: 'longitude', shownInTable: true, label: 'Kinh độ', type: 'number', hint: 'Ví dụ 105.8072' },
         {
-          key: 'status', shownInTable: true,
+          key: 'status',
+          shownInTable: true,
           label: 'Trạng thái',
           type: 'select',
           hint: 'Đang hoạt động',
@@ -80,6 +117,12 @@ export class AdminAirports {
         },
       ],
       filters: [
+        {
+          key: 'city_id',
+          label: 'Lọc theo thành phố',
+          defaultValue: '',
+          options: cityFilterOptions,
+        },
         {
           key: 'status',
           label: 'Lọc theo trạng thái',
@@ -92,6 +135,5 @@ export class AdminAirports {
         },
       ],
     };
-    return config;
-  };
+  });
 }

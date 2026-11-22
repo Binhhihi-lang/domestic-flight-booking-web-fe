@@ -34,10 +34,13 @@
                       type="button"
                       class="cell"
                       [style.background]="cellBackground(seat)"
+                      [style.color]="cellTextColor(seat)"
                       [attr.aria-label]="'Ghế ' + row + col + ', ' + typeName(seat.seat_type_id)"
                       [attr.title]="row + col + ' · ' + typeName(seat.seat_type_id)"
                       (click)="onCell(seat)"
-                    ></button>
+                    >
+                      {{ row }}{{ col }}
+                    </button>
                   </td>
                 } @else {
                   <!-- Ô khuyết trong hàng — giữ chỗ để cột thẳng hàng. -->
@@ -73,6 +76,7 @@
           [style.background]="t.color_hex ?? fallbackColor(t.seat_class)"
         ></span>
         <span class="legend__name">{{ t.seat_type_name }}</span>
+        <span class="legend__surcharge">{{ formatSurcharge(t.surcharge) }}</span>
         <span class="legend__code">{{ t.seat_type_code }}</span>
         @if (!t.color_hex) {
           <span class="legend__note">mặc định</span>

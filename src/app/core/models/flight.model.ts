@@ -30,6 +30,8 @@ export interface FlightRecord {
   sales_status: FlightSalesStatus;
   parent_flight_id: number | null;
   parent_flight_number: string | null;
+  seat_capacity?: number;
+  available_seats?: number;
   created_at: string;
   updated_at: string;
 }

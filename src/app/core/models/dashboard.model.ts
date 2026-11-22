@@ -17,6 +17,22 @@ export interface TopRouteItem {
   bookings_count: number;
   revenue: number;
   load_factor_percent: number;
+  flights_count?: number;
+  pax_count?: number;
+}
+
+export interface RevenueByAirlineItem {
+  airline_code: string;
+  airline_name: string;
+  revenue: number;
+  bookings_count: number;
+  percentage: number;
+}
+
+export interface BookingByStatusItem {
+  status: string;
+  count: number;
+  percentage: number;
 }
 
 export interface RecentBookingItem {
@@ -48,6 +64,8 @@ export interface OverviewDashboard {
   occupancy_rate_percent: number;
   cancel_rate_percent: number;
   revenue_by_day: DailyRevenueItem[];
+  revenue_by_airline?: RevenueByAirlineItem[];
+  bookings_by_status?: BookingByStatusItem[];
   top_routes: TopRouteItem[];
   recent_bookings: RecentBookingItem[];
 }

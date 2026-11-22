@@ -210,14 +210,7 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () =>
           import('@features/admin/pages/reports/reports').then((m) => m.AdminReports),
-        data: { title: 'Báo cáo doanh thu' },
-      },
-      {
-        path: 'airlines',
-        canActivate: [adminGuard],
-        loadComponent: () =>
-          import('@features/admin/pages/airlines/airlines').then((m) => m.AdminAirlines),
-        data: { title: 'Hãng hàng không' },
+        data: { title: 'Báo cáo & thống kê' },
       },
       {
         path: 'style-guide',
@@ -243,7 +236,7 @@ export const routes: Routes = [
       ),
       ...crudRoutes('aircrafts', 'Máy bay', () =>
         import('@features/admin/pages/aircrafts/aircrafts').then((m) => m.AdminAircrafts),
-        { adminOnly: true },
+        { writeAdminOnly: true },
       ),
       ...crudRoutes('seat-types', 'Loại ghế', () =>
         import('@features/admin/pages/seat-types/seat-types').then((m) => m.AdminSeatTypes),
@@ -340,7 +333,6 @@ export const routes: Routes = [
       },
       {
         path: 'flights/new',
-        canActivate: [adminGuard],
         loadComponent: () =>
           import('@features/admin/pages/flights/flight-form').then((m) => m.AdminFlightForm),
         data: { title: 'Thêm chuyến bay' },

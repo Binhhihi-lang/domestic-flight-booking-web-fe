@@ -398,6 +398,12 @@ export class MockRegistry {
     if (path === '/api/profile/avatar' && m === 'POST') {
       return this.uploadAvatar();
     }
+    if (path === '/api/admin/uploads/image' && m === 'POST') {
+      return ok(
+        { url: 'https://res.cloudinary.com/demo/image/upload/admin-upload-mock.png' },
+        'Tải ảnh lên thành công',
+      );
+    }
 
     if (path === '/api/admin/airlines' && m === 'GET') {
       return this.listAirlines(url);
@@ -458,12 +464,24 @@ export class MockRegistry {
       if (m === 'PUT') return this.saveSeatMap(aircraftId, body);
     }
 
+    const voucherAssignMatch = path.match(/^\/api\/admin\/vouchers\/(\d+)\/assign$/);
+    if (voucherAssignMatch && m === 'POST') {
+      const ids = ((body ?? {}) as { user_ids?: number[] }).user_ids ?? [];
+      return ok({ assigned_count: ids.length }, `Đã tặng voucher cho ${ids.length} người dùng`);
+    }
+
     // Ví voucher của khách — API v0.2 mục 2.8.
     if (path === '/api/voucher-store' && m === 'GET') {
       return this.voucherStore();
     }
     if (path === '/api/my-vouchers' && m === 'GET') {
       return this.myVouchers(url);
+    }
+    const myVoucherDetailMatch = path.match(/^\/api\/my-vouchers\/(\d+)$/);
+    if (myVoucherDetailMatch && m === 'GET') {
+      const id = Number(myVoucherDetailMatch[1]);
+      const found = this.userVouchers.find((v) => v.id === id);
+      return found ? ok(found) : notFound('Không tìm thấy voucher trong ví');
     }
     const claimMatch = path.match(/^\/api\/vouchers\/(\d+)\/claim$/);
     if (claimMatch && m === 'POST') {
@@ -499,6 +517,21 @@ export class MockRegistry {
       let rows = BAGGAGE_OPTIONS_MOCK.filter((b) => b.status === 'ACTIVE');
       if (airlineId) rows = rows.filter((b) => String(b.airline_id) === airlineId);
       return ok(paginate(rows, Number(params.get('page') ?? 1), Number(params.get('size') ?? 50)));
+    }
+    if (path === '/api/public/fare-rules' && m === 'GET') {
+      const params = readParams(url);
+      const airlineId = params.get('airline_id');
+      let rows = FARE_RULES_MOCK.filter((r) => r.status === 'ACTIVE').map((r) => {
+        const fc = FARE_CLASSES_MOCK.find((f) => f.id === r.fare_class_id);
+        return {
+          ...r,
+          airline_id: fc?.airline_id,
+          airline_name: fc?.airline_name,
+          seat_class: fc?.seat_class,
+        };
+      });
+      if (airlineId) rows = rows.filter((r) => String(r.airline_id) === airlineId);
+      return ok(rows);
     }
     if (path === '/api/public/bookings/lookup' && m === 'GET') {
       const params = readParams(url);

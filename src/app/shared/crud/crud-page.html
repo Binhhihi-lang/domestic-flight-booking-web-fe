@@ -12,12 +12,12 @@
       }
     </app-page-header>
 
-    <app-app-card>
-      <!-- ===== Thanh công cụ ===== -->
-      <div class="toolbar">
+    <!-- ===== Thẻ bộ lọc tách riêng (`.adm-filter--card`) ===== -->
+    @if (hasFilterBar()) {
+      <div class="adm-filter adm-filter--card">
         @if (config().searchPlaceholder) {
           <div class="search">
-            <mat-icon>search</mat-icon>
+            <mat-icon aria-hidden="true">search</mat-icon>
             <input
               type="search"
               [placeholder]="config().searchPlaceholder"
@@ -42,34 +42,32 @@
         }
 
         @if (hasFilters()) {
-          <!-- margin-left:auto đẩy nút về sát phải để thanh công cụ cân đối
-               thay vì dồn hết về bên trái. -->
-          <app-app-button class="toolbar__end" variant="ghost" (clicked)="clearFilters()">
+          <app-app-button class="toolbar__end" variant="ghost" size="sm" (clicked)="clearFilters()">
             <mat-icon>filter_alt_off</mat-icon>
             Bỏ lọc
           </app-app-button>
         }
       </div>
+    }
 
+    <!-- ===== Thẻ danh sách sát mép (`.adm-listcard`) ===== -->
+    <div class="adm-listcard">
       @if (loading()) {
-        <app-loading-state />
+        <div class="listcard__pad">
+          <app-loading-state />
+        </div>
       } @else if (rows().length === 0) {
-        <app-empty-state
-          [icon]="config().emptyIcon"
-          [message]="hasFilters() ? 'Không tìm thấy kết quả phù hợp' : config().emptyMessage"
-          [hint]="hasFilters() ? 'Thử từ khoá khác hoặc bỏ bộ lọc' : config().emptyHint"
-          [actionLabel]="hasFilters() || config().readonly ? '' : config().createLabel"
-          (actionClicked)="cancel()"
-        />
+        <div class="listcard__pad">
+          <app-empty-state
+            [icon]="config().emptyIcon"
+            [message]="hasFilters() ? 'Không tìm thấy kết quả phù hợp' : config().emptyMessage"
+            [hint]="hasFilters() ? 'Thử từ khoá khác hoặc bỏ bộ lọc' : config().emptyHint"
+            [actionLabel]="hasFilters() || config().readonly ? '' : config().createLabel"
+            (actionClicked)="goCreate()"
+          />
+        </div>
       } @else {
-        <!-- Thanh hành động hàng loạt: chỉ hiện khi có hàng được chọn, để bảng
-             không bị thêm một dải trống lúc bình thường.
-
-             Phân cấp nút: Xóa dùng variant="danger" vì là hành động phá hủy —
-             để nó khác ba nút còn lại, tránh bấm nhầm. Ba nút kia dùng "ghost"
-             (có viền) để cùng một kiểu khung; "Bỏ chọn" không phải hành động
-             nghiệp vụ nên đứng cuối, tách khỏi nhóm hành động. -->
-        @if (selectedCount() > 0) {
+        @if (showBulk() && selectedCount() > 0) {
           <div class="bulkbar" role="region" aria-label="Thao tác hàng loạt">
             <span class="bulkbar__n">Đã chọn <b>{{ selectedCount() }}</b> bản ghi</span>
             <div class="bulkbar__acts">
@@ -93,13 +91,11 @@
           </div>
         }
 
-        <!-- Khung cuộn ngang: bảng rộng hơn màn hình thì tự cuộn, không đẩy cả
-             trang tràn ngang và không cắt mất cột. -->
         <div class="tbl-wrap">
           <table class="tbl">
             <thead>
               <tr>
-                @if (!config().readonly) {
+                @if (showBulk()) {
                   <th class="col-check">
                     <input
                       type="checkbox"
@@ -120,8 +116,6 @@
             </thead>
             <tbody>
               @for (row of rows(); track row.id) {
-                <!-- Hàng bấm được để xem chi tiết. tabindex + keydown để dùng
-                     được bằng bàn phím, không chỉ bằng chuột. -->
                 <tr
                   [class.row--clickable]="!config().readonly"
                   [class.row--selected]="isSelected(row.id)"
@@ -130,7 +124,7 @@
                   (click)="openDetail(row)"
                   (keydown)="onRowKey($event, row)"
                 >
-                  @if (!config().readonly) {
+                  @if (showBulk()) {
                     <td class="col-check">
                       <input
                         type="checkbox"
@@ -158,8 +152,6 @@
                           </span>
                         }
                       } @else if (c.kind === 'color') {
-                        <!-- Cột màu: ô vuông + mã hex; rỗng → "Mặc định" để ADMIN
-                             phân biệt "chưa đặt màu" với "lỗi render". -->
                         @if (c.value(row)) {
                           <span class="swatch" [style.background]="c.value(row)"></span>
                           <span class="swatch__hex">{{ c.value(row) }}</span>
@@ -170,8 +162,6 @@
                       } @else if (c.tone) {
                         <app-status-badge [tone]="c.tone(row)" [label]="c.value(row)" />
                       } @else if (c.link) {
-                        <!-- Cột dẫn sang màn con. Chặn nổi bọt để bấm link không
-                             mở luôn trang chi tiết của hàng. -->
                         <a
                           class="rowlink"
                           [routerLink]="c.link(row)"
@@ -193,9 +183,11 @@
                       >
                         Sửa
                       </a>
-                      <button class="rowbtn rowbtn--danger" type="button" (click)="confirmDelete(row, $event)">
-                        Xóa
-                      </button>
+                      @if (canDeleteRow(row)) {
+                        <button class="rowbtn rowbtn--danger" type="button" (click)="confirmDelete(row, $event)">
+                          Xóa
+                        </button>
+                      }
                       <mat-icon class="rowchev" aria-hidden="true">chevron_right</mat-icon>
                     </td>
                   }
@@ -205,51 +197,20 @@
           </table>
         </div>
 
-        <!-- ===== Phân trang =====
-             Ẩn với endpoint trả mảng trần (Role, Permission) — không có trang để chuyển. -->
         @if (!config().unpaginated) {
-        <div class="pager">
-          <span class="tabular">{{ rangeLabel() }}</span>
-          <div class="pager__p">
-            <button
-              class="pg"
-              type="button"
-              aria-label="Trang trước"
-              [disabled]="pageIndex() === 0"
-              (click)="goTo(pageIndex() - 1)"
-            >
-              <mat-icon>chevron_left</mat-icon>
-            </button>
-            @for (p of pageNumbers(); track p) {
-              <button class="pg" type="button" [class.on]="p === pageIndex() + 1" (click)="goTo(p - 1)">
-                {{ p }}
-              </button>
-            }
-            <button
-              class="pg"
-              type="button"
-              aria-label="Trang sau"
-              [disabled]="pageIndex() >= totalPages() - 1"
-              (click)="goTo(pageIndex() + 1)"
-            >
-              <mat-icon>chevron_right</mat-icon>
-            </button>
-
-            <select
-              class="pager__size"
-              aria-label="Số dòng mỗi trang"
-              [ngModel]="pageSize()"
-              (ngModelChange)="onPageSize($event)"
-            >
-              <option [ngValue]="10">10 / trang</option>
-              <option [ngValue]="20">20 / trang</option>
-              <option [ngValue]="50">50 / trang</option>
-            </select>
-          </div>
-        </div>
+          <app-server-pager
+            [page]="pageIndex() + 1"
+            [size]="pageSize()"
+            [totalItems]="totalItems()"
+            [totalPages]="totalPages()"
+            [pageSizeOptions]="[10, 20, 50, 100]"
+            [noun]="config().title.toLowerCase()"
+            (pageChange)="goTo($event - 1)"
+            (sizeChange)="onPageSize($event)"
+          />
         }
       }
-    </app-app-card>
+    </div>
   </div>
 }
 
@@ -308,8 +269,6 @@
             </div>
           }
 
-          <!-- Các trường có trong form nhưng không phải cột bảng vẫn hiện ở đây,
-               nếu không người dùng bấm vào chi tiết mà không thấy đủ dữ liệu. -->
           @for (f of config().fields; track f.key) {
             @if (detailExtra(f, row); as value) {
               <div class="detail__row">
@@ -325,7 +284,7 @@
 }
 
 <!-- =====================================================================
-     CHẾ ĐỘ FORM (thêm mới / sửa) — trang riêng, không phải hộp thoại
+     CHẾ ĐỘ FORM (thêm mới / sửa)
      ===================================================================== -->
 @if (mode() === 'form') {
   <div class="wrap wrap--narrow">
@@ -359,6 +318,8 @@
                   <textarea
                     [id]="'cf-' + f.key"
                     rows="6"
+                    [disabled]="isFieldDisabled(f)"
+                    [attr.disabled]="isFieldDisabled(f) ? '' : null"
                     [attr.maxlength]="f.maxLength ?? null"
                     [attr.aria-invalid]="fieldErrors()[f.key] ? true : null"
                     [ngModel]="asString(fieldValue(f.key))"
@@ -369,6 +330,8 @@
                 @case ('select') {
                   <select
                     [id]="'cf-' + f.key"
+                    [disabled]="isFieldDisabled(f)"
+                    [attr.disabled]="isFieldDisabled(f) ? '' : null"
                     [ngModel]="fieldValue(f.key)"
                     (ngModelChange)="setField(f.key, $event)"
                     [name]="f.key"
@@ -378,11 +341,31 @@
                     }
                   </select>
                 }
+                @case ('multiselect') {
+                  <div class="multiselect-chips" role="group" [attr.aria-label]="f.label">
+                    @for (o of f.options ?? []; track o.label) {
+                      <label
+                        class="ms-chip"
+                        [class.is-on]="isMultiSelected(f.key, o.value)"
+                        [class.is-disabled]="isFieldDisabled(f)"
+                      >
+                        <input
+                          type="checkbox"
+                          [checked]="isMultiSelected(f.key, o.value)"
+                          [disabled]="isFieldDisabled(f)"
+                          (change)="toggleMultiOption(f.key, o.value)"
+                        />
+                        <span>{{ o.label }}</span>
+                      </label>
+                    }
+                  </div>
+                }
                 @case ('toggle') {
                   <label class="toggle">
                     <input
                       [id]="'cf-' + f.key"
                       type="checkbox"
+                      [disabled]="isFieldDisabled(f)"
                       [ngModel]="!!fieldValue(f.key)"
                       (ngModelChange)="setField(f.key, $event)"
                       [name]="f.key"
@@ -391,10 +374,6 @@
                   </label>
                 }
                 @case ('image') {
-                  <!-- Ô ảnh: hai cách nhập — dán URL, hoặc chọn file từ máy.
-                       File từ máy được đọc thành data URL (base64) và lưu thẳng
-                       vào trường, nên xem trước được ngay mà không cần upload.
-                       Khi BE có endpoint upload thì chỉ cần thay chỗ đọc file. -->
                   <div class="imgfield">
                     <div class="imgfield__preview">
                       @if (!isImageBroken(asString(fieldValue(f.key)))) {
@@ -415,6 +394,7 @@
                       <input
                         [id]="'cf-' + f.key"
                         type="text"
+                        [disabled]="isFieldDisabled(f) || uploadingField() === f.key"
                         [attr.maxlength]="f.maxLength ?? null"
                         [ngModel]="asString(fieldValue(f.key))"
                         (ngModelChange)="setField(f.key, $event)"
@@ -424,16 +404,20 @@
                       />
 
                       <div class="imgfield__row">
-                        <label class="imgfield__pick">
-                          <mat-icon>upload</mat-icon>
-                          Chọn ảnh từ máy
+                        <label
+                          class="imgfield__pick"
+                          [class.is-busy]="uploadingField() === f.key || isFieldDisabled(f)"
+                        >
+                          <mat-icon>{{ uploadingField() === f.key ? 'hourglass_top' : 'upload' }}</mat-icon>
+                          {{ uploadingField() === f.key ? 'Đang tải ảnh…' : 'Chọn ảnh từ máy' }}
                           <input
                             type="file"
                             accept="image/*"
+                            [disabled]="isFieldDisabled(f) || uploadingField() === f.key"
                             (change)="onPickImage($event, f.key)"
                           />
                         </label>
-                        @if (asString(fieldValue(f.key))) {
+                        @if (asString(fieldValue(f.key)) && !isFieldDisabled(f)) {
                           <button
                             class="imgfield__clear"
                             type="button"
@@ -447,13 +431,11 @@
                   </div>
                 }
                 @case ('color') {
-                  <!-- Ô màu: color picker + ô hex đồng bộ 2 chiều + nút bỏ màu.
-                       `<input type="color">` không biểu diễn được "không có màu"
-                       (luôn trả #000000), nên phải có nút Bỏ màu riêng. -->
                   <div class="colorfield">
                     <input
                       [id]="'cf-' + f.key"
                       type="color"
+                      [disabled]="isFieldDisabled(f)"
                       [value]="asString(fieldValue(f.key)) || '#000000'"
                       (input)="setField(f.key, asColor($any($event.target).value))"
                       [name]="f.key"
@@ -462,13 +444,14 @@
                     <input
                       type="text"
                       class="colorfield__hex"
+                      [disabled]="isFieldDisabled(f)"
                       [value]="asString(fieldValue(f.key))"
                       (input)="setField(f.key, asColor($any($event.target).value))"
                       maxlength="7"
                       placeholder="#RRGGBB"
                       [attr.aria-label]="f.label + ' — mã màu'"
                     />
-                    @if (fieldValue(f.key)) {
+                    @if (fieldValue(f.key) && !isFieldDisabled(f)) {
                       <button
                         class="colorfield__clear"
                         type="button"
@@ -482,7 +465,17 @@
                 @default {
                   <input
                     [id]="'cf-' + f.key"
-                    [type]="f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'"
+                    [type]="
+                      f.type === 'number'
+                        ? 'number'
+                        : f.type === 'date'
+                          ? 'date'
+                          : f.type === 'datetime-local'
+                            ? 'datetime-local'
+                            : 'text'
+                    "
+                    [disabled]="isFieldDisabled(f)"
+                    [attr.disabled]="isFieldDisabled(f) ? '' : null"
                     [attr.maxlength]="f.maxLength ?? null"
                     [attr.min]="f.min ?? null"
                     [attr.max]="f.max ?? null"
@@ -506,7 +499,7 @@
 
       <div cardFooter class="form-actions">
         <app-app-button variant="ghost" (clicked)="cancel()">Hủy</app-app-button>
-        <app-app-button [disabled]="saving()" (clicked)="save()">
+        <app-app-button [disabled]="saving() || uploadingField() !== null" (clicked)="save()">
           {{ saving() ? 'Đang lưu…' : 'Lưu' }}
         </app-app-button>
       </div>

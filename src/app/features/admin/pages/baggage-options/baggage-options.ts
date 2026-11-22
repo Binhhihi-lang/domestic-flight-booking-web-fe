@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BaggageOption } from '@core/models/fare-baggage.model';
 import { AirlineService } from '@core/services/airline.service';
@@ -26,7 +26,7 @@ export class AdminBaggageOptions {
     initialValue: null,
   });
 
-  protected readonly config = () => {
+  protected readonly config = computed<CrudConfig<BaggageOption, Partial<BaggageOption>>>(() => {
     const airlineList = this.airlines()?.data.items ?? [];
     const airlineOptions = [
       { value: null as number | null, label: '— Chọn hãng hàng không —' },
@@ -37,7 +37,7 @@ export class AdminBaggageOptions {
       ...airlineList.map((a) => ({ value: String(a.id), label: `${a.airline_code} — ${a.airline_name}` })),
     ];
 
-    const config: CrudConfig<BaggageOption, Partial<BaggageOption>> = {
+    return {
       title: 'Gói hành lý ký gửi',
       subtitle: 'Danh mục gói hành lý ký gửi bổ sung theo từng hãng hàng không',
       createLabel: 'Thêm gói hành lý',
@@ -46,6 +46,7 @@ export class AdminBaggageOptions {
       emptyMessage: 'Chưa có gói hành lý',
       emptyHint: 'Thêm gói hành lý đầu tiên (10kg, 20kg, 23kg, 32kg)',
       editTitle: 'Sửa gói hành lý',
+      detailTitle: (r) => r.name,
       deleteTitle: () => 'Xóa gói hành lý?',
       deleteMessage: (r) =>
         `Bạn có chắc muốn xóa gói "${r.name}" (${r.weight_kg} kg) của ${r.airline_name || r.airline_code}?`,
@@ -104,11 +105,11 @@ export class AdminBaggageOptions {
         {
           key: 'price',
           shownInTable: true,
-          label: 'Đơn giá (VNĐ)',
+          label: 'Đơn giá (đ)',
           type: 'number',
           required: true,
           min: 0,
-          hint: 'Ví dụ: 216000',
+          hint: 'Ví dụ: 216.000đ (nhập 216000)',
         },
         {
           key: 'status',
@@ -141,6 +142,5 @@ export class AdminBaggageOptions {
         },
       ],
     };
-    return config;
-  };
+  });
 }
