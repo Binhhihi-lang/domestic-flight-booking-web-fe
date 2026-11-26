@@ -1,0 +1,50 @@
+name: Build and Deploy Frontend to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies and build production bundle
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload dist/browser to VPS via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          source: "dist/domestic-flight-booking-web-frontend/browser/*"
+          target: "/root/Datve/dist/domestic-flight-booking-web-frontend/browser"
+          strip_components: 3
+          overwrite: true
+
+      - name: Set permissions and reload Nginx on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          script: |
+            chmod o+x /root
+            chmod -R o+rX /root/Datve/dist
+            systemctl reload nginx

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,13 +26,8 @@ interface BlockRow {
 /**
  * Cấu hình sơ đồ ghế — SEAT-01/02 (API v0.2 mục 2.6).
  *
- * Vì sao khai theo KHỐI rồi sinh lưới, không bắt ADMIN bấm từng ô: máy bay 300
- * ghế mà bấm tay từng ô thì không ai làm nổi. Khối là cách tự nhiên để mô tả
- * "hàng 1–4 cột A,B,C,D loại Thương gia" — đúng cách hãng bay thật khai cabin.
- *
- * Vì sao KHÔNG dùng `CrudPage`: đây không phải danh sách bản ghi mà là MỘT sơ
- * đồ thuộc về một máy bay, lưu bằng cách gửi cả sơ đồ. Không có endpoint
- * CRUD từng ghế.
+ * Hỗ trợ thanh chọn nhanh máy bay trên đầu trang để Admin chuyển qua lại giữa
+ * các máy bay trong đội bay mà không phải quay về danh sách.
  */
 @Component({
   selector: 'app-admin-seat-configurations',
@@ -53,6 +49,7 @@ export class AdminSeatConfigurations {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly aircraft = signal<Aircraft | null>(null);
+  protected readonly aircrafts = signal<Aircraft[]>([]);
   protected readonly seatTypes = signal<SeatType[]>([]);
   protected readonly seats = signal<AircraftSeat[]>([]);
   protected readonly blocks = signal<BlockRow[]>([]);
@@ -62,6 +59,7 @@ export class AdminSeatConfigurations {
   protected readonly editingCell = signal<GridCell | null>(null);
 
   private blockKeySeq = 1;
+  private loadedAircraftId: number | null = null;
 
   /** Loại ghế chọn được: chỉ loại đang bật (DB v0.4: tắt thì không chọn được). */
   protected readonly usableSeatTypes = computed(() =>
@@ -80,20 +78,59 @@ export class AdminSeatConfigurations {
   );
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      // Không có id máy bay thì màn này vô nghĩa — đưa về danh sách máy bay.
-      this.router.navigate(['/admin/aircrafts']);
-      return;
-    }
-    this.loadAircraft(Number(id));
+    this.aircraftService.list({ page: 1, size: 100 }).subscribe({
+      next: (res) => this.aircrafts.set(res.data.items),
+      error: () => {
+        /* Không chặn trang nếu danh sách chuyển nhanh lỗi. */
+      },
+    });
+
     this.seatTypeService.list({ page: 1, size: 100 }).subscribe({
       next: (res) => this.seatTypes.set(res.data.items),
       error: (err: Error) => this.notify(err.message),
     });
+
+    if (this.route.paramMap) {
+      this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+        const id = params.get('id');
+        if (!id) {
+          this.router.navigate(['/admin/aircrafts']);
+          return;
+        }
+        this.loadAircraft(Number(id));
+      });
+    } else {
+      const id = this.route.snapshot.paramMap.get('id');
+      if (!id) {
+        this.router.navigate(['/admin/aircrafts']);
+        return;
+      }
+      this.loadAircraft(Number(id));
+    }
+  }
+
+  protected onSwitchAircraft(rawId: string | number): void {
+    const nextId = Number(rawId);
+    if (!nextId || nextId === this.loadedAircraftId) {
+      return;
+    }
+    this.blocks.set([]);
+    this.editingCell.set(null);
+    this.errorMessage.set('');
+    this.router.navigate(['/admin/seat-configurations', nextId]);
+    if (!this.route.paramMap) {
+      this.loadAircraft(nextId);
+    }
   }
 
   private loadAircraft(id: number): void {
+    if (this.loadedAircraftId === id && this.aircraft() !== null) {
+      return;
+    }
+    this.loadedAircraftId = id;
+    this.blocks.set([]);
+    this.editingCell.set(null);
+    this.errorMessage.set('');
     this.loading.set(true);
     this.aircraftService.getById(id).subscribe({
       next: (res) => {
@@ -147,9 +184,7 @@ export class AdminSeatConfigurations {
   /**
    * Sinh lưới từ các khối đã khai.
    *
-   * Ghi đè theo thứ tự khai: khối sau phủ khối trước ở cùng (hàng, cột) — nhờ
-   * vậy ADMIN có thể khai "cả cabin phổ thông" rồi thêm một khối nhỏ đè lên
-   * vài hàng để đổi thành thương gia, thay vì phải khai từng dải rời rạc.
+   * Ghi đè theo thứ tự khai: khối sau phủ khối trước ở cùng (hàng, cột).
    */
   protected generate(): void {
     const map = new Map<string, AircraftSeat>();
@@ -224,8 +259,6 @@ export class AdminSeatConfigurations {
     const aircraft = this.aircraft();
     if (!aircraft) return;
 
-    // Chặn trước ở FE để ADMIN thấy ngay lệch bao nhiêu, thay vì bấm Lưu rồi
-    // nhận thông báo lỗi từ server.
     if (this.diff() !== 0) {
       this.errorMessage.set(
         `Sơ đồ đang có ${this.configuredCount()} ghế, cần đúng ${this.capacity()} ghế (lệch ${Math.abs(this.diff())}).`,

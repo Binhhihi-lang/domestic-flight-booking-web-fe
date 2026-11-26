@@ -1,24 +1,25 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '@core/services/auth.service';
+import { UploadService } from '@core/services/upload.service';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { AppCard } from '@shared/ui/app-card/app-card';
 import { LoadingState } from '@shared/ui/loading-state/loading-state';
 
+interface ProfileDraft {
+  full_name: string;
+  phone: string;
+  avatar_url: string;
+}
+
 /**
  * Hồ sơ cá nhân — PRO-01/PRO-02 (API v0.4 mục 2.2).
  *
- * Chỉ ba trường sửa được: họ tên, số điện thoại, ảnh đại diện. Email, trạng
- * thái và vai trò do hệ thống quản — BE bỏ qua nếu client gửi lên, nên màn
- * này hiện chúng ở dạng chỉ đọc thay vì ẩn hẳn: người dùng cần biết mình đang
- * dùng email nào và thuộc vai trò gì.
- *
- * Ảnh đại diện nhận URL hoặc file từ máy. File được đọc thành data URL và lưu
- * qua `PUT /profile` — BE thật có `POST /profile/avatar` để đẩy lên Cloudinary;
- * dùng chung một trường `avatar_url` nên đổi sang endpoint upload sau này chỉ
- * cần thay chỗ đọc file, không đổi mô hình dữ liệu.
+ * Chỉ ba trường sửa được: họ tên, số điện thoại, ảnh đại diện.
+ * Ảnh đại diện tải lên Cloudinary qua `UploadService.uploadProfileAvatar(file)`
+ * để đảm bảo URL gọn (<= 500 ký tự, không nhồi base64 vào DB).
  */
 @Component({
   selector: 'app-account-profile',
@@ -29,6 +30,7 @@ import { LoadingState } from '@shared/ui/loading-state/loading-state';
 })
 export class AccountProfile {
   private readonly authService = inject(AuthService);
+  private readonly uploadService = inject(UploadService);
   private readonly snackBar = inject(MatSnackBar);
 
   /**
@@ -39,10 +41,22 @@ export class AccountProfile {
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
+  protected readonly uploadingAvatar = signal(false);
   protected readonly errors = signal<Record<string, string>>({});
   protected readonly brokenAvatar = signal(false);
 
-  protected readonly draft = signal({ full_name: '', phone: '', avatar_url: '' });
+  protected readonly draft = signal<ProfileDraft>({ full_name: '', phone: '', avatar_url: '' });
+  private readonly initialDraft = signal<ProfileDraft>({ full_name: '', phone: '', avatar_url: '' });
+
+  protected readonly isDirty = computed(() => {
+    const cur = this.draft();
+    const init = this.initialDraft();
+    return (
+      cur.full_name !== init.full_name ||
+      cur.phone !== init.phone ||
+      cur.avatar_url !== init.avatar_url
+    );
+  });
 
   /** Chỉ đọc — lấy từ phiên đăng nhập, không nằm trong form. */
   protected readonly account = this.authService.currentUser;
@@ -55,11 +69,13 @@ export class AccountProfile {
     this.loading.set(true);
     this.authService.getProfile().subscribe({
       next: (res) => {
-        this.draft.set({
+        const loaded: ProfileDraft = {
           full_name: res.data.full_name,
           phone: res.data.phone ?? '',
           avatar_url: res.data.avatar_url ?? '',
-        });
+        };
+        this.draft.set(loaded);
+        this.initialDraft.set({ ...loaded });
         this.loading.set(false);
       },
       error: (err: Error) => {
@@ -69,7 +85,7 @@ export class AccountProfile {
     });
   }
 
-  protected setField(key: 'full_name' | 'phone' | 'avatar_url', value: string): void {
+  protected setField(key: keyof ProfileDraft, value: string): void {
     this.draft.set({ ...this.draft(), [key]: value });
     if (key === 'avatar_url') {
       this.brokenAvatar.set(false);
@@ -85,9 +101,16 @@ export class AccountProfile {
     return this.errors()[key] ?? '';
   }
 
+  protected resetChanges(): void {
+    this.draft.set({ ...this.initialDraft() });
+    this.errors.set({});
+    this.brokenAvatar.set(false);
+  }
+
   protected onPickAvatar(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    input.value = '';
     if (!file) {
       return;
     }
@@ -95,17 +118,28 @@ export class AccountProfile {
       this.notify('Vui lòng chọn tệp ảnh');
       return;
     }
-    // 2 MB: base64 phình ~33% và đi kèm payload JSON; ảnh lớn làm request nặng
-    // mà ảnh đại diện không cần độ phân giải cao.
     if (file.size > 2 * 1024 * 1024) {
       this.notify('Ảnh phải nhỏ hơn 2 MB');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => this.setField('avatar_url', String(reader.result ?? ''));
-    reader.onerror = () => this.notify('Không đọc được tệp ảnh');
-    reader.readAsDataURL(file);
-    input.value = '';
+
+    this.uploadingAvatar.set(true);
+    this.uploadService.uploadProfileAvatar(file).subscribe({
+      next: (res) => {
+        this.uploadingAvatar.set(false);
+        const uploadedUrl = (res.data?.avatar_url ?? res.data?.url ?? '').trim();
+        if (!uploadedUrl) {
+          this.notify('Không nhận được đường dẫn ảnh từ máy chủ');
+          return;
+        }
+        this.setField('avatar_url', uploadedUrl);
+        this.notify(res.message || 'Tải ảnh đại diện thành công');
+      },
+      error: (err: Error) => {
+        this.uploadingAvatar.set(false);
+        this.notify(err.message || 'Tải ảnh đại diện thất bại');
+      },
+    });
   }
 
   private validate(): boolean {
@@ -135,23 +169,24 @@ export class AccountProfile {
     }
 
     const d = this.draft();
+    const payload: ProfileDraft = {
+      full_name: d.full_name.trim(),
+      phone: d.phone.trim(),
+      avatar_url: d.avatar_url.trim(),
+    };
     this.saving.set(true);
-    this.authService
-      .updateProfile({
-        full_name: d.full_name.trim(),
-        phone: d.phone.trim(),
-        avatar_url: d.avatar_url.trim(),
-      })
-      .subscribe({
-        next: (res) => {
-          this.saving.set(false);
-          this.notify(res.message);
-        },
-        error: (err: Error) => {
-          this.saving.set(false);
-          this.notify(err.message);
-        },
-      });
+    this.authService.updateProfile(payload).subscribe({
+      next: (res) => {
+        this.saving.set(false);
+        this.draft.set({ ...payload });
+        this.initialDraft.set({ ...payload });
+        this.notify(res.message);
+      },
+      error: (err: Error) => {
+        this.saving.set(false);
+        this.notify(err.message);
+      },
+    });
   }
 
   private notify(message: string): void {

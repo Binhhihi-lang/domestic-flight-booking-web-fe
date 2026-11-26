@@ -1,0 +1,1948 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Wireframe — Khu vực vận hành (Staff)</title>
+<style>
+  :root{
+    --ink:#1b2026; --ink-2:#5b6570; --ink-3:#8b949e;
+    --line:#d7dbe0; --line-2:#b9c0c8;
+    --fill:#eef0f3; --fill-2:#dfe3e8; --fill-3:#f7f8fa;
+    --paper:#ffffff; --canvas:#eceef1;
+    --mark:var(--ink-2);
+    --primary:var(--ink); --danger:var(--ink-2);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:56px 0;
+    background:var(--canvas); color:var(--ink);
+    font-family:Inter,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    font-size:13px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{width:1440px; margin:0 auto;}
+
+  .bar{height:9px; border-radius:3px; background:var(--fill-2);}
+  .bar+.bar{margin-top:6px;}
+  .w25{width:25%} .w35{width:35%} .w45{width:45%} .w55{width:55%}
+  .w65{width:65%} .w75{width:75%} .w85{width:85%} .w100{width:100%}
+
+  .box{border:1px solid var(--line); border-radius:8px; background:var(--paper);}
+  .ph{background:
+        linear-gradient(to top right, transparent calc(50% - .5px), var(--line) 50%, transparent calc(50% + .5px)),
+        linear-gradient(to top left,  transparent calc(50% - .5px), var(--line) 50%, transparent calc(50% + .5px)),
+        var(--fill-3);
+      border:1px solid var(--line); border-radius:6px;}
+
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:6px;
+       height:36px; padding:0 16px; border-radius:6px; font-size:12px; font-weight:600;
+       border:1px solid var(--line-2); background:var(--paper); color:var(--ink-2); white-space:nowrap;}
+  .btn--dark{background:var(--primary); border-color:var(--primary); color:#fff;}
+  .btn--ghost{border-color:var(--line-2); background:transparent;}
+  .btn--sm{height:28px; padding:0 11px; font-size:11px;}
+
+  .tag{display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:4px;
+       background:var(--fill); border:1px solid var(--line); font-size:10px; font-weight:600;
+       color:var(--ink-2); letter-spacing:.3px; white-space:nowrap;}
+  .tag--dark{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .tag--mark{border-color:var(--mark); color:var(--mark); background:#fff;}
+
+  /* ---------- Khung tài liệu ---------- */
+  .cover{background:var(--ink); color:#fff; border-radius:12px; padding:44px 52px;}
+  .cover h1{margin:0 0 6px; font-size:30px; letter-spacing:-.4px;}
+  .cover p{margin:0; color:#a8b0b9; font-size:13.5px; max-width:860px;}
+  .cover__meta{display:flex; gap:48px; margin-top:30px; padding-top:26px; border-top:1px solid #39414a;}
+  .cover__meta dt{font-size:10px; letter-spacing:.8px; text-transform:uppercase; color:#7d8792; margin-bottom:5px;}
+  .cover__meta dd{margin:0; font-size:13.5px; font-weight:600;}
+
+  .legend{background:var(--paper); border:1px solid var(--line); border-radius:10px;
+          padding:24px 28px; margin:24px 0 44px;}
+  .legend h2{margin:0 0 18px; font-size:13px; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-2);}
+  .legend__grid{display:grid; grid-template-columns:repeat(4,1fr); gap:26px;}
+  .legend__item{display:flex; gap:12px; align-items:flex-start;}
+  .legend__demo{flex:none; width:40px;}
+  .legend__item p{margin:0; font-size:11.5px; color:var(--ink-2);}
+  .legend__item b{display:block; font-size:12px; color:var(--ink); margin-bottom:2px;}
+
+  .row{margin-bottom:52px;}
+  .rowhead{display:flex; align-items:center; gap:16px; padding:0 4px 14px;}
+  .rowhead h2{margin:0; font-size:19px; letter-spacing:-.2px;}
+  .rowhead .code{font-family:Consolas,monospace; font-size:12px; font-weight:700;
+                 background:var(--ink); color:#fff; padding:4px 9px; border-radius:4px; letter-spacing:.5px;}
+  .rowhead .route{font-family:Consolas,monospace; font-size:12px; color:var(--ink-2);
+                  background:var(--paper); border:1px solid var(--line); padding:4px 9px; border-radius:4px;}
+  .rowhead .sp{flex:1;}
+  .rowhead .meta{font-size:11.5px; color:var(--ink-3);}
+
+  .art{background:var(--paper); border:1px solid var(--line-2); border-radius:10px; overflow:hidden;
+       width:1440px; margin-bottom:18px;}
+
+  .notes{display:grid; grid-template-columns:repeat(4,1fr); gap:20px;
+         background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:20px 24px;}
+  .notes h3{margin:0 0 8px; font-size:10.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--mark);}
+  .notes ul{margin:0; padding-left:15px; font-size:11.5px; color:var(--ink-2); line-height:1.65;}
+  .notes li::marker{color:var(--line-2);}
+
+  .endnote{background:var(--paper); border:1px solid var(--line); border-radius:10px;
+           padding:22px 28px; font-size:12px; color:var(--ink-2);}
+  .endnote h3{margin:0 0 10px; font-size:12px; letter-spacing:.6px; text-transform:uppercase; color:var(--mark);}
+  .endnote ul{margin:0; padding-left:16px; line-height:1.75;}
+
+  /* ---------- Khung ứng dụng vận hành ---------- */
+  .shell{display:flex; min-height:900px;}
+
+  .side{width:236px; flex:none; background:var(--paper); border-right:1px solid var(--line);
+        display:flex; flex-direction:column;}
+  .side__h{padding:16px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:9px;}
+  .side__mk{width:26px; height:26px; border-radius:6px; background:var(--ink); flex:none;}
+  .side__nm{font-size:13.5px; font-weight:700; letter-spacing:-.2px;}
+  .side__nav{padding:14px 12px; flex:1;}
+  .side__g{margin-bottom:15px;}
+  .side__l{font-size:9.5px; letter-spacing:.9px; text-transform:uppercase; color:var(--ink-3);
+           padding:0 10px; margin-bottom:6px;}
+  .side__i{display:flex; align-items:center; gap:10px; height:32px; padding:0 10px;
+           border-radius:6px; font-size:12px; color:var(--ink-2);}
+  .side__i.on{background:var(--fill-2); color:var(--ink); font-weight:700;}
+  .side__ic{width:15px; height:15px; border-radius:3px; border:1px solid var(--line-2); flex:none;}
+  .side__i.on .side__ic{background:var(--ink); border-color:var(--ink);}
+  .side__f{border-top:1px solid var(--line); padding:10px 12px;}
+
+  .main{flex:1; min-width:0; display:flex; flex-direction:column; background:var(--fill-3);}
+
+  .hd{height:56px; background:var(--paper); border-bottom:1px solid var(--line);
+      display:flex; align-items:center; gap:14px; padding:0 24px; flex:none;}
+  .crumbs{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink-3);}
+  .crumbs b{color:var(--ink); font-weight:600;}
+  .crumbs .sep{color:var(--line-2);}
+  .hd .sp{flex:1;}
+  .hd__date{font-size:11.5px; color:var(--ink-2); border:1px solid var(--line); border-radius:6px;
+            height:30px; padding:0 11px; display:flex; align-items:center;}
+  .hd__ic{width:30px; height:30px; border:1px solid var(--line); border-radius:6px;}
+  .hd__u{display:flex; align-items:center; gap:9px;}
+  .hd__nm{font-size:11.5px; font-weight:600;}
+  .hd__rl{font-size:10px; color:var(--ink-3); display:block; margin-top:-1px;}
+  .av{width:30px; height:30px; border-radius:50%; background:var(--ink); color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700;}
+
+  .cnt{padding:22px 24px 26px; flex:1;}
+  .foot2{border-top:1px solid var(--line); background:var(--paper); padding:14px 24px;
+         display:flex; justify-content:space-between; font-size:10.5px; color:var(--ink-3);}
+
+  /* ---------- Tiêu đề trang ---------- */
+  .pgh{display:flex; align-items:flex-start; gap:14px; margin-bottom:18px;}
+  .pgh h1{margin:0; font-size:20px; letter-spacing:-.3px;}
+  .pgh p{margin:5px 0 0; font-size:12px; color:var(--ink-2);}
+  .pgh .sp{flex:1;}
+
+  /* ---------- Thẻ nội dung ---------- */
+  .card{background:var(--paper); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .card+.card{margin-top:16px;}
+  .split+.card{margin-top:16px;}
+  .card__h{padding:14px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px;}
+  .card__h h2{margin:0; font-size:13.5px;}
+  .card__h .sp{flex:1;}
+
+  /* ---------- Thanh công cụ ---------- */
+  .tb{display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid var(--line);
+      background:var(--paper);}
+  .srh{display:flex; align-items:center; gap:8px; height:34px; border:1px solid var(--line-2);
+       border-radius:6px; padding:0 11px; width:290px; font-size:11.5px; color:var(--ink-3);}
+  .srh__ic{width:13px; height:13px; border:1.5px solid var(--line-2); border-radius:50%; flex:none;}
+  .sel{height:34px; border:1px solid var(--line-2); border-radius:6px; padding:0 11px;
+       display:flex; align-items:center; justify-content:space-between; gap:14px;
+       font-size:11.5px; color:var(--ink-2); min-width:158px;}
+  .sel__c{width:7px; height:7px; border-right:1.5px solid var(--ink-3); border-bottom:1.5px solid var(--ink-3);
+          transform:rotate(45deg); margin-top:-3px;}
+  .tb .sp{flex:1;}
+
+  /* ---------- Bảng ---------- */
+  .tbl{width:100%; border-collapse:collapse;}
+  .tbl th{font-size:9.5px; letter-spacing:.7px; text-transform:uppercase; color:var(--ink-3);
+          text-align:left; padding:10px 14px; background:var(--fill-3);
+          border-bottom:1px solid var(--line); font-weight:600; white-space:nowrap;}
+  .tbl th.num, .tbl td.num{text-align:right;}
+  .tbl td{padding:11px 14px; border-bottom:1px solid var(--fill); font-size:12px; color:var(--ink-2);}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl td b{color:var(--ink); font-weight:600;}
+  .cb{display:inline-block; vertical-align:middle; width:14px; height:14px;
+      border:1px solid var(--line-2); border-radius:3px; background:var(--paper);}
+  .cb.on{background:var(--ink); border-color:var(--ink);}
+  .cd{font-family:Consolas,monospace; font-size:11px; color:var(--ink);
+      background:var(--fill); border-radius:3px; padding:2px 6px;}
+  .thumb{width:40px; height:26px;}
+  .badge{display:inline-flex; align-items:center; height:20px; padding:0 9px; border-radius:10px;
+         font-size:10px; font-weight:600; background:var(--fill); border:1px solid var(--line);
+         color:var(--ink-2); white-space:nowrap;}
+  .badge--ok{background:var(--paper); border-color:var(--line-2); color:var(--ink);}
+  .badge--warn{background:var(--paper); border:1px dashed var(--line-2); color:var(--ink-2);}
+  .ract{display:flex; align-items:center; gap:8px; font-size:11px;}
+  .ract a{display:inline-flex; align-items:center; justify-content:center; height:26px;
+          padding:0 10px; border-radius:5px; font-size:11px; font-weight:700;
+          text-decoration:none; white-space:nowrap; background:var(--primary);
+          border:1px solid var(--primary); color:#fff;}
+  .ract a + a{background:var(--paper); border-color:var(--line-2); color:var(--ink-2);}
+  .ract a:only-child{background:var(--paper); border-color:var(--primary); color:var(--primary);}
+  .ract .chev{color:var(--line-2);}
+
+  .pager{display:flex; align-items:center; gap:10px; padding:12px 18px;
+         border-top:1px solid var(--line); font-size:11px; color:var(--ink-2);}
+  .pager .sp{flex:1;}
+  .pg{width:26px; height:26px; border:1px solid var(--line-2); border-radius:5px;
+      display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--ink-2);}
+  .pg.on{background:var(--ink); border-color:var(--ink); color:#fff; font-weight:700;}
+  .pgsize{height:26px; border:1px solid var(--line-2); border-radius:5px; padding:0 9px;
+          display:flex; align-items:center; gap:10px; font-size:10.5px;}
+
+  .bulkbar{display:flex; align-items:center; gap:12px; padding:10px 18px;
+           background:var(--fill-3); border-bottom:1px solid var(--line); font-size:11.5px;}
+  .bulkbar b{color:var(--ink);}
+  .bulkbar .sp{flex:1;}
+
+  /* ---------- Biểu mẫu ---------- */
+  .fgrid{display:grid; grid-template-columns:1fr 1fr; gap:16px 20px; padding:18px 20px;}
+  .fg{display:flex; flex-direction:column;}
+  .fg--full{grid-column:1 / -1;}
+  .fg label{font-size:10.5px; font-weight:600; color:var(--ink-2); margin-bottom:6px; letter-spacing:.2px;}
+  .fg .req{color:var(--mark);}
+  .inp{height:38px; border:1px solid var(--line-2); border-radius:6px; background:var(--paper);
+       padding:0 11px; display:flex; align-items:center; font-size:12px; color:var(--ink);}
+  .inp--ph{color:var(--ink-3);}
+  .ta{height:88px; border:1px solid var(--line-2); border-radius:6px; background:var(--paper);}
+  .hint{font-size:10.5px; color:var(--ink-3); margin-top:5px;}
+  .toggle{display:flex; align-items:center; gap:9px; font-size:11.5px; color:var(--ink-2);}
+  .sw{width:32px; height:18px; border-radius:10px; background:var(--ink); position:relative; flex:none;}
+  .sw::after{content:""; position:absolute; right:2px; top:2px; width:14px; height:14px;
+             border-radius:50%; background:#fff;}
+  .sw.off{background:var(--fill-2);}
+  .sw.off::after{left:2px; right:auto;}
+  .imgfield{display:flex; gap:14px; align-items:flex-start;}
+  .imgfield__pv{width:120px; height:72px; flex:none;}
+  .imgfield__bd{flex:1;}
+  .fact{display:flex; justify-content:flex-end; gap:10px; padding:13px 20px;
+        border-top:1px solid var(--line); background:var(--fill-3);}
+  .note2{background:var(--fill-3); border:1px solid var(--line); border-radius:8px;
+         padding:12px 16px; font-size:11.5px; color:var(--ink-2); line-height:1.65;}
+  .note2--warn{border-color:var(--mark); background:#fff;}
+
+  /* ---------- Chi tiết ---------- */
+  .dl{padding:4px 20px 16px;}
+  .dl__r{display:grid; grid-template-columns:200px 1fr; gap:18px;
+         padding:12px 0; border-bottom:1px solid var(--fill); font-size:12px;}
+  .dl__r:last-child{border-bottom:none;}
+  .dl dt{color:var(--ink-3); font-size:11px;}
+  .dl dd{margin:0; color:var(--ink);}
+
+  /* ---------- Dashboard ---------- */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px;}
+  .stat{background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:15px 17px;}
+  .stat__ic{width:32px; height:32px; border-radius:8px; background:var(--fill);
+            border:1px solid var(--line); margin-bottom:11px;}
+  .stat__l{font-size:10.5px; color:var(--ink-3); margin-bottom:4px;}
+  .stat__v{font-size:21px; font-weight:700; letter-spacing:-.4px;}
+  .stat__v small{font-size:12px; font-weight:600; color:var(--ink-2);}
+  .stat__d{font-size:10px; color:var(--ink-2); margin-top:6px;}
+
+  .dgrid{display:grid; grid-template-columns:1.35fr 1fr; gap:16px; margin-bottom:16px;}
+  .bars{display:flex; align-items:flex-end; gap:14px; height:150px; padding:14px 18px 0;}
+  .bcol{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;}
+  .bcol__v{font-size:9.5px; color:var(--ink-3); margin-bottom:5px;}
+  .bcol__b{width:100%; background:var(--fill-2); border-radius:4px 4px 0 0;}
+  .bcol__b.on{background:var(--ink);}
+  .bcol__l{font-size:9px; color:var(--ink-3); margin-top:7px;}
+
+  .ranks{padding:4px 18px 14px;}
+  .rank{display:flex; align-items:center; gap:11px; padding:10px 0; border-bottom:1px solid var(--fill);}
+  .rank:last-child{border-bottom:none;}
+  .rank__i{width:21px; height:21px; border-radius:50%; background:var(--fill); flex:none;
+           display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;}
+  .rank__bd{flex:1;}
+  .rank__n{font-family:Consolas,monospace; font-size:11.5px; font-weight:700; color:var(--ink);}
+  .rank__m{font-size:10px; color:var(--ink-3);}
+  .rank__v{text-align:right; font-size:11.5px; color:var(--ink); font-weight:700;}
+  .rank__v small{display:block; font-size:9px; font-weight:400; color:var(--ink-3);}
+
+  /* ---------- Sơ đồ ghế ---------- */
+  .blocks{padding:14px 18px;}
+  .brow{display:grid; grid-template-columns:110px 110px 1fr 1fr 34px; gap:12px;
+        align-items:end; padding:10px 0; border-bottom:1px solid var(--fill);}
+  .brow:last-of-type{border-bottom:none;}
+  .brow__d{height:34px; border:1px solid var(--line); border-radius:6px; background:var(--fill-3);}
+  .brow__del{width:34px; height:34px; border:1px solid var(--line); border-radius:6px;
+             display:flex; align-items:center; justify-content:center; color:var(--ink-3); font-size:13px;}
+  .bacts{display:flex; gap:10px; padding-top:12px;}
+
+  .cabin{width:400px; margin:6px auto 12px; background:var(--fill-3); border:1px solid var(--line);
+         border-radius:110px 110px 14px 14px; padding:26px 0 32px;
+         display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .cabin__cap{font-size:9px; letter-spacing:1.2px; color:var(--ink-3); margin-bottom:4px;}
+  .srow{display:flex; gap:6px; align-items:center;}
+  .srow .no{width:18px; text-align:center; font-size:9px; color:var(--ink-3);}
+  .seat{width:29px; height:29px; border:1px solid var(--line-2); border-radius:5px; background:var(--paper);}
+  .seat.a{background:var(--ink); border-color:var(--ink);}
+  .seat.b{background:var(--fill-2); border-style:dashed;}
+  .seat.c{border:2px solid var(--mark);}
+  .aisle{width:22px;}
+  .legend-inline{display:flex; gap:20px; justify-content:center; margin:4px 0 14px;
+                 font-size:10.5px; color:var(--ink-2);}
+  .legend-inline span{display:flex; align-items:center; gap:6px;}
+  .swt{width:14px; height:14px; border:1px solid var(--line-2); border-radius:4px; background:var(--paper);}
+  .swt--a{background:var(--ink); border-color:var(--ink);}
+  .swt--b{background:var(--fill-2); border-style:dashed;}
+  .swt--c{border:2px solid var(--mark);}
+
+  .counter{display:flex; align-items:baseline; gap:10px; padding:6px 20px 14px;}
+  .counter__n{font-size:22px; font-weight:700; letter-spacing:-.4px;}
+  .counter__l{font-size:11.5px; color:var(--ink-2);}
+
+  .empty{display:flex; flex-direction:column; align-items:center; justify-content:center;
+         padding:56px 20px; text-align:center;}
+  .empty__ic{width:48px; height:48px; border-radius:50%; border:1px dashed var(--line-2); margin-bottom:14px;}
+  .empty h3{margin:0 0 6px; font-size:15px;}
+  .empty p{margin:0; font-size:12px; color:var(--ink-2);}
+
+  /* ---------- Riêng Staff Portal ---------- */
+  .tabs{display:flex; gap:2px; padding:0 18px; border-bottom:1px solid var(--line); background:var(--paper);}
+  .tab{display:flex; align-items:center; height:42px; padding:0 15px; font-size:12px;
+       color:var(--ink-2); border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap;}
+  .tab.on{color:var(--ink); font-weight:700; border-bottom-color:var(--ink);}
+  .tab .cnt-n{display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px;
+              padding:0 5px; margin-left:7px; border-radius:9px; background:var(--fill);
+              border:1px solid var(--line); font-size:9.5px; font-weight:600; color:var(--ink-2);}
+  .split{display:grid; grid-template-columns:1.5fr 1fr; gap:16px; align-items:start;}
+  .danger{background:var(--paper); border:1px solid var(--mark); border-radius:10px; padding:16px 18px;}
+  .danger h3{margin:0 0 6px; font-size:12.5px; color:var(--ink);}
+  .danger p{margin:0 0 12px; font-size:11.5px; color:var(--ink-2); line-height:1.6;}
+  .danger .btn{border-color:var(--mark); color:var(--mark);}
+  .kv2{display:grid; grid-template-columns:1fr 1fr; gap:0 28px;}
+  .kv2 .dl__r{grid-template-columns:170px 1fr;}
+  .inline-tag{display:inline-flex; align-items:center; height:19px; padding:0 7px; margin-left:7px;
+              border-radius:4px; background:var(--fill); border:1px solid var(--line);
+              font-size:9.5px; font-weight:600; color:var(--ink-2);}
+
+  /* ---------- Header: logo, chuông, menu tài khoản ---------- */
+  .hd__brand{display:flex; align-items:center; gap:8px; flex:none;}
+  .hd__mk{width:24px; height:24px; border-radius:6px; background:var(--ink); flex:none;}
+  .hd__bn{font-size:13px; font-weight:700; letter-spacing:-.2px;}
+  .hd__sep{width:1px; height:20px; background:var(--line); flex:none;}
+  .hd__bell{width:30px; height:30px; border:1px solid var(--line); border-radius:6px;
+            position:relative; flex:none;}
+  .hd__bell::before{content:""; position:absolute; left:50%; top:50%; width:11px; height:10px;
+                    margin:-6px 0 0 -5.5px; border:1.5px solid var(--ink-2);
+                    border-bottom-width:2.5px; border-radius:6px 6px 1px 1px;}
+  .hd__bell::after{content:""; position:absolute; top:4px; right:4px; width:6px; height:6px;
+                   border-radius:50%; background:var(--ink);
+                   box-shadow:0 0 0 1.5px var(--paper);}
+  .hd__u{position:relative;}
+  .hd__chev{width:6px; height:6px; border-right:1.5px solid var(--ink-3);
+            border-bottom:1.5px solid var(--ink-3); transform:rotate(45deg);
+            flex:none; margin:-3px 2px 0 0;}
+  .hd__menu{position:absolute; top:46px; right:0; width:226px; background:var(--paper);
+            border:1px solid var(--line-2); border-radius:9px; overflow:hidden;
+            box-shadow:0 14px 34px rgba(27,32,38,.18); z-index:6;}
+  .hd__menu-h{display:block; padding:11px 14px 11px 38px; border-bottom:1px solid var(--line);}
+  .hd__menu-h b{display:block; font-size:11.5px;}
+  .hd__menu-h span{display:block; font-size:10px; color:var(--ink-3); margin-top:2px;}
+  .hd__menu-i{display:flex; align-items:center; gap:9px; padding:9px 14px;
+              font-size:11.5px; color:var(--ink-2);}
+  .hd__menu-i + .hd__menu-i{border-top:1px solid var(--fill);}
+  .hd__menu-i--sep{border-top:1px solid var(--line);}
+  .hd__menu-i .mic{width:14px; height:14px; border-radius:3px; border:1px solid var(--line-2); flex:none;}
+  .dlg__c{display:flex; align-items:center; gap:11px; padding:11px 0; border-bottom:1px solid var(--fill);}
+  .dlg__c:last-of-type{border-bottom:none;}
+  .dlg__c .av{width:32px; height:32px; flex:none;}
+  .dlg__c b{display:block; font-size:12px;}
+  .dlg__c em{display:block; font-style:normal; font-size:10.5px; color:var(--ink-3); margin-top:3px;}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ============ BÌA ============ -->
+  <header class="cover">
+    <h1>Wireframe — Khu vực vận hành (Staff)</h1>
+    <p>Toàn bộ màn hình của nhân viên vận hành VinaFly: dashboard, quản lý chuyến bay, giá bán,
+       tồn ghế, tra cứu đặt chỗ và hồ sơ cá nhân. Staff không có quản trị người dùng, phân quyền
+       hay nội dung — phạm vi đúng theo Permission Matrix v2.1.</p>
+    <dl class="cover__meta">
+      <div><dt>Dự án</dt><dd>VinaFly — Đặt vé máy bay nội địa</dd></div>
+      <div><dt>Tài liệu</dt><dd>WF-04 · Khu vực vận hành (Staff)</dd></div>
+      <div><dt>Kích thước</dt><dd>Desktop 1440</dd></div>
+      <div><dt>Số màn hình</dt><dd>9 artboard</dd></div>
+      <div><dt>Ngày</dt><dd>13/11/2026</dd></div>
+    </dl>
+  </header>
+
+  <section class="legend">
+    <h2>Bốn điều cần đọc trước</h2>
+    <div class="legend__grid">
+      <div class="legend__item">
+        <div class="legend__demo"><span class="tag tag--dark">1</span></div>
+        <p><b>Chỉ desktop</b>Nhân viên vận hành làm việc trên máy tính. Không có bản mobile.</p>
+      </div>
+      <div class="legend__item">
+        <div class="legend__demo"><span class="tag">Phạm vi</span></div>
+        <p><b>Chuyến bay &amp; tra cứu</b>Staff toàn quyền chuyến bay, giá và tồn ghế; chỉ đọc booking, máy bay và dữ liệu nền.</p>
+      </div>
+      <div class="legend__item">
+        <div class="legend__demo"><span class="tag">Form</span></div>
+        <p><b>Biểu mẫu là trang riêng</b>Không phải hộp thoại — mở được bằng đường dẫn, quay lại không mất dữ liệu.</p>
+      </div>
+      <div class="legend__item">
+        <div class="legend__demo"><span class="tag tag--mark">!</span></div>
+        <p><b>Không dùng màu</b>Toàn bộ wireframe chỉ dùng thang xám — kể cả chú thích. Màu thương hiệu chỉ có ở bản sản phẩm.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-01 · STAFF DASHBOARD
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-01</span>
+      <h2>Dashboard</h2>
+      <span class="route">/staff/dashboard</span>
+      <span class="sp"></span>
+      <span class="meta">Màn đầu tiên sau khi nhân viên đăng nhập</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i on"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><b>Dashboard</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div class="pgh">
+              <div>
+                <h1>Dashboard</h1>
+                <p>Tổng quan vận hành hôm nay · cập nhật lúc 09:12, 13/11/2026</p>
+              </div>
+              <span class="sp"></span>
+              <span class="btn btn--ghost">Hôm nay</span>
+            </div>
+
+            <div class="stats">
+              <div class="stat">
+                <div class="stat__ic"></div>
+                <div class="stat__l">Chuyến khởi hành hôm nay</div>
+                <div class="stat__v">42</div>
+                <div class="stat__d">8 chuyến đã cất cánh</div>
+              </div>
+              <div class="stat">
+                <div class="stat__ic"></div>
+                <div class="stat__l">Booking hôm nay</div>
+                <div class="stat__v">386</div>
+                <div class="stat__d">↑ +6,2% so với hôm qua</div>
+              </div>
+              <div class="stat">
+                <div class="stat__ic"></div>
+                <div class="stat__l">Tỷ lệ lấp đầy hôm nay</div>
+                <div class="stat__v">78<small>%</small></div>
+                <div class="stat__d">Trung bình các chuyến trong ngày</div>
+              </div>
+              <div class="stat">
+                <div class="stat__ic"></div>
+                <div class="stat__l">Chuyến sắp hết ghế</div>
+                <div class="stat__v">7</div>
+                <div class="stat__d">Cần mở chuyến bổ sung</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Chuyến cần xử lý</h2><span class="sp"></span><span class="badge badge--warn">7 chuyến</span></div>
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width:110px">Số hiệu</th>
+                    <th style="width:150px">Tuyến</th>
+                    <th style="width:190px">Khởi hành</th>
+                    <th style="width:110px" class="num">Ghế trống</th>
+                    <th style="width:140px">Vận hành</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="cd">VN 165</span></td><td><b>HAN → DAD</b></td>
+                    <td>15/11/2026 · 06:15</td><td class="num">4 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
+                    <td><span class="ract"><a>Mở chuyến bổ sung</a></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">VJ 507</span></td><td><b>HAN → DAD</b></td>
+                    <td>15/11/2026 · 07:20</td><td class="num">2 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
+                    <td><span class="ract"><a>Mở chuyến bổ sung</a></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">QH 204</span></td><td><b>SGN → DAD</b></td>
+                    <td>15/11/2026 · 09:05</td><td class="num">6 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
+                    <td><span class="ract"><a>Mở chuyến bổ sung</a></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">VU 812</span></td><td><b>SGN → CXR</b></td>
+                    <td>16/11/2026 · 13:40</td><td class="num">68</td>
+                    <td><span class="badge">Bản nháp</span></td>
+                    <td><span class="ract"><a>Hoàn tất lịch bay</a></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Booking chờ xác nhận</h2><span class="sp"></span><span class="tag">Sắp hết hạn thanh toán</span></div>
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width:120px">Mã đơn hàng</th>
+                    <th style="width:220px">Khách hàng</th>
+                    <th>Tuyến</th>
+                    <th style="width:190px">Hạn thanh toán</th>
+                    <th style="width:150px" class="num">Tổng tiền</th>
+                    <th style="width:80px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="cd">DH-1046</span><div style="font-size:9px;color:var(--ink-3)">PNR sau thanh toán</div></td>
+                    <td><b>Lê Minh Cường</b><div style="font-size:10px;color:var(--ink-3)">cuong.le&#64;gmail.com</div></td>
+                    <td>SGN → DAD</td><td>13/11/2026 · 09:27</td>
+                    <td class="num">1.290.000 ₫</td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">DH-1047</span></td>
+                    <td><b>Nguyễn Thị Mai</b><div style="font-size:10px;color:var(--ink-3)">mai.nguyen&#64;email.com</div></td>
+                    <td>HAN → SGN</td><td>13/11/2026 · 09:41</td>
+                    <td class="num">2.660.000 ₫</td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">DH-1048</span></td>
+                    <td><b>Phạm Quốc Bảo</b><div style="font-size:10px;color:var(--ink-3)">bao.pham&#64;email.com</div></td>
+                    <td>DAD → HAN</td><td>13/11/2026 · 09:55</td>
+                    <td class="num">1.480.000 ₫</td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Số liệu là ảnh chụp lúc tải, có ghi giờ cập nhật dưới tiêu đề</li>
+          <li>Chỉ số vận hành — không có thẻ quản trị người dùng</li>
+          <li>Không có dữ liệu thật thì hiện khung rỗng, không hiện số 0</li>
+          <li>Chuyến quá 95% ghế tự vào danh sách "Chuyến cần xử lý"</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> đăng nhập vận hành, mục Dashboard ở sidebar</li>
+          <li><b>Ra tới:</b> danh sách chuyến khi bấm "Mở chuyến bổ sung"</li>
+          <li>Booking chờ xác nhận mở sang chi tiết booking</li>
+          <li>Chuông thông báo là placeholder — nghiệp vụ chốt tại docs/design/00-nghiep-vu-thong-bao.md; chưa có bảng notifications</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Bốn thẻ số liệu một hàng, đều nhau</li>
+          <li>Hai bảng xếp dọc: việc của chuyến bay trước, booking sau</li>
+          <li>Bảng chuyến đứng trên vì ưu tiên xử lý lịch bay</li>
+          <li>Footer và header dùng chung với mọi màn staff</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li>Dashboard staff chỉ trả lời "hôm nay vận hành thế nào", không lặp lại báo cáo doanh thu của admin.</li>
+          <li>Không có thẻ người dùng/RBAC — staff không có quyền đó.</li>
+          <li>Đưa hạn thanh toán lên bảng booking để staff biết đơn nào sắp hết hạn.</li>
+          <li>Nút hành động ghi rõ việc làm, không dùng icon trần.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-02 · STAFF FLIGHT LIST
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-02</span>
+      <h2>Danh sách chuyến bay</h2>
+      <span class="route">/staff/flights</span>
+      <span class="sp"></span>
+      <span class="meta">Toàn quyền tạo, sửa, mở/đóng bán</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i on"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><b>Chuyến bay</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div class="pgh">
+              <div>
+                <h1>Chuyến bay</h1>
+                <p>Lịch bay, trạng thái mở bán và trạng thái vận hành</p>
+              </div>
+              <span class="sp"></span>
+              <span class="btn btn--dark">+ Thêm chuyến bay</span>
+            </div>
+
+            <div class="card">
+              <div class="tb">
+                <div class="srh"><span class="srh__ic"></span>Tìm theo số hiệu hoặc tuyến bay</div>
+                <div class="sel">Tất cả trạng thái bán<span class="sel__c"></span></div>
+                <div class="sel">Tất cả vận hành<span class="sel__c"></span></div>
+                <span class="sp"></span>
+                <span class="btn btn--ghost btn--sm">Xuất danh sách</span>
+              </div>
+
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width:44px"><span class="cb"></span></th>
+                    <th style="width:110px">Số hiệu</th>
+                    <th style="width:150px">Tuyến</th>
+                    <th style="width:180px">Khởi hành</th>
+                    <th style="width:160px">Máy bay</th>
+                    <th style="width:110px" class="num">Ghế trống</th>
+                    <th style="width:110px">Bán vé</th>
+                    <th style="width:150px">Vận hành</th>
+                    <th style="width:120px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="cb"></span></td><td><span class="cd">VN 165</span></td>
+                    <td><b>HAN → DAD</b></td><td>15/11/2026 · 06:15</td>
+                    <td>VN-A321-01</td><td class="num">4 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
+                    <td><span class="badge badge--ok">Mở bán</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
+                    <td><span class="ract"><a>Sửa</a><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cb"></span></td><td><span class="cd">VJ 507</span></td>
+                    <td><b>HAN → DAD</b></td><td>15/11/2026 · 07:20</td>
+                    <td>VJ-A321-02</td><td class="num">2 <span class="badge badge--warn" style="margin-left:4px">Sắp hết</span></td>
+                    <td><span class="badge badge--ok">Mở bán</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
+                    <td><span class="ract"><a>Sửa</a><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cb"></span></td><td><span class="cd">QH 204</span></td>
+                    <td><b>SGN → DAD</b></td><td>15/11/2026 · 09:05</td>
+                    <td>QH-A320-03</td><td class="num">6</td>
+                    <td><span class="badge badge--ok">Mở bán</span></td>
+                    <td><span class="badge">Đã lên lịch</span></td>
+                    <td><span class="ract"><a>Sửa</a><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cb"></span></td><td><span class="cd">VU 812</span></td>
+                    <td><b>SGN → CXR</b></td><td>16/11/2026 · 13:40</td>
+                    <td>VU-ATR-04</td><td class="num">68</td>
+                    <td><span class="badge">Đóng bán</span></td>
+                    <td><span class="badge badge--warn">Bản nháp</span></td>
+                    <td><span class="ract"><a>Sửa</a><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cb"></span></td><td><span class="cd">VN 218</span></td>
+                    <td><b>HAN → SGN</b></td><td>14/11/2026 · 18:30</td>
+                    <td>VN-B787-05</td><td class="num">12</td>
+                    <td><span class="badge">Đóng bán</span></td>
+                    <td><span class="badge">Đã cất cánh</span></td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="pager">
+                <span>Hiển thị 1–10 trên 248 bản ghi</span>
+                <span class="sp"></span>
+                <span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">›</span>
+                <div class="pgsize">10 / trang<span class="sel__c"></span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Hai trạng thái tách riêng: bán vé (mở/đóng) và vận hành (7 trạng thái)</li>
+          <li>Vận hành: nháp, lên lịch, lên máy bay, trễ, cất cánh, hạ cánh, huỷ</li>
+          <li>Chuyến nháp chưa hiện với khách dù đã mở bán</li>
+          <li>Chuyến đã cất cánh không còn sửa được</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> sidebar nhóm "Vận hành bay", hoặc từ Dashboard</li>
+          <li><b>Ra tới:</b> chi tiết chuyến, biểu mẫu sửa, danh sách đặt chỗ của chuyến</li>
+          <li>"Thêm chuyến bay" mở biểu mẫu ở trang riêng</li>
+          <li>Bấm vào số hiệu mở chi tiết chuyến</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Tám cột: số hiệu, tuyến, khởi hành, máy bay, ghế trống, bán vé, vận hành, thao tác</li>
+          <li>Hai cột trạng thái đứng cạnh nhau vì hay phải đọc cùng lúc</li>
+          <li>Ghế trống canh phải để quét nhanh chuyến sắp hết</li>
+          <li>Hai bộ lọc tương ứng hai trạng thái</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li>Giữ đúng hai trạng thái tách rời: một chuyến có thể đang mở bán nhưng đã bị huỷ.</li>
+          <li>Đưa ghế trống lên bảng chính để thấy ngay chuyến nào cần mở bổ sung.</li>
+          <li>Không có thao tác xoá cứng — chỉ đóng bán hoặc huỷ chuyến.</li>
+          <li>Tích chọn ở đầu dòng để chuẩn bị cho thao tác hàng loạt mở/đóng bán.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-03 · STAFF FLIGHT DETAIL
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-03</span>
+      <h2>Chi tiết chuyến bay</h2>
+      <span class="route">/staff/flights/:id</span>
+      <span class="sp"></span>
+      <span class="meta">Bốn tab: lịch bay · giá bán · tồn ghế · đặt chỗ</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i on"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><span>Chuyến bay</span><span class="sep">›</span><b>VN 165</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div class="pgh">
+              <div>
+                <h1>VN 165 <span class="tag">Airbus A321</span></h1>
+                <p>HAN → DAD · 15/11/2026 · 06:15 – 07:35 · Vietnam Airlines</p>
+              </div>
+              <span class="sp"></span>
+              <span class="toggle"><span class="sw"></span> Đang mở bán</span>
+              <span class="btn btn--dark">Sửa chuyến</span>
+            </div>
+
+            <div class="card">
+              <div class="tabs">
+                <div class="tab on">Lịch bay</div>
+                <div class="tab">Giá bán <span class="cnt-n">3</span></div>
+                <div class="tab">Tồn ghế <span class="cnt-n">176</span></div>
+                <div class="tab">Đặt chỗ <span class="cnt-n">42</span></div>
+              </div>
+
+              <div class="dl">
+                <div class="dl__r"><dt>Số hiệu chuyến</dt><dd><b>VN 165</b></dd></div>
+                <div class="dl__r"><dt>Hãng khai thác</dt><dd>Vietnam Airlines (VN)</dd></div>
+                <div class="dl__r"><dt>Máy bay</dt><dd>VN-A321-01 · Airbus A321 · 180 ghế</dd></div>
+                <div class="dl__r"><dt>Sân bay đi</dt><dd>Nội Bài (HAN) — Hà Nội</dd></div>
+                <div class="dl__r"><dt>Sân bay đến</dt><dd>Đà Nẵng (DAD) — Đà Nẵng</dd></div>
+                <div class="dl__r"><dt>Khởi hành dự kiến</dt><dd>15/11/2026 · 06:15</dd></div>
+                <div class="dl__r"><dt>Đến dự kiến</dt><dd>15/11/2026 · 07:35</dd></div>
+                <div class="dl__r"><dt>Chuyến gốc</dt><dd>— (chuyến thường)</dd></div>
+                <div class="dl__r"><dt>Trạng thái vận hành</dt><dd><span class="badge badge--ok">Đã lên lịch</span></dd></div>
+                <div class="dl__r"><dt>Trạng thái bán vé</dt><dd><span class="badge badge--ok">Mở bán</span></dd></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Chuyến bổ sung cùng tuyến</h2><span class="sp"></span><span class="tag">So sánh nhanh</span></div>
+              <table class="tbl">
+                <thead>
+                  <tr><th style="width:120px">Số hiệu</th><th style="width:170px">Khởi hành</th><th style="width:150px">Máy bay</th><th style="width:120px" class="num">Ghế trống</th><th>Chuyến gốc</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><span class="cd">VN 167</span></td><td>15/11/2026 · 08:10</td><td>VN-A321-06</td><td class="num">94</td><td>VN 165</td></tr>
+                  <tr><td><span class="cd">VJ 509</span></td><td>15/11/2026 · 08:45</td><td>VJ-A321-02</td><td class="num">58</td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Tab Lịch bay đang mở; ba tab còn lại cùng cấp, không phải bước tuần tự</li>
+          <li>Công tắc Mở/Đóng bán đổi ngay trạng thái bán vé</li>
+          <li>Chuyến đã cất cánh hoặc đã huỷ thì khoá nút Sửa</li>
+          <li>Chuyến bổ sung hiện đường dẫn về chuyến gốc</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> danh sách chuyến bay, Dashboard</li>
+          <li><b>Ra tới:</b> sửa chuyến, giá bán, tồn ghế, đặt chỗ của chuyến</li>
+          <li>Ba tab sau mở nội dung tại chỗ, không đổi route</li>
+          <li>Tab Đặt chỗ lọc sẵn theo chuyến đang xem</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Tiêu đề chuyến + tuyến + giờ ở đầu, công tắc bán vé bên phải</li>
+          <li>Dải tab nằm trong thẻ nội dung, tab đang chọn gạch chân</li>
+          <li>Tab Lịch bay dùng danh sách nhãn–giá trị hai cột</li>
+          <li>Khối chuyến bổ sung đặt dưới để đối chiếu nhanh</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li>Gom bốn việc của một chuyến vào một trang: lịch, giá, ghế, booking — staff không phải nhảy màn.</li>
+          <li>Đặt công tắc bán vé ở tiêu đề vì đây là thao tác hay dùng nhất.</li>
+          <li>Tab Giá bán hiển thị hạng vé × base_fare + tax_fee; tax_fee là cột gộp thuế và phí.</li>
+          <li>Tab Tồn ghế dùng đúng bốn trạng thái AVAILABLE / HOLD / BOOKED / BLOCKED.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-04 · STAFF CREATE FLIGHT
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-04</span>
+      <h2>Thêm chuyến bay</h2>
+      <span class="route">/staff/flights/create</span>
+      <span class="sp"></span>
+      <span class="meta">Biểu mẫu trang riêng</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i on"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><span>Chuyến bay</span><span class="sep">›</span><b>Thêm mới</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div class="pgh">
+              <div>
+                <h1>Thêm chuyến bay</h1>
+                <p>Chuyến mới tạo ở trạng thái nháp và chưa mở bán</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Thông tin chuyến</h2></div>
+              <div class="fgrid">
+                <div class="fg">
+                  <label>Số hiệu chuyến bay <span class="req">*</span></label>
+                  <div class="inp inp--ph">Ví dụ: VN 165</div>
+                  <div class="hint">Tối đa 20 ký tự, không trùng cùng ngày khởi hành</div>
+                </div>
+                <div class="fg">
+                  <label>Hãng khai thác <span class="req">*</span></label>
+                  <div class="sel">Chọn hãng hàng không<span class="sel__c"></span></div>
+                </div>
+                <div class="fg">
+                  <label>Máy bay <span class="req">*</span></label>
+                  <div class="sel">Chọn máy bay có sơ đồ ghế<span class="sel__c"></span></div>
+                  <div class="hint">Chỉ hiện máy bay đã có sơ đồ ghế đủ số ghế</div>
+                </div>
+                <div class="fg">
+                  <label>Chuyến gốc</label>
+                  <div class="sel">Không phải chuyến bổ sung<span class="sel__c"></span></div>
+                  <div class="hint">Chọn chuyến gốc khi mở chuyến bổ sung do cầu cao</div>
+                </div>
+                <div class="fg">
+                  <label>Sân bay đi <span class="req">*</span></label>
+                  <div class="sel">Chọn sân bay<span class="sel__c"></span></div>
+                </div>
+                <div class="fg">
+                  <label>Sân bay đến <span class="req">*</span></label>
+                  <div class="sel">Chọn sân bay<span class="sel__c"></span></div>
+                  <div class="hint">Phải khác sân bay đi</div>
+                </div>
+                <div class="fg">
+                  <label>Giờ khởi hành dự kiến <span class="req">*</span></label>
+                  <div class="inp inp--ph">dd/mm/yyyy · --:--</div>
+                </div>
+                <div class="fg">
+                  <label>Giờ đến dự kiến <span class="req">*</span></label>
+                  <div class="inp inp--ph">dd/mm/yyyy · --:--</div>
+                  <div class="hint">Phải sau giờ khởi hành</div>
+                </div>
+                <div class="fg">
+                  <label>Trạng thái vận hành</label>
+                  <div class="sel">Bản nháp<span class="sel__c"></span></div>
+                </div>
+                <div class="fg">
+                  <label>Mở bán ngay</label>
+                  <div class="toggle"><span class="sw off"></span> Đóng bán cho tới khi hoàn tất giá</div>
+                </div>
+              </div>
+
+              <div style="padding:0 20px 18px">
+                <div class="note2">
+                  Tạo chuyến <b>chưa sinh tồn ghế</b>. Sau khi lưu, staff vào tab <b>Tồn ghế</b> để
+                  khởi tạo ghế từ sơ đồ máy bay, rồi nhập <b>Giá bán</b> cho từng hạng vé.
+                  Chuyến chỉ hiện với khách khi đã có giá và được mở bán.
+                </div>
+              </div>
+
+              <div class="fact">
+                <span class="btn btn--ghost">Huỷ</span>
+                <span class="btn">Lưu nháp</span>
+                <span class="btn btn--dark">Tạo chuyến</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Mặc định bản nháp, đóng bán</li>
+          <li>Thiếu trường bắt buộc thì nút Tạo chuyến không bấm được</li>
+          <li>Giờ đến phải sau giờ khởi hành, sân bay đến khác sân bay đi</li>
+          <li>Máy bay không có sơ đồ ghế đủ thì không chọn được</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> nút "Thêm chuyến bay" ở danh sách, hoặc Dashboard</li>
+          <li><b>Ra tới:</b> chi tiết chuyến vừa tạo, tab Tồn ghế</li>
+          <li>Huỷ quay lại danh sách, không lưu gì</li>
+          <li>Lưu nháp giữ trang, cho phép sửa tiếp</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Lưới hai cột, nhóm cặp thông tin liên quan cạnh nhau</li>
+          <li>Số hiệu và hãng ở hàng đầu</li>
+          <li>Máy bay và chuyến gốc ở hàng hai</li>
+          <li>Thanh hành động dính đáy thẻ nội dung</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li>Tách "tạo chuyến" khỏi "nhập giá" để không bắt staff nhập giá ngay khi chưa có tồn ghế.</li>
+          <li>Chuyến gốc là trường tuỳ chọn, chỉ dùng khi mở chuyến bổ sung.</li>
+          <li>Ghi rõ hệ quả của "Mở bán ngay" ngay dưới công tắc.</li>
+          <li>Biểu mẫu là trang riêng để tải lại không mất dữ liệu.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-05 · STAFF EDIT FLIGHT
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-05</span>
+      <h2>Sửa chuyến bay</h2>
+      <span class="route">/staff/flights/:id/edit</span>
+      <span class="sp"></span>
+      <span class="meta">Khoá máy bay khi chuyến đã có booking</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i on"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><span>Chuyến bay</span><span class="sep">›</span><span>VN 165</span><span class="sep">›</span><b>Sửa</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div class="pgh">
+              <div>
+                <h1>Sửa chuyến VN 165</h1>
+                <p>Cập nhật lịch bay · chuyến đã có 42 booking</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Thông tin chuyến</h2></div>
+              <div class="fgrid">
+                <div class="fg">
+                  <label>Số hiệu chuyến bay <span class="req">*</span></label>
+                  <div class="inp">VN 165</div>
+                </div>
+                <div class="fg">
+                  <label>Hãng khai thác <span class="req">*</span></label>
+                  <div class="sel">Vietnam Airlines (VN)<span class="sel__c"></span></div>
+                </div>
+                <div class="fg">
+                  <label>Máy bay <span class="req">*</span></label>
+                  <div class="sel" style="background:var(--fill-3);color:var(--ink-3)">VN-A321-01 · khoá<span class="sel__c"></span></div>
+                  <div class="hint">Không đổi được vì chuyến đã có booking gắn với sơ đồ ghế cũ</div>
+                </div>
+                <div class="fg">
+                  <label>Chuyến gốc</label>
+                  <div class="sel">Không phải chuyến bổ sung<span class="sel__c"></span></div>
+                </div>
+                <div class="fg">
+                  <label>Sân bay đi <span class="req">*</span></label>
+                  <div class="sel">Nội Bài (HAN) — Hà Nội<span class="sel__c"></span></div>
+                </div>
+                <div class="fg">
+                  <label>Sân bay đến <span class="req">*</span></label>
+                  <div class="sel">Đà Nẵng (DAD) — Đà Nẵng<span class="sel__c"></span></div>
+                </div>
+                <div class="fg">
+                  <label>Giờ khởi hành dự kiến <span class="req">*</span></label>
+                  <div class="inp">15/11/2026 · 06:15</div>
+                </div>
+                <div class="fg">
+                  <label>Giờ đến dự kiến <span class="req">*</span></label>
+                  <div class="inp">15/11/2026 · 07:35</div>
+                </div>
+                <div class="fg">
+                  <label>Trạng thái vận hành</label>
+                  <div class="sel">Đã lên lịch<span class="sel__c"></span></div>
+                </div>
+                <div class="fg">
+                  <label>Bán vé</label>
+                  <div class="toggle"><span class="sw"></span> Đang mở bán</div>
+                </div>
+              </div>
+
+              <div style="padding:0 20px 18px">
+                <div class="note2 note2--warn">
+                  <b>Máy bay đang bị khoá.</b> Chuyến đã có booking nên không thể đổi máy bay —
+                  số ghế đã bán gắn với sơ đồ máy bay hiện tại. Nếu buộc phải đổi, phải huỷ chuyến
+                  và tạo chuyến mới.
+                </div>
+              </div>
+
+              <div class="fact">
+                <span class="btn btn--ghost">Quay lại</span>
+                <span class="btn btn--dark">Lưu thay đổi</span>
+              </div>
+            </div>
+
+            <div class="danger" style="margin-top:16px">
+              <h3>Huỷ chuyến</h3>
+              <p>Huỷ chuyến sẽ chuyển trạng thái vận hành sang <b>Đã huỷ</b> và đóng bán vé.
+                 Hệ thống không tự hoàn tiền — khách liên hệ đại lý để được xử lý hoàn tiền.</p>
+              <span class="btn">Huỷ chuyến này</span>
+            </div>
+          </div>
+
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Máy bay hiện ô khoá, nền xám, kèm lý do</li>
+          <li>Khối huỷ chuyến tách riêng, viền cam để tránh bấm nhầm</li>
+          <li>Chuyến đã cất cánh hoặc đã huỷ thì chỉ xem, không sửa</li>
+          <li>Đổi giờ khởi hành không tự đổi hạn thanh toán của booking cũ</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> chi tiết chuyến, danh sách chuyến bay</li>
+          <li><b>Ra tới:</b> chi tiết chuyến sau khi lưu</li>
+          <li>Huỷ chuyến yêu cầu xác nhận, không hoàn tiền tự động</li>
+          <li>Quay lại không lưu thay đổi đang nhập</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Cùng lưới hai cột với biểu mẫu thêm mới</li>
+          <li>Ô bị khoá dùng nền xám, chữ mờ hơn</li>
+          <li>Cảnh báo đặt ngay dưới lưới trường</li>
+          <li>Khối huỷ chuyến nằm ngoài thẻ để tách khỏi thao tác lưu</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li>Khoá máy bay ngay ở giao diện, không để staff chọn rồi mới báo lỗi từ server.</li>
+          <li>Nói rõ hệ quả "không tự hoàn tiền" ngay trong khối huỷ để staff trả lời khách đúng.</li>
+          <li>Tách khối huỷ khỏi nút Lưu để giảm thao tác nhầm.</li>
+          <li>Giữ nguyên bố cục với màn thêm mới để staff không phải học lại.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-06 · STAFF BOOKING LIST
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-06</span>
+      <h2>Danh sách đặt chỗ</h2>
+      <span class="route">/staff/bookings</span>
+      <span class="sp"></span>
+      <span class="meta">Chỉ đọc — tra cứu theo mã đơn hoặc PNR</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i on"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><b>Đặt chỗ</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div class="pgh">
+              <div>
+                <h1>Đặt chỗ</h1>
+                <p>Toàn bộ booking của khách · tra cứu theo mã đơn hoặc PNR, tên hoặc email</p>
+              </div>
+              <span class="sp"></span>
+              <span class="btn btn--ghost">Xuất Excel</span>
+            </div>
+
+            <div class="card">
+              <div class="tb">
+                <div class="srh"><span class="srh__ic"></span>Tìm theo mã đơn, PNR, tên hoặc email khách</div>
+                <div class="sel">Tất cả trạng thái<span class="sel__c"></span></div>
+                <div class="sel">Hành trình: tất cả<span class="sel__c"></span></div>
+                <div class="sel">13/11/2026 – 20/11/2026<span class="sel__c"></span></div>
+                <span class="sp"></span>
+              </div>
+
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width:130px">Mã đơn / PNR</th>
+                    <th style="width:220px">Khách hàng</th>
+                    <th>Tuyến</th>
+                    <th style="width:170px">Ngày bay</th>
+                    <th style="width:120px" class="num">Hành khách</th>
+                    <th style="width:150px" class="num">Tổng tiền</th>
+                    <th style="width:160px">Trạng thái</th>
+                    <th style="width:60px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="cd">VF7K2M</span><div style="font-size:9px;color:var(--ink-3)">DH-1042</div></td>
+                    <td><b>Nguyễn Văn An</b><div style="font-size:10px;color:var(--ink-3)">an.nguyen&#64;email.com</div></td>
+                    <td>HAN → SGN</td><td>15/11/2026</td><td class="num">2</td>
+                    <td class="num">2.750.000 ₫</td>
+                    <td><span class="badge badge--ok">Đã xác nhận</span></td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">VF9Q1T</span><div style="font-size:9px;color:var(--ink-3)">DH-1043</div></td>
+                    <td><b>Trần Thị Bích</b><div style="font-size:10px;color:var(--ink-3)">bich.tran&#64;email.com</div></td>
+                    <td>HAN → SGN → HAN</td><td>20/11/2026</td><td class="num">1</td>
+                    <td class="num">5.220.000 ₫</td>
+                    <td><span class="badge badge--ok">Đã xác nhận</span></td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">DH-1046</span><div style="font-size:9px;color:var(--ink-3)">PNR sau thanh toán</div></td>
+                    <td><b>Lê Minh Cường</b><div style="font-size:10px;color:var(--ink-3)">cuong.le&#64;gmail.com</div></td>
+                    <td>SGN → DAD</td><td>14/11/2026</td><td class="num">1</td>
+                    <td class="num">1.290.000 ₫</td>
+                    <td><span class="badge badge--warn">Chờ thanh toán</span></td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">VF5H0P</span><div style="font-size:9px;color:var(--ink-3)">DH-1044</div></td>
+                    <td><b>Phạm Thu Hà</b><div style="font-size:10px;color:var(--ink-3)">ha.pham&#64;email.com</div></td>
+                    <td>HAN → DAD</td><td>12/11/2026</td><td class="num">2</td>
+                    <td class="num">2.480.000 ₫</td>
+                    <td><span class="badge">Đã hủy</span></td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="cd">DH-1045</span><div style="font-size:9px;color:var(--ink-3)">PNR sau thanh toán</div></td>
+                    <td><b>Đỗ Quang Minh</b><div style="font-size:10px;color:var(--ink-3)">minh.do&#64;email.com</div></td>
+                    <td>SGN → CXR</td><td>11/11/2026</td><td class="num">3</td>
+                    <td class="num">3.870.000 ₫</td>
+                    <td><span class="badge">Hết hạn</span></td>
+                    <td><span class="ract"><span class="chev">›</span></span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="pager">
+                <span>Hiển thị 1–10 trên 1.284 bản ghi</span>
+                <span class="sp"></span>
+                <span class="pg">‹</span><span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">›</span>
+                <div class="pgsize">10 / trang<span class="sel__c"></span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Bốn trạng thái: chờ thanh toán, đã xác nhận, đã huỷ, hết hạn</li>
+          <li>Chờ thanh toán có hạn giữ chỗ, quá hạn tự chuyển "Hết hạn"</li>
+          <li>Không có nút tạo booking — booking do khách tạo</li>
+          <li>Không có sửa/xoá hàng loạt</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> sidebar nhóm "Bán vé", Dashboard, hoặc tab Đặt chỗ của chuyến</li>
+          <li><b>Ra tới:</b> chi tiết booking để xem hành khách, ghế, hành lý, thanh toán</li>
+          <li>Đơn chưa thanh toán chỉ có mã đơn hàng; PNR sinh sau khi thanh toán thành công.</li>
+          <li>Xuất Excel để đối soát, không chuyển trang</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Bảy cột: mã đơn/PNR, khách hàng, tuyến, ngày bay, số khách, tổng tiền, trạng thái</li>
+          <li>Cột khách hàng hai dòng: tên đậm, email mờ</li>
+          <li>Số khách và tổng tiền canh phải</li>
+          <li>Không cột tích chọn vì không có thao tác hàng loạt</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li>Chỉ đọc đúng quyền staff: xem để hỗ trợ khách, không sửa dữ liệu.</li>
+          <li>Mã đơn/PNR đứng đầu bảng: PNR là khoá tra cứu sau khi đơn đã thanh toán.</li>
+          <li>Lọc theo khoảng ngày vì staff thường hỏi "hôm nay có bao nhiêu đơn".</li>
+          <li>Giữ "Hết hạn" tách khỏi "Đã huỷ" để biết khách có chủ động huỷ hay không.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-07 · STAFF BOOKING DETAIL
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-07</span>
+      <h2>Chi tiết đặt chỗ</h2>
+      <span class="route">/staff/bookings/:id</span>
+      <span class="sp"></span>
+      <span class="meta">Chỉ đọc · in / xuất PDF</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i on"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><span>Đặt chỗ</span><span class="sep">›</span><b>VF7K2M</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div class="pgh">
+              <div>
+                <h1>VF7K2M <span class="badge badge--ok">Đã xác nhận</span></h1>
+                <p>Nguyễn Văn An · an.nguyen&#64;email.com · tạo lúc 08:42, 13/11/2026</p>
+              </div>
+              <span class="sp"></span>
+              <span class="btn btn--ghost">In / xuất PDF</span>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Thông tin booking</h2></div>
+              <div class="dl">
+                <div class="dl__r"><dt>Mã đặt chỗ (PNR)</dt><dd><b>VF7K2M</b></dd></div>
+                <div class="dl__r"><dt>Loại hành trình</dt><dd>Một chiều</dd></div>
+                <div class="dl__r"><dt>Trạng thái</dt><dd><span class="badge badge--ok">Đã xác nhận</span></dd></div>
+                <div class="dl__r"><dt>Hạn thanh toán</dt><dd>Đã thanh toán lúc 08:47, 13/11/2026</dd></div>
+                <div class="dl__r"><dt>Tổng tiền</dt><dd><b>2.750.000 ₫</b></dd></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Chặng bay</h2></div>
+              <table class="tbl">
+                <thead>
+                  <tr><th style="width:70px">Chặng</th><th style="width:150px">Chuyến</th><th style="width:190px">Tuyến</th><th style="width:190px">Hạng vé</th><th style="width:190px">Quy định hoàn</th><th class="num">Giá chặng</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1 · Đi</td><td><span class="cd">VN 165</span></td><td>HAN → DAD</td>
+                    <td>VN_ECON_FLEX · Phổ thông linh hoạt</td><td>Hoàn trước 24 giờ · 90%</td>
+                    <td class="num">2.400.000 ₫</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Hành khách</h2><span class="sp"></span><span class="tag">2 hành khách</span></div>
+              <table class="tbl">
+                <thead>
+                  <tr><th style="width:220px">Họ tên</th><th style="width:110px">Giới tính</th><th style="width:140px">Ngày sinh</th><th style="width:120px">Loại</th><th style="width:120px">Ghế</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><b>Nguyễn Văn An</b></td><td>Nam</td><td>12/04/1990</td><td><span class="badge">Người lớn</span></td><td><span class="cd">12A</span></td></tr>
+                  <tr><td><b>Nguyễn Thị Mai</b></td><td>Nữ</td><td>08/09/1997</td><td><span class="badge">Người lớn</span></td><td><span class="cd">12B</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="split" style="margin-top:16px">
+              <div class="card" style="margin-top:0">
+                <div class="card__h"><h2>Hành lý</h2></div>
+                <table class="tbl">
+                  <thead>
+                    <tr><th>Hành khách</th><th>Gói</th><th class="num">SL</th><th class="num">Thành tiền</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Nguyễn Văn An</td><td>Hành lý 20 kg</td><td class="num">1</td><td class="num">250.000 ₫</td></tr>
+                    <tr><td>Nguyễn Thị Mai</td><td>Hành lý 20 kg</td><td class="num">1</td><td class="num">250.000 ₫</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="card" style="margin-top:0">
+                <div class="card__h"><h2>Thanh toán</h2></div>
+                <table class="tbl">
+                  <thead>
+                    <tr><th>Phương thức</th><th>Trạng thái</th><th class="num">Số tiền</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>VNPay</td><td><span class="badge badge--ok">Thành công</span></td><td class="num">2.750.000 ₫</td></tr>
+                  </tbody>
+                </table>
+                <div class="dl">
+                  <div class="dl__r"><dt>Mã giao dịch</dt><dd><span class="cd">VNP-9F3K2L</span></dd></div>
+                  <div class="dl__r"><dt>Thời điểm</dt><dd>08:47, 13/11/2026</dd></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__h"><h2>Vé điện tử</h2><span class="sp"></span><span class="tag">2 vé</span></div>
+              <table class="tbl">
+                <thead>
+                  <tr><th style="width:190px">Mã vé</th><th>Hành khách</th><th>Chặng</th><th>Ghế</th><th style="width:140px">Trạng thái</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><span class="cd">ET-7K2M-01</span></td><td>Nguyễn Văn An</td><td>HAN → DAD</td><td>12A</td><td><span class="badge badge--ok">Đã phát hành</span></td></tr>
+                  <tr><td><span class="cd">ET-7K2M-02</span></td><td>Nguyễn Thị Mai</td><td>HAN → DAD</td><td>12B</td><td><span class="badge badge--ok">Đã phát hành</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Chỉ đọc hoàn toàn — không nút sửa, huỷ hay hoàn tiền</li>
+          <li>Booking đã huỷ thì khối vé hiện trạng thái đã huỷ</li>
+          <li>Em bé không có ghế nên cột ghế để trống</li>
+          <li>Không hiện số điện thoại/email người liên hệ ngoài thông tin khách tạo đơn</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> danh sách đặt chỗ, tab Đặt chỗ của chuyến, Dashboard</li>
+          <li><b>Ra tới:</b> không có màn con; chỉ in hoặc xuất PDF</li>
+          <li>In / xuất PDF mở hộp thoại in của trình duyệt</li>
+          <li>Quay lại giữ nguyên bộ lọc danh sách</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Bốn khối dọc: thông tin booking, chặng, hành khách, hành lý + thanh toán</li>
+          <li>Hành lý và thanh toán đứng cạnh nhau theo tỉ lệ 1,5 : 1</li>
+          <li>Vé điện tử xuống cuối vì chỉ để đối chiếu</li>
+          <li>Mã PNR và trạng thái gộp ở tiêu đề</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li>Staff xem để hỗ trợ khách, mọi thay đổi vẫn do khách hoặc admin quyết định.</li>
+          <li>Hiện quy định hoàn của hạng vé để staff trả lời câu hỏi hoàn tiền.</li>
+          <li>Không có nút huỷ hộ khách — tránh tranh chấp trách nhiệm.</li>
+          <li>Mỗi hành khách một vé điện tử, khớp quy tắc mỗi chặng một vé.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-08 · STAFF AIRCRAFT
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-08</span>
+      <h2>Máy bay</h2>
+      <span class="route">/staff/aircrafts</span>
+      <span class="sp"></span>
+      <span class="meta">Chỉ đọc — tra cứu khi xếp chuyến</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i on"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><b>Máy bay</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div class="pgh">
+              <div>
+                <h1>Máy bay</h1>
+                <p>Danh sách máy bay để tra cứu khi xếp chuyến · chỉ đọc</p>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="tb">
+                <div class="srh"><span class="srh__ic"></span>Tìm theo mã máy bay hoặc hãng</div>
+                <div class="sel">Tất cả hãng<span class="sel__c"></span></div>
+                <div class="sel">Sơ đồ ghế: tất cả<span class="sel__c"></span></div>
+                <span class="sp"></span>
+              </div>
+
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width:180px">Mã máy bay</th>
+                    <th style="width:200px">Hãng</th>
+                    <th style="width:160px">Dòng máy bay</th>
+                    <th style="width:120px" class="num">Số ghế</th>
+                    <th style="width:160px">Sơ đồ ghế</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>VN-A321-01</b></td><td>Vietnam Airlines</td><td>Airbus A321</td>
+                    <td class="num">180</td><td><span class="badge badge--ok">Đã cấu hình</span></td>
+                    <td><span class="badge">Đang hoạt động</span></td>
+                  </tr>
+                  <tr>
+                    <td><b>VJ-A321-02</b></td><td>Vietjet Air</td><td>Airbus A321</td>
+                    <td class="num">180</td><td><span class="badge badge--ok">Đã cấu hình</span></td>
+                    <td><span class="badge">Đang hoạt động</span></td>
+                  </tr>
+                  <tr>
+                    <td><b>QH-A320-03</b></td><td>Bamboo Airways</td><td>Airbus A320</td>
+                    <td class="num">168</td><td><span class="badge badge--ok">Đã cấu hình</span></td>
+                    <td><span class="badge">Đang hoạt động</span></td>
+                  </tr>
+                  <tr>
+                    <td><b>VU-ATR-04</b></td><td>Vietravel Airlines</td><td>ATR 72</td>
+                    <td class="num">68</td><td><span class="badge badge--warn">Chưa cấu hình</span></td>
+                    <td><span class="badge">Tạm dừng</span></td>
+                  </tr>
+                  <tr>
+                    <td><b>VN-B787-05</b></td><td>Vietnam Airlines</td><td>Boeing 787-9</td>
+                    <td class="num">274</td><td><span class="badge badge--ok">Đã cấu hình</span></td>
+                    <td><span class="badge">Đang hoạt động</span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="pager">
+                <span>Hiển thị 1–5 trên 5 bản ghi</span>
+                <span class="sp"></span>
+                <span class="pg on">1</span>
+                <div class="pgsize">10 / trang<span class="sel__c"></span></div>
+              </div>
+            </div>
+
+            <div class="note2" style="margin-top:16px">
+              Nhân viên vận hành chỉ tra cứu máy bay. Việc thêm, sửa và cấu hình sơ đồ ghế do
+              quản trị viên thực hiện. Máy bay chưa cấu hình sơ đồ ghế không dùng để xếp chuyến được.
+            </div>
+          </div>
+
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Hai trạng thái tách biệt: sơ đồ ghế (đã/chưa cấu hình) và hoạt động (đang chạy/tạm dừng)</li>
+          <li>Máy bay chưa cấu hình sơ đồ ghế không chọn được khi tạo chuyến</li>
+          <li>Tạm dừng vẫn xem được nhưng không xếp chuyến mới</li>
+          <li>Không có nút thêm/sửa/xoá</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> sidebar nhóm "Danh mục"</li>
+          <li><b>Ra tới:</b> không có màn con; chỉ tra cứu</li>
+          <li>Khi tạo chuyến, danh sách máy bay hợp lệ lấy từ đây</li>
+          <li>Tìm nhanh theo mã hoặc hãng</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Năm cột: mã máy bay, hãng, dòng máy bay, số ghế, sơ đồ ghế, trạng thái</li>
+          <li>Số ghế canh phải để so sánh nhanh sức chứa</li>
+          <li>Hai cột trạng thái đứng cạnh nhau</li>
+          <li>Ghi chú phạm vi quyền đặt ngay dưới bảng</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li>Staff cần đọc máy bay để chọn đúng khi xếp chuyến, nhưng không được sửa danh mục.</li>
+          <li>Tách "sơ đồ ghế" khỏi "hoạt động": máy bay có thể đang dừng nhưng sơ đồ vẫn đã có.</li>
+          <li>Không lặp lại cột hãng ở menu lọc và trong bảng là đủ.</li>
+          <li>Ghi rõ ai có quyền sửa để staff biết chuyển yêu cầu cho ai.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       W-STF-09 · STAFF PROFILE
+       ================================================================ -->
+  <section class="row">
+    <div class="rowhead">
+      <span class="code">W-STF-09</span>
+      <h2>Hồ sơ cá nhân</h2>
+      <span class="route">/staff/profile</span>
+      <span class="sp"></span>
+      <span class="meta">Thông tin tài khoản và đổi mật khẩu</span>
+    </div>
+
+    <div class="art">
+      <div class="shell">
+        <aside class="side">
+          <div class="side__h"><span class="side__mk"></span><span class="side__nm">VinaFly</span></div>
+          <div class="side__nav">
+            <div class="side__g"><div class="side__l">Tổng quan</div>
+              <div class="side__i"><span class="side__ic"></span>Dashboard</div></div>
+            <div class="side__g"><div class="side__l">Vận hành bay</div>
+              <div class="side__i"><span class="side__ic"></span>Chuyến bay</div></div>
+            <div class="side__g"><div class="side__l">Bán vé</div>
+              <div class="side__i"><span class="side__ic"></span>Đặt chỗ</div></div>
+            <div class="side__g"><div class="side__l">Danh mục</div>
+              <div class="side__i"><span class="side__ic"></span>Máy bay</div></div>
+            <div class="side__g"><div class="side__l">Hệ thống</div>
+              <div class="side__i on"><span class="side__ic"></span>Hồ sơ cá nhân</div></div>
+          </div>
+          <div class="side__f"><div class="side__i"><span class="side__ic"></span>Về trang khách hàng</div></div>
+        </aside>
+
+        <div class="main">
+          <div class="hd">
+            <div class="hd__brand"><span class="hd__mk"></span><span class="hd__bn">VinaFly</span></div>
+            <span class="hd__sep"></span>
+            <div class="crumbs"><span>Vận hành</span><span class="sep">›</span><b>Hồ sơ cá nhân</b></div>
+            <span class="sp"></span>
+            <span class="hd__date">13/11/2026</span>
+            <span class="hd__bell"></span>
+            <span class="hd__u"><span><span class="hd__nm">Trần Minh Khoa</span><span class="hd__rl">Nhân viên vận hành</span></span><span class="av">MK</span><span class="hd__chev"></span></span>
+          </div>
+
+          <div class="cnt">
+            <div style="max-width:880px">
+              <div class="pgh">
+                <div>
+                  <h1>Hồ sơ cá nhân</h1>
+                  <p>Thông tin tài khoản đang đăng nhập · dùng chung một biểu mẫu với khu vực khách</p>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card__h"><h2>Ảnh đại diện</h2></div>
+                <div class="imgfield" style="padding:16px 20px">
+                  <div class="ph imgfield__pv" style="width:64px;height:64px;border-radius:50%"></div>
+                  <div class="imgfield__bd">
+                    <div class="inp">https://res.cloudinary.com/vinafly/avatar/__AV__</div>
+                    <div style="margin-top:9px;display:flex;gap:10px">
+                      <span class="btn btn--ghost btn--sm">Chọn ảnh từ máy</span>
+                      <span class="btn btn--ghost btn--sm">Gỡ ảnh</span>
+                    </div>
+                    <div class="hint">Dán đường dẫn Cloudinary hoặc chọn tệp. Để trống thì hiện chữ viết tắt của họ tên.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card__h"><h2>Thông tin cá nhân</h2></div>
+                <div class="fgrid">
+                  <div class="fg">
+                    <label>Họ và tên <span class="req">*</span></label>
+                    <div class="inp">Trần Minh Khoa</div>
+                    <div class="hint">Nhập đầy đủ họ và tên, không tách riêng</div>
+                  </div>
+                  <div class="fg">
+                    <label>Số điện thoại</label>
+                    <div class="inp">0912 345 678</div>
+                  </div>
+                  <div class="fg">
+                    <label>Giới tính</label>
+                    <div class="inp">Nam<span style="flex:1"></span><span class="sel__c"></span></div>
+                    <div class="hint">Nam · Nữ · Khác</div>
+                  </div>
+                  <div class="fg">
+                    <label>Thông tin cư trú</label>
+                    <div class="inp">Quận Hải Châu, Đà Nẵng</div>
+                    <div class="hint">Không bắt buộc</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card__h"><h2>Thông tin tài khoản</h2><span class="sp"></span><span class="badge badge--ok">Đang hoạt động</span></div>
+                <div class="dl">
+                  <div class="dl__r"><dt>Email đăng nhập</dt><dd>khoa.tran&#64;vinafly.vn</dd></div>
+                  <div class="dl__r"><dt>Vai trò</dt><dd><span class="badge">Nhân viên vận hành</span> <span class="cd">STAFF</span></dd></div>
+                  <div class="dl__r"><dt>Ngày tham gia</dt><dd>02/03/2026</dd></div>
+                  <div class="dl__r"><dt>Đăng nhập gần nhất</dt><dd>14/11/2026 · 08:55</dd></div>
+                </div>
+                <p style="margin:0; padding:0 20px 16px; font-size:11px; color:var(--ink-3)">
+                  Email và vai trò do hệ thống quản lý. Muốn đổi vai trò thì nhờ ADMIN khác sửa ở màn Người dùng.
+                </p>
+                <div class="fact">
+                  <span class="btn btn--ghost">Hoàn tác</span>
+                  <span class="btn btn--dark">Lưu thay đổi</span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card__h"><h2>Đổi mật khẩu</h2></div>
+                <div class="fgrid" style="grid-template-columns:1fr">
+                  <div class="fg">
+                    <label>Mật khẩu hiện tại <span class="req">*</span></label>
+                    <div class="inp inp--ph">Nhập mật khẩu hiện tại</div>
+                  </div>
+                  <div class="fg">
+                    <label>Mật khẩu mới <span class="req">*</span></label>
+                    <div class="inp inp--ph">Tối thiểu 8 ký tự, gồm chữ và số</div>
+                  </div>
+                  <div class="fg">
+                    <label>Nhập lại mật khẩu mới <span class="req">*</span></label>
+                    <div class="inp inp--ph">Nhập lại mật khẩu mới</div>
+                  </div>
+                </div>
+                <div class="fact">
+                  <span class="btn btn--dark">Cập nhật mật khẩu</span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card__h"><h2>Phiên đăng nhập gần nhất</h2><span class="sp"></span><span class="tag">10 phiên</span></div>
+                <table class="tbl">
+                  <thead><tr><th>Thiết bị</th><th>Thời điểm</th><th>Địa chỉ IP</th></tr></thead>
+                  <tbody>
+                    <tr><td>Chrome · Windows</td><td>14/11/2026 · 08:55</td><td><span class="cd">113.161.x.x</span></td></tr>
+                    <tr><td>Chrome · Windows</td><td>13/11/2026 · 17:20</td><td><span class="cd">113.161.x.x</span></td></tr>
+                    <tr><td>Safari · iPhone</td><td>12/11/2026 · 21:04</td><td><span class="cd">27.72.x.x</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="foot2"><span>© 2026 VinaFly — Khu vực vận hành.</span><span>Phiên bản 0.2 · Phase 1</span></div>
+        </div>
+      </div>
+    </div>
+
+        <div class="notes">
+      <div>
+        <h3>Trạng thái</h3>
+        <ul>
+          <li>Bốn ô nhập cá nhân dùng chung một biểu mẫu với khu vực khách</li>
+          <li>Chưa có ảnh: hình tròn hiện chữ viết tắt của họ tên</li>
+          <li>Đang lưu: nút đổi thành "Đang lưu…" và khoá lại</li>
+          <li>Email và vai trò không sửa được — chỉ hiện để đọc</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Luồng</h3>
+        <ul>
+          <li><b>Vào từ:</b> sidebar nhóm "Hệ thống", hoặc menu tài khoản trên header</li>
+          <li><b>Ra tới:</b> ở lại trang sau khi lưu; header đổi tên và ảnh ngay</li>
+          <li>Đổi mật khẩu cùng màn: <code>PUT /account/change-password</code></li>
+          <li>Muốn đổi vai trò thì nhờ ADMIN khác sửa ở màn Người dùng</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Cấu trúc</h3>
+        <ul>
+          <li>Năm khối: ảnh đại diện -> thông tin cá nhân -> tài khoản -> mật khẩu -> phiên đăng nhập</li>
+          <li>Họ và tên là một ô, không tách họ đệm và tên</li>
+          <li>Giới tính chọn Nam · Nữ · Khác; thông tin cư trú không bắt buộc</li>
+          <li>Nút lưu đặt trong khối tài khoản, sau khi đã xem hết dữ liệu sửa được</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Quyết định thiết kế</h3>
+        <ul>
+          <li><b>ADMIN và STAFF dùng chung một màn</b> — cùng endpoint hồ sơ, chỉ khác dữ liệu vai trò.</li>
+          <li>Ảnh đại diện nhập bằng URL Cloudinary hoặc chọn tệp, cùng khuôn với các màn danh mục khác.</li>
+          <li>Không có khối phân quyền: người dùng không tự đổi vai trò của mình.</li>
+          <li>Phiên đăng nhập để đối chiếu khi có truy cập lạ, chỉ đọc.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GHI CHÚ CUỐI TÀI LIỆU ============ -->
+  <section class="endnote">
+    <h3>Tổng hợp khu vực vận hành (Staff)</h3>
+    <ul>
+      <li><b>9 artboard, 5 mục sidebar:</b> Dashboard · Chuyến bay · Đặt chỗ · Máy bay · Hồ sơ cá nhân.</li>
+      <li><b>Khác khu vực admin ở đâu:</b> staff không có quản trị người dùng, vai trò, quyền, master data ghi, khuyến mãi, voucher, tin tức hay cấu hình máy bay. Staff toàn quyền chuyến bay, giá bán và tồn ghế; chỉ đọc booking và máy bay.</li>
+      <li><b>Khung chung:</b> sidebar trái chia nhóm · header có logo, đường dẫn, ngày, chuông thông báo và menu tài khoản · vùng nội dung · footer. Không có thanh điều hướng ngang.</li>
+      <li><b>Tái dùng khuôn:</b> danh sách chuyến bay và đặt chỗ dùng chung khuôn bảng; biểu mẫu thêm/sửa chuyến là trang riêng; chi tiết chuyến gom bốn tab lịch bay · giá bán · tồn ghế · đặt chỗ.</li>
+      <li><b>Giá vé:</b> mỗi hạng vé nhập <span class="code" style="font-family:Consolas,monospace;background:#eef0f3;padding:2px 6px;border-radius:3px">base_fare</span> và <span class="code" style="font-family:Consolas,monospace;background:#eef0f3;padding:2px 6px;border-radius:3px">tax_fee</span> (thuế và phí gộp một cột). Giá trẻ em 75%, em bé 10% do hệ thống tính.</li>
+      <li><b>Bảng màu:</b> wireframe chỉ dùng thang xám; cam chỉ để đánh dấu chú thích. Bảng màu thương hiệu nằm ở tài liệu Design System.</li>
+      <li><b>Chỉ desktop.</b> Không có bản mobile cho khu vực vận hành.</li>
+    </ul>
+  </section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+Hãy tạo liên kết Prototype (On click -> Navigate to, animation: Dissolve 150ms; riêng các Popup dùng Open overlay, căn giữa, nền mờ 40%, bấm ra ngoài để đóng) cho 21 màn hình của luồng Khách hàng — Đặt vé:
+
+1. Thanh điều hướng đầu trang (Header) — áp dụng cho các frame có Header:
+- Logo "VinaFly" & mục "Trang chủ" -> W-CUS-01 (Trang chủ)
+- Menu tài khoản -> "Vé của tôi" -> W-CUS-17
+- Menu tài khoản -> "Đăng xuất" -> W-CUS-02 (Đăng nhập)
+
+2. Luồng Đăng nhập / Đăng ký:
+- W-CUS-02 (Đăng nhập): nút "Đăng nhập" -> W-CUS-01; link "Đăng ký" -> W-CUS-03; link "Quên mật khẩu" -> W-CUS-04
+- W-CUS-03 (Đăng ký): nút "Tạo tài khoản" -> W-CUS-01; link "Đăng nhập" -> W-CUS-02
+- W-CUS-04 (Quên mật khẩu): nút "Gửi yêu cầu" / link "Quay lại đăng nhập" -> W-CUS-02
+
+3. Luồng Đặt vé 1 chiều:
+- W-CUS-01 (Trang chủ): nút "Tìm chuyến bay" -> W-CUS-05 (Kết quả tìm chuyến)
+- W-CUS-05 (Kết quả tìm chuyến): nút "Chi tiết" -> W-CUS-06 (Chi tiết chuyến); nút "Chọn" / "Chọn chuyến" -> W-CUS-07 (Chọn hạng vé)
+- W-CUS-06 (Chi tiết chuyến): nút "Quay lại" -> W-CUS-05; nút "Chọn chuyến này" -> W-CUS-07
+- W-CUS-07 (Chọn hạng vé): nút "Chọn hạng vé này" / "Tiếp tục" -> W-CUS-08 (Chọn ghế); nút "Quay lại" -> W-CUS-05
+- W-CUS-08 (Chọn ghế): nút "Tiếp tục" -> W-CUS-09 (Thông tin hành khách); nút "Quay lại" -> W-CUS-07
+- W-CUS-09 (Thông tin hành khách):
+  + Nút "Chọn hành lý" / "Chọn" ở mục hành lý -> Open overlay W-BOK-01b (Popup Chọn hành lý ký gửi)
+  + Nút "Sửa" thông tin hành khách -> Open overlay W-BOK-01a (Popup Chỉnh sửa hành khách)
+  + Nút "Tiếp tục" -> W-CUS-10 (Xem lại đơn)
+  + Nút "Quay lại" -> W-CUS-08
+- Trong popup W-BOK-01b & W-BOK-01a: nút "Đóng" / "Huỷ" / "Lưu" / "Xác nhận" -> Close overlay
+- W-CUS-10 (Xem lại đơn): nút "Tiến hành thanh toán" -> W-CUS-11 (Thanh toán); nút "Quay lại" -> W-CUS-09
+- W-CUS-11 (Thanh toán):
+  + Nút thanh toán "VietQR" -> W-CUS-12 (Chuyển khoản VietQR)
+  + Nút "Thanh toán ngay" -> W-CUS-13 (Đang xử lý thanh toán)
+- W-CUS-12 (VietQR): nút "Tôi đã chuyển khoản" -> W-CUS-13; nút "Đổi phương thức" -> W-CUS-11
+- W-CUS-13 (Đang xử lý thanh toán): bấm vào nút/khung trạng thái -> W-CUS-15 (Xác nhận đặt vé); nút "Mô phỏng thất bại" (nếu có) -> W-CUS-14 (Thanh toán thất bại)
+- W-CUS-14 (Thanh toán thất bại): nút "Thử thanh toán lại" -> W-CUS-11
+- W-CUS-15 (Xác nhận đặt vé): nút "Xem vé điện tử" -> W-CUS-16 (Vé điện tử); nút "Về vé của tôi" -> W-CUS-17; nút "Về trang chủ" -> W-CUS-01
+
+4. Luồng Quản lý vé đã đặt:
+- W-CUS-16 (Vé điện tử): nút "Quay lại" -> W-CUS-18 (Chi tiết đặt chỗ)
+- W-CUS-17 (Vé của tôi): bấm vào đơn DH-1049 / nút "Xem chi tiết" -> W-CUS-18
+- W-CUS-18 (Chi tiết đặt chỗ):
+  + Nút "Xem vé điện tử" -> W-CUS-16
+  + Nút "Huỷ đặt chỗ" -> Open overlay W-BOK-02a (Popup Xác nhận huỷ đặt chỗ)
+  + Link "Quay lại" -> W-CUS-17
+- Trong popup W-BOK-02a: nút "Đóng" / "Giữ đặt chỗ" / "Xác nhận huỷ" -> Close overlay
+
+Đặt W-CUS-01 (Trang chủ) làm Flow Starting Point (tên Flow: "Khách hàng — Đặt vé").

@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '@env/environment';
 import { ApiResponse, ListQuery, PageData } from '@core/models/api-response.model';
 import { BaseCrudService } from '@core/services/base-crud.service';
@@ -20,7 +20,7 @@ import {
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
 import { Permission, Role } from '@core/models/rbac.model';
-import { SeatClassSurcharge } from '@core/models/seat-surcharge.model';
+import { BaggageOption, FareClass, FareRule, PublicFareRule } from '@core/models/fare-baggage.model';
 import {
   UserVoucher,
   UserVoucherStatus,
@@ -46,6 +46,26 @@ export class AirportService extends BaseCrudService<Airport> {
   constructor() {
     super('admin/airports');
   }
+
+  /**
+   * Backend trả `city` lồng và có thể không có `city_id` phẳng — chuẩn hóa
+   * `city_id` để form sửa Sân bay điền đúng dropdown Thành phố.
+   */
+  override getById(id: number): Observable<ApiResponse<Airport>> {
+    return super.getById(id).pipe(
+      map((res) =>
+        res.data
+          ? {
+              ...res,
+              data: {
+                ...res.data,
+                city_id: res.data.city_id ?? res.data.city?.id,
+              },
+            }
+          : res,
+      ),
+    );
+  }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -59,6 +79,17 @@ export class PromotionService extends BaseCrudService<Promotion> {
 export class VoucherService extends BaseCrudService<Voucher> {
   constructor() {
     super('admin/vouchers');
+  }
+
+  /** Tặng voucher (ASSIGNED) cho danh sách người dùng. */
+  assign(
+    voucherId: number,
+    userIds: number[],
+  ): Observable<ApiResponse<{ assigned_count: number }>> {
+    return this.http.post<ApiResponse<{ assigned_count: number }>>(
+      `${this.baseUrl}/${voucherId}/assign`,
+      { user_ids: userIds },
+    );
   }
 }
 
@@ -76,16 +107,24 @@ export class SeatTypeService extends BaseCrudService<SeatType> {
   }
 }
 
-/**
- * Phụ thu nâng hạng ghế — mặc định dùng chung mọi chuyến.
- *
- * KHÔNG có dòng cho một cặp (from_class, to_class) nghĩa là chưa có chính sách;
- * muốn miễn phí thì tạo dòng `surcharge = 0` tường minh.
- */
 @Injectable({ providedIn: 'root' })
-export class SeatClassSurchargeService extends BaseCrudService<SeatClassSurcharge> {
+export class FareClassService extends BaseCrudService<FareClass> {
   constructor() {
-    super('admin/seat-class-surcharges');
+    super('admin/fare-classes');
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class FareRuleService extends BaseCrudService<FareRule> {
+  constructor() {
+    super('admin/fare-rules');
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class BaggageOptionService extends BaseCrudService<BaggageOption> {
+  constructor() {
+    super('admin/baggage-options');
   }
 }
 
@@ -188,7 +227,9 @@ export class SeatMapService {
   private readonly baseUrl = `${environment.apiBaseUrl}/admin/aircrafts`;
 
   getMap(aircraftId: number): Observable<ApiResponse<SeatMap>> {
-    return this.http.get<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`);
+    return this.http
+      .get<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`)
+      .pipe(map(withSeatTypeId));
   }
 
   /**
@@ -200,8 +241,32 @@ export class SeatMapService {
    * cả sơ đồ.
    */
   saveMap(aircraftId: number, seats: AircraftSeat[]): Observable<ApiResponse<SeatMap>> {
-    return this.http.put<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`, { seats });
+    return this.http
+      .put<ApiResponse<SeatMap>>(`${this.baseUrl}/${aircraftId}/seat-map`, { seats })
+      .pipe(map(withSeatTypeId));
   }
+}
+
+/**
+ * Backend trả `seat_type` lồng và KHÔNG có `seat_type_id` trần (API v0.4 mục
+ * 2.6). Màn cấu hình và lưới ghế đọc `seat_type_id` để tra loại ghế, nên phải
+ * bơm lại từ `seat_type.id` — thiếu bước này thì mọi ô rơi về màu mặc định và
+ * legend rỗng.
+ */
+function withSeatTypeId(res: ApiResponse<SeatMap>): ApiResponse<SeatMap> {
+  if (!res.data?.seats) {
+    return res;
+  }
+  return {
+    ...res,
+    data: {
+      ...res.data,
+      seats: res.data.seats.map((s) => ({
+        ...s,
+        seat_type_id: s.seat_type?.id ?? s.seat_type_id,
+      })),
+    },
+  };
 }
 
 /**
@@ -244,5 +309,38 @@ export class UserVoucherService {
     return this.http.get<ApiResponse<PageData<UserVoucher>>>(`${this.baseUrl}/my-vouchers`, {
       params: new HttpParams({ fromObject: query as Record<string, string> }),
     });
+  }
+
+  /** Chi tiết một voucher trong ví của khách đang đăng nhập. */
+  getById(id: number): Observable<ApiResponse<UserVoucher>> {
+    return this.http.get<ApiResponse<UserVoucher>>(`${this.baseUrl}/my-vouchers/${id}`);
+  }
+}
+
+/**
+ * Quy định hoàn/đổi vé công khai — `GET /api/public/fare-rules`.
+ * Hỗ trợ cả trường hợp Backend trả mảng trần hoặc `PageData`.
+ */
+@Injectable({ providedIn: 'root' })
+export class PublicFareRuleService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${environment.apiBaseUrl}/public/fare-rules`;
+
+  list(airlineId?: number | null): Observable<ApiResponse<PublicFareRule[]>> {
+    let params = new HttpParams();
+    if (airlineId !== undefined && airlineId !== null) {
+      params = params.set('airline_id', String(airlineId));
+    }
+    return this.http
+      .get<ApiResponse<PublicFareRule[] | PageData<PublicFareRule>>>(this.baseUrl, { params })
+      .pipe(
+        map((res) => {
+          const data = res.data;
+          if (data && !Array.isArray(data) && 'items' in data) {
+            return { ...res, data: data.items };
+          }
+          return { ...res, data: Array.isArray(data) ? data : [] };
+        }),
+      );
   }
 }

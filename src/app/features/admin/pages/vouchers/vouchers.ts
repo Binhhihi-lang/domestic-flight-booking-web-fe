@@ -41,7 +41,7 @@ export class AdminVouchers {
         value: (r) =>
           r.discount_type === 'PERCENT'
             ? `${r.discount_value}%`
-            : `${AdminVouchers.money.format(r.discount_value)}₫`,
+            : `${AdminVouchers.money.format(r.discount_value)}đ`,
         kind: 'num',
       },
       {
@@ -58,6 +58,15 @@ export class AdminVouchers {
         label: 'Trạng thái',
         value: (r) => (r.status === 'ACTIVE' ? 'Đang phát' : 'Tạm dừng'),
         tone: (r) => (r.status === 'ACTIVE' ? 'success' : 'neutral'),
+      },
+      {
+        label: 'Phát hành nhanh',
+        value: (r) => (r.distribution_type === 'ASSIGNED' ? 'Tặng voucher' : 'Xem chi tiết'),
+        link: (r) =>
+          r.distribution_type === 'ASSIGNED'
+            ? `/admin/vouchers/${r.id}/assign`
+            : `/admin/vouchers/${r.id}`,
+        width: '130px',
       },
     ],
     fields: [

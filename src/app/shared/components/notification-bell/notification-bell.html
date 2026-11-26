@@ -1,0 +1,85 @@
+<div class="notif">
+  <button
+    class="notif__btn"
+    type="button"
+    aria-label="Thông báo"
+    [attr.aria-expanded]="open()"
+    (click)="toggleDropdown()"
+  >
+    <mat-icon>{{ notificationService.unreadCount() > 0 ? 'notifications' : 'notifications_none' }}</mat-icon>
+    @if (notificationService.unreadCount() > 0) {
+      <span class="notif__badge" data-testid="notif-badge">{{ badgeLabel() }}</span>
+    }
+  </button>
+
+  @if (open()) {
+    <section class="notif__panel" role="dialog" aria-label="Danh sách thông báo" data-testid="notif-panel">
+      <header class="notif__head">
+        <div class="notif__title-wrap">
+          <h3 class="notif__title">Thông báo</h3>
+          @if (notificationService.unreadCount() > 0) {
+            <span class="notif__count-pill">{{ notificationService.unreadCount() }} mới</span>
+          }
+        </div>
+        @if (notificationService.unreadCount() > 0) {
+          <button
+            class="notif__mark-all"
+            type="button"
+            data-testid="notif-mark-all"
+            (click)="onMarkAllAsRead($event)"
+          >
+            Đánh dấu tất cả đã đọc
+          </button>
+        }
+      </header>
+
+      <div class="notif__body">
+        @if (notificationService.loading() && notificationService.items().length === 0) {
+          <div class="notif__state" data-testid="notif-loading">
+            <span>Đang tải thông báo...</span>
+          </div>
+        } @else if (notificationService.items().length === 0) {
+          <div class="notif__empty" data-testid="notif-empty">
+            <mat-icon>notifications_off</mat-icon>
+            <p>Không có thông báo mới</p>
+          </div>
+        } @else {
+          <ul class="notif__list">
+            @for (item of notificationService.items(); track item.id) {
+              <li>
+                <button
+                  class="notif__item"
+                  [class.notif__item--unread]="!item.is_read"
+                  type="button"
+                  data-testid="notif-item"
+                  (click)="onSelectNotification(item)"
+                >
+                  <span
+                    class="notif__icon"
+                    [class.notif__icon--info]="toneFor(item.type) === 'info'"
+                    [class.notif__icon--warning]="toneFor(item.type) === 'warning'"
+                    [class.notif__icon--danger]="toneFor(item.type) === 'danger'"
+                    [class.notif__icon--success]="toneFor(item.type) === 'success'"
+                    aria-hidden="true"
+                  >
+                    <mat-icon>{{ iconFor(item.type) }}</mat-icon>
+                  </span>
+
+                  <span class="notif__content">
+                    <span class="notif__item-title">{{ item.title }}</span>
+                    <span class="notif__item-body">{{ item.body }}</span>
+                    <span class="notif__item-time">{{ formatRelativeTime(item.created_at) }}</span>
+                  </span>
+
+                  @if (!item.is_read) {
+                    <span class="notif__dot" aria-label="Chưa đọc"></span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </section>
+  }
+</div>

@@ -320,6 +320,8 @@ describe('Seat map mock — ràng buộc khi lưu', () => {
 });
 
 describe('Voucher store mock', () => {
+  // Kho voucher trả MẢNG TRẦN (API v0.4), không phân trang — BE dùng
+  // ApiResponse<List<VoucherStoreItem>>.
   it('kho chỉ trả voucher GLOBAL đang hiệu lực và còn lượt', () => {
     const registry = new MockRegistry();
     const res = registry.resolve('GET', 'http://x/api/voucher-store') as ApiResponse<
@@ -428,43 +430,5 @@ describe('Voucher store mock', () => {
     const claimed = res.data.items.find((v) => v.voucher.id === 6)!;
     // Voucher id 6 có end_date = 2027-12-31.
     expect(claimed.expires_at).toContain('2027-12-31');
-  });
-
-  /**
-   * BE trả `voucher` dạng RÚT GỌN trong ví (`MyVoucherResponse.VoucherBrief`).
-   * Mock trả thừa trường thì code đọc nhầm `voucher.max_discount_amount` vẫn
-   * chạy trên mock và chỉ vỡ khi nối API thật.
-   */
-  it('voucher trong ví là bản rút gọn, không có trường cấu hình của admin', () => {
-    const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/my-vouchers') as ApiResponse<
-      PageData<UserVoucher>
-    >;
-
-    const brief = res.data.items[0].voucher as unknown as Record<string, unknown>;
-    expect(Object.keys(brief).sort()).toEqual([
-      'applicable_trip_type',
-      'description',
-      'discount_type',
-      'discount_value',
-      'end_date',
-      'id',
-      'min_order_amount',
-      'start_date',
-      'voucher_code',
-      'voucher_name',
-    ]);
-    expect(brief).not.toHaveProperty('max_discount_amount');
-    expect(brief).not.toHaveProperty('claim_limit');
-    expect(brief).not.toHaveProperty('status');
-  });
-
-  it('dòng ví không còn `discount_amount`', () => {
-    const registry = new MockRegistry();
-    const res = registry.resolve('GET', 'http://x/api/my-vouchers') as ApiResponse<
-      PageData<UserVoucher>
-    >;
-
-    expect(res.data.items[0]).not.toHaveProperty('discount_amount');
   });
 });

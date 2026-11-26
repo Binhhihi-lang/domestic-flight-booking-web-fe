@@ -1,33 +1,44 @@
 <div class="wrap">
   <div class="page-h">
     <div>
-      <h1>Tài khoản của tôi</h1>
-      <p>Quản lý booking, vé điện tử và voucher đã nhận</p>
+      <div class="page-h__title">Tài khoản của tôi</div>
+      <p>Quản lý booking, vé điện tử, voucher và thông tin cá nhân</p>
     </div>
   </div>
 
   <div class="acct">
     <!-- ===== Menu tài khoản ===== -->
-    <aside class="acct__nav">
+    <aside class="acct__nav" aria-label="Điều hướng tài khoản">
       <div class="acct__me">
-        <div class="acct__av">{{ initials() }}</div>
+        <div class="acct__av">
+          @if (authService.currentUser()?.avatar_url; as av) {
+          <img [src]="av" [alt]="authService.currentUser()?.full_name || 'Ảnh đại diện'" />
+          } @else {
+          <span>{{ initials() }}</span>
+          }
+        </div>
         <div class="acct__id">
           <div class="acct__nm">{{ authService.currentUser()?.full_name }}</div>
           <div class="acct__em">{{ authService.currentUser()?.email }}</div>
         </div>
       </div>
 
-      @for (link of links; track link.path) {
-        <a
-          class="acct__lnk"
-          [routerLink]="link.path"
-          routerLinkActive="on"
-          [routerLinkActiveOptions]="{ exact: !!link.exact }"
-        >
-          <mat-icon>{{ link.icon }}</mat-icon>
+      <nav class="acct__links">
+        @for (link of links; track link.path) {
+        <a class="acct__lnk" [routerLink]="link.path" routerLinkActive="on"
+          [routerLinkActiveOptions]="{ exact: !!link.exact }">
+          <mat-icon aria-hidden="true">{{ link.icon }}</mat-icon>
           <span>{{ link.label }}</span>
         </a>
-      }
+        }
+      </nav>
+
+      <div class="acct__foot">
+        <button type="button" class="acct__logout" [disabled]="loggingOut()" (click)="logout()">
+          <mat-icon aria-hidden="true">logout</mat-icon>
+          <span>{{ loggingOut() ? 'Đang đăng xuất…' : 'Đăng xuất' }}</span>
+        </button>
+      </div>
     </aside>
 
     <div class="acct__body">

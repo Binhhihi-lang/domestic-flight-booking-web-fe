@@ -1,80 +1,194 @@
 <div class="wrap head">
+  <nav class="fr-crumb" aria-label="Đường dẫn">
+    <a routerLink="/">Trang chủ</a>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <span>Kết quả tìm chuyến</span>
+  </nav>
+
   <div class="page-h">
     <div>
-      <h1>Hà Nội → Đà Nẵng</h1>
+      <h1>
+        @if (selectingReturn()) {
+          Chọn chuyến về: {{ toLabel() }} → {{ fromLabel() }}
+        } @else {
+          {{ fromLabel() }} → {{ toLabel() }}
+        }
+      </h1>
       <p>
-        Thứ Bảy, 15/11/2026 · 1 người lớn · Phổ thông ·
-        <b class="page-h__count">24 chuyến bay</b>
+        {{ formatDisplayDate(activeSearchDate()) }} · {{ passengerSummary() }}
+        @if (selectedCabin()) {
+          · {{ cabinLabel(selectedCabin()) }}
+        }
+        · <b class="page-h__count">{{ filteredFlights().length }} chuyến bay</b>
       </p>
     </div>
-    <button class="btn btn--ghost" type="button">
-      <mat-icon>tune</mat-icon>
-      Sửa tìm kiếm
-    </button>
+    <div class="fr-head-actions">
+      @if (selectingReturn()) {
+        <button class="btn btn--ghost" type="button" (click)="backToOutbound()">
+          <mat-icon>arrow_back</mat-icon>
+          Chọn lại chuyến đi
+        </button>
+      }
+      <button class="btn btn--ghost" type="button" (click)="showSearchEditor.set(!showSearchEditor())">
+        <mat-icon>tune</mat-icon>
+        {{ showSearchEditor() ? 'Đóng tìm kiếm' : 'Sửa tìm kiếm' }}
+      </button>
+    </div>
   </div>
+
+  @if (showSearchEditor()) {
+    <div class="fr-edit-search">
+      <app-flight-search-card
+        [initialTripType]="tripType()"
+        [initialFrom]="fromCode()"
+        [initialTo]="toCode()"
+        [initialDepartDate]="departDate()"
+        [initialReturnDate]="returnDate()"
+        [initialAdults]="adultsCount()"
+        [initialChildren]="childrenCount()"
+        [initialInfants]="infantsCount()"
+        (searched)="onModifySearch($event)"
+      />
+    </div>
+  }
+
+  @if (tripType() === 'round') {
+    <nav class="fr-leg-stepper" aria-label="Tiến trình chọn chuyến khứ hồi">
+      <button
+        type="button"
+        class="fr-leg-step"
+        [class.fr-leg-step--active]="!selectingReturn()"
+        [class.fr-leg-step--done]="selectingReturn()"
+        (click)="selectingReturn() && backToOutbound()"
+      >
+        <span class="fr-leg-step__num">{{ selectingReturn() ? '✓' : '1' }}</span>
+        <span>Chặng 1: Chọn chuyến đi ({{ fromCode() }} → {{ toCode() }})</span>
+      </button>
+      <span class="fr-leg-stepper__line" aria-hidden="true"></span>
+      <span
+        class="fr-leg-step"
+        [class.fr-leg-step--active]="selectingReturn()"
+      >
+        <span class="fr-leg-step__num">2</span>
+        <span>Chặng 2: Chọn chuyến về ({{ toCode() }} → {{ fromCode() }})</span>
+      </span>
+    </nav>
+  }
+
+  @if (selectingReturn() && bookingFlow.selectedFlight(); as outFl) {
+    <div class="fr-outbound-banner">
+      <div>
+        <strong>Chặng đi đã chọn:</strong>
+        {{ outFl.airline.airline_name }} ({{ outFl.flight_number }}) ·
+        {{ outFl.departure_airport.airport_code }} → {{ outFl.arrival_airport.airport_code }} ·
+        {{ formatTime(outFl.scheduled_departure) }} – {{ formatTime(outFl.scheduled_arrival) }}
+        @if (bookingFlow.selectedFare(); as outFare) {
+          · <b>{{ outFare.fare_class_name }}</b> ({{ formatMoney(outFare.adult_price) }})
+        }
+      </div>
+      <span class="fr-outbound-step">Bước 2/2: Chọn chuyến về</span>
+    </div>
+  }
 </div>
 
 <div class="result-wrap">
   <!-- ===== Bộ lọc ===== -->
-  <aside class="filters">
+  <aside class="filters" aria-label="Bộ lọc chuyến bay">
     <div class="filters__hd">
       Bộ lọc
-      <button class="link-btn" type="button" (click)="clearFilters()">Xóa hết</button>
+      <button class="link-btn" type="button" (click)="resetFilters()">Xóa hết</button>
     </div>
 
     <div class="filters__g">
       <div class="filters__t">Hãng hàng không</div>
-      @for (opt of airlineFilters; track opt.label; let i = $index) {
+      @for (opt of availableAirlines(); track opt.code) {
         <label class="opt">
           <input
             type="checkbox"
-            [(ngModel)]="opt.checked"
-            [name]="'al-' + i"
-            [attr.aria-label]="opt.label"
+            [checked]="selectedAirlines().has(opt.code)"
+            (change)="toggleAirline(opt.code)"
+            [attr.aria-label]="opt.name"
           />
-          {{ opt.label }}
+          <span>{{ opt.name }}</span>
           <span class="opt__n">{{ opt.count }}</span>
         </label>
       }
+    </div>
+
+    <div class="filters__g">
+      <div class="filters__t">Hạng dịch vụ</div>
+      <label class="opt">
+        <input
+          type="radio"
+          name="cabin"
+          value=""
+          [checked]="selectedCabin() === ''"
+          (change)="selectCabin('')"
+        />
+        <span>Tất cả khoang</span>
+      </label>
+      <label class="opt">
+        <input
+          type="radio"
+          name="cabin"
+          value="ECONOMY"
+          [checked]="selectedCabin() === 'ECONOMY'"
+          (change)="selectCabin('ECONOMY')"
+        />
+        <span>Phổ thông</span>
+      </label>
+      <label class="opt">
+        <input
+          type="radio"
+          name="cabin"
+          value="PREMIUM_ECONOMY"
+          [checked]="selectedCabin() === 'PREMIUM_ECONOMY'"
+          (change)="selectCabin('PREMIUM_ECONOMY')"
+        />
+        <span>Phổ thông đặc biệt</span>
+      </label>
+      <label class="opt">
+        <input
+          type="radio"
+          name="cabin"
+          value="BUSINESS"
+          [checked]="selectedCabin() === 'BUSINESS'"
+          (change)="selectCabin('BUSINESS')"
+        />
+        <span>Thương gia</span>
+      </label>
     </div>
 
     <div class="filters__g">
       <div class="filters__t">Giờ khởi hành</div>
-      @for (opt of timeFilters; track opt.label; let i = $index) {
+      @for (slot of timeSlots; track slot.key) {
         <label class="opt">
           <input
             type="checkbox"
-            [(ngModel)]="opt.checked"
-            [name]="'tm-' + i"
-            [attr.aria-label]="opt.label"
+            [checked]="selectedTimeSlots().has(slot.key)"
+            (change)="toggleTimeSlot(slot.key)"
+            [attr.aria-label]="slot.label"
           />
-          {{ opt.label }}
-          <span class="opt__n">{{ opt.count }}</span>
+          <span>{{ slot.label }}</span>
         </label>
       }
     </div>
 
     <div class="filters__g">
-      <div class="filters__t">Tiện ích</div>
-      <label class="opt">
-        <input type="checkbox" name="perk-baggage" aria-label="Có hành lý ký gửi" />
-        Có hành lý ký gửi
-      </label>
-      <label class="opt">
-        <input type="checkbox" name="perk-refund" aria-label="Được hoàn vé" />
-        Được hoàn vé
-      </label>
-      <label class="opt">
-        <input type="checkbox" name="perk-change" aria-label="Được đổi ngày" />
-        Được đổi ngày
-      </label>
-    </div>
-
-    <div class="filters__g">
-      <div class="filters__t">Khoảng giá</div>
-      <input class="range" type="range" min="760000" max="2400000" aria-label="Khoảng giá" />
+      <div class="filters__t">Khoảng giá tối đa</div>
+      <input
+        class="range"
+        type="range"
+        [min]="priceBounds().min"
+        [max]="priceBounds().max"
+        step="50000"
+        [ngModel]="maxPriceFilter()"
+        (ngModelChange)="maxPriceFilter.set(+$event)"
+        aria-label="Giá tối đa"
+      />
       <div class="range__lbl tabular">
-        <span>760.000₫</span><span>2.400.000₫</span>
+        <span>{{ formatMoney(priceBounds().min) }}</span>
+        <span>{{ formatMoney(maxPriceFilter()) }}</span>
       </div>
     </div>
   </aside>
@@ -83,85 +197,387 @@
   <div class="list">
     <div class="sortbar">
       <span class="sortbar__t">Sắp xếp:</span>
-      @for (sort of sorts; track sort) {
+      @for (sort of sorts; track sort.key) {
         <button
           class="sortbtn"
           type="button"
-          [class.on]="activeSort() === sort"
-          (click)="activeSort.set(sort)"
+          [class.on]="activeSort() === sort.key"
+          (click)="activeSort.set(sort.key)"
         >
-          {{ sort }}
+          {{ sort.label }}
         </button>
       }
       <div class="sortbar__sp"></div>
-      <span class="sortbar__n tabular">24 kết quả</span>
+      <span class="sortbar__n tabular">{{ filteredFlights().length }} kết quả</span>
     </div>
 
-    @for (f of flights; track f.id) {
-      <article class="fr" [class.fr--out]="f.soldOut">
-        <div class="fr__top">
-          <div class="fr__al">
-            <div class="fr__logo" [style.background]="f.airlineColor">{{ f.code }}</div>
-            <div class="fr__aln">
-              {{ f.airline }}
-              <small>{{ f.aircraft }}</small>
+    @if (loading()) {
+      <div class="fr-skels">
+        <app-skeleton-block height="136px" />
+        <app-skeleton-block height="136px" />
+        <app-skeleton-block height="136px" />
+      </div>
+    } @else if (error()) {
+      <app-empty-state
+        icon="error_outline"
+        message="Không tải được danh sách chuyến bay"
+        [hint]="error()!"
+        actionLabel="Thử lại"
+        (actionClicked)="loadFlights()"
+      />
+    } @else if (filteredFlights().length === 0) {
+      <app-empty-state
+        icon="flight_takeoff"
+        message="Không tìm thấy chuyến bay phù hợp"
+        hint="Thử chọn ngày bay khác hoặc đặt lại bộ lọc tìm kiếm"
+        actionLabel="Đặt lại bộ lọc"
+        (actionClicked)="resetFilters()"
+      />
+    } @else {
+      @for (f of visibleFlights(); track f.id) {
+        <article class="fr fr-card">
+          <div class="fr__top">
+            <div class="fr__al">
+              <div class="fr__logo" [style.background]="airlineColor(f.airline.airline_code)">
+                {{ f.airline.airline_code }}
+              </div>
+              <div class="fr__aln">
+                {{ f.airline.airline_name }}
+                <small>{{ f.flight_number }} · {{ f.aircraft.model }}</small>
+              </div>
+            </div>
+
+            <div class="fr__times">
+              <div>
+                <div class="fr__t tabular">{{ formatTime(f.scheduled_departure) }}</div>
+                <div class="fr__ap">{{ f.departure_airport.airport_code }}</div>
+              </div>
+              <div class="fr__mid">
+                <div class="fr__dur tabular">{{ formatDuration(f.duration_minutes) }}</div>
+                <div class="fr__line"></div>
+                <div class="fr__stop">Bay thẳng</div>
+              </div>
+              <div class="fr__arr">
+                <div class="fr__t tabular">{{ formatTime(f.scheduled_arrival) }}</div>
+                <div class="fr__ap">{{ f.arrival_airport.airport_code }}</div>
+              </div>
+            </div>
+
+            <div class="fr__right">
+              <app-status-badge
+                [tone]="totalSeatsOf(f) <= 8 ? 'warning' : 'success'"
+                [label]="'Còn ' + totalSeatsOf(f) + ' ghế'"
+              />
+              <div class="fr__price tabular fr__price--primary">
+                {{ formatMoneyNumber(lowestPriceOf(f)) }}<small>đ</small>
+              </div>
+              <div class="fr__per">mỗi người lớn · đã gồm thuế phí</div>
+              <button class="btn btn--primary" type="button" (click)="openCompareModal(f)">
+                So sánh &amp; Chọn
+              </button>
             </div>
           </div>
 
-          <div class="fr__times">
-            <div>
-              <div class="fr__t tabular">{{ f.departTime }}</div>
-              <div class="fr__ap">{{ f.departAirport }}</div>
-            </div>
-            <div class="fr__mid">
-              <div class="fr__dur tabular">{{ f.duration }}</div>
-              <div class="fr__line"></div>
-              <div class="fr__stop">Bay thẳng</div>
-            </div>
-            <div class="fr__arr">
-              <div class="fr__t tabular">{{ f.arriveTime }}</div>
-              <div class="fr__ap">{{ f.arriveAirport }}</div>
-            </div>
-          </div>
-
-          <div class="fr__right">
-            @if (f.badge) {
-              <app-status-badge [tone]="f.badge.tone" [label]="f.badge.label" />
-            }
-            @if (f.oldPrice) {
-              <div class="fr__old tabular">{{ f.oldPrice }}₫</div>
-            }
-            <div class="fr__price tabular" [class]="'fr__price--' + f.priceTone">
-              {{ f.price }}<small>₫</small>
-            </div>
-            <div class="fr__per">mỗi khách</div>
-            <button
-              class="btn"
-              type="button"
-              [class.btn--primary]="!f.soldOut"
-              [disabled]="f.soldOut"
-            >
-              {{ f.soldOut ? 'Hết chỗ' : 'Chọn' }}
-            </button>
-          </div>
-        </div>
-
-        <div class="fr__feats">
-          @for (p of f.perks; track p.text) {
-            <span class="fr__f" [class.fr__f--no]="!p.available">
-              <mat-icon>{{ p.available ? 'check_circle' : 'cancel' }}</mat-icon>
-              {{ p.text }}
+          <div class="fr__feats">
+            <span class="fr__f">
+              <mat-icon aria-hidden="true">airline_seat_recline_normal</mat-icon>
+              {{ f.fares.length }} hạng vé đang mở bán
             </span>
-          }
-        </div>
-      </article>
-    }
+            @if (cheapestFareOf(f); as best) {
+              <span class="fr__f" [class.fr__f--no]="!best.is_refundable">
+                <mat-icon aria-hidden="true">{{ best.is_refundable ? 'check_circle' : 'cancel' }}</mat-icon>
+                {{ best.is_refundable ? 'Hoàn ' + best.refund_percent + '% trước ' + (best.refund_min_hours_before_departure ?? 24) + 'h' : 'Không hoàn vé ở hạng tiết kiệm' }}
+              </span>
+            }
+            <a
+              class="fr__detail-link"
+              [routerLink]="['/flights', f.id]"
+              [queryParams]="detailQueryParams()"
+              [state]="{ flight: f }"
+            >
+              Chi tiết chuyến bay
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+          </div>
+        </article>
+      }
 
-    <div class="more">
-      <button class="btn btn--ghost" type="button">
-        <mat-icon>expand_more</mat-icon>
-        Xem thêm 19 chuyến
-      </button>
-    </div>
+      @if (filteredFlights().length > visibleLimit()) {
+        <div class="more">
+          <button class="btn btn--ghost" type="button" (click)="showMore()">
+            <mat-icon>expand_more</mat-icon>
+            Xem thêm {{ filteredFlights().length - visibleLimit() }} chuyến
+          </button>
+        </div>
+      }
+    }
   </div>
 </div>
+
+<!-- Modal chọn hạng vé 3 tầng W-RT-02a -->
+@if (comparingFlight(); as fl) {
+  <div
+    class="vf-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'So sánh hạng vé chuyến ' + fl.flight_number"
+    (click)="closeCompareModal()"
+  >
+    <div class="vf-modal-panel fr-modal" (click)="$event.stopPropagation()">
+      <header class="fr-modal__head">
+        <div>
+          <h2>Chọn hạng vé — {{ fl.flight_number }}</h2>
+          <p class="fr-muted">
+            {{ fl.airline.airline_name }} · {{ fl.departure_airport.airport_code }} → {{ fl.arrival_airport.airport_code }}
+            ({{ formatTime(fl.scheduled_departure) }} – {{ formatTime(fl.scheduled_arrival) }})
+            · {{ fl.aircraft.model }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="fr-close"
+          aria-label="Đóng hộp thoại"
+          (click)="closeCompareModal()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </header>
+
+      <!-- Tầng 1: Tab khoang dịch vụ -->
+      <div class="cabtabs" role="tablist" aria-label="Khoang dịch vụ">
+        @for (tab of modalCabinTabs(); track tab.key) {
+          <button
+            type="button"
+            role="tab"
+            class="cabtab"
+            [class.cabtab--active]="activeModalCabin() === tab.key"
+            [attr.aria-selected]="activeModalCabin() === tab.key"
+            (click)="activeModalCabin.set(tab.key)"
+          >
+            <span>{{ tab.label }}</span>
+            <span class="cabtab__count">{{ tab.count }}</span>
+          </button>
+        }
+      </div>
+
+      <!-- Tầng 2a: Lưới thẻ hạng vé trong khoang đang chọn -->
+      <div class="fdcols">
+        @for (fare of activeModalFares(); track fare.fare_class_code) {
+          @let isCheapest = fare.fare_class_code === cheapestActiveFareCode();
+          <article class="fdcol" [class.fdcol--cheapest]="isCheapest">
+            <div class="fdcol__top">
+              <div>
+                <div class="fdcol__name">{{ fare.fare_class_name }}</div>
+                <div class="fr-fare-code">{{ fare.fare_class_code }}</div>
+              </div>
+              @if (isCheapest) {
+                <span class="fdcol__badge">Rẻ nhất trong hạng</span>
+              }
+            </div>
+
+            <div class="fdcol__price tabular">{{ formatMoney(fare.adult_price) }}</div>
+            <div class="fdcol__seats">Còn {{ fare.seats_available }} ghế trống</div>
+
+            <ul class="fdcol__perks">
+              <li>
+                <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">check_circle</mat-icon>
+                <span>{{ carryOnLabel(fare) }}</span>
+              </li>
+              <li>
+                <mat-icon
+                  class="fr-cmp-ic"
+                  [class.fr-cmp-ic--ok]="fare.seat_class !== 'ECONOMY' || fare.is_refundable"
+                  [class.fr-cmp-ic--no]="fare.seat_class === 'ECONOMY' && !fare.is_refundable"
+                  aria-hidden="true"
+                >
+                  {{ fare.seat_class !== 'ECONOMY' || fare.is_refundable ? 'check_circle' : 'cancel' }}
+                </mat-icon>
+                <span>{{ checkedBaggageLabel(fare) }}</span>
+              </li>
+              <li>
+                <mat-icon
+                  class="fr-cmp-ic"
+                  [class.fr-cmp-ic--ok]="fare.is_refundable || fare.seat_class === 'BUSINESS'"
+                  [class.fr-cmp-ic--no]="!fare.is_refundable && fare.seat_class !== 'BUSINESS'"
+                  aria-hidden="true"
+                >
+                  {{ fare.is_refundable || fare.seat_class === 'BUSINESS' ? 'check_circle' : 'info' }}
+                </mat-icon>
+                <span>{{ changePolicyLabel(fare) }}</span>
+              </li>
+              <li>
+                <mat-icon
+                  class="fr-cmp-ic"
+                  [class.fr-cmp-ic--ok]="fare.is_refundable"
+                  [class.fr-cmp-ic--no]="!fare.is_refundable"
+                  aria-hidden="true"
+                >
+                  {{ fare.is_refundable ? 'check_circle' : 'cancel' }}
+                </mat-icon>
+                <span>{{ refundPolicyLabel(fare) }}</span>
+              </li>
+              <li>
+                <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">event_seat</mat-icon>
+                <span>{{ seatSelectionLabel(fare) }}</span>
+              </li>
+            </ul>
+
+            <div class="fdcol__foot">
+              <app-app-button variant="primary" size="sm" (clicked)="chooseFare(fl, fare)">
+                Chọn hạng này
+              </app-app-button>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- Tầng 2b: Bảng so sánh chi tiết chỉ trong khoang đang chọn -->
+      <div class="fr-compare-wrap">
+        <table class="fr-compare-table">
+          <thead>
+            <tr>
+              <th scope="col" class="fr-compare-table__attr">Quyền lợi &amp; Điều kiện</th>
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <th scope="col">
+                  <div class="fr-compare-th">
+                    <span class="fr-compare-th__name">{{ fare.fare_class_name }}</span>
+                    <span class="fr-fare-code">{{ fare.fare_class_code }}</span>
+                  </div>
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Giá vé</th>
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
+                  <div class="fr-fare-price tabular">{{ formatMoney(fare.adult_price) }}</div>
+                  <div class="fr-compare-sub tabular">
+                    Gốc {{ formatMoney(fare.base_fare) }} + Thuế phí {{ formatMoney(fare.tax_fee) }}
+                  </div>
+                  <div class="fr-compare-sub tabular">
+                    Trẻ em: {{ formatMoney(fare.child_price) }} · Em bé: {{ formatMoney(fare.infant_price) }}
+                  </div>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Hành lý xách tay</th>
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
+                  <span class="fr-cmp-cell">
+                    <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">check_circle</mat-icon>
+                    {{ carryOnLabel(fare) }}
+                  </span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Hành lý ký gửi</th>
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
+                  <span class="fr-cmp-cell">
+                    <mat-icon
+                      class="fr-cmp-ic"
+                      [class.fr-cmp-ic--ok]="fare.seat_class !== 'ECONOMY' || fare.is_refundable"
+                      [class.fr-cmp-ic--no]="fare.seat_class === 'ECONOMY' && !fare.is_refundable"
+                      aria-hidden="true"
+                    >
+                      {{ fare.seat_class !== 'ECONOMY' || fare.is_refundable ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                    {{ checkedBaggageLabel(fare) }}
+                  </span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Đổi vé</th>
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
+                  <span class="fr-cmp-cell">
+                    <mat-icon
+                      class="fr-cmp-ic"
+                      [class.fr-cmp-ic--ok]="fare.is_refundable || fare.seat_class === 'BUSINESS'"
+                      [class.fr-cmp-ic--no]="!fare.is_refundable && fare.seat_class !== 'BUSINESS'"
+                      aria-hidden="true"
+                    >
+                      {{ fare.is_refundable || fare.seat_class === 'BUSINESS' ? 'check_circle' : 'info' }}
+                    </mat-icon>
+                    {{ changePolicyLabel(fare) }}
+                  </span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Hoàn vé</th>
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
+                  <span class="fr-cmp-cell">
+                    <mat-icon
+                      class="fr-cmp-ic"
+                      [class.fr-cmp-ic--ok]="fare.is_refundable"
+                      [class.fr-cmp-ic--no]="!fare.is_refundable"
+                      aria-hidden="true"
+                    >
+                      {{ fare.is_refundable ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                    {{ refundPolicyLabel(fare) }}
+                  </span>
+                </td>
+              }
+            </tr>
+            <tr>
+              <th scope="row">Chọn ghế</th>
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
+                  <span class="fr-cmp-cell">
+                    <mat-icon class="fr-cmp-ic fr-cmp-ic--ok" aria-hidden="true">event_seat</mat-icon>
+                    {{ seatSelectionLabel(fare) }}
+                  </span>
+                  <div class="fr-compare-sub">Còn {{ fare.seats_available }} chỗ</div>
+                </td>
+              }
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Chọn hạng vé</th>
+              @for (fare of activeModalFares(); track fare.fare_class_code) {
+                <td>
+                  <app-app-button variant="primary" size="sm" (clicked)="chooseFare(fl, fare)">
+                    Chọn hạng này
+                  </app-app-button>
+                </td>
+              }
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Tầng 3: Gợi ý nâng hạng dịch vụ cao hơn -->
+      @if (upgradeCabins().length > 0) {
+        <div class="upblk">
+          <div class="upblk__title">Đổi sang hạng dịch vụ cao hơn</div>
+          <div class="upblk__list">
+            @for (up of upgradeCabins(); track up.key) {
+              <div class="upblk__item">
+                <div>
+                  <strong>{{ up.label }}</strong>
+                  <span class="tabular">+{{ formatMoney(up.diff) }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn--ghost btn--sm"
+                  (click)="activeModalCabin.set(up.key)"
+                >
+                  Xem
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

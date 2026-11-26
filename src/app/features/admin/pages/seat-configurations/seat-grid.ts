@@ -119,15 +119,22 @@ export class SeatGrid {
     return this.fallbackColor(type?.seat_class ?? 'ECONOMY');
   }
 
+  private static readonly moneyFmt = new Intl.NumberFormat('vi-VN');
+
+  /** Định dạng phụ thu chọn ghế cho chú thích legend (vd: "+50.000đ" hoặc "0đ"). */
+  protected formatSurcharge(surcharge: number): string {
+    return surcharge > 0 ? `+${SeatGrid.moneyFmt.format(surcharge)}đ` : '0đ';
+  }
+
   /** Màu chữ theo độ tương phản WCAG 2.1 — nền sáng thì chữ tối. */
   protected cellTextColor(seat: AircraftSeat): string {
     const bg = this.cellBackground(seat);
     // `var(--...)` không parse được thành hex → đó là các token màu đậm của
-    // design system (accent/danger), chữ trắng mới đọc được.
+    // design system (accent/danger/primary), chữ trắng mới đọc được.
     if (!bg.startsWith('#')) {
-      return '#fff';
+      return '#ffffff';
     }
-    return contrastRatio(bg, '#ffffff') >= 4.5 ? '#fff' : '#111';
+    return contrastRatio(bg, '#ffffff') >= 4.5 ? '#ffffff' : '#03121a';
   }
 
   /** Màu mặc định theo hạng — dùng cho lưới và legend khi `color_hex` null. */
@@ -135,8 +142,8 @@ export class SeatGrid {
     switch (seatClass) {
       case 'BUSINESS':
         return 'var(--color-accent)';
-      case 'FIRST':
-        return 'var(--color-danger)';
+      case 'PREMIUM_ECONOMY':
+        return 'var(--color-warning)';
       default:
         return 'var(--color-primary-bright)';
     }

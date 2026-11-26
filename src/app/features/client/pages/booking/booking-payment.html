@@ -1,0 +1,296 @@
+<div class="pay">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb" aria-label="Đường dẫn">
+    <a routerLink="/">Trang chủ</a>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <a routerLink="/flights">Đặt vé</a>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <a [routerLink]="['/booking/review']" [queryParams]="{ bookingId: bookingId() }">Xem lại</a>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <span>Thanh toán</span>
+  </nav>
+
+  <!-- Thanh tiến trình thống nhất 5 bước -->
+  <ol class="stepper" aria-label="Tiến trình đặt vé" data-testid="booking-stepper">
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Chọn chuyến</span>
+    </li>
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Chọn ghế</span>
+    </li>
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Hành khách</span>
+    </li>
+    <li class="stepper__item stepper__item--done">
+      <span class="stepper__num"><mat-icon>check</mat-icon></span>
+      <span>Xem lại</span>
+    </li>
+    <li class="stepper__item stepper__item--active" aria-current="step">
+      <span class="stepper__num">5</span>
+      <span>Thanh toán</span>
+    </li>
+  </ol>
+
+  <!-- Banner đơn hàng + tổng thanh toán + đồng hồ đếm ngược 15:00 -->
+  <div class="timer-bar" [class.timer-bar--expired]="isExpired()" data-testid="payment-timer-bar">
+    <div class="timer-bar__left">
+      <mat-icon>schedule</mat-icon>
+      @if (booking(); as b) {
+        <div class="timer-bar__meta">
+          <span class="timer-bar__order">Mã đơn <b>{{ b.order_code || ('DH-' + b.id) }}</b></span>
+          <span class="timer-bar__sep" aria-hidden="true">|</span>
+          <span class="timer-bar__total">Tổng thanh toán <b class="tabular">{{ formatVnd(b.total_amount) }}</b></span>
+        </div>
+      } @else {
+        <span>Ghế của bạn đang được giữ trong 15 phút.</span>
+      }
+    </div>
+    <div class="timer-bar__right">
+      @if (!isExpired()) {
+        <span class="timer-bar__label">Thời gian giữ chỗ còn lại</span>
+      } @else {
+        <span class="timer-bar__label">Hết thời gian giữ chỗ</span>
+      }
+      <span class="timer-bar__clock tabular" data-testid="payment-countdown">{{ countdownText() }}</span>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card card--state">Đang tải thông tin thanh toán...</div>
+  } @else if (booking(); as b) {
+    <div class="pay__grid">
+      <!-- Cột trái: Chọn phương thức thanh toán, khung QR & lưu ý PNR -->
+      <div class="pay__main">
+        @if (error()) {
+          <div class="alert alert--danger" role="alert">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ error() }}</span>
+          </div>
+        }
+
+        <section class="card">
+          <h2>Chọn phương thức thanh toán</h2>
+          <div class="methods">
+            <button
+              type="button"
+              class="method"
+              [class.method--active]="selectedMethod() === 'VNPAY'"
+              data-testid="method-vnpay"
+              (click)="selectMethod('VNPAY')"
+            >
+              <span class="method__radio"></span>
+              <span class="method__body">
+                <b>Cổng thanh toán VNPay</b>
+                <small>Thẻ ATM nội địa, thẻ quốc tế Visa/Master/JCB, ứng dụng VNPay QR</small>
+              </span>
+              <span class="method__tag">VNPay</span>
+            </button>
+
+            <button
+              type="button"
+              class="method"
+              [class.method--active]="selectedMethod() === 'PAYOS'"
+              data-testid="method-payos"
+              (click)="selectMethod('PAYOS')"
+            >
+              <span class="method__radio"></span>
+              <span class="method__body">
+                <b>Chuyển khoản ngân hàng VietQR (payOS)</b>
+                <small>Quét mã VietQR động trên mọi app ngân hàng — đối soát tự động 24/7</small>
+              </span>
+              <span class="method__tag method__tag--qr">VietQR</span>
+            </button>
+          </div>
+
+          <div class="pay__actions">
+            <button
+              type="button"
+              class="btn btn--primary"
+              data-testid="btn-pay-now"
+              [disabled]="processing() || isExpired()"
+              (click)="submitPayment('PENDING')"
+            >
+              <mat-icon>lock</mat-icon>
+              @if (processing()) {
+                Đang xử lý...
+              } @else if (selectedMethod() === 'PAYOS') {
+                Tạo mã VietQR thanh toán ({{ formatVnd(b.total_amount) }})
+              } @else {
+                Thanh toán qua VNPay ({{ formatVnd(b.total_amount) }})
+              }
+            </button>
+
+            <button
+              type="button"
+              class="btn btn--ghost"
+              data-testid="btn-simulate-success"
+              [disabled]="processing() || isExpired()"
+              (click)="submitPayment('SUCCESS')"
+            >
+              <mat-icon>verified</mat-icon>
+              Xác nhận thanh toán nhanh (Demo)
+            </button>
+          </div>
+        </section>
+
+        <!-- Lưu ý cấp mã đặt chỗ PNR sau thanh toán (D1) -->
+        <div class="pnr-callout" data-testid="pnr-callout">
+          <mat-icon>info</mat-icon>
+          <div>
+            <b>Mã đặt chỗ (PNR) được cấp ngay sau khi thanh toán thành công</b>
+            <p>
+              Trong lúc chờ thanh toán, đơn hàng của bạn được ghi nhận với mã tạm <b>{{ b.order_code || ('DH-' + b.id) }}</b>. Ngay khi giao dịch hoàn tất, hệ thống sẽ tự động xuất mã PNR chính thức và vé điện tử cho toàn bộ hành khách.
+            </p>
+          </div>
+        </div>
+
+        <!-- Khung hiển thị mã QR chuyển khoản khi tạo giao dịch VietQR / payOS -->
+        @if (transaction()?.viet_qr; as qr) {
+          <section class="card qr-card" data-testid="vietqr-box">
+            <div class="qr-card__head">
+              <h3>Quét mã VietQR để chuyển khoản</h3>
+              <span class="qr-card__badge">Tự động kiểm tra mỗi 3 giây</span>
+            </div>
+
+            <div class="qr-card__grid">
+              @if (qr.qr_image_url) {
+                <div class="qr-card__img-wrap">
+                  <img
+                    [src]="qr.qr_image_url"
+                    alt="Mã VietQR thanh toán đơn đặt vé"
+                    loading="lazy"
+                    width="220"
+                    height="220"
+                  />
+                </div>
+              }
+              <dl class="qr-card__info">
+                <div>
+                  <dt>Ngân hàng</dt>
+                  <dd>{{ qr.bank_name }}</dd>
+                </div>
+                <div>
+                  <dt>Số tài khoản</dt>
+                  <dd class="copy-row">
+                    <b class="tabular">{{ qr.account_number }}</b>
+                    <button type="button" class="btn-copy" (click)="copyText('acc', qr.account_number)">
+                      {{ copiedField() === 'acc' ? 'Đã chép' : 'Sao chép' }}
+                    </button>
+                  </dd>
+                </div>
+                <div>
+                  <dt>Chủ tài khoản</dt>
+                  <dd>{{ qr.account_holder }}</dd>
+                </div>
+                <div>
+                  <dt>Số tiền</dt>
+                  <dd class="tabular"><b>{{ formatVnd(qr.amount) }}</b></dd>
+                </div>
+                <div>
+                  <dt>Nội dung chuyển khoản</dt>
+                  <dd class="copy-row">
+                    <b>{{ qr.transfer_content }}</b>
+                    <button type="button" class="btn-copy" (click)="copyText('memo', qr.transfer_content)">
+                      {{ copiedField() === 'memo' ? 'Đã chép' : 'Sao chép' }}
+                    </button>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <p class="qr-card__warn">
+              <mat-icon>warning_amber</mat-icon>
+              Vui lòng giữ nguyên <b>nội dung chuyển khoản</b> và chuyển đúng số tiền để hệ thống tự động xuất vé điện tử.
+            </p>
+
+            <div class="qr-card__foot">
+              <button type="button" class="btn btn--ghost" (click)="checkPayosSyncNow()">
+                <mat-icon>sync</mat-icon>
+                Tôi đã chuyển khoản — kiểm tra lại
+              </button>
+              @if (qr.checkout_url) {
+                <a class="btn btn--ghost" [href]="qr.checkout_url" target="_blank" rel="noopener">
+                  Mở trang payOS
+                </a>
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <!-- Cột phải: Hành khách trong đơn + Chi tiết giá thanh toán -->
+      <aside class="pay__side">
+        <section class="card">
+          <div class="summary__head">
+            @if (b.status === 'CONFIRMED') {
+              <span>Mã đặt chỗ (PNR)</span>
+              <b>{{ b.booking_code }}</b>
+            } @else {
+              <span>Mã đơn hàng</span>
+              <b>{{ b.order_code || ('DH-' + b.id) }}</b>
+            }
+          </div>
+
+          @for (seg of b.segments; track seg.id) {
+            <div class="summary__seg">
+              <div class="summary__route">{{ seg.departure_airport_code }} → {{ seg.arrival_airport_code }}</div>
+              <div class="summary__meta">{{ seg.airline_name }} · {{ seg.flight_number }} · {{ seg.fare_class_name }}</div>
+            </div>
+          }
+
+          <div class="summary__pax">
+            <h3>Hành khách ({{ b.passengers.length }})</h3>
+            <ul>
+              @for (p of b.passengers; track p.id) {
+                <li>
+                  <span>{{ p.full_name }} <small>({{ passengerTypeLabel(p.passenger_type) }})</small></span>
+                  <b>Ghế {{ seatsOfPassenger(b, p.id) }}</b>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <dl class="price-rows">
+            <div>
+              <dt>Giá vé (bao gồm thuế, phí)</dt>
+              <dd class="tabular">{{ formatVnd(b.fare_amount) }}</dd>
+            </div>
+            <div>
+              <dt>Phụ thu chọn ghế</dt>
+              <dd class="tabular">{{ b.seat_surcharge_amount > 0 ? '+' + formatVnd(b.seat_surcharge_amount) : formatVnd(0) }}</dd>
+            </div>
+            <div>
+              <dt>Hành lý ký gửi</dt>
+              <dd class="tabular">{{ b.baggage_amount > 0 ? '+' + formatVnd(b.baggage_amount) : formatVnd(0) }}</dd>
+            </div>
+            @if (b.promotion_discount_amount > 0) {
+              <div class="price-row--discount">
+                <dt>Khuyến mãi</dt>
+                <dd class="tabular">−{{ formatVnd(b.promotion_discount_amount) }}</dd>
+              </div>
+            }
+            @if (b.voucher_discount_amount > 0) {
+              <div class="price-row--discount">
+                <dt>Voucher</dt>
+                <dd class="tabular">−{{ formatVnd(b.voucher_discount_amount) }}</dd>
+              </div>
+            }
+          </dl>
+
+          <div class="summary__total">
+            <span>Tổng thanh toán</span>
+            <strong class="tabular">{{ formatVnd(b.total_amount) }}</strong>
+          </div>
+
+          <a class="link-back" [routerLink]="['/booking/review']" [queryParams]="{ bookingId: b.id }">
+            <mat-icon>arrow_back</mat-icon>
+            Quay lại bước xem lại
+          </a>
+        </section>
+      </aside>
+    </div>
+  }
+</div>

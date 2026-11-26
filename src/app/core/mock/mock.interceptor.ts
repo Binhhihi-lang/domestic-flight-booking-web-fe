@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { delay, of } from 'rxjs';
+import { delay, of, throwError } from 'rxjs';
 import { ApiCode, ApiResponse } from '@core/models/api-response.model';
 import { MockRegistry } from '@core/mock/mock-registry';
 
@@ -27,7 +27,17 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
   const httpStatus = statusFor(envelope.code);
 
   // Độ trễ giả lập để thấy được trạng thái đang tải trên UI.
-  return of(new HttpResponse({ status: httpStatus, body: envelope })).pipe(delay(320));
+  //
+  // Lỗi phải đi vào `error`, KHÔNG vào `next`: response do interceptor tự trả
+  // không đi qua backend XHR nên HttpClient không kiểm status giúp. Nếu trả
+  // HttpResponse 4xx/5xx ở đây, component nhận `res.data = null` trong `next`
+  // và vỡ (hoặc tệ hơn: coi như thành công) — trong khi chạy backend thật thì
+  // cùng lỗi đó lại vào `error`. Mock phải giống hệt backend.
+  return httpStatus >= 400
+    ? throwError(() => new HttpErrorResponse({ status: httpStatus, error: envelope })).pipe(
+        delay(320),
+      )
+    : of(new HttpResponse({ status: httpStatus, body: envelope })).pipe(delay(320));
 };
 
 /** Ánh xạ mã nghiệp vụ sang HTTP status, giống Backend thật (mục 1.4 API v0.2). */

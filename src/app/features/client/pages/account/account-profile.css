@@ -104,6 +104,12 @@
   background: var(--color-primary-soft);
 }
 
+.pf__pick--disabled {
+  opacity: 0.6;
+  cursor: wait;
+  pointer-events: none;
+}
+
 .pf__pick mat-icon {
   font-size: 17px;
   width: 17px;

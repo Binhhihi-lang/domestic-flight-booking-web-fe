@@ -1,0 +1,2275 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VinaFly — Khu vực vận hành</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/tokens.css" />
+  <link rel="stylesheet" href="assets/base.css" />
+  <link rel="stylesheet" href="staff.css" />
+</head>
+
+<body data-default-screen="dashboard">
+  <div class="stf-app">
+    <!-- ================= SIDEBAR DỌC ================= -->
+    <aside class="stf-side" id="stf-sidebar">
+      <button class="stf-side__toggle" id="stf-side-toggle" type="button" aria-label="Thu gọn thanh bên"
+        aria-expanded="true" title="Thu gọn thanh bên">
+        <span class="material-icons" aria-hidden="true">chevron_left</span>
+      </button>
+      <a class="stf-brand" href="#/dashboard" aria-label="VinaFly — về Dashboard">
+        <span class="stf-brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 36 36" focusable="false">
+            <path class="stf-brand__path" d="M9.5 11.5 L17.2 25.4 L24.4 12.6" />
+            <path class="stf-brand__trail" d="M24.4 12.6 L26.6 10.6" />
+            <circle class="stf-brand__dot" cx="28" cy="9" r="2.6" />
+          </svg>
+        </span>
+        <span class="stf-brand__text">
+          <span class="stf-brand__name">Vina<span>Fly</span></span>
+          <span class="stf-brand__tag">Khu vực vận hành</span>
+        </span>
+      </a>
+
+      <nav class="stf-nav" aria-label="Điều hướng vận hành">
+        <div class="stf-nav__group">
+          <div class="stf-nav__label">Vận hành</div>
+          <a class="stf-nav__item" data-nav="dashboard" href="#/dashboard">
+            <span class="material-icons" aria-hidden="true">dashboard</span>
+            <span class="stf-nav__txt">Dashboard</span>
+          </a>
+          <a class="stf-nav__item" data-nav="flights" href="#/flights">
+            <span class="material-icons" aria-hidden="true">flight</span>
+            <span class="stf-nav__txt">Chuyến bay</span>
+            <span class="stf-nav__count">2</span>
+          </a>
+          <a class="stf-nav__item" data-nav="bookings" href="#/bookings">
+            <span class="material-icons" aria-hidden="true">confirmation_number</span>
+            <span class="stf-nav__txt">Đặt chỗ</span>
+          </a>
+        </div>
+
+        <div class="stf-nav__group">
+          <div class="stf-nav__label">Danh mục</div>
+          <a class="stf-nav__item" data-nav="aircraft" href="#/aircraft">
+            <span class="material-icons" aria-hidden="true">airlines</span>
+            <span class="stf-nav__txt">Máy bay</span>
+          </a>
+        </div>
+
+        <div class="stf-nav__group">
+          <div class="stf-nav__label">Cá nhân</div>
+          <a class="stf-nav__item" data-nav="profile" href="#/profile">
+            <span class="material-icons" aria-hidden="true">account_circle</span>
+            <span class="stf-nav__txt">Hồ sơ</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="stf-side__foot">
+        <div class="stf-who">
+          <span class="stf-avatar">LC</span>
+          <span class="stf-who__txt">
+            <b>Lê Hoàng Cường</b>
+            <span>Nhân viên vận hành</span>
+          </span>
+        </div>
+        <a class="stf-side__link" href="customer.html">
+          <span class="material-icons" aria-hidden="true">open_in_new</span>
+          <span class="stf-nav__txt">Về trang khách hàng</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ================= VÙNG NỘI DUNG ================= -->
+    <div class="stf-main">
+      <header class="stf-header">
+        <nav class="stf-crumbs" id="stf-crumbs" aria-label="Đường dẫn">
+          <b>Dashboard</b>
+        </nav>
+        <span class="stf-header__sp"></span>
+
+        <span class="stf-hdate">
+          <span class="material-icons" aria-hidden="true">calendar_today</span>
+          25/11/2026
+        </span>
+
+        <details class="stf-menu stf-menu--bell">
+          <summary class="stf-iconbtn" aria-label="Thông báo">
+            <span class="material-icons" aria-hidden="true">notifications</span>
+            <span class="stf-dot-count" id="stf-bell-count">3</span>
+          </summary>
+          <div class="stf-menu__panel">
+            <div class="stf-menu__head">
+              <span>Thông báo vận hành</span>
+              <span class="badge badge--primary">3 chưa đọc</span>
+            </div>
+            <div class="stf-noti is-unread">
+              <span class="stf-noti__ic stf-noti__ic--warning">
+                <span class="material-icons" aria-hidden="true">flight_takeoff</span>
+              </span>
+              <span class="stf-noti__body">
+                <b>Chuyến VJ-621 hoãn 30 phút</b>
+                <span>5 phút trước</span>
+              </span>
+            </div>
+            <div class="stf-noti is-unread">
+              <span class="stf-noti__ic stf-noti__ic--success">
+                <span class="material-icons" aria-hidden="true">payments</span>
+              </span>
+              <span class="stf-noti__body">
+                <b>Đơn DH-1049 đã thanh toán 2.959.000đ</b>
+                <span>18 phút trước</span>
+              </span>
+            </div>
+            <div class="stf-noti is-unread">
+              <span class="stf-noti__ic stf-noti__ic--danger">
+                <span class="material-icons" aria-hidden="true">cancel</span>
+              </span>
+              <span class="stf-noti__body">
+                <b>Chuyến VJ-305 đã huỷ — cần xử lý hoàn vé</b>
+                <span>1 giờ trước</span>
+              </span>
+            </div>
+            <div class="stf-noti">
+              <span class="stf-noti__ic">
+                <span class="material-icons" aria-hidden="true">person_add</span>
+              </span>
+              <span class="stf-noti__body">
+                <b>3 khách hàng mới đăng ký hôm nay</b>
+                <span>3 giờ trước</span>
+              </span>
+            </div>
+          </div>
+        </details>
+
+        <details class="stf-menu stf-menu--user">
+          <summary class="stf-userbtn" aria-label="Menu tài khoản">
+            <span class="stf-avatar stf-avatar--sm">LC</span>
+            <span class="stf-userbtn__name">
+              <b>Lê Hoàng Cường</b>
+              <span>Nhân viên vận hành</span>
+            </span>
+            <span class="material-icons stf-userbtn__chev" aria-hidden="true">
+              expand_more
+            </span>
+          </summary>
+          <div class="stf-menu__panel stf-menu__panel--sm">
+            <div class="stf-menu__head">
+              <span>cuong.le@vinafly.vn</span>
+              <span class="badge badge--neutral">STAFF</span>
+            </div>
+            <a class="stf-menuitem" href="#/profile">
+              <span class="material-icons" aria-hidden="true">person</span>Hồ sơ cá nhân
+            </a>
+            <a class="stf-menuitem" href="#/dashboard">
+              <span class="material-icons" aria-hidden="true">space_dashboard</span>Về Dashboard
+            </a>
+            <button class="stf-menuitem stf-menuitem--btn" type="button" data-overlay="support">
+              <span class="material-icons" aria-hidden="true">help_outline</span>Liên hệ hỗ trợ
+            </button>
+            <button class="stf-menuitem stf-menuitem--btn stf-menuitem--danger" type="button" data-overlay="logout">
+              <span class="material-icons" aria-hidden="true">logout</span>Đăng xuất
+            </button>
+          </div>
+        </details>
+      </header>
+
+      <main class="stf-content">
+        <!-- ============================================================
+               1. DASHBOARD — BẢNG CA TRỰC
+               ============================================================ -->
+        <section class="screen" data-screen="dashboard" data-title="Dashboard">
+          <div class="stf-page">
+            <div>
+              <h1>Dashboard</h1>
+              <p class="stf-page__sub">
+                Tổng quan vận hành hôm nay · cập nhật lúc 09:12, 25/11/2026
+              </p>
+            </div>
+            <div class="stf-page__actions">
+              <a class="btn btn--secondary" href="#/flights">
+                <span class="material-icons" aria-hidden="true">flight</span>
+                Danh sách chuyến
+              </a>
+              <a class="btn btn--primary" href="#/flight-new">
+                <span class="material-icons" aria-hidden="true">add</span>
+                Thêm chuyến bay
+              </a>
+            </div>
+          </div>
+
+          <div class="stf-stats">
+            <div class="stf-stat">
+              <span class="stf-stat__label">
+                <span class="material-icons" aria-hidden="true">flight_takeoff</span>
+                Chuyến khởi hành hôm nay
+              </span>
+              <span class="stf-stat__value">18</span>
+              <span class="stf-stat__note">6 chuyến đã cất cánh</span>
+            </div>
+            <div class="stf-stat">
+              <span class="stf-stat__label">
+                <span class="material-icons" aria-hidden="true">confirmation_number</span>
+                Booking hôm nay
+              </span>
+              <span class="stf-stat__value">47</span>
+              <span class="stf-stat__note">↑ +6,2% so với hôm qua</span>
+            </div>
+            <div class="stf-stat">
+              <span class="stf-stat__label">
+                <span class="material-icons" aria-hidden="true">event_seat</span>
+                Tỷ lệ lấp đầy hôm nay
+              </span>
+              <span class="stf-stat__value">78<small>%</small></span>
+              <span class="stf-stat__note">Trung bình các chuyến trong ngày</span>
+            </div>
+            <div class="stf-stat">
+              <span class="stf-stat__label">
+                <span class="material-icons" aria-hidden="true">trending_up</span>
+                Chuyến sắp hết ghế
+              </span>
+              <span class="stf-stat__value">2</span>
+              <span class="stf-stat__note">Cần mở chuyến bổ sung</span>
+            </div>
+          </div>
+
+          <div class="card stf-card--flush">
+            <div class="card-head">
+              <div>
+                <h3>Chuyến cần xử lý</h3>
+                <p class="small muted">Sắp hết ghế hoặc chưa hoàn tất lịch bay</p>
+              </div>
+              <span class="badge badge--warning">4 chuyến</span>
+            </div>
+            <div class="table-wrap stf-card__table">
+              <table class="table stf-table">
+                <thead>
+                  <tr>
+                    <th>Số hiệu</th>
+                    <th>Tuyến</th>
+                    <th>Khởi hành</th>
+                    <th class="num">Ghế trống</th>
+                    <th>Vận hành</th>
+                    <th class="right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-href="#/flight-detail">
+                    <td><a class="stf-code" href="#/flight-detail">VN-165</a></td>
+                    <td><b>HAN → DAD</b></td>
+                    <td class="nowrap">25/11/2026 · 06:00</td>
+                    <td class="num">
+                      51 <span class="badge badge--warning">Sắp hết</span>
+                    </td>
+                    <td><span class="badge badge--success">Đúng giờ</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--ghost btn--sm" href="#/flight-new">
+                          Mở chuyến bổ sung
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/flight-detail">
+                    <td><a class="stf-code" href="#/flight-detail">VJ-621</a></td>
+                    <td><b>HAN → DAD</b></td>
+                    <td class="nowrap">25/11/2026 · 08:35</td>
+                    <td class="num">
+                      9 <span class="badge badge--warning">Sắp hết</span>
+                    </td>
+                    <td><span class="badge badge--warning">Hoãn 30 phút</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--ghost btn--sm" href="#/flight-new">
+                          Mở chuyến bổ sung
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/flight-detail">
+                    <td><a class="stf-code" href="#/flight-detail">QH-204</a></td>
+                    <td><b>HAN → DAD</b></td>
+                    <td class="nowrap">25/11/2026 · 12:15</td>
+                    <td class="num">105</td>
+                    <td><span class="badge badge--success">Đúng giờ</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--ghost btn--sm" href="#/flight-edit">Sửa chuyến</a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/flight-detail">
+                    <td><a class="stf-code" href="#/flight-detail">VU-118</a></td>
+                    <td><b>SGN → PQC</b></td>
+                    <td class="nowrap">25/11/2026 · 09:10</td>
+                    <td class="num">32</td>
+                    <td><span class="badge badge--success">Đúng giờ</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--ghost btn--sm" href="#/flight-edit">Sửa chuyến</a>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card stf-card--flush mt-lg">
+            <div class="card-head">
+              <div>
+                <h3>Booking chờ xác nhận</h3>
+                <p class="small muted">Đơn chưa thanh toán, sắp hết hạn giữ chỗ</p>
+              </div>
+              <span class="badge badge--danger">Sắp hết hạn thanh toán</span>
+            </div>
+            <div class="table-wrap stf-card__table">
+              <table class="table stf-table">
+                <thead>
+                  <tr>
+                    <th>Mã đơn hàng</th>
+                    <th>Khách hàng</th>
+                    <th>Tuyến</th>
+                    <th>Hạn thanh toán</th>
+                    <th class="num">Tổng tiền</th>
+                    <th class="right"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-href="#/booking-detail">
+                    <td>
+                      <a class="stf-code" href="#/booking-detail">DH-1047</a>
+                      <div class="stf-cellsub">PNR sau thanh toán</div>
+                    </td>
+                    <td>
+                      <b>Lê Hoàng Cường</b>
+                      <div class="stf-cellsub">cuong.le@example.com</div>
+                    </td>
+                    <td>HAN → DAD</td>
+                    <td class="nowrap">25/11/2026 · 09:47</td>
+                    <td class="num">890.000đ</td>
+                    <td>
+                      <div class="cell-actions"></div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/booking-detail">
+                    <td>
+                      <a class="stf-code" href="#/booking-detail">DH-1044</a>
+                      <div class="stf-cellsub">PNR sau thanh toán</div>
+                    </td>
+                    <td>
+                      <b>Trần Thị Bình</b>
+                      <div class="stf-cellsub">binh.tran@example.com</div>
+                    </td>
+                    <td>SGN → PQC</td>
+                    <td class="nowrap">25/11/2026 · 10:15</td>
+                    <td class="num">4.170.000đ</td>
+                    <td>
+                      <div class="cell-actions"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="stf-note mt-lg">
+            <span class="material-icons" aria-hidden="true">info</span>
+            <span>
+              Chuyến sắp hết ghế cần mở chuyến bổ sung trước 24 giờ khởi hành. Đơn quá hạn
+              thanh toán sẽ tự huỷ và nhả ghế về kho.
+            </span>
+          </div>
+        </section>
+
+        <!-- ============================================================
+               2. DANH SÁCH CHUYẾN BAY
+               ============================================================ -->
+        <section class="screen" data-screen="flights" data-title="Danh sách chuyến bay">
+          <div class="stf-page">
+            <div>
+              <h1>Chuyến bay</h1>
+              <p class="stf-page__sub">
+                Lịch bay ngày 25/11/2026 · trạng thái mở bán và trạng thái vận hành
+              </p>
+            </div>
+            <div class="stf-page__actions">
+              <button class="btn btn--secondary" type="button">
+                <span class="material-icons" aria-hidden="true">download</span>
+                Xuất danh sách
+              </button>
+              <a class="btn btn--primary" href="#/flight-new">
+                <span class="material-icons" aria-hidden="true">add</span>
+                Thêm chuyến bay
+              </a>
+            </div>
+          </div>
+
+          <div class="card stf-card--flush">
+            <div class="stf-toolbar">
+              <div class="stf-search">
+                <span class="material-icons" aria-hidden="true">search</span>
+                <input class="input" type="search" id="stf-q-flights" name="q-flights"
+                  placeholder="Tìm theo số hiệu hoặc tuyến bay" aria-label="Tìm chuyến bay" />
+              </div>
+              <select id="stf-fl-sale" class="select" aria-label="Lọc theo trạng thái bán">
+                <option>Tất cả trạng thái bán</option>
+                <option>Mở bán</option>
+                <option>Ngừng bán</option>
+              </select>
+              <select id="stf-fl-status" class="select" aria-label="Lọc theo trạng thái vận hành">
+                <option>Tất cả vận hành</option>
+                <option>Đúng giờ</option>
+                <option>Hoãn chuyến</option>
+                <option>Đang lên máy bay</option>
+                <option>Đã huỷ</option>
+              </select>
+              <select id="stf-fl-route" class="select" aria-label="Lọc theo tuyến bay">
+                <option>Tất cả tuyến</option>
+                <option>HAN → DAD</option>
+                <option>SGN → PQC</option>
+                <option>DAD → CXR</option>
+              </select>
+              <span class="stf-toolbar__sp"></span>
+              <span class="small muted nowrap">6 chuyến</span>
+            </div>
+
+            <div class="stf-bulkbar" id="stf-flights-bulkbar" hidden>
+              <span class="stf-bulkbar__n">Đã chọn <b id="stf-flights-bulk-n">0</b> bản ghi</span>
+              <div class="stf-bulkbar__acts">
+                <button class="btn btn--ghost btn--sm" type="button" data-stf-bulk="open">
+                  <span class="material-icons" aria-hidden="true">check_circle</span>
+                  Mở bán
+                </button>
+                <button class="btn btn--ghost btn--sm" type="button" data-stf-bulk="close">
+                  <span class="material-icons" aria-hidden="true">pause_circle</span>
+                  Ngừng bán
+                </button>
+                <button class="btn btn--ghost btn--sm" type="button" data-stf-bulk="clear">
+                  <span class="material-icons" aria-hidden="true">close</span>
+                  Bỏ chọn
+                </button>
+              </div>
+            </div>
+
+            <div class="table-wrap stf-card__table">
+              <table class="table stf-table">
+                <thead>
+                  <tr>
+                    <th class="stf-cbcol">
+                      <input type="checkbox" class="stf-cb" aria-label="Chọn tất cả chuyến trong bảng" />
+                    </th>
+                    <th>Số hiệu</th>
+                    <th>Tuyến</th>
+                    <th>Khởi hành</th>
+                    <th>Máy bay</th>
+                    <th class="num">Ghế trống</th>
+                    <th>Bán vé</th>
+                    <th>Vận hành</th>
+                    <th class="right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-href="#/flight-detail">
+                    <td class="stf-cbcol">
+                      <input type="checkbox" class="stf-cb" aria-label="Chọn chuyến VN-165" />
+                    </td>
+                    <td><a class="stf-code" href="#/flight-detail">VN-165</a></td>
+                    <td>
+                      <b>HAN → DAD</b>
+                      <div class="stf-cellsub">Hà Nội → Đà Nẵng</div>
+                    </td>
+                    <td class="nowrap">06:00 – 07:20</td>
+                    <td class="nowrap">VN-A321-05</td>
+                    <td class="num">51</td>
+                    <td><span class="badge badge--success">Mở bán</span></td>
+                    <td><span class="badge badge--success">Đúng giờ</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--secondary btn--sm" href="#/flight-edit">Sửa</a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/flight-detail">
+                    <td class="stf-cbcol">
+                      <input type="checkbox" class="stf-cb" aria-label="Chọn chuyến VJ-621" />
+                    </td>
+                    <td><a class="stf-code" href="#/flight-detail">VJ-621</a></td>
+                    <td>
+                      <b>HAN → DAD</b>
+                      <div class="stf-cellsub">Hà Nội → Đà Nẵng</div>
+                    </td>
+                    <td class="nowrap">08:35 – 09:55</td>
+                    <td class="nowrap">VJ-A320-12</td>
+                    <td class="num">
+                      9 <span class="badge badge--warning">Sắp hết</span>
+                    </td>
+                    <td><span class="badge badge--success">Mở bán</span></td>
+                    <td><span class="badge badge--warning">Hoãn 30 phút</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--secondary btn--sm" href="#/flight-edit">Sửa</a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/flight-detail">
+                    <td class="stf-cbcol">
+                      <input type="checkbox" class="stf-cb" aria-label="Chọn chuyến QH-204" />
+                    </td>
+                    <td><a class="stf-code" href="#/flight-detail">QH-204</a></td>
+                    <td>
+                      <b>HAN → DAD</b>
+                      <div class="stf-cellsub">Hà Nội → Đà Nẵng</div>
+                    </td>
+                    <td class="nowrap">12:15 – 13:35</td>
+                    <td class="nowrap">QH-A321-04</td>
+                    <td class="num">105</td>
+                    <td><span class="badge badge--success">Mở bán</span></td>
+                    <td><span class="badge badge--success">Đúng giờ</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--secondary btn--sm" href="#/flight-edit">Sửa</a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/flight-detail">
+                    <td class="stf-cbcol">
+                      <input type="checkbox" class="stf-cb" aria-label="Chọn chuyến VN-183" />
+                    </td>
+                    <td><a class="stf-code" href="#/flight-detail">VN-183</a></td>
+                    <td>
+                      <b>HAN → DAD</b>
+                      <div class="stf-cellsub">Hà Nội → Đà Nẵng</div>
+                    </td>
+                    <td class="nowrap">18:45 – 20:05</td>
+                    <td class="nowrap">VN-A350-01</td>
+                    <td class="num">210</td>
+                    <td><span class="badge badge--success">Mở bán</span></td>
+                    <td><span class="badge badge--info">Đang lên máy bay</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--secondary btn--sm" href="#/flight-edit">Sửa</a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/flight-detail">
+                    <td class="stf-cbcol">
+                      <input type="checkbox" class="stf-cb" aria-label="Chọn chuyến VU-118" />
+                    </td>
+                    <td><a class="stf-code" href="#/flight-detail">VU-118</a></td>
+                    <td>
+                      <b>SGN → PQC</b>
+                      <div class="stf-cellsub">TP. HCM → Phú Quốc</div>
+                    </td>
+                    <td class="nowrap">09:10 – 10:15</td>
+                    <td class="nowrap">VU-A321-01</td>
+                    <td class="num">32</td>
+                    <td><span class="badge badge--success">Mở bán</span></td>
+                    <td><span class="badge badge--success">Đúng giờ</span></td>
+                    <td>
+                      <div class="cell-actions">
+                        <a class="btn btn--secondary btn--sm" href="#/flight-edit">Sửa</a>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr data-href="#/flight-detail">
+                    <td class="stf-cbcol">
+                      <input type="checkbox" class="stf-cb" aria-label="Chọn chuyến VJ-305" />
+                    </td>
+                    <td><a class="stf-code" href="#/flight-detail">VJ-305</a></td>
+                    <td>
+                      <b>DAD → CXR</b>
+                      <div class="stf-cellsub">Đà Nẵng → Nha Trang</div>
+                    </td>
+                    <td class="nowrap">14:40 – 15:50</td>
+                    <td class="nowrap">VJ-A321-08</td>
+                    <td class="num">220</td>
+                    <td><span class="badge badge--neutral">Ngừng bán</span></td>
+                    <td><span class="badge badge--danger">Đã huỷ</span></td>
+                    <td>
+                      <div class="cell-actions"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="stf-pager">
+              <span>Hiển thị 1–6 trên 18 chuyến trong ngày</span>
+              <nav class="stf-pages" aria-label="Phân trang danh sách chuyến bay">
+                <button class="stf-pages__btn" type="button" disabled aria-label="Trang trước">
+                  <span class="material-icons" aria-hidden="true">chevron_left</span>
+                </button>
+                <button class="stf-pages__btn is-active" type="button" aria-current="page">1</button>
+                <button class="stf-pages__btn" type="button">2</button>
+                <button class="stf-pages__btn" type="button">3</button>
+                <button class="stf-pages__btn" type="button" aria-label="Trang sau">
+                  <span class="material-icons" aria-hidden="true">chevron_right</span>
+                </button>
+              </nav>
+            </div>
+          </div>
+
+          <div class="stf-note mt-lg">
+            <span class="material-icons" aria-hidden="true">info</span>
+            <span>
+              Nhân viên vận hành được thêm chuyến, đổi giờ bay, cổng ra máy bay và trạng thái
+              vận hành. Riêng hãng bay, sân bay và máy bay là danh mục dùng chung do quản trị
+              viên quản lý.
+            </span>
+          </div>
+        </section>
+
+        <!-- ============================================================
+               2b. THÊM CHUYẾN BAY (W-STF-04)
+               ============================================================ -->
+        <section class="screen" data-screen="flight-new" data-title="Thêm chuyến bay">
+          <div class="stf-page">
+            <div>
+              <h1>Thêm chuyến bay</h1>
+              <p class="stf-page__sub">
+                Chuyến mới tạo ở trạng thái bản nháp và chưa mở bán
+              </p>
+              <nav class="stf-backline" aria-label="Quay lại">
+                <a href="#/flights">
+                  <span class="material-icons" aria-hidden="true">arrow_back</span>
+                  Về danh sách chuyến bay
+                </a>
+              </nav>
+            </div>
+          </div>
+
+          <form class="card" onsubmit="return false">
+            <div class="card-head">
+              <h3>Thông tin chuyến</h3>
+              <span class="badge badge--neutral">Bản nháp</span>
+            </div>
+
+            <div class="stf-fgrid">
+              <div class="field">
+                <label for="stf-n-code">Số hiệu chuyến bay <span class="req">*</span></label>
+                <input id="stf-n-code" class="input" placeholder="Ví dụ: VN 165" maxlength="20" required />
+                <span class="field-hint">Tối đa 20 ký tự, không trùng cùng ngày khởi hành</span>
+              </div>
+              <div class="field">
+                <label for="stf-n-airline">Hãng khai thác <span class="req">*</span></label>
+                <select id="stf-n-airline" class="select" required>
+                  <option value="">Chọn hãng hàng không</option>
+                  <option>Vietnam Airlines (VN)</option>
+                  <option>Vietjet Air (VJ)</option>
+                  <option>Bamboo Airways (QH)</option>
+                  <option>Vietravel Airlines (VU)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="stf-n-aircraft">Máy bay <span class="req">*</span></label>
+                <select id="stf-n-aircraft" class="select" required>
+                  <option value="">Chọn máy bay có sơ đồ ghế</option>
+                  <option>VN-A350-01 · Airbus A350-900 · 305 ghế</option>
+                  <option>VN-A321-05 · Airbus A321neo · 203 ghế</option>
+                  <option>VJ-A320-12 · Airbus A320 · 180 ghế</option>
+                  <option>VJ-A321-08 · Airbus A321 · 220 ghế</option>
+                  <option>QH-B787-02 · Boeing 787-9 · 274 ghế</option>
+                  <option>QH-A321-04 · Airbus A321 · 203 ghế</option>
+                  <option>VU-A321-01 · Airbus A321 · 220 ghế</option>
+                </select>
+                <span class="field-hint">Chỉ hiện máy bay đã có sơ đồ ghế đủ số ghế</span>
+              </div>
+              <div class="field">
+                <label for="stf-n-parent">Chuyến gốc</label>
+                <select id="stf-n-parent" class="select">
+                  <option>Không phải chuyến bổ sung</option>
+                  <option>VN-165 · HAN → DAD · 06:00</option>
+                  <option>VJ-621 · HAN → DAD · 08:35</option>
+                </select>
+                <span class="field-hint">Chọn chuyến gốc khi mở chuyến bổ sung do cầu cao</span>
+              </div>
+              <div class="field">
+                <label for="stf-n-from">Sân bay đi <span class="req">*</span></label>
+                <select id="stf-n-from" class="select" required>
+                  <option value="">Chọn sân bay</option>
+                  <option>HAN · Sân bay Quốc tế Nội Bài</option>
+                  <option>SGN · Sân bay Quốc tế Tân Sơn Nhất</option>
+                  <option>DAD · Sân bay Quốc tế Đà Nẵng</option>
+                  <option>CXR · Sân bay Quốc tế Cam Ranh</option>
+                  <option>PQC · Sân bay Quốc tế Phú Quốc</option>
+                  <option>DLI · Sân bay Liên Khương</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="stf-n-to">Sân bay đến <span class="req">*</span></label>
+                <select id="stf-n-to" class="select" required>
+                  <option value="">Chọn sân bay</option>
+                  <option>HAN · Sân bay Quốc tế Nội Bài</option>
+                  <option>SGN · Sân bay Quốc tế Tân Sơn Nhất</option>
+                  <option>DAD · Sân bay Quốc tế Đà Nẵng</option>
+                  <option>CXR · Sân bay Quốc tế Cam Ranh</option>
+                  <option>PQC · Sân bay Quốc tế Phú Quốc</option>
+                  <option>DLI · Sân bay Liên Khương</option>
+                </select>
+                <span class="field-hint">Phải khác sân bay đi</span>
+              </div>
+              <div class="field">
+                <label for="stf-n-dep">Giờ khởi hành dự kiến <span class="req">*</span></label>
+                <div class="stf-datetime">
+                  <input id="stf-n-dep" class="input" placeholder="dd/mm/yyyy" aria-label="Ngày khởi hành" required />
+                  <input class="input" id="stf-n-dep-time" placeholder="--:--" aria-label="Giờ khởi hành" required />
+                </div>
+              </div>
+              <div class="field">
+                <label for="stf-n-arr">Giờ đến dự kiến <span class="req">*</span></label>
+                <div class="stf-datetime">
+                  <input id="stf-n-arr" class="input" placeholder="dd/mm/yyyy" aria-label="Ngày đến" required />
+                  <input class="input" id="stf-n-arr-time" placeholder="--:--" aria-label="Giờ đến" required />
+                </div>
+                <span class="field-hint">Phải sau giờ khởi hành</span>
+              </div>
+              <div class="field">
+                <label for="stf-n-status">Trạng thái vận hành</label>
+                <select id="stf-n-status" class="select">
+                  <option>Bản nháp</option>
+                  <option>Đã lên lịch</option>
+                </select>
+              </div>
+                <div class="field">
+                  <label for="stf-n-sale">Mở bán ngay</label>
+                  <label class="row gap-sm" style="height: 42px">
+                    <span class="switch">
+                      <input id="stf-n-sale" type="checkbox" aria-describedby="stf-n-sale-hint" />
+                      <span></span>
+                    </span>
+                    <span class="small muted" id="stf-n-sale-hint">
+                      Đóng bán cho tới khi hoàn tất giá
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="stf-formfoot">
+      <a class="btn btn--secondary" href="#/flights">Huỷ</a>
+      <a class="btn btn--secondary" href="#/flights" data-toast="Đã lưu bản nháp chuyến bay">
+        Lưu nháp
+      </a>
+      <a class="btn btn--primary" href="#/flights" data-toast="Đã tạo chuyến bay mới">
+        <span class="material-icons" aria-hidden="true">add</span>
+        Tạo chuyến
+      </a>
+    </div>
+    </form>
+    </section>
+
+    <!-- ============================================================
+               3. CHI TIẾT CHUYẾN BAY
+               ============================================================ -->
+    <section class="screen" data-screen="flight-detail" data-title="Chi tiết chuyến bay">
+      <div class="stf-page">
+        <div>
+          <div class="row gap-md wrap">
+            <h1>VN-165</h1>
+            <span class="badge badge--success">Đúng giờ</span>
+            <span class="badge badge--neutral">Airbus A321neo</span>
+          </div>
+          <p class="stf-page__sub">
+            Hà Nội → Đà Nẵng · 06:00 – 07:20, 25/11/2026 · Vietnam Airlines
+          </p>
+        </div>
+        <div class="stf-page__actions">
+          <a class="btn btn--secondary" href="#/bookings">
+            <span class="material-icons" aria-hidden="true">confirmation_number</span>
+            Đơn của chuyến
+          </a>
+          <a class="btn btn--primary" href="#/flight-edit">
+            <span class="material-icons" aria-hidden="true">edit</span>
+            Sửa chuyến
+          </a>
+        </div>
+      </div>
+
+      <div class="stf-grid">
+        <div class="stack gap-lg">
+          <div class="card">
+            <div class="card-head">
+              <h3>Thông tin chuyến</h3>
+              <span class="badge badge--primary">Đang mở bán</span>
+            </div>
+            <dl class="stf-dl">
+              <dt>Số hiệu chuyến</dt>
+              <dd><b>VN-165</b></dd>
+              <dt>Hãng khai thác</dt>
+              <dd>Vietnam Airlines (VN)</dd>
+              <dt>Máy bay</dt>
+              <dd>VN-A321-05 · Airbus A321neo · 203 ghế</dd>
+              <dt>Sân bay đi</dt>
+              <dd>Nội Bài (HAN) — Hà Nội</dd>
+              <dt>Sân bay đến</dt>
+              <dd>Đà Nẵng (DAD) — Đà Nẵng</dd>
+              <dt>Giờ khởi hành</dt>
+              <dd><b>06:00</b> · 25/11/2026</dd>
+              <dt>Giờ hạ cánh</dt>
+              <dd><b>07:20</b> · 25/11/2026</dd>
+              <dt>Cổng ra máy bay</dt>
+              <dd>A12 · Ga đi Nội Bài</dd>
+              <dt>Trạng thái vận hành</dt>
+              <dd><span class="badge badge--success">Đúng giờ</span></dd>
+            </dl>
+          </div>
+
+          <div class="card stf-card--flush">
+            <div class="card-head">
+              <div>
+                <h3>Danh sách hành khách</h3>
+                <p class="small muted">Đang hiển thị 8 trên 152 hành khách</p>
+              </div>
+              <button class="btn btn--ghost btn--sm" type="button">
+                <span class="material-icons" aria-hidden="true">print</span>
+                In danh sách
+              </button>
+            </div>
+            <div class="table-wrap stf-card__table">
+              <table class="table stf-table">
+                <thead>
+                  <tr>
+                    <th class="num">STT</th>
+                    <th>Hành khách</th>
+                    <th>Loại</th>
+                    <th>Ghế</th>
+                    <th>Hành lý</th>
+                    <th>Vé</th>
+                    <th>Check-in</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="num">1</td>
+                    <td><b>Nguyễn Văn An</b></td>
+                    <td>Người lớn</td>
+                    <td class="stf-code">12A</td>
+                    <td>20kg</td>
+                    <td class="nowrap">738-4521001</td>
+                    <td><span class="badge badge--success">Đã check-in</span></td>
+                  </tr>
+                  <tr>
+                    <td class="num">2</td>
+                    <td><b>Nguyễn Minh Anh</b></td>
+                    <td>Trẻ em</td>
+                    <td class="stf-code">12B</td>
+                    <td>10kg</td>
+                    <td class="nowrap">738-4521002</td>
+                    <td><span class="badge badge--success">Đã check-in</span></td>
+                  </tr>
+                  <tr>
+                    <td class="num">3</td>
+                    <td><b>Trần Thị Bình</b></td>
+                    <td>Người lớn</td>
+                    <td class="stf-code">12C</td>
+                    <td>20kg</td>
+                    <td class="nowrap">738-4521003</td>
+                    <td><span class="badge badge--neutral">Chưa check-in</span></td>
+                  </tr>
+                  <tr>
+                    <td class="num">4</td>
+                    <td><b>Lê Hoàng Cường</b></td>
+                    <td>Người lớn</td>
+                    <td class="stf-code">14A</td>
+                    <td>20kg</td>
+                    <td class="nowrap">738-4521004</td>
+                    <td><span class="badge badge--success">Đã check-in</span></td>
+                  </tr>
+                  <tr>
+                    <td class="num">5</td>
+                    <td><b>Phạm Thu Dung</b></td>
+                    <td>Người lớn</td>
+                    <td class="stf-code">14B</td>
+                    <td>15kg</td>
+                    <td class="nowrap">738-4521005</td>
+                    <td><span class="badge badge--neutral">Chưa check-in</span></td>
+                  </tr>
+                  <tr>
+                    <td class="num">6</td>
+                    <td><b>Võ Minh Đức</b></td>
+                    <td>Người lớn</td>
+                    <td class="stf-code">15C</td>
+                    <td>20kg</td>
+                    <td class="nowrap">738-4521006</td>
+                    <td><span class="badge badge--success">Đã check-in</span></td>
+                  </tr>
+                  <tr>
+                    <td class="num">7</td>
+                    <td><b>Đỗ Quang Huy</b></td>
+                    <td>Người lớn</td>
+                    <td class="stf-code">16A</td>
+                    <td>20kg</td>
+                    <td class="nowrap">738-4521007</td>
+                    <td><span class="badge badge--neutral">Chưa check-in</span></td>
+                  </tr>
+                  <tr>
+                    <td class="num">8</td>
+                    <td><b>Bùi Thanh Hà</b></td>
+                    <td>Trẻ em</td>
+                    <td class="stf-code">16B</td>
+                    <td>10kg</td>
+                    <td class="nowrap">738-4521008</td>
+                    <td><span class="badge badge--neutral">Chưa check-in</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="stf-pager">
+              <span>Hiển thị 8 trên 152 hành khách</span>
+              <a class="btn btn--ghost btn--sm" href="#/bookings">Xem đơn liên quan</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack gap-lg">
+          <div class="card">
+            <div class="card-head">
+              <h3>Tải chuyến</h3>
+            </div>
+            <div class="card-body">
+              <div class="stf-bigload">
+                <span class="stf-bigload__num">152<small>/203</small></span>
+                <span class="badge badge--success">75%</span>
+              </div>
+              <div class="stf-load stf-load--lg mt-md">
+                <div class="stf-load__bar"><span style="width: 75%"></span></div>
+              </div>
+              <div class="stf-mini mt-lg">
+                <div>
+                  <span>Ghế đã bán</span>
+                  <b>152</b>
+                </div>
+                <div>
+                  <span>Ghế còn trống</span>
+                  <b>51</b>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Thao tác nhanh</h3>
+            </div>
+            <div class="stf-actions">
+              <a class="btn btn--primary btn--block" href="#/flight-edit">
+                <span class="material-icons" aria-hidden="true">edit</span>
+                Sửa giờ và trạng thái
+              </a>
+              <button class="btn btn--secondary btn--block" type="button">
+                <span class="material-icons" aria-hidden="true">print</span>
+                In danh sách khách
+              </button>
+              <a class="btn btn--ghost btn--block" href="#/bookings">
+                <span class="material-icons" aria-hidden="true">confirmation_number</span>
+                Xem đơn của chuyến
+              </a>
+            </div>
+          </div>
+
+          <div class="stf-note stf-note--warning">
+            <span class="material-icons" aria-hidden="true">lock</span>
+            <span>
+              Chuyến đã có 152 booking nên không đổi được máy bay. Nếu buộc phải đổi,
+              quản trị viên phải huỷ chuyến và tạo chuyến mới.
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+               4. SỬA CHUYẾN BAY
+               ============================================================ -->
+    <section class="screen" data-screen="flight-edit" data-title="Sửa chuyến bay">
+      <div class="stf-page">
+        <div>
+          <h1>Sửa chuyến VN-165</h1>
+          <p class="stf-page__sub">
+            Cập nhật lịch bay · chuyến đã có 152 booking, mọi thay đổi giờ cần thông báo
+            khách tại quầy
+          </p>
+          <nav class="stf-backline" aria-label="Quay lại">
+            <a href="#/flight-detail">
+              <span class="material-icons" aria-hidden="true">arrow_back</span>
+              Về chi tiết chuyến
+            </a>
+          </nav>
+        </div>
+      </div>
+
+      <form class="card" onsubmit="return false">
+        <div class="card-head">
+          <h3>Thông tin chuyến</h3>
+          <span class="badge badge--neutral">Mã chuyến không đổi</span>
+        </div>
+
+        <div class="stf-fgrid">
+          <div class="field">
+            <label for="stf-f-code">Số hiệu chuyến bay</label>
+            <input id="stf-f-code" class="input" value="VN-165" disabled />
+            <span class="field-hint">Do quản trị viên tạo, không sửa được</span>
+          </div>
+          <div class="field">
+            <label for="stf-f-airline">Hãng khai thác</label>
+            <input id="stf-f-airline" class="input" value="Vietnam Airlines (VN)" disabled />
+          </div>
+          <div class="field">
+            <label for="stf-f-aircraft">Máy bay</label>
+            <input id="stf-f-aircraft" class="input" value="VN-A321-05 · Airbus A321neo" disabled />
+            <span class="field-hint">Khoá vì chuyến đã có booking gắn với sơ đồ ghế</span>
+          </div>
+          <div class="field">
+            <label for="stf-f-gate">Cổng ra máy bay</label>
+            <input id="stf-f-gate" class="input" value="A12" />
+            <span class="field-hint">Ghi theo bảng cổng của ga đi Nội Bài</span>
+          </div>
+          <div class="field">
+            <label for="stf-f-dep">Giờ khởi hành <span class="req">*</span></label>
+            <div class="stf-datetime">
+              <input id="stf-f-dep" class="input" value="25/11/2026" placeholder="dd/mm/yyyy"
+                aria-label="Ngày khởi hành" required />
+              <input class="input" id="stf-f-dep-time" name="dep-time" value="06:00" placeholder="hh:mm"
+                aria-label="Giờ khởi hành" required />
+            </div>
+            <span class="field-hint">Định dạng ngày/tháng/năm · giờ:phút</span>
+          </div>
+          <div class="field">
+            <label for="stf-f-arr">Giờ hạ cánh <span class="req">*</span></label>
+            <div class="stf-datetime">
+              <input id="stf-f-arr" class="input" value="25/11/2026" placeholder="dd/mm/yyyy" aria-label="Ngày hạ cánh"
+                required />
+              <input class="input" id="stf-f-arr-time" name="arr-time" value="07:20" placeholder="hh:mm"
+                aria-label="Giờ hạ cánh" required />
+            </div>
+            <span class="field-hint">Phải sau giờ khởi hành</span>
+          </div>
+          <div class="field">
+            <label for="stf-f-status">Trạng thái vận hành</label>
+            <select id="stf-f-status" class="select">
+              <option>Đúng giờ</option>
+              <option>Hoãn chuyến</option>
+              <option>Đang lên máy bay</option>
+              <option>Đã huỷ</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="stf-f-delay">Lý do thay đổi</label>
+            <select id="stf-f-delay" class="select">
+              <option>Thời tiết xấu</option>
+              <option>Điều chỉnh lịch khai thác</option>
+              <option>Lý do kỹ thuật</option>
+              <option>Không có thay đổi</option>
+            </select>
+          </div>
+          <div class="field field--full">
+            <label for="stf-f-note">Ghi chú nội bộ</label>
+            <textarea id="stf-f-note" class="textarea" rows="3"
+              placeholder="Ví dụ: đã thông báo loa 2 lần, khách được chuyển sang chuyến QH-204"></textarea>
+            <span class="field-hint">Ghi chú hiển thị cho nhân viên ca sau</span>
+          </div>
+        </div>
+
+        <div class="stf-inline-note">
+          <div class="stf-note stf-note--warning">
+            <span class="material-icons" aria-hidden="true">info</span>
+            <span>
+              Đổi giờ khởi hành không tự đổi hạn thanh toán của các booking cũ. Hệ thống
+              không tự hoàn tiền — khách liên hệ quầy A3 để được xử lý.
+            </span>
+          </div>
+        </div>
+
+        <div class="stf-formfoot">
+          <a class="btn btn--secondary" href="#/flight-detail">Huỷ</a>
+          <a class="btn btn--primary" href="#/flight-detail" data-toast="Đã lưu thay đổi cho chuyến VN-165">
+            <span class="material-icons" aria-hidden="true">save</span>
+            Lưu thay đổi
+          </a>
+        </div>
+      </form>
+
+      <div class="card mt-lg">
+        <div class="card-head">
+          <h3>Lịch sử thay đổi gần đây</h3>
+        </div>
+        <div class="table-wrap">
+          <table class="table stf-table stf-table--narrow">
+            <thead>
+              <tr>
+                <th>Thời điểm</th>
+                <th>Người thực hiện</th>
+                <th>Nội dung</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="nowrap">25/11/2026 · 08:47</td>
+                <td>Lê Hoàng Cường</td>
+                <td>Giữ nguyên giờ bay, cập nhật cổng ra máy bay A12</td>
+              </tr>
+              <tr>
+                <td class="nowrap">24/11/2026 · 17:05</td>
+                <td>Nguyễn Thị Hồng</td>
+                <td>Xác nhận lịch bay ngày 25/11/2026</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Khối huỷ chuyến tách riêng khỏi thao tác lưu, viền cảnh báo -->
+      <div class="stf-danger mt-lg">
+        <div>
+          <h3>Huỷ chuyến</h3>
+          <p>
+            Huỷ chuyến sẽ chuyển trạng thái vận hành sang <b>Đã huỷ</b> và đóng bán vé.
+            Hệ thống không tự hoàn tiền — khách liên hệ đại lý để được xử lý hoàn tiền.
+          </p>
+        </div>
+        <button class="btn btn--danger" type="button" data-overlay="delete-confirm" data-del-flight="chuyến bay VN-165">
+          Huỷ chuyến này
+        </button>
+      </div>
+    </section>
+
+    <!-- ============================================================
+               5. DANH SÁCH ĐẶT CHỖ
+               ============================================================ -->
+    <section class="screen" data-screen="bookings" data-title="Danh sách đặt chỗ">
+      <div class="stf-page">
+        <div>
+          <h1>Đặt chỗ</h1>
+          <p class="stf-page__sub">
+            Toàn bộ booking ngày 25/11/2026 · tra cứu theo mã đơn, PNR hoặc tên khách
+          </p>
+        </div>
+        <div class="stf-page__actions">
+          <button class="btn btn--secondary" type="button">
+            <span class="material-icons" aria-hidden="true">download</span>
+            Xuất Excel
+          </button>
+        </div>
+      </div>
+
+      <div class="card stf-card--flush">
+        <div class="stf-toolbar">
+          <div class="stf-search">
+            <span class="material-icons" aria-hidden="true">search</span>
+            <input class="input" type="search" id="stf-q-bookings" name="q-bookings"
+              placeholder="Tìm theo mã đơn, PNR hoặc tên khách" aria-label="Tìm đặt chỗ" />
+          </div>
+          <select id="stf-bk-status" class="select" aria-label="Lọc theo trạng thái">
+            <option>Tất cả trạng thái</option>
+            <option>Đã thanh toán</option>
+            <option>Chờ thanh toán</option>
+            <option>Đã hoàn tiền</option>
+          </select>
+          <select id="stf-bk-route" class="select" aria-label="Lọc theo hành trình">
+            <option>Hành trình: tất cả</option>
+            <option>Hà Nội → Đà Nẵng</option>
+            <option>TP. HCM → Phú Quốc</option>
+            <option>Đà Nẵng → Nha Trang</option>
+          </select>
+          <div class="stf-daterange">
+            <span class="material-icons" aria-hidden="true">date_range</span>
+            <input class="input" value="25/11/2026" id="stf-bk-from" name="bk-from" aria-label="Từ ngày"
+              placeholder="Từ ngày" />
+            <span class="stf-daterange__sep">–</span>
+            <input class="input" value="25/11/2026" id="stf-bk-to" name="bk-to" aria-label="Đến ngày"
+              placeholder="Đến ngày" />
+          </div>
+          <span class="stf-toolbar__sp"></span>
+          <span class="small muted nowrap">5 đơn</span>
+        </div>
+
+        <div class="table-wrap stf-card__table">
+          <table class="table stf-table stf-table--wide">
+            <thead>
+              <tr>
+                <th>Mã đơn / PNR</th>
+                <th>Khách hàng</th>
+                <th>Tuyến · Chuyến</th>
+                <th>Ngày bay</th>
+                <th class="num">Khách</th>
+                <th class="num">Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th class="right"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-href="#/booking-detail">
+                <td>
+                  <a class="stf-code" href="#/booking-detail">DH-1049</a>
+                  <div class="stf-cellsub">PNR X7K2MP</div>
+                </td>
+                <td>
+                  <b>Nguyễn Văn An</b>
+                  <div class="stf-cellsub">0901 234 567</div>
+                </td>
+                <td>
+                  Hà Nội → Đà Nẵng
+                  <div class="stf-cellsub">VN-165</div>
+                </td>
+                <td class="nowrap">25/11/2026 06:00</td>
+                <td class="num">2</td>
+                <td class="num"><b>2.959.000đ</b></td>
+                <td><span class="badge badge--success">Đã thanh toán</span></td>
+                <td>
+                  <div class="cell-actions"></div>
+                </td>
+              </tr>
+              <tr data-href="#/booking-detail">
+                <td>
+                  <a class="stf-code" href="#/booking-detail">DH-1048</a>
+                  <div class="stf-cellsub">PNR B9TRQK</div>
+                </td>
+                <td>
+                  <b>Trần Thị Bình</b>
+                  <div class="stf-cellsub">0912 345 678</div>
+                </td>
+                <td>
+                  TP. HCM → Phú Quốc
+                  <div class="stf-cellsub">VU-118</div>
+                </td>
+                <td class="nowrap">25/11/2026 09:10</td>
+                <td class="num">3</td>
+                <td class="num"><b>4.170.000đ</b></td>
+                <td><span class="badge badge--success">Đã thanh toán</span></td>
+                <td>
+                  <div class="cell-actions"></div>
+                </td>
+              </tr>
+              <tr data-href="#/booking-detail">
+                <td>
+                  <a class="stf-code" href="#/booking-detail">DH-1047</a>
+                  <div class="stf-cellsub">PNR sau thanh toán</div>
+                </td>
+                <td>
+                  <b>Lê Hoàng Cường</b>
+                  <div class="stf-cellsub">0938 111 222</div>
+                </td>
+                <td>
+                  Hà Nội → Đà Nẵng
+                  <div class="stf-cellsub">VJ-621</div>
+                </td>
+                <td class="nowrap">25/11/2026 08:35</td>
+                <td class="num">1</td>
+                <td class="num"><b>890.000đ</b></td>
+                <td><span class="badge badge--warning">Chờ thanh toán</span></td>
+                <td>
+                  <div class="cell-actions"></div>
+                </td>
+              </tr>
+              <tr data-href="#/booking-detail">
+                <td>
+                  <a class="stf-code" href="#/booking-detail">DH-1046</a>
+                  <div class="stf-cellsub">PNR M2LKJH</div>
+                </td>
+                <td>
+                  <b>Phạm Thu Dung</b>
+                  <div class="stf-cellsub">0977 888 999</div>
+                </td>
+                <td>
+                  Đà Nẵng → Nha Trang
+                  <div class="stf-cellsub">VJ-305</div>
+                </td>
+                <td class="nowrap">25/11/2026 14:40</td>
+                <td class="num">2</td>
+                <td class="num"><b>1.780.000đ</b></td>
+                <td><span class="badge badge--neutral">Đã hoàn tiền</span></td>
+                <td>
+                  <div class="cell-actions"></div>
+                </td>
+              </tr>
+              <tr data-href="#/booking-detail">
+                <td>
+                  <a class="stf-code" href="#/booking-detail">DH-1045</a>
+                  <div class="stf-cellsub">PNR P8YHN3</div>
+                </td>
+                <td>
+                  <b>Võ Minh Đức</b>
+                  <div class="stf-cellsub">0903 222 333</div>
+                </td>
+                <td>
+                  Hà Nội → Đà Nẵng
+                  <div class="stf-cellsub">VN-183</div>
+                </td>
+                <td class="nowrap">25/11/2026 18:45</td>
+                <td class="num">2</td>
+                <td class="num"><b>1.880.000đ</b></td>
+                <td><span class="badge badge--success">Đã thanh toán</span></td>
+                <td>
+                  <div class="cell-actions"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="stf-pager">
+          <span>Hiển thị 1–5 trên 12 đơn trong ngày</span>
+          <nav class="stf-pages" aria-label="Phân trang danh sách đặt chỗ">
+            <button class="stf-pages__btn" type="button" disabled aria-label="Trang trước">
+              <span class="material-icons" aria-hidden="true">chevron_left</span>
+            </button>
+            <button class="stf-pages__btn is-active" type="button" aria-current="page">1</button>
+            <button class="stf-pages__btn" type="button">2</button>
+            <button class="stf-pages__btn" type="button">3</button>
+            <button class="stf-pages__btn" type="button" aria-label="Trang sau">
+              <span class="material-icons" aria-hidden="true">chevron_right</span>
+            </button>
+            <select class="stf-pager__size" aria-label="Số dòng mỗi trang">
+              <option value="10" selected>10 / trang</option>
+              <option value="20">20 / trang</option>
+              <option value="50">50 / trang</option>
+            </select>
+          </nav>
+        </div>
+      </div>
+
+  <div class="stf-note mt-lg">
+    <span class="material-icons" aria-hidden="true">info</span>
+    <span>
+      Nhân viên chỉ tra cứu đơn để hỗ trợ khách. Việc huỷ, hoàn tiền và sửa thông tin
+      hành khách do khách hàng hoặc quản trị viên thực hiện.
+    </span>
+  </div>
+  </section>
+
+  <!-- ============================================================
+               6. CHI TIẾT ĐẶT CHỖ
+               ============================================================ -->
+  <section class="screen" data-screen="booking-detail" data-title="Chi tiết đặt chỗ">
+    <div class="stf-page">
+      <div>
+        <div class="row gap-md wrap">
+          <h1>DH-1049</h1>
+          <span class="badge badge--success">Đã thanh toán</span>
+          <span class="badge badge--primary">PNR X7K2MP</span>
+        </div>
+        <p class="stf-page__sub">
+          Nguyễn Văn An · 0901 234 567 · tạo lúc 18/11/2026 14:32
+        </p>
+        <nav class="stf-backline" aria-label="Quay lại">
+          <a href="#/bookings">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
+            Về danh sách đặt chỗ
+          </a>
+        </nav>
+      </div>
+      <div class="stf-page__actions">
+        <button class="btn btn--secondary" type="button" data-toast="Đang mở bản in vé DH-1049">
+          <span class="material-icons" aria-hidden="true">print</span>
+          In vé
+        </button>
+        <button class="btn btn--primary" type="button" data-overlay="checkin-confirm">
+          <span class="material-icons" aria-hidden="true">how_to_reg</span>
+          Check-in
+        </button>
+      </div>
+    </div>
+
+    <div class="stf-grid">
+      <div class="stack gap-lg">
+        <div class="card">
+          <div class="card-head">
+            <h3>Thông tin đặt chỗ</h3>
+          </div>
+          <dl class="stf-dl">
+            <dt>Mã đơn</dt>
+            <dd><b>DH-1049</b></dd>
+            <dt>Mã đặt chỗ (PNR)</dt>
+            <dd><b class="stf-code">X7K2MP</b></dd>
+            <dt>Kênh đặt</dt>
+            <dd>Website</dd>
+            <dt>Người liên hệ</dt>
+            <dd>Nguyễn Văn An · 0901 234 567 · an.nguyen@example.com</dd>
+            <dt>Trạng thái</dt>
+            <dd><span class="badge badge--success">Đã thanh toán</span></dd>
+            <dt>Thanh toán lúc</dt>
+            <dd>18/11/2026 14:41 · VNPay</dd>
+          </dl>
+        </div>
+
+        <div class="card stf-card--flush">
+          <div class="card-head">
+            <h3>Chặng bay</h3>
+            <span class="badge badge--neutral">Một chiều</span>
+          </div>
+          <div class="table-wrap stf-card__table">
+            <table class="table stf-table stf-table--narrow">
+              <thead>
+                <tr>
+                  <th>Chặng</th>
+                  <th>Chuyến</th>
+                  <th>Giờ bay</th>
+                  <th>Hạng vé</th>
+                  <th>Ghế</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1 · Đi</td>
+                  <td class="stf-code">VN-165</td>
+                  <td class="nowrap">06:00 – 07:20 · 25/11/2026</td>
+                  <td>Phổ thông Linh hoạt</td>
+                  <td class="stf-code">12A, 12B</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card stf-card--flush">
+          <div class="card-head">
+            <h3>Hành khách</h3>
+            <span class="badge badge--neutral">2 hành khách</span>
+          </div>
+          <div class="table-wrap stf-card__table">
+            <table class="table stf-table">
+              <thead>
+                <tr>
+                  <th>Họ tên</th>
+                  <th>Loại</th>
+                  <th>Giới tính</th>
+                  <th>Ngày sinh</th>
+                  <th>Ghế</th>
+                  <th>Hành lý</th>
+                  <th>Vé</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Nguyễn Văn An</b></td>
+                  <td>Người lớn</td>
+                  <td>Nam</td>
+                  <td class="nowrap">12/03/1990</td>
+                  <td class="stf-code">12A</td>
+                  <td>20kg</td>
+                  <td class="nowrap">738-4521001</td>
+                </tr>
+                <tr>
+                  <td><b>Nguyễn Minh Anh</b></td>
+                  <td>Trẻ em</td>
+                  <td>Nữ</td>
+                  <td class="nowrap">05/07/2018</td>
+                  <td class="stf-code">12B</td>
+                  <td>10kg</td>
+                  <td class="nowrap">738-4521002</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Thanh toán</h3>
+            <span class="badge badge--success">Thành công</span>
+          </div>
+          <div class="card-body">
+            <div class="stf-pay">
+              <div>
+                <span>Phương thức</span>
+                <b>VNPay</b>
+              </div>
+              <div>
+                <span>Mã giao dịch</span>
+                <b class="stf-code">VNP-88213456</b>
+              </div>
+              <div>
+                <span>Thời điểm</span>
+                <b>18/11/2026 14:41</b>
+              </div>
+            </div>
+            <div class="stf-sum mt-lg">
+              <div><span>Giá vé (2 hành khách)</span><b>2.580.000đ</b></div>
+              <div><span>Thuế và phí sân bay</span><b>380.000đ</b></div>
+              <div><span>Phí dịch vụ</span><b>99.000đ</b></div>
+              <div><span>Phí chọn ghế</span><b>100.000đ</b></div>
+              <div><span>Hành lý mua thêm</span><b>0đ</b></div>
+              <div class="is-discount">
+                <span>Voucher BAYHE2026 · giảm 200.000đ</span><b>-200.000đ</b>
+              </div>
+              <div class="is-total"><span>Tổng thanh toán</span><b>2.959.000đ</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack gap-lg">
+        <div class="card">
+          <div class="card-head">
+            <h3>Thao tác</h3>
+          </div>
+          <div class="stf-actions">
+            <button class="btn btn--primary btn--block" type="button" data-overlay="checkin-confirm">
+              <span class="material-icons" aria-hidden="true">how_to_reg</span>
+              Check-in cho 2 khách
+            </button>
+            <button class="btn btn--secondary btn--block" type="button" data-toast="Đang mở bản in vé DH-1049">
+              <span class="material-icons" aria-hidden="true">print</span>
+              In vé điện tử
+            </button>
+            <button class="btn btn--ghost btn--block" type="button"
+              data-toast="Đã gửi lại vé tới an.nguyen@example.com">
+              <span class="material-icons" aria-hidden="true">forward_to_inbox</span>
+              Gửi lại email vé
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Vé điện tử</h3>
+          </div>
+          <div class="stf-eticket">
+            <div>
+              <span class="material-icons" aria-hidden="true">airplane_ticket</span>
+              <div>
+                <b>Nguyễn Văn An</b>
+                <span class="stf-code">738-4521001</span>
+              </div>
+              <span class="badge badge--success">Đã phát hành</span>
+            </div>
+            <div>
+              <span class="material-icons" aria-hidden="true">airplane_ticket</span>
+              <div>
+                <b>Nguyễn Minh Anh</b>
+                <span class="stf-code">738-4521002</span>
+              </div>
+              <span class="badge badge--success">Đã phát hành</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Quy định hạng vé</h3>
+          </div>
+          <dl class="stf-dl">
+            <dt>Hạng vé</dt>
+            <dd>VN_ECON_FLEX · Phổ thông Linh hoạt</dd>
+            <dt>Hành lý</dt>
+            <dd>20kg ký gửi + 10kg xách tay</dd>
+            <dt>Hoàn vé</dt>
+            <dd>Hoàn 90% trước 24 giờ (khách liên hệ đại lý)</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+               7. MÁY BAY (CHỈ ĐỌC)
+               ============================================================ -->
+  <section class="screen" data-screen="aircraft" data-title="Máy bay">
+    <div class="stf-page">
+      <div>
+        <h1>Máy bay</h1>
+        <p class="stf-page__sub">
+          Danh mục máy bay để tra cứu khi điều phối chuyến · chỉ đọc
+        </p>
+      </div>
+      <div class="stf-page__actions">
+        <span class="badge badge--neutral">
+          <span class="material-icons" aria-hidden="true">visibility</span>
+          Chỉ xem
+        </span>
+      </div>
+    </div>
+
+    <div class="stf-stats">
+      <div class="stf-stat">
+        <span class="stf-stat__label">
+          <span class="material-icons" aria-hidden="true">airlines</span>
+          Tổng số máy bay
+        </span>
+        <span class="stf-stat__value">8</span>
+        <span class="stf-stat__note">Trong danh mục đội bay</span>
+      </div>
+      <div class="stf-stat">
+        <span class="stf-stat__label">
+          <span class="material-icons" aria-hidden="true">check_circle</span>
+          Đang hoạt động
+        </span>
+        <span class="stf-stat__value">7</span>
+        <span class="stf-stat__note">Sẵn sàng xếp chuyến</span>
+      </div>
+      <div class="stf-stat">
+        <span class="stf-stat__label">
+          <span class="material-icons" aria-hidden="true">pause_circle</span>
+          Tạm dừng
+        </span>
+        <span class="stf-stat__value">1</span>
+        <span class="stf-stat__note">Không xếp chuyến mới</span>
+      </div>
+    </div>
+
+    <div class="card stf-card--flush">
+      <div class="stf-toolbar">
+        <div class="stf-search">
+          <span class="material-icons" aria-hidden="true">search</span>
+          <input class="input" type="search" id="stf-q-aircraft" name="q-aircraft"
+            placeholder="Tìm theo mã máy bay hoặc dòng máy bay" aria-label="Tìm máy bay" />
+        </div>
+        <select id="stf-ac-maker" class="select" aria-label="Lọc theo nhà sản xuất">
+          <option>Tất cả nhà sản xuất</option>
+          <option>Airbus</option>
+          <option>Boeing</option>
+        </select>
+        <span class="stf-toolbar__sp"></span>
+        <span class="small muted nowrap">8 máy bay</span>
+      </div>
+
+      <div class="table-wrap stf-card__table">
+        <table class="table stf-table">
+          <thead>
+            <tr>
+              <th>Mã máy bay</th>
+              <th>Dòng máy bay</th>
+              <th>Nhà sản xuất</th>
+              <th class="num">Số ghế</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="stf-code">VN-A350-01</td>
+              <td><b>Airbus A350-900</b></td>
+              <td>Airbus</td>
+              <td class="num">305</td>
+              <td><span class="badge badge--success">Đang hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="stf-code">VN-A321-05</td>
+              <td><b>Airbus A321neo</b></td>
+              <td>Airbus</td>
+              <td class="num">203</td>
+              <td><span class="badge badge--success">Đang hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="stf-code">VJ-A320-12</td>
+              <td><b>Airbus A320</b></td>
+              <td>Airbus</td>
+              <td class="num">180</td>
+              <td><span class="badge badge--success">Đang hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="stf-code">VJ-A321-08</td>
+              <td><b>Airbus A321</b></td>
+              <td>Airbus</td>
+              <td class="num">220</td>
+              <td><span class="badge badge--success">Đang hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="stf-code">QH-B787-02</td>
+              <td><b>Boeing 787-9</b></td>
+              <td>Boeing</td>
+              <td class="num">274</td>
+              <td><span class="badge badge--success">Đang hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="stf-code">QH-A321-04</td>
+              <td><b>Airbus A321</b></td>
+              <td>Airbus</td>
+              <td class="num">203</td>
+              <td><span class="badge badge--success">Đang hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="stf-code">VU-A321-01</td>
+              <td><b>Airbus A321</b></td>
+              <td>Airbus</td>
+              <td class="num">220</td>
+              <td><span class="badge badge--success">Đang hoạt động</span></td>
+            </tr>
+            <tr>
+              <td class="stf-code">BL-A320-03</td>
+              <td><b>Airbus A320</b></td>
+              <td>Airbus</td>
+              <td class="num">180</td>
+              <td><span class="badge badge--neutral">Tạm dừng</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="stf-pager">
+        <span>Hiển thị 1–8 trên 8 máy bay</span>
+        <nav class="stf-pages" aria-label="Phân trang danh sách máy bay">
+          <button class="stf-pages__btn" type="button" disabled aria-label="Trang trước">
+            <span class="material-icons" aria-hidden="true">chevron_left</span>
+          </button>
+          <button class="stf-pages__btn is-active" type="button" aria-current="page">1</button>
+          <button class="stf-pages__btn" type="button" disabled aria-label="Trang sau">
+            <span class="material-icons" aria-hidden="true">chevron_right</span>
+          </button>
+          <select class="stf-pager__size" aria-label="Số dòng mỗi trang">
+            <option value="10" selected>10 / trang</option>
+            <option value="20">20 / trang</option>
+            <option value="50">50 / trang</option>
+          </select>
+        </nav>
+      </div>
+    </div>
+
+    <div class="stf-note mt-lg">
+      <span class="material-icons" aria-hidden="true">info</span>
+      <span>
+        Nhân viên vận hành chỉ tra cứu máy bay. Việc thêm, sửa và cấu hình sơ đồ ghế do
+        quản trị viên thực hiện. Máy bay đang tạm dừng không xếp chuyến mới được.
+      </span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+               8. HỒ SƠ CÁ NHÂN
+               ============================================================ -->
+  <section class="screen" data-screen="profile" data-title="Hồ sơ cá nhân">
+    <div class="stf-page">
+      <div>
+        <h1>Hồ sơ cá nhân</h1>
+        <p class="stf-page__sub">
+          Thông tin tài khoản đang đăng nhập · vai trò nhân viên vận hành
+        </p>
+      </div>
+    </div>
+
+    <div class="stf-profile">
+      <div class="card">
+        <div class="card-head">
+          <h3>Thông tin cá nhân</h3>
+          <span class="badge badge--success">Đang hoạt động</span>
+        </div>
+        <div class="stf-fgrid">
+          <div class="field">
+            <label for="stf-p-name">Họ và tên</label>
+            <input id="stf-p-name" class="input" value="Lê Hoàng Cường" />
+            <span class="field-hint">Nhập đầy đủ họ và tên, không tách riêng</span>
+          </div>
+          <div class="field">
+            <label for="stf-p-phone">Số điện thoại</label>
+            <input id="stf-p-phone" class="input" value="0938 111 222" />
+          </div>
+          <div class="field">
+            <label for="stf-p-gender">Giới tính</label>
+            <select id="stf-p-gender" class="select">
+              <option>Nam</option>
+              <option>Nữ</option>
+              <option>Khác</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="stf-p-addr">Thông tin cư trú</label>
+            <input id="stf-p-addr" class="input" value="Hải Châu, Đà Nẵng" />
+            <span class="field-hint">Không bắt buộc</span>
+          </div>
+        </div>
+        <div class="stf-formfoot">
+          <button class="btn btn--secondary" type="button">Hoàn tác</button>
+          <button class="btn btn--primary" type="button" data-toast="Đã lưu thông tin cá nhân">
+            <span class="material-icons" aria-hidden="true">save</span>
+            Lưu thay đổi
+          </button>
+        </div>
+      </div>
+
+      <div class="stack gap-lg">
+        <div class="card">
+          <div class="card-head">
+            <h3>Tài khoản</h3>
+          </div>
+          <dl class="stf-dl">
+            <dt>Email đăng nhập</dt>
+            <dd>cuong.le@vinafly.vn</dd>
+            <dt>Vai trò</dt>
+            <dd><span class="badge badge--primary">Nhân viên vận hành</span></dd>
+            <dt>Ngày tham gia</dt>
+            <dd>20/08/2025</dd>
+          </dl>
+          <p class="stf-card__hint">
+            Email và vai trò do hệ thống quản lý. Muốn đổi vai trò cần quản trị viên
+            cập nhật ở màn Người dùng.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Đổi mật khẩu</h3>
+          </div>
+          <div class="stf-fgrid stf-fgrid--one">
+            <div class="field">
+              <label for="stf-pw-old">Mật khẩu hiện tại <span class="req">*</span></label>
+              <input id="stf-pw-old" class="input" type="password" placeholder="Nhập mật khẩu hiện tại" />
+            </div>
+            <div class="field">
+              <label for="stf-pw-new">Mật khẩu mới <span class="req">*</span></label>
+              <input id="stf-pw-new" class="input" type="password" placeholder="Tối thiểu 8 ký tự, gồm chữ và số" />
+            </div>
+            <div class="field">
+              <label for="stf-pw-re">Nhập lại mật khẩu mới <span class="req">*</span></label>
+              <input id="stf-pw-re" class="input" type="password" placeholder="Nhập lại mật khẩu mới" />
+            </div>
+          </div>
+          <div class="stf-formfoot">
+            <button class="btn btn--primary" type="button" data-toast="Đã cập nhật mật khẩu">
+              <span class="material-icons" aria-hidden="true">lock_reset</span>
+              Cập nhật mật khẩu
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card stf-card--flush mt-lg">
+      <div class="card-head">
+        <h3>Phiên đăng nhập gần nhất</h3>
+        <span class="badge badge--neutral">Chỉ đọc</span>
+      </div>
+      <div class="table-wrap stf-card__table">
+        <table class="table stf-table stf-table--narrow">
+          <thead>
+            <tr>
+              <th>Thiết bị</th>
+              <th>Thời điểm</th>
+              <th>Địa chỉ IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Chrome · Windows</td>
+              <td class="nowrap">25/11/2026 · 05:58</td>
+              <td class="stf-code">113.161.x.x</td>
+            </tr>
+            <tr>
+              <td>Chrome · Windows</td>
+              <td class="nowrap">24/11/2026 · 13:04</td>
+              <td class="stf-code">113.161.x.x</td>
+            </tr>
+            <tr>
+              <td>Safari · iPhone</td>
+              <td class="nowrap">23/11/2026 · 20:41</td>
+              <td class="stf-code">27.72.x.x</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  </main>
+
+  <footer class="stf-footer">
+    <span>© 2026 VinaFly — Khu vực vận hành.</span>
+    <span>Phiên bản 0.2 · Bản mẫu giao diện</span>
+  </footer>
+  </div>
+  </div>
+
+  <!-- ================= OVERLAY CHECK-IN ================= -->
+  <div class="overlay" id="ov-checkin-confirm">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ov-checkin-title">
+      <div class="modal-head">
+        <div>
+          <h3 id="ov-checkin-title">Xác nhận check-in</h3>
+          <p class="small muted mt-sm">Đơn DH-1049 · chuyến VN-165 · 06:00 25/11/2026</p>
+        </div>
+        <button class="modal-close" type="button" data-close aria-label="Đóng">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="stf-paxpick">
+          <label class="stf-paxpick__row">
+            <input type="checkbox" id="stf-ci-1" name="ci-pax-1" checked />
+            <span>
+              <b>Nguyễn Văn An</b>
+              <span class="small muted">Người lớn · ghế 12A · vé 738-4521001</span>
+            </span>
+            <span class="badge badge--neutral">Chưa check-in</span>
+          </label>
+          <label class="stf-paxpick__row">
+            <input type="checkbox" id="stf-ci-2" name="ci-pax-2" checked />
+            <span>
+              <b>Nguyễn Minh Anh</b>
+              <span class="small muted">Trẻ em · ghế 12B · vé 738-4521002</span>
+            </span>
+            <span class="badge badge--neutral">Chưa check-in</span>
+          </label>
+        </div>
+        <div class="stf-note stf-note--warning mt-lg">
+          <span class="material-icons" aria-hidden="true">info</span>
+          <span>
+            Sau khi check-in, hành khách không đổi được ghế và không huỷ vé. Thẻ lên máy bay
+            được gửi tới an.nguyen@example.com.
+          </span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--secondary" type="button" data-close>Huỷ</button>
+        <button class="btn btn--primary" type="button" data-close
+          data-toast="Đã check-in 2 hành khách cho chuyến VN-165">
+          <span class="material-icons" aria-hidden="true">how_to_reg</span>
+          Xác nhận check-in
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= XÁC NHẬN HUỶ / XOÁ (dùng chung) ================= -->
+  <div class="overlay" id="ov-delete-confirm" role="dialog" aria-modal="true" aria-labelledby="stf-del-title">
+    <div class="modal">
+      <div class="modal-head">
+        <div style="display: flex; align-items: center; gap: var(--sp-md)">
+          <span class="stf-modal__ic">
+            <span class="material-icons" aria-hidden="true">delete_outline</span>
+          </span>
+          <div>
+            <h3 id="stf-del-title">Huỷ chuyến bay VN-165?</h3>
+            <p class="small muted mt-sm" id="stf-del-sub">
+              Chuyến đã có 152 booking. Huỷ chuyến không tự động hoàn tiền — khách liên hệ đại lý.
+            </p>
+          </div>
+        </div>
+        <button class="modal-close" type="button" data-close aria-label="Đóng">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--secondary" type="button" data-close>Giữ nguyên</button>
+        <button class="btn btn--danger" type="button" data-close
+          data-toast="Đã huỷ chuyến VN-165 · đã gửi thông báo cho 152 hành khách">
+          Xác nhận huỷ chuyến
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ĐĂNG XUẤT ================= -->
+  <div class="overlay" id="ov-logout" role="dialog" aria-modal="true" aria-labelledby="stf-logout-title">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 id="stf-logout-title">Đăng xuất khỏi khu vực vận hành?</h3>
+          <p class="small muted mt-sm">
+            Phiên làm việc của Lê Hoàng Cường sẽ kết thúc. Mọi thay đổi đã lưu vẫn được giữ.
+          </p>
+        </div>
+        <button class="modal-close" type="button" data-close aria-label="Đóng">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--secondary" type="button" data-close>Ở lại</button>
+        <button class="btn btn--primary" type="button" data-close data-toast="Đã đăng xuất khỏi khu vực vận hành">
+          Đăng xuất
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= LIÊN HỆ HỖ TRỢ ================= -->
+  <div class="overlay" id="ov-support" role="dialog" aria-modal="true" aria-labelledby="stf-support-title">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 id="stf-support-title">Liên hệ hỗ trợ</h3>
+          <p class="small muted mt-sm">Khi có sự cố chuyến bay hoặc tài khoản vận hành.</p>
+        </div>
+        <button class="modal-close" type="button" data-close aria-label="Đóng">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="stf-support">
+          <div class="stf-support__row">
+            <span class="material-icons" aria-hidden="true">call</span>
+            <div>
+              <b>1900 1234 · nhánh 2</b>
+              <span class="small muted">Bộ phận vận hành khai thác · 06:00 – 23:00 mỗi ngày</span>
+            </div>
+          </div>
+          <div class="stf-support__row">
+            <span class="material-icons" aria-hidden="true">mail</span>
+            <div>
+              <b>ops@vinafly.vn</b>
+              <span class="small muted">Phản hồi trong 2 giờ làm việc</span>
+            </div>
+          </div>
+          <div class="stf-support__row">
+            <span class="material-icons" aria-hidden="true">support_agent</span>
+            <div>
+              <b>Quản trị viên trực ca</b>
+              <span class="small muted">Phạm Thu Dung · dung.pham@vinafly.vn</span>
+            </div>
+          </div>
+        </div>
+        <div class="stf-note mt-lg">
+          <span class="material-icons" aria-hidden="true">info</span>
+          <span>
+            Sự cố ảnh hưởng nhiều chuyến: gọi tổng đài trước, rồi ghi mã chuyến vào email để
+            đối chiếu nhanh.
+          </span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn--secondary" type="button" data-close>Đóng</button>
+        <button class="btn btn--primary" type="button" data-close data-toast="Đã mở email soạn sẵn tới ops@vinafly.vn">
+          <span class="material-icons" aria-hidden="true">mail</span>
+          Soạn email
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="proto-bar">
+    <button id="proto-home" title="Về màn đầu"><span class="material-icons">home</span></button>
+    <button id="proto-back" title="Quay lại"><span class="material-icons">arrow_back</span></button>
+    <span id="proto-label"></span>
+    <span id="proto-count"></span>
+  </div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/proto.js"></script>
+  <script>
+    /* Đồng bộ breadcrumb + mục sidebar đang chọn theo màn hiện tại.
+       Không đụng tới assets/proto.js — chỉ nghe sự kiện screen:change. */
+    (function () {
+      'use strict';
+
+      var CRUMBS = {
+        dashboard: ['Vận hành', 'Dashboard'],
+        flights: ['Vận hành', 'Chuyến bay'],
+        'flight-detail': ['Vận hành', 'Chuyến bay', 'VN-165'],
+        'flight-edit': ['Vận hành', 'Chuyến bay', 'VN-165', 'Sửa chuyến'],
+        bookings: ['Vận hành', 'Đặt chỗ'],
+        'booking-detail': ['Vận hành', 'Đặt chỗ', 'DH-1049'],
+        aircraft: ['Danh mục', 'Máy bay'],
+        profile: ['Cá nhân', 'Hồ sơ'],
+      };
+
+      var NAV = {
+        dashboard: 'dashboard',
+        flights: 'flights',
+        'flight-detail': 'flights',
+        'flight-edit': 'flights',
+        bookings: 'bookings',
+        'booking-detail': 'bookings',
+        aircraft: 'aircraft',
+        profile: 'profile',
+      };
+
+      function sync(name) {
+        var box = document.getElementById('stf-crumbs');
+        var parts = CRUMBS[name] || [];
+        if (box) {
+          box.innerHTML = parts
+            .map(function (part, i) {
+              if (i === parts.length - 1) return '<b>' + part + '</b>';
+              return (
+                '<span>' +
+                part +
+                '</span><span class="material-icons stf-crumbs__sep" aria-hidden="true">chevron_right</span>'
+              );
+            })
+            .join('');
+        }
+        var key = NAV[name];
+        var items = document.querySelectorAll('.stf-nav__item');
+        for (var i = 0; i < items.length; i++) {
+          items[i].classList.toggle('is-active', items[i].dataset.nav === key);
+        }
+      }
+
+      document.addEventListener('screen:change', function (e) {
+        sync(e.detail.name);
+      });
+
+      /* ---------- Thu gọn / Mở rộng Sidebar ---------- */
+      var stfApp = document.querySelector('.stf-app');
+      var stfToggle = document.getElementById('stf-side-toggle');
+      var stfNavItems = document.querySelectorAll('.stf-nav__item, .stf-side__link');
+      for (var ti = 0; ti < stfNavItems.length; ti++) {
+        var txtEl = stfNavItems[ti].querySelector('.stf-nav__txt');
+        if (txtEl && !stfNavItems[ti].getAttribute('title')) {
+          stfNavItems[ti].setAttribute('title', txtEl.textContent.trim());
+        }
+      }
+      function isStfCollapsed() {
+        if (!stfApp) return false;
+        if (stfApp.classList.contains('is-collapsed')) return true;
+        if (stfApp.classList.contains('is-expanded')) return false;
+        return window.matchMedia && window.matchMedia('(max-width: 1180px)').matches;
+      }
+      function updateStfToggle() {
+        if (!stfApp || !stfToggle) return;
+        var collapsed = isStfCollapsed();
+        var icon = stfToggle.querySelector('.material-icons');
+        if (icon) icon.textContent = collapsed ? 'chevron_right' : 'chevron_left';
+        var label = collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên';
+        stfToggle.setAttribute('aria-label', label);
+        stfToggle.setAttribute('title', label);
+        stfToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      }
+      if (stfToggle && stfApp) {
+        stfToggle.addEventListener('click', function () {
+          var collapsed = isStfCollapsed();
+          if (collapsed) {
+            stfApp.classList.remove('is-collapsed');
+            stfApp.classList.add('is-expanded');
+          } else {
+            stfApp.classList.remove('is-expanded');
+            stfApp.classList.add('is-collapsed');
+          }
+          updateStfToggle();
+        });
+        window.addEventListener('resize', updateStfToggle);
+        updateStfToggle();
+      }
+
+      document.addEventListener('change', function (e) {
+        var sz = e.target.closest('.stf-pager__size');
+        if (sz && window.proto) {
+          window.proto.toast('Đã đổi hiển thị: ' + sz.value + ' / trang');
+        }
+        var cb = e.target.closest('.stf-cb');
+        if (cb) {
+          var table = cb.closest('.stf-table');
+          if (!table) return;
+          var rowCbs = table.querySelectorAll('tbody .stf-cb');
+          if (cb.closest('thead')) {
+            for (var i = 0; i < rowCbs.length; i++) rowCbs[i].checked = cb.checked;
+          }
+          syncStfBulk(table);
+        }
+      });
+
+      function syncStfBulk(table) {
+        if (!table) return;
+        var headCb = table.querySelector('thead .stf-cb');
+        var rowCbs = table.querySelectorAll('tbody .stf-cb');
+        var count = 0;
+        for (var i = 0; i < rowCbs.length; i++) {
+          var tr = rowCbs[i].closest('tr');
+          if (rowCbs[i].checked) {
+            count++;
+            if (tr) tr.classList.add('is-selected');
+          } else if (tr) {
+            tr.classList.remove('is-selected');
+          }
+        }
+        if (headCb) {
+          headCb.checked = rowCbs.length > 0 && count === rowCbs.length;
+          headCb.indeterminate = count > 0 && count < rowCbs.length;
+        }
+        var bar = document.getElementById('stf-flights-bulkbar');
+        var num = document.getElementById('stf-flights-bulk-n');
+        if (bar) bar.hidden = count === 0;
+        if (num) num.textContent = String(count);
+      }
+
+      document.addEventListener('click', function (e) {
+        var bulkBtn = e.target.closest('[data-stf-bulk]');
+        if (!bulkBtn) return;
+        var card = bulkBtn.closest('.card');
+        var table = card ? card.querySelector('.stf-table') : null;
+        if (!table) return;
+        var act = bulkBtn.dataset.stfBulk;
+        var checked = table.querySelectorAll('tbody .stf-cb:checked');
+        var n = checked.length;
+        if (act === 'open' || act === 'close') {
+          var isOpen = act === 'open';
+          for (var i = 0; i < checked.length; i++) {
+            var tr = checked[i].closest('tr');
+            var saleTd = tr ? tr.children[6] : null;
+            var badge = saleTd ? saleTd.querySelector('.badge') : null;
+            if (badge) {
+              badge.className = isOpen ? 'badge badge--success' : 'badge badge--neutral';
+              badge.textContent = isOpen ? 'Mở bán' : 'Ngừng bán';
+            }
+            checked[i].checked = false;
+          }
+          if (window.proto && n) {
+            window.proto.toast((isOpen ? 'Đã mở bán ' : 'Đã ngừng bán ') + n + ' chuyến bay');
+          }
+        } else if (act === 'clear') {
+          var all = table.querySelectorAll('.stf-cb');
+          for (var j = 0; j < all.length; j++) all[j].checked = false;
+          if (window.proto) window.proto.toast('Đã bỏ chọn tất cả');
+        }
+        syncStfBulk(table);
+      });
+
+      document.addEventListener('click', function (e) {
+        var el = e.target.closest('[data-toast]');
+        if (el && window.proto) window.proto.toast(el.dataset.toast);
+
+        var del = e.target.closest('[data-del-flight]');
+        if (del) {
+          var title = document.getElementById('stf-del-title');
+          if (title) title.textContent = 'Huỷ ' + del.dataset.delFlight + '?';
+        }
+      });
+
+      /* ---------- Hàng bảng bấm được: cả hàng mở chi tiết ----------
+       Bám theo crud-page.html của dự án: hàng có màn chi tiết thì cả hàng
+       bấm được, và đi được bằng bàn phím (Enter/Space) chứ không chỉ chuột.
+       Nút và link bên trong tự chặn nổi bọt nên không mở kèm. */
+      function rowDetailTarget(tr) {
+        if (tr.dataset.href) return tr.dataset.href;
+        var a = tr.querySelector('a[href$="-detail"]');
+        if (a) return a.getAttribute('href');
+        var btn = tr.querySelector('[data-go$="-detail"]');
+        if (btn) return '#/' + btn.dataset.go;
+        return null;
+      }
+
+    function setupClickableRows() {
+      var rows = document.querySelectorAll('.stf-table tbody tr');
+      for (var i = 0; i < rows.length; i++) {
+        var tr = rows[i];
+        if (tr.dataset.clickable) continue;
+        var target = rowDetailTarget(tr);
+        if (!target) continue;
+        tr.dataset.clickable = '1';
+        tr.dataset.href = target;
+        tr.setAttribute('tabindex', '0');
+        tr.setAttribute('role', 'link');
+      }
+    }
+
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('button, a, input, select, label, [data-overlay]')) return;
+      var tr = e.target.closest('tr[data-clickable]');
+      if (tr) location.hash = tr.dataset.href;
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var tr = e.target.closest && e.target.closest('tr[data-clickable]');
+      if (!tr) return;
+      e.preventDefault();
+      location.hash = tr.dataset.href;
+    });
+
+    setupClickableRows();
+    document.addEventListener('screen:change', setupClickableRows);
+
+    var unread = ((window.VF && VF.notifications) || []).filter(function (n) {
+      return n.unread;
+    }).length;
+    var bell = document.getElementById('stf-bell-count');
+    if (bell) bell.textContent = String(unread);
+    }) ();
+  </script>
+</body>
+
+</html>

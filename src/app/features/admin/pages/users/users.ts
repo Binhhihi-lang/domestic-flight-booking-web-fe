@@ -15,6 +15,8 @@ export class AdminUsers {
   protected readonly service = inject(UserService);
 
   protected readonly config: CrudConfig<AdminUser, AdminUserUpdatePayload> = {
+    disableBulk: true,
+    hideDelete: (r) => r.roles?.includes('ADMIN'),
     title: 'Người dùng',
     subtitle: 'Quản lý tài khoản, vai trò và trạng thái hoạt động',
     createLabel: 'Thêm người dùng',
@@ -23,6 +25,7 @@ export class AdminUsers {
     emptyMessage: 'Chưa có người dùng',
     emptyHint: 'Thêm tài khoản đầu tiên',
     editTitle: 'Sửa người dùng',
+    detailTitle: (r) => r.full_name,
     // Form riêng: có nút "Đặt lại mật khẩu" và ràng buộc ADMIN cuối cùng.
     deleteTitle: () => 'Ngừng sử dụng tài khoản?',
     deleteMessage: (r) =>
@@ -30,6 +33,7 @@ export class AdminUsers {
     columns: [
       { label: 'Họ tên', value: (r) => r.full_name },
       { label: 'Email', value: (r) => r.email, kind: 'code' },
+      { label: 'Điện thoại', value: (r) => r.phone || '—', width: '130px' },
       {
         label: 'Vai trò',
         value: (r) => (r.roles[0] === 'ADMIN' ? 'Quản trị' : r.roles[0] === 'STAFF' ? 'Nhân viên' : 'Khách hàng'),

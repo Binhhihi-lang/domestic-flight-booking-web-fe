@@ -51,6 +51,72 @@ export const routes: Routes = [
           ),
         data: { title: 'Kết quả tìm chuyến' },
       },
+      {
+        path: 'flights/:id',
+        loadComponent: () =>
+          import('@features/client/pages/flight-results/client-flight-detail').then(
+            (m) => m.ClientFlightDetail,
+          ),
+        data: { title: 'Chi tiết chuyến bay' },
+      },
+      {
+        path: 'lookup',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-lookup').then((m) => m.BookingLookup),
+        data: { title: 'Tra cứu đặt chỗ' },
+      },
+      {
+        path: 'verify-ticket',
+        loadComponent: () =>
+          import('@features/client/pages/booking/verify-ticket').then((m) => m.VerifyTicketPage),
+        data: { title: 'Xác thực vé điện tử' },
+      },
+      // ---- Luồng Đặt vé Bước 2–3 (Cụm DA3.1) & Checkout (Cụm B6.1) ----
+      {
+        path: 'booking/seats',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-seats').then((m) => m.BookingSeats),
+        data: { title: 'Chọn ghế ngồi' },
+      },
+      {
+        path: 'booking/passengers',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-passengers').then(
+            (m) => m.BookingPassengers,
+          ),
+        data: { title: 'Thông tin hành khách' },
+      },
+      {
+        path: 'booking/review',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-review').then((m) => m.BookingReview),
+        data: { title: 'Xác nhận đặt chỗ' },
+      },
+      {
+        path: 'booking/payment',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-payment').then((m) => m.BookingPayment),
+        data: { title: 'Thanh toán' },
+      },
+      {
+        path: 'booking/confirmation',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-confirmation').then(
+            (m) => m.BookingConfirmation,
+          ),
+        data: { title: 'Xác nhận vé điện tử' },
+      },
+      {
+        path: 'payment-result',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-confirmation').then(
+            (m) => m.BookingConfirmation,
+          ),
+        data: { title: 'Kết quả thanh toán' },
+      },
       // `promotions` phải đứng TRƯỚC `promotions/:id`, nếu không Angular khớp
       // chuỗi rỗng vào `:id` và trang danh sách không bao giờ mở được.
       {
@@ -83,6 +149,72 @@ export const routes: Routes = [
           import('@features/client/pages/news/news-detail').then((m) => m.ClientNewsDetail),
         data: { title: 'Chi tiết tin tức' },
       },
+      // ---- 9 trang thông tin công khai (Public Pages) ----
+      {
+        path: 'help',
+        loadComponent: () =>
+          import('@features/client/pages/public/help').then((m) => m.PublicHelpPage),
+        data: { title: 'Trung tâm trợ giúp' },
+      },
+      {
+        path: 'booking-guide',
+        loadComponent: () =>
+          import('@features/client/pages/public/booking-guide').then(
+            (m) => m.PublicBookingGuidePage,
+          ),
+        data: { title: 'Hướng dẫn đặt vé' },
+      },
+      {
+        path: 'refund-policy',
+        loadComponent: () =>
+          import('@features/client/pages/public/refund-policy').then(
+            (m) => m.PublicRefundPolicyPage,
+          ),
+        data: { title: 'Chính sách hoàn & đổi vé' },
+      },
+      {
+        path: 'help-contact',
+        loadComponent: () =>
+          import('@features/client/pages/public/help-contact').then(
+            (m) => m.PublicHelpContactPage,
+          ),
+        data: { title: 'Liên hệ hỗ trợ' },
+      },
+      {
+        path: 'destinations',
+        loadComponent: () =>
+          import('@features/client/pages/public/destinations').then(
+            (m) => m.PublicDestinationsPage,
+          ),
+        data: { title: 'Điểm đến nội địa' },
+      },
+      // `airlines` phải đứng TRƯỚC `airlines/:id`.
+      {
+        path: 'airlines',
+        loadComponent: () =>
+          import('@features/client/pages/public/public-airlines').then((m) => m.PublicAirlinesPage),
+        data: { title: 'Hãng hàng không' },
+      },
+      {
+        path: 'airlines/:id',
+        loadComponent: () =>
+          import('@features/client/pages/public/public-airlines').then(
+            (m) => m.PublicAirlineDetailPage,
+          ),
+        data: { title: 'Chi tiết hãng hàng không' },
+      },
+      {
+        path: 'airports',
+        loadComponent: () =>
+          import('@features/client/pages/public/public-airports').then((m) => m.PublicAirportsPage),
+        data: { title: 'Sân bay nội địa' },
+      },
+      {
+        path: 'cities',
+        loadComponent: () =>
+          import('@features/client/pages/public/public-cities').then((m) => m.PublicCitiesPage),
+        data: { title: 'Thành phố nội địa' },
+      },
       {
         path: 'account',
         canActivate: [authGuard],
@@ -98,10 +230,26 @@ export const routes: Routes = [
             data: { title: 'Vé của tôi' },
           },
           {
+            path: 'bookings/:id',
+            loadComponent: () =>
+              import('@features/client/pages/booking/booking-detail').then(
+                (m) => m.BookingDetailPage,
+              ),
+            data: { title: 'Chi tiết đặt chỗ' },
+          },
+          {
             path: 'vouchers',
             loadComponent: () =>
               import('@features/client/pages/account/my-vouchers').then((m) => m.MyVouchers),
             data: { title: 'Voucher của tôi' },
+          },
+          {
+            path: 'vouchers/:id',
+            loadComponent: () =>
+              import('@features/client/pages/account/voucher-detail').then(
+                (m) => m.VoucherDetailPage,
+              ),
+            data: { title: 'Chi tiết voucher' },
           },
           {
             path: 'voucher-store',
@@ -146,11 +294,11 @@ export const routes: Routes = [
         data: { title: 'Dashboard' },
       },
       {
-        path: 'airlines',
+        path: 'reports',
         canActivate: [adminGuard],
         loadComponent: () =>
-          import('@features/admin/pages/airlines/airlines').then((m) => m.AdminAirlines),
-        data: { title: 'Hãng hàng không' },
+          import('@features/admin/pages/reports/reports').then((m) => m.AdminReports),
+        data: { title: 'Báo cáo & thống kê' },
       },
       {
         path: 'style-guide',
@@ -176,15 +324,23 @@ export const routes: Routes = [
       ),
       ...crudRoutes('aircrafts', 'Máy bay', () =>
         import('@features/admin/pages/aircrafts/aircrafts').then((m) => m.AdminAircrafts),
-        { adminOnly: true },
+        { writeAdminOnly: true },
       ),
       ...crudRoutes('seat-types', 'Loại ghế', () =>
         import('@features/admin/pages/seat-types/seat-types').then((m) => m.AdminSeatTypes),
         { adminOnly: true },
       ),
-      ...crudRoutes('seat-class-surcharges', 'Phụ thu nâng hạng', () =>
-        import('@features/admin/pages/seat-class-surcharges/seat-class-surcharges').then(
-          (m) => m.AdminSeatClassSurcharges,
+      ...crudRoutes('fare-classes', 'Hạng vé', () =>
+        import('@features/admin/pages/fare-classes/fare-classes').then((m) => m.AdminFareClasses),
+        { adminOnly: true },
+      ),
+      ...crudRoutes('fare-rules', 'Quy định hoàn vé', () =>
+        import('@features/admin/pages/fare-rules/fare-rules').then((m) => m.AdminFareRules),
+        { adminOnly: true },
+      ),
+      ...crudRoutes('baggage-options', 'Gói hành lý', () =>
+        import('@features/admin/pages/baggage-options/baggage-options').then(
+          (m) => m.AdminBaggageOptions,
         ),
         { adminOnly: true },
       ),
@@ -192,16 +348,29 @@ export const routes: Routes = [
         import('@features/admin/pages/promotions/promotions').then((m) => m.AdminPromotions),
         {
           adminOnly: true,
+          detailLoader: () =>
+            import('@features/admin/pages/promotions/promotion-detail').then(
+              (m) => m.PromotionDetail,
+            ),
           formLoader: () =>
             import('@features/admin/pages/promotions/promotion-form').then(
               (m) => m.PromotionForm,
             ),
         },
       ),
+      {
+        path: 'vouchers/:id/assign',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('@features/admin/pages/vouchers/voucher-assign').then((m) => m.VoucherAssign),
+        data: { title: 'Tặng voucher' },
+      },
       ...crudRoutes('vouchers', 'Voucher', () =>
         import('@features/admin/pages/vouchers/vouchers').then((m) => m.AdminVouchers),
         {
           adminOnly: true,
+          detailLoader: () =>
+            import('@features/admin/pages/vouchers/voucher-detail').then((m) => m.VoucherDetail),
           formLoader: () =>
             import('@features/admin/pages/vouchers/voucher-form').then((m) => m.VoucherForm),
         },
@@ -240,6 +409,8 @@ export const routes: Routes = [
         import('@features/admin/pages/users/users').then((m) => m.AdminUsers),
         {
           adminOnly: true,
+          detailLoader: () =>
+            import('@features/admin/pages/users/user-detail').then((m) => m.UserDetail),
           formLoader: () => import('@features/admin/pages/users/user-form').then((m) => m.UserForm),
         },
       ),
@@ -256,8 +427,73 @@ export const routes: Routes = [
           ),
         data: { title: 'Sơ đồ ghế' },
       },
-      ...comingSoonAdmin('flights', 'Chuyến bay'),
-      ...comingSoonAdmin('bookings', 'Đặt chỗ'),
+      // ---- Quản trị Chuyến bay, Giá bán & Tồn ghế (Cụm DA2) ----
+      {
+        path: 'flights',
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flights').then((m) => m.AdminFlights),
+        data: { title: 'Chuyến bay' },
+      },
+      {
+        path: 'flights/new',
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flight-form').then((m) => m.AdminFlightForm),
+        data: { title: 'Thêm chuyến bay' },
+      },
+      {
+        path: 'flights/:id',
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flight-detail').then((m) => m.AdminFlightDetail),
+        data: { title: 'Chi tiết chuyến bay' },
+      },
+      {
+        path: 'flights/:id/edit',
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flight-form').then((m) => m.AdminFlightForm),
+        data: { title: 'Sửa chuyến bay' },
+      },
+      {
+        path: 'flights/:id/operation',
+        loadComponent: () =>
+          import('@features/admin/pages/flights/flight-edit').then((m) => m.AdminFlightEdit),
+        data: { title: 'Cập nhật vận hành' },
+      },
+      {
+        path: 'flights/:id/seat-inventory',
+        loadComponent: () =>
+          import('@features/admin/pages/flight-seat-inventory/flight-seat-inventory').then(
+            (m) => m.AdminFlightSeatInventory,
+          ),
+        data: { title: 'Tồn ghế chuyến bay' },
+      },
+      {
+        path: 'flight-fares',
+        loadComponent: () =>
+          import('@features/admin/pages/flight-fares/flight-fares').then((m) => m.AdminFlightFares),
+        data: { title: 'Bảng giá chuyến bay' },
+      },
+      {
+        path: 'flight-seat-inventory',
+        loadComponent: () =>
+          import('@features/admin/pages/flight-seat-inventory/flight-seat-inventory').then(
+            (m) => m.AdminFlightSeatInventory,
+          ),
+        data: { title: 'Tồn ghế chuyến bay' },
+      },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('@features/admin/pages/bookings/bookings').then((m) => m.AdminBookings),
+        data: { title: 'Đặt chỗ' },
+      },
+      {
+        path: 'bookings/:id',
+        loadComponent: () =>
+          import('@features/client/pages/booking/booking-detail').then(
+            (m) => m.BookingDetailPage,
+          ),
+        data: { title: 'Chi tiết đặt chỗ', adminMode: true },
+      },
       {
         path: 'profile',
         loadComponent: () =>

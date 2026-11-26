@@ -1,8 +1,58 @@
-/* Lưới thẻ khuyến mãi — cùng khuôn với lưới thẻ ở trang chủ. */
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+  margin-bottom: var(--sp-md);
+}
+
+.crumbs mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.crumb-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.crumb-btn:hover {
+  text-decoration: underline;
+}
+
+.page-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-md);
+  margin-bottom: var(--sp-xl);
+}
+
+.page-h h1 {
+  font-size: var(--text-h1);
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.page-h p {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
 .promo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
-  gap: 16px;
+  gap: var(--sp-lg);
 }
 
 .promo {
@@ -21,7 +71,6 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* Cả thẻ là một liên kết tới trang chi tiết. */
 .promo__link {
   display: block;
   color: inherit;
@@ -42,7 +91,6 @@
   display: block;
 }
 
-/* Chưa có ảnh: nền + icon, KHÔNG để ảnh vỡ của trình duyệt. */
 .promo__img--ph {
   display: flex;
   align-items: center;
@@ -66,7 +114,7 @@
   font-weight: 800;
   padding: 4px 11px;
   border-radius: var(--radius-sm);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .promo__tag--danger {
@@ -74,7 +122,7 @@
 }
 
 .promo__tag--primary {
-  background: var(--color-primary-bright);
+  background: var(--color-primary);
 }
 
 .promo__tag--accent {
@@ -100,7 +148,6 @@
   margin: 0 0 11px;
 }
 
-/* Hàng meta: hạn dùng + cảnh báo sắp hết. */
 .promo__meta {
   display: flex;
   align-items: center;
@@ -131,7 +178,7 @@
 .promo__lk {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--color-primary-bright);
+  color: var(--color-primary);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -141,6 +188,13 @@
   font-size: 16px;
   width: 16px;
   height: 16px;
+}
+
+.promo-pager {
+  margin-top: var(--sp-xl);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .promo--skeleton {

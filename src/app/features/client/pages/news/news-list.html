@@ -1,4 +1,10 @@
 <div class="wrap">
+  <nav class="crumbs" aria-label="Đường dẫn">
+    <a routerLink="/">Trang chủ</a>
+    <mat-icon aria-hidden="true">chevron_right</mat-icon>
+    <span>Tin tức</span>
+  </nav>
+
   <header class="page-h">
     <div>
       <h1>Tin tức &amp; cẩm nang</h1>
@@ -6,84 +12,155 @@
     </div>
   </header>
 
-  <!-- Lọc theo danh mục — lấy từ /public/news-categories (mảng trần, chỉ danh
-       mục đang hoạt động). -->
-  @if (!loading() && categories().length > 0) {
-    <div class="cat-filter">
-      <label class="cat-filter__lbl" for="news-cat">Danh mục</label>
-      <select
-        id="news-cat"
-        class="cat-filter__sel"
-        [value]="activeCategory() === null ? '' : activeCategory()"
-        (change)="onCategoryChange($any($event.target).value)"
-      >
-        <option value="">Tất cả danh mục</option>
-        @for (c of categories(); track c.id) {
-          <option [value]="c.id">{{ c.name }}</option>
-        }
-      </select>
-    </div>
-  }
+  <div class="nl-layout">
+    <!-- ===== Sidebar danh mục ===== -->
+    <aside class="nl-side" aria-label="Lọc theo danh mục tin tức">
+      <div class="nl-cat-box">
+        <div class="nl-cat-box__title">Danh mục bài viết</div>
+        <ul class="nl-cat-list">
+          <li>
+            <button
+              type="button"
+              class="nl-cat-btn"
+              [class.nl-cat-btn--on]="activeCategory() === null"
+              (click)="selectCategory(null)"
+            >
+              <span>Tất cả bài viết</span>
+              <span class="nl-cat-cnt tabular">{{ news().length }}</span>
+            </button>
+          </li>
+          @for (c of categories(); track c.id) {
+            <li>
+              <button
+                type="button"
+                class="nl-cat-btn"
+                [class.nl-cat-btn--on]="activeCategory() === c.id"
+                (click)="selectCategory(c.id)"
+              >
+                <span>{{ c.name }}</span>
+                <span class="nl-cat-cnt tabular">{{ categoryCount(c.id) }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    </aside>
 
-  @if (loading()) {
-    <div class="news-grid">
-      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-        <div class="news news--skeleton">
-          <app-skeleton-block height="160px" />
-          <div class="news__bd">
-            <app-skeleton-block width="80%" height="16px" />
-            <div style="height: 9px"></div>
-            <app-skeleton-block width="55%" height="12px" />
+    <!-- ===== Nội dung chính ===== -->
+    <div class="nl-main">
+      @if (loading()) {
+        <app-skeleton-block height="240px" />
+        <div class="news-grid" style="margin-top: 16px">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="news news--skeleton">
+              <app-skeleton-block height="150px" />
+              <div class="news__bd">
+                <app-skeleton-block width="80%" height="16px" />
+                <div style="height: 9px"></div>
+                <app-skeleton-block width="55%" height="12px" />
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (visibleNews().length === 0) {
+        <app-app-card>
+          <app-empty-state
+            icon="feed"
+            [message]="activeCategory() === null ? 'Chưa có tin tức' : 'Danh mục này chưa có bài viết'"
+            [hint]="activeCategory() === null ? 'Bài viết mới sẽ xuất hiện ở đây' : 'Thử chọn danh mục khác'"
+          />
+        </app-app-card>
+      } @else {
+        @if (featuredArticle(); as feat) {
+          <article class="feat">
+            <a class="feat__link" [routerLink]="['/news', feat.id]">
+              <div class="feat__media">
+                @if (feat.thumbnail_url && !brokenThumbs().has(feat.id)) {
+                  <img
+                    class="feat__img"
+                    [src]="feat.thumbnail_url"
+                    [alt]="feat.title"
+                    (error)="markBroken(feat.id)"
+                  />
+                } @else {
+                  <span class="feat__img feat__img--ph" aria-hidden="true">
+                    <mat-icon>article</mat-icon>
+                  </span>
+                }
+                <span class="feat__pill">Nổi bật</span>
+              </div>
+              <div class="feat__bd">
+                @if (feat.categories?.length) {
+                  <div class="news__cats">
+                    @for (c of feat.categories; track c.id) {
+                      <span class="news__cat">{{ c.name }}</span>
+                    }
+                  </div>
+                }
+                @if (feat.published_at) {
+                  <div class="news__date">{{ formatDate(feat.published_at) }}</div>
+                }
+                <h2 class="feat__title">{{ feat.title }}</h2>
+                <p class="feat__excerpt">{{ excerpt(feat.content, 200) }}</p>
+                <span class="news__lk">Đọc bài viết <mat-icon aria-hidden="true">arrow_forward</mat-icon></span>
+              </div>
+            </a>
+          </article>
+        }
+
+        @if (gridArticles().length > 0) {
+          <div class="news-grid">
+            @for (item of gridArticles(); track item.id) {
+              <article class="news">
+                <a class="news__link" [routerLink]="['/news', item.id]">
+                  @if (item.thumbnail_url && !brokenThumbs().has(item.id)) {
+                    <img
+                      class="news__img"
+                      [src]="item.thumbnail_url"
+                      [alt]="item.title"
+                      loading="lazy"
+                      (error)="markBroken(item.id)"
+                    />
+                  } @else {
+                    <span class="news__img news__img--ph" aria-hidden="true">
+                      <mat-icon>article</mat-icon>
+                    </span>
+                  }
+
+                  <div class="news__bd">
+                    @if (item.categories?.length) {
+                      <div class="news__cats">
+                        @for (c of item.categories; track c.id) {
+                          <span class="news__cat">{{ c.name }}</span>
+                        }
+                      </div>
+                    }
+                    @if (item.published_at) {
+                      <div class="news__date">{{ formatDate(item.published_at) }}</div>
+                    }
+                    <h3 class="news__title">{{ item.title }}</h3>
+                    <p class="news__excerpt">{{ excerpt(item.content) }}</p>
+                    <span class="news__lk">Đọc tiếp <mat-icon aria-hidden="true">arrow_forward</mat-icon></span>
+                  </div>
+                </a>
+              </article>
+            }
           </div>
+        }
+
+        <div class="nl-pager">
+          <app-server-pager
+            [page]="page()"
+            [size]="pageSize()"
+            [totalItems]="totalItems()"
+            [totalPages]="totalPages()"
+            [pageSizeOptions]="[7, 13, 19]"
+            noun="bài viết"
+            (pageChange)="onPageChange($event)"
+            (sizeChange)="onSizeChange($event)"
+          />
         </div>
       }
     </div>
-  } @else if (visibleNews().length === 0) {
-    <app-app-card>
-      <app-empty-state
-        icon="feed"
-        [message]="activeCategory() === null ? 'Chưa có tin tức' : 'Danh mục này chưa có bài viết'"
-        [hint]="activeCategory() === null ? 'Bài viết mới sẽ xuất hiện ở đây' : 'Thử chọn danh mục khác'"
-      />
-    </app-app-card>
-  } @else {
-    <div class="news-grid">
-      @for (item of visibleNews(); track item.id) {
-        <article class="news">
-          <a class="news__link" [routerLink]="['/news', item.id]">
-            @if (item.thumbnail_url && !brokenThumbs().has(item.id)) {
-              <img
-                class="news__img"
-                [src]="item.thumbnail_url"
-                [alt]="item.title"
-                loading="lazy"
-                (error)="markBroken(item.id)"
-              />
-            } @else {
-              <!-- Chưa có ảnh (hoặc ảnh lỗi): nền + icon thay vì icon ảnh vỡ. -->
-              <span class="news__img news__img--ph" aria-hidden="true">
-                <mat-icon>article</mat-icon>
-              </span>
-            }
-
-            <div class="news__bd">
-              @if (item.categories?.length) {
-                <div class="news__cats">
-                  @for (c of item.categories; track c.id) {
-                    <span class="news__cat">{{ c.name }}</span>
-                  }
-                </div>
-              }
-              @if (item.published_at) {
-                <div class="news__date">{{ formatDate(item.published_at) }}</div>
-              }
-              <h3 class="news__title">{{ item.title }}</h3>
-              <p class="news__excerpt">{{ excerpt(item.content) }}</p>
-              <span class="news__lk">Đọc tiếp <mat-icon>arrow_forward</mat-icon></span>
-            </div>
-          </a>
-        </article>
-      }
-    </div>
-  }
+  </div>
 </div>

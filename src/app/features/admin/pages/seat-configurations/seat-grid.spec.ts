@@ -13,6 +13,7 @@ function seatType(id: number, cls: SeatType['seat_class'], color: string | null)
     seat_type_name: `Loại ${id}`,
     seat_class: cls,
     color_hex: color,
+    surcharge: 0,
     status: 'ACTIVE',
   };
 }
@@ -57,12 +58,24 @@ describe('SeatGrid — màu theo color_hex', () => {
     expect(contrastRatio('#05285D', '#ffffff')).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('ô ghế KHÔNG hiện mã loại ghế (chữ tràn khỏi ô 40px)', () => {
+  it('ô ghế hiển thị trực tiếp mã ghế (1A) rõ nét thay vì mã loại ghế', () => {
     const f = mount(
       [{ seat_row: 1, seat_column: 'A', seat_type_id: 1 }],
       [seatType(1, 'ECONOMY', '#90CAF9')],
     );
-    expect(firstCell(f).textContent?.trim()).toBe('');
+    expect(firstCell(f).textContent?.trim()).toBe('1A');
+    expect(firstCell(f).style.color).toBe('rgb(3, 18, 26)');
+  });
+
+  it('legend hiển thị tên loại ghế kèm phụ thu định dạng đ', () => {
+    const t = seatType(1, 'BUSINESS', '#F9A825');
+    t.surcharge = 250000;
+    const f = mount(
+      [{ seat_row: 1, seat_column: 'A', seat_type_id: 1 }],
+      [t],
+    );
+    const surcharge = (f.nativeElement as HTMLElement).querySelector('.legend__surcharge')?.textContent?.trim();
+    expect(surcharge).toBe('+250.000đ');
   });
 
   it('có lối đi sau đúng cột đã cấu hình (3-3)', () => {
@@ -109,7 +122,7 @@ describe('SeatGrid — màu theo color_hex', () => {
       [
         seatType(1, 'ECONOMY', '#90CAF9'),
         seatType(2, 'BUSINESS', '#F9A825'),
-        seatType(3, 'FIRST', '#6A1B9A'),
+        seatType(3, 'PREMIUM_ECONOMY', '#6A1B9A'),
       ],
     );
     const names = [...(f.nativeElement as HTMLElement).querySelectorAll('.legend__name')].map(

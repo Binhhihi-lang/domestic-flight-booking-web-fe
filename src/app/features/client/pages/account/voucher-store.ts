@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { VoucherStoreItem } from '@core/models/user-voucher.model';
@@ -7,18 +8,15 @@ import { AppCard } from '@shared/ui/app-card/app-card';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { EmptyState } from '@shared/components/empty-state/empty-state';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
+import { StatusBadge } from '@shared/ui/status-badge/status-badge';
 
 /**
  * Kho voucher — VOU-02 (API v0.2 mục 2.8).
- *
- * Vì sao hiện nút theo trạng thái chứ không luôn cho bấm: server từ chối nhận
- * trùng (`1005`) và hết lượt (`1006`). Để khách bấm rồi mới báo lỗi là trải
- * nghiệm tệ — nút phải nói trước được hay không.
  */
 @Component({
   selector: 'app-voucher-store',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatIconModule, AppCard, AppButton, EmptyState, SkeletonBlock],
+  imports: [RouterLink, MatIconModule, AppCard, AppButton, EmptyState, SkeletonBlock, StatusBadge],
   templateUrl: './voucher-store.html',
   styleUrl: './voucher-store.css',
 })
@@ -28,7 +26,6 @@ export class VoucherStore {
 
   protected readonly loading = signal(true);
   protected readonly items = signal<VoucherStoreItem[]>([]);
-  /** id voucher đang gửi yêu cầu nhận — để khoá nút, tránh bấm hai lần. */
   protected readonly claiming = signal<Set<number>>(new Set());
 
   private static readonly money = new Intl.NumberFormat('vi-VN');
@@ -41,29 +38,50 @@ export class VoucherStore {
     this.loading.set(true);
     this.service.store().subscribe({
       next: (res) => {
-        this.items.set(res.data);
+        this.items.set(res.data ?? []);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
   }
 
-  /** Câu mô tả mức giảm, ví dụ "Giảm 50.000₫" hoặc "Giảm 10%, tối đa 200.000₫". */
+  protected stubValue(v: VoucherStoreItem): string {
+    if (v.discount_type === 'PERCENT') {
+      return `${v.discount_value}%`;
+    }
+    if (v.discount_value >= 1000 && v.discount_value % 1000 === 0) {
+      return `${v.discount_value / 1000}K`;
+    }
+    return `${VoucherStore.money.format(v.discount_value)}đ`;
+  }
+
   protected discountText(v: VoucherStoreItem): string {
     const value =
       v.discount_type === 'PERCENT'
         ? `Giảm ${v.discount_value}%`
-        : `Giảm ${VoucherStore.money.format(v.discount_value)}₫`;
+        : `Giảm ${VoucherStore.money.format(v.discount_value)}đ`;
     if (v.discount_type === 'PERCENT' && v.max_discount_amount) {
-      return `${value}, tối đa ${VoucherStore.money.format(v.max_discount_amount)}₫`;
+      return `${value}, tối đa ${VoucherStore.money.format(v.max_discount_amount)}đ`;
     }
     return value;
   }
 
   protected minOrderText(v: VoucherStoreItem): string {
     return v.min_order_amount
-      ? `Đơn từ ${VoucherStore.money.format(v.min_order_amount)}₫`
+      ? `Đơn từ ${VoucherStore.money.format(v.min_order_amount)}đ`
       : 'Không yêu cầu đơn tối thiểu';
+  }
+
+  protected remainingCount(v: VoucherStoreItem): number | null {
+    if (v.claim_limit === null || v.claim_limit === undefined) {
+      return null;
+    }
+    return Math.max(0, v.claim_limit - (v.claimed_count ?? 0));
+  }
+
+  protected isExhausted(v: VoucherStoreItem): boolean {
+    const rem = this.remainingCount(v);
+    return rem !== null && rem <= 0;
   }
 
   protected formatDate(iso: string): string {
@@ -79,7 +97,7 @@ export class VoucherStore {
   }
 
   protected claim(item: VoucherStoreItem): void {
-    if (item.claimed || this.isClaiming(item.id)) {
+    if (item.claimed || this.isExhausted(item) || this.isClaiming(item.id)) {
       return;
     }
 
@@ -87,9 +105,14 @@ export class VoucherStore {
     this.service.claim(item.id).subscribe({
       next: (res) => {
         this.claiming.set(new Set([...this.claiming()].filter((x) => x !== item.id)));
-        // Đánh dấu tại chỗ thay vì tải lại cả kho — nhanh hơn và không nhảy vị trí.
-        this.items.set(this.items().map((v) => (v.id === item.id ? { ...v, claimed: true } : v)));
-        this.snackBar.open(res.message, 'Đóng', { duration: 3000 });
+        this.items.set(
+          this.items().map((v) =>
+            v.id === item.id
+              ? { ...v, claimed: true, claimed_count: (v.claimed_count ?? 0) + 1 }
+              : v,
+          ),
+        );
+        this.snackBar.open(res.message || 'Đã lưu voucher vào ví', 'Đóng', { duration: 3000 });
       },
       error: (err: Error) => {
         this.claiming.set(new Set([...this.claiming()].filter((x) => x !== item.id)));

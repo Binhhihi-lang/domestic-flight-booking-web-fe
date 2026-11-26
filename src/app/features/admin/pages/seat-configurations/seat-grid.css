@@ -72,17 +72,24 @@
   vertical-align: middle;
 }
 
-/* Màu nền do `[style]` binding quyết định (xem seat-grid.ts) — màu là dữ liệu
-   động từ seat_types.color_hex nên không sinh class được.
-   Ô KHÔNG hiện mã loại ghế: 40px không đủ chỗ cho "ECO_WIN"/"FIRST", chữ tràn
-   ra ngoài. Loại ghế đọc qua chú thích màu bên dưới + tooltip + aria-label. */
+/* Màu nền & chữ do `[style]` binding quyết định (xem seat-grid.ts) — màu là dữ liệu
+   động từ seat_types.color_hex kèm kiểm tra độ tương phản WCAG 2.1.
+   Mỗi ô hiển thị trực tiếp mã ghế ngắn gọn (1A, 2B…) để dễ nhận diện và chỉnh sửa lẻ. */
 .cell {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
   border-radius: 7px 7px 4px 4px;
   border: none;
   padding: 0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.02em;
   cursor: pointer;
   transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
@@ -138,12 +145,23 @@
   border: 1px solid var(--color-border);
 }
 
-/* Mã loại ghế trong chú thích — thay cho chữ từng bị tràn trong ô. */
+.legend__name {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.legend__surcharge {
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-primary);
+}
+
+/* Mã loại ghế trong chú thích. */
 .legend__code {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  color: var(--color-ink);
-  opacity: 0.75;
+  color: var(--color-ink-muted);
 }
 
 .legend__note {
@@ -164,6 +182,10 @@
   .grid__gap {
     width: 32px;
     height: 32px;
+  }
+
+  .cell {
+    font-size: 10px;
   }
 
   .grid__colhead {

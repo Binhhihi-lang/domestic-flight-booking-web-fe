@@ -20,6 +20,27 @@
       </app-app-button>
     </header>
 
+    @if (aircrafts().length > 1) {
+      <div class="switcher blk">
+        <label class="switcher__label" for="ac-quick-switch">
+          <mat-icon aria-hidden="true">airlines</mat-icon>
+          <span>Chuyển nhanh máy bay</span>
+        </label>
+        <select
+          id="ac-quick-switch"
+          class="switcher__select"
+          [ngModel]="ac.id"
+          (ngModelChange)="onSwitchAircraft($event)"
+        >
+          @for (item of aircrafts(); track item.id) {
+            <option [ngValue]="item.id">
+              {{ item.aircraft_code }} — {{ item.model }} ({{ item.seat_capacity }} ghế)
+            </option>
+          }
+        </select>
+      </div>
+    }
+
     @if (errorMessage(); as msg) {
       <div class="blk">
         <app-alert tone="error" title="Chưa lưu được" [message]="msg" />

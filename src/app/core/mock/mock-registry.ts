@@ -15,7 +15,7 @@ import {
 } from '@core/models/fleet-news.model';
 import { Airport, City } from '@core/models/location.model';
 import { Promotion, Voucher } from '@core/models/promotion.model';
-import { SeatClassSurcharge } from '@core/models/seat-surcharge.model';
+import { BaggageOption, FareClass, FareRule } from '@core/models/fare-baggage.model';
 import { AIRLINES_MOCK } from '@core/mock/data/airlines.mock';
 import {
   AIRCRAFT_MOCK,
@@ -29,8 +29,12 @@ import {
   toVoucherBrief,
   VOUCHERS_MOCK,
 } from '@core/mock/data/catalog.mock';
+import {
+  BAGGAGE_OPTIONS_MOCK,
+  FARE_CLASSES_MOCK,
+  FARE_RULES_MOCK,
+} from '@core/mock/data/fare-baggage.mock';
 import { AIRPORTS_MOCK, CITIES_MOCK } from '@core/mock/data/locations.mock';
-import { SEAT_CLASS_SURCHARGES_MOCK } from '@core/mock/data/seat-surcharge.mock';
 import {
   buildLoginResponse,
   findMockUser,
@@ -38,6 +42,32 @@ import {
   USERS_MOCK,
 } from '@core/mock/data/auth.mock';
 import { UserVoucher, VoucherStoreItem } from '@core/models/user-voucher.model';
+import { NotificationItem } from '@core/models/notification.model';
+import { NOTIFICATIONS_MOCK } from '@core/mock/data/notifications.mock';
+import { BookingDetail, PaymentCreateRequest, PaymentTransaction } from '@core/models/booking.model';
+import {
+  buildMockBookingDetail,
+  buildMockETickets,
+  OPERATIONAL_DASHBOARD_MOCK,
+  OVERVIEW_DASHBOARD_MOCK,
+} from '@core/mock/data/checkout-dashboard.mock';
+import {
+  FlightDetailRecord,
+  FlightFare,
+  FlightFarePayload,
+  FlightPayload,
+  FlightRecord,
+  FlightSeatMap,
+  SeatInventoryRequestPayload,
+} from '@core/models/flight.model';
+import {
+  buildMockFlightSeatMap,
+  computeFarePrices,
+  FLIGHT_FARES_MOCK,
+  FLIGHT_PASSENGERS_MOCK,
+  FLIGHTS_MOCK,
+  recalcSeatMapCounts,
+} from '@core/mock/data/flights.mock';
 import { MockResource } from '@core/mock/mock-resource';
 import { ApiResponse, PageData } from '@core/models/api-response.model';
 import {
@@ -97,6 +127,23 @@ export class MockRegistry {
   /** Ví voucher của khách đang đăng nhập (mock chỉ có một khách). */
   private userVouchers: UserVoucher[] = USER_VOUCHERS_MOCK.map((v) => ({ ...v }));
   private userVoucherIdSeq = 100;
+
+  /** Danh sách thông báo in-app của người dùng đang đăng nhập. */
+  private notifications: NotificationItem[] = NOTIFICATIONS_MOCK.map((n) => ({ ...n }));
+
+  /** Dữ liệu mẫu đơn đặt vé & thanh toán cho luồng Checkout (Cụm B6) & Quản lý đặt chỗ (Cụm DA3). */
+  private mockBooking: BookingDetail = buildMockBookingDetail();
+  private mockBookingsList: BookingDetail[] = this.buildInitialBookings();
+  private mockPayments: PaymentTransaction[] = [];
+  private paymentIdSeq = 500;
+
+  /** Dữ liệu mẫu Chuyến bay, Giá bán & Tồn ghế (Cụm DA2). */
+  private flights: FlightRecord[] = FLIGHTS_MOCK.map((f) => ({ ...f }));
+  private readonly deletedFlights = new Set<number>();
+  private flightIdSeq = 200;
+  private flightFares: FlightFare[] = FLIGHT_FARES_MOCK.map((f) => ({ ...f }));
+  private flightFareIdSeq = 100;
+  private flightSeatMaps = new Map<number, FlightSeatMap>();
 
   private readonly resources = [
     new MockResource<City>({
@@ -167,25 +214,108 @@ export class MockRegistry {
       searchFields: ['seat_type_code', 'seat_type_name'],
       uniqueField: 'seat_type_code',
       noun: 'loại ghế',
+      validate: (p) =>
+        p.surcharge !== undefined && p.surcharge !== null && p.surcharge < 0
+          ? 'Phụ thu không được âm'
+          : null,
     }),
-    new MockResource<SeatClassSurcharge>({
-      path: 'admin/seat-class-surcharges',
-      seed: SEAT_CLASS_SURCHARGES_MOCK,
-      searchFields: ['from_class', 'to_class'],
-      noun: 'phụ thu nâng hạng',
-      // UNIQUE là CẶP (from_class, to_class) nên không dùng được `uniqueField`.
-      // `update()` gọi validate với `merged` đã chứa `id`, nên `r.id !== payload.id`
-      // phân biệt đúng "trùng bản ghi khác" với "giữ nguyên cặp của chính nó".
-      validate: (payload, existing) => {
-        const from = payload.from_class;
-        const to = payload.to_class;
-        if (!from || !to) {
-          return 'Hạng vé và hạng ghế không được để trống';
+    new MockResource<FareClass>({
+      path: 'admin/fare-classes',
+      seed: FARE_CLASSES_MOCK,
+      searchFields: ['fare_class_code', 'fare_class_name', 'airline_code', 'airline_name'],
+      uniqueField: 'fare_class_code',
+      noun: 'hạng vé',
+      validate: (p) => {
+        if (p.airline_id === undefined || p.airline_id === null) {
+          return 'Hãng áp dụng không được để trống';
         }
-        const clash = existing.some(
-          (r) => r.id !== payload.id && r.from_class === from && r.to_class === to,
-        );
-        return clash ? `Đã có phụ thu cho cặp ${from} → ${to}` : null;
+        if (!p.seat_class) {
+          return 'Khoang dịch vụ không được để trống';
+        }
+        return null;
+      },
+      enrich: (fc) => {
+        const airline = AIRLINES_MOCK.find((a) => a.id === Number(fc.airline_id));
+        const airlineCode = airline?.airline_code ?? fc.airline_code ?? '';
+        const rawCode = (fc.fare_class_code ?? '').trim().toUpperCase();
+        const prefixedCode =
+          airlineCode && rawCode && !rawCode.startsWith(`${airlineCode}_`)
+            ? `${airlineCode}_${rawCode}`
+            : rawCode;
+        return {
+          ...fc,
+          airline_id: Number(fc.airline_id),
+          airline_code: airlineCode,
+          airline_name: airline?.airline_name ?? fc.airline_name ?? '',
+          fare_class_code: prefixedCode,
+        };
+      },
+    }),
+    new MockResource<FareRule>({
+      path: 'admin/fare-rules',
+      seed: FARE_RULES_MOCK,
+      searchFields: ['fare_class_code', 'fare_class_name', 'airline_code', 'description'],
+      noun: 'quy định hoàn vé',
+      validate: (p) => {
+        if (p.fare_class_id === undefined || p.fare_class_id === null) {
+          return 'Hạng vé không được để trống';
+        }
+        if (
+          p.refund_min_hours_before_departure !== undefined &&
+          (p.refund_min_hours_before_departure < 0 || p.refund_min_hours_before_departure > 720)
+        ) {
+          return 'Số giờ tối thiểu phải từ 0 đến 720';
+        }
+        if (
+          p.refund_percent !== undefined &&
+          (p.refund_percent < 0 || p.refund_percent > 100)
+        ) {
+          return 'Phần trăm hoàn phải từ 0 đến 100';
+        }
+        return null;
+      },
+      enrich: (rule) => {
+        const fc = FARE_CLASSES_MOCK.find((f) => f.id === Number(rule.fare_class_id));
+        return {
+          ...rule,
+          fare_class_id: Number(rule.fare_class_id),
+          fare_class_code: fc?.fare_class_code ?? rule.fare_class_code ?? '',
+          fare_class_name: fc?.fare_class_name ?? rule.fare_class_name ?? '',
+          airline_code: fc?.airline_code ?? rule.airline_code ?? '',
+          version: rule.version ?? 1,
+          is_refundable: Boolean(rule.is_refundable),
+          refund_min_hours_before_departure: Number(rule.refund_min_hours_before_departure ?? 0),
+          refund_percent: Number(rule.refund_percent ?? 0),
+        };
+      },
+    }),
+    new MockResource<BaggageOption>({
+      path: 'admin/baggage-options',
+      seed: BAGGAGE_OPTIONS_MOCK,
+      searchFields: ['name', 'airline_code', 'airline_name'],
+      noun: 'gói hành lý',
+      validate: (p) => {
+        if (p.airline_id === undefined || p.airline_id === null) {
+          return 'Hãng áp dụng không được để trống';
+        }
+        if (p.weight_kg === undefined || p.weight_kg === null || p.weight_kg <= 0 || p.weight_kg > 100) {
+          return 'Khối lượng phải lớn hơn 0 và tối đa 100 kg';
+        }
+        if (p.price === undefined || p.price === null || p.price < 0) {
+          return 'Đơn giá không được âm';
+        }
+        return null;
+      },
+      enrich: (bg) => {
+        const airline = AIRLINES_MOCK.find((a) => a.id === Number(bg.airline_id));
+        return {
+          ...bg,
+          airline_id: Number(bg.airline_id),
+          airline_code: airline?.airline_code ?? bg.airline_code ?? '',
+          airline_name: airline?.airline_name ?? bg.airline_name ?? '',
+          weight_kg: Number(bg.weight_kg),
+          price: Number(bg.price),
+        };
       },
     }),
     new MockResource<NewsItem>({
@@ -268,6 +398,12 @@ export class MockRegistry {
     if (path === '/api/profile/avatar' && m === 'POST') {
       return this.uploadAvatar();
     }
+    if (path === '/api/admin/uploads/image' && m === 'POST') {
+      return ok(
+        { url: 'https://res.cloudinary.com/demo/image/upload/admin-upload-mock.png' },
+        'Tải ảnh lên thành công',
+      );
+    }
 
     if (path === '/api/admin/airlines' && m === 'GET') {
       return this.listAirlines(url);
@@ -328,6 +464,12 @@ export class MockRegistry {
       if (m === 'PUT') return this.saveSeatMap(aircraftId, body);
     }
 
+    const voucherAssignMatch = path.match(/^\/api\/admin\/vouchers\/(\d+)\/assign$/);
+    if (voucherAssignMatch && m === 'POST') {
+      const ids = ((body ?? {}) as { user_ids?: number[] }).user_ids ?? [];
+      return ok({ assigned_count: ids.length }, `Đã tặng voucher cho ${ids.length} người dùng`);
+    }
+
     // Ví voucher của khách — API v0.2 mục 2.8.
     if (path === '/api/voucher-store' && m === 'GET') {
       return this.voucherStore();
@@ -335,9 +477,192 @@ export class MockRegistry {
     if (path === '/api/my-vouchers' && m === 'GET') {
       return this.myVouchers(url);
     }
+    const myVoucherDetailMatch = path.match(/^\/api\/my-vouchers\/(\d+)$/);
+    if (myVoucherDetailMatch && m === 'GET') {
+      const id = Number(myVoucherDetailMatch[1]);
+      const found = this.userVouchers.find((v) => v.id === id);
+      return found ? ok(found) : notFound('Không tìm thấy voucher trong ví');
+    }
     const claimMatch = path.match(/^\/api\/vouchers\/(\d+)\/claim$/);
     if (claimMatch && m === 'POST') {
       return this.claimVoucher(Number(claimMatch[1]));
+    }
+
+    // Thông báo in-app — 00-nghiep-vu-thong-bao.md.
+    if (path === '/api/notifications' && m === 'GET') {
+      return this.listNotifications(url);
+    }
+    if (path === '/api/notifications/unread-count' && m === 'GET') {
+      return this.getUnreadNotificationCount();
+    }
+    if (path === '/api/notifications/read-all' && m === 'PATCH') {
+      return this.markAllNotificationsRead();
+    }
+    const notifReadMatch = path.match(/^\/api\/notifications\/(\d+)\/read$/);
+    if (notifReadMatch && m === 'PATCH') {
+      return this.markNotificationRead(Number(notifReadMatch[1]));
+    }
+
+    // Checkout, Payment, E-Ticket (Cụm B6) & Quản lý đặt chỗ Khách / Admin (Cụm DA3).
+    if (path === '/api/public/flights/search' && m === 'GET') {
+      return this.searchPublicFlights(url);
+    }
+    const publicSeatMapMatch = path.match(/^\/api\/public\/flights\/(\d+)\/seat-map$/);
+    if (publicSeatMapMatch && m === 'GET') {
+      return this.getFlightSeatMap(Number(publicSeatMapMatch[1]));
+    }
+    if (path === '/api/public/baggage-options' && m === 'GET') {
+      const params = readParams(url);
+      const airlineId = params.get('airline_id');
+      let rows = BAGGAGE_OPTIONS_MOCK.filter((b) => b.status === 'ACTIVE');
+      if (airlineId) rows = rows.filter((b) => String(b.airline_id) === airlineId);
+      return ok(paginate(rows, Number(params.get('page') ?? 1), Number(params.get('size') ?? 50)));
+    }
+    if (path === '/api/public/fare-rules' && m === 'GET') {
+      const params = readParams(url);
+      const airlineId = params.get('airline_id');
+      let rows = FARE_RULES_MOCK.filter((r) => r.status === 'ACTIVE').map((r) => {
+        const fc = FARE_CLASSES_MOCK.find((f) => f.id === r.fare_class_id);
+        return {
+          ...r,
+          airline_id: fc?.airline_id,
+          airline_name: fc?.airline_name,
+          seat_class: fc?.seat_class,
+        };
+      });
+      if (airlineId) rows = rows.filter((r) => String(r.airline_id) === airlineId);
+      return ok(rows);
+    }
+    if (path === '/api/public/bookings/lookup' && m === 'GET') {
+      const params = readParams(url);
+      const code = (params.get('booking_code') ?? '').trim().toUpperCase();
+      const email = (params.get('email') ?? '').trim().toLowerCase();
+      const found = this.mockBookingsList.find(
+        (b) =>
+          (b.booking_code.toUpperCase() === code || `DH-${b.id}` === code) &&
+          (!email || b.customer_email.toLowerCase() === email),
+      );
+      return found ? ok(found) : notFound('Không tìm thấy đơn đặt chỗ khớp thông tin');
+    }
+    if (path === '/api/bookings' && m === 'GET') {
+      return this.listBookings(url);
+    }
+    if (path === '/api/bookings' && m === 'POST') {
+      return this.createMockBooking(body);
+    }
+    const seatHoldMatch = path.match(/^\/api\/bookings\/(\d+)\/seats\/hold$/);
+    if (seatHoldMatch && m === 'POST') {
+      const payload = (body ?? {}) as { passenger_id?: number; flight_seat_id?: number };
+      return ok({
+        id: Date.now(),
+        booking_id: Number(seatHoldMatch[1]),
+        flight_seat_id: payload.flight_seat_id ?? 1,
+        seat_code: '3A',
+        seat_type_name: 'Ghế tiêu chuẩn',
+        seat_class: 'ECONOMY',
+        passenger_id: payload.passenger_id ?? 301,
+        passenger_name: 'Hành khách',
+        surcharge_at_booking: 0,
+        status: 'HOLD',
+        hold_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+      });
+    }
+    const addBagMatch = path.match(/^\/api\/bookings\/(\d+)\/baggages$/);
+    if (addBagMatch && m === 'POST') {
+      return ok(this.mockBooking, 'Cập nhật hành lý thành công');
+    }
+    const bookingCancelMatch = path.match(/^\/api\/bookings\/(\d+)\/cancel$/);
+    if (bookingCancelMatch && m === 'POST') {
+      return this.cancelBooking(Number(bookingCancelMatch[1]), body);
+    }
+    if (path === '/api/admin/bookings' && m === 'GET') {
+      return this.listBookings(url);
+    }
+    const adminBookingCancelMatch = path.match(/^\/api\/admin\/bookings\/(\d+)\/cancel$/);
+    if (adminBookingCancelMatch && m === 'POST') {
+      return this.cancelBooking(Number(adminBookingCancelMatch[1]), body);
+    }
+    const adminBookingDetailMatch = path.match(/^\/api\/admin\/bookings\/(\d+)$/);
+    if (adminBookingDetailMatch && m === 'GET') {
+      return this.getBookingById(Number(adminBookingDetailMatch[1]));
+    }
+    const bookingDetailMatch = path.match(/^\/api\/bookings\/(\d+)$/);
+    if (bookingDetailMatch && m === 'GET') {
+      return this.getBookingById(Number(bookingDetailMatch[1]));
+    }
+    const bookingVoucherMatch = path.match(/^\/api\/bookings\/(\d+)\/voucher$/);
+    if (bookingVoucherMatch) {
+      if (m === 'POST') return this.applyMockVoucher(body);
+      if (m === 'DELETE') return this.removeMockVoucher();
+    }
+    const bookingPayMatch = path.match(/^\/api\/bookings\/(\d+)\/payments$/);
+    if (bookingPayMatch && m === 'POST') {
+      return this.createMockPayment(body);
+    }
+    const bookingEticketMatch = path.match(/^\/api\/bookings\/(\d+)\/e-tickets$/);
+    if (bookingEticketMatch && m === 'GET') {
+      return ok(buildMockETickets(this.mockBooking));
+    }
+    const payosSyncMatch = path.match(/^\/api\/payments\/(\d+)\/payos\/sync$/);
+    if (payosSyncMatch && m === 'POST') {
+      return ok({ paid: this.mockBooking.status === 'CONFIRMED' });
+    }
+    const paymentGetMatch = path.match(/^\/api\/payments\/(\d+)$/);
+    if (paymentGetMatch && m === 'GET') {
+      const found = this.mockPayments.find((p) => p.id === Number(paymentGetMatch[1]));
+      return found ? ok(found) : notFound('Giao dịch thanh toán không tồn tại');
+    }
+
+    // Dashboard & Reports (Cụm B6).
+    if (path === '/api/admin/dashboard/operational' && m === 'GET') {
+      return ok(OPERATIONAL_DASHBOARD_MOCK);
+    }
+    if ((path === '/api/admin/dashboard' || path === '/api/admin/dashboard/overview' || path === '/api/admin/dashboard/reports' || path === '/api/admin/reports') && m === 'GET') {
+      return ok(OVERVIEW_DASHBOARD_MOCK);
+    }
+
+    // Quản trị Chuyến bay, Giá bán & Tồn ghế (Cụm DA2).
+    if (path === '/api/admin/flights') {
+      if (m === 'GET') return this.listFlights(url);
+      if (m === 'POST') return this.createFlight(body);
+    }
+    const flightActivateMatch = path.match(/^\/api\/admin\/flights\/(\d+)\/(activate|deactivate)$/);
+    if (flightActivateMatch && m === 'POST') {
+      return this.toggleFlightSales(
+        Number(flightActivateMatch[1]),
+        flightActivateMatch[2] === 'activate' ? 'OPEN' : 'CLOSED',
+      );
+    }
+    const flightSeatInvMatch = path.match(/^\/api\/admin\/flights\/(\d+)\/(seat-map|seat-inventory)$/);
+    if (flightSeatInvMatch) {
+      const flightId = Number(flightSeatInvMatch[1]);
+      if (m === 'GET') return this.getFlightSeatMap(flightId);
+      if (m === 'PUT') return this.saveFlightSeatInventory(flightId, body);
+    }
+    const flightSeatBlockMatch = path.match(/^\/api\/admin\/flight-seats\/(\d+)\/(block|unblock)$/);
+    if (flightSeatBlockMatch && m === 'POST') {
+      return this.toggleFlightSeatBlock(
+        Number(flightSeatBlockMatch[1]),
+        flightSeatBlockMatch[2] === 'block',
+      );
+    }
+    const flightIdMatch = path.match(/^\/api\/admin\/flights\/(\d+)$/);
+    if (flightIdMatch) {
+      const id = Number(flightIdMatch[1]);
+      if (m === 'GET') return this.getFlightDetail(id);
+      if (m === 'PUT') return this.updateFlight(id, body);
+      if (m === 'DELETE') return this.deleteFlight(id);
+    }
+    if (path === '/api/admin/flight-fares') {
+      if (m === 'GET') return this.listFlightFares(url);
+      if (m === 'POST') return this.createFlightFare(body);
+    }
+    const flightFareIdMatch = path.match(/^\/api\/admin\/flight-fares\/(\d+)$/);
+    if (flightFareIdMatch) {
+      const id = Number(flightFareIdMatch[1]);
+      if (m === 'GET') return this.getFlightFare(id);
+      if (m === 'PUT') return this.updateFlightFare(id, body);
+      if (m === 'DELETE') return this.deleteFlightFare(id);
     }
 
     // Các module master data dùng chung một lớp tài nguyên tổng quát.
@@ -948,5 +1273,714 @@ export class MockRegistry {
       succeeded.push(id);
     }
     return ok({ succeeded, failed }, 'Thao tác hàng loạt hoàn tất');
+  }
+
+  // ---------- Thông báo In-App — 00-nghiep-vu-thong-bao.md ----------
+
+  private listNotifications(url: string): unknown {
+    const params = readParams(url);
+    const unreadParam = params.get('unread');
+    let rows = [...this.notifications].sort((a, b) =>
+      b.created_at.localeCompare(a.created_at),
+    );
+    if (unreadParam === 'true') {
+      rows = rows.filter((n) => !n.is_read);
+    }
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getUnreadNotificationCount(): unknown {
+    const unreadCount = this.notifications.filter((n) => !n.is_read).length;
+    return ok({ unread_count: unreadCount });
+  }
+
+  private markNotificationRead(id: number): unknown {
+    const target = this.notifications.find((n) => n.id === id);
+    if (!target) {
+      return notFound('Không tìm thấy thông báo');
+    }
+    if (!target.is_read) {
+      target.is_read = true;
+      target.read_at = new Date().toISOString();
+    }
+    return ok(target, 'Đã đánh dấu đã đọc');
+  }
+
+  private markAllNotificationsRead(): unknown {
+    const now = new Date().toISOString();
+    for (const item of this.notifications) {
+      if (!item.is_read) {
+        item.is_read = true;
+        item.read_at = now;
+      }
+    }
+    return ok(null, 'Đã đánh dấu tất cả thông báo là đã đọc');
+  }
+
+  // ---------- Checkout, Payment & E-Ticket (Cụm B6) ----------
+
+  private applyMockVoucher(body: unknown): unknown {
+    const payload = (body ?? {}) as { user_voucher_id?: number };
+    const uv = this.userVouchers.find((v) => v.id === payload.user_voucher_id);
+    const discount = uv ? 150000 : 100000;
+    this.mockBooking = {
+      ...this.mockBooking,
+      voucher_discount_amount: discount,
+      total_amount: Math.max(
+        0,
+        this.mockBooking.fare_amount -
+          this.mockBooking.promotion_discount_amount -
+          discount +
+          this.mockBooking.seat_surcharge_amount +
+          this.mockBooking.baggage_amount,
+      ),
+      applied_voucher: {
+        user_voucher_id: payload.user_voucher_id ?? 1,
+        voucher_id: uv?.voucher.id ?? 1,
+        voucher_code: uv?.voucher.voucher_code ?? 'HE2026',
+        voucher_name: uv?.voucher.voucher_name ?? 'Voucher Ưu đãi Hè 2026',
+        discount_amount: discount,
+        status: 'RESERVED',
+      },
+    };
+    return ok(this.mockBooking, 'Đã áp dụng voucher');
+  }
+
+  private removeMockVoucher(): unknown {
+    this.mockBooking = {
+      ...this.mockBooking,
+      voucher_discount_amount: 0,
+      total_amount:
+        this.mockBooking.fare_amount -
+        this.mockBooking.promotion_discount_amount +
+        this.mockBooking.seat_surcharge_amount +
+        this.mockBooking.baggage_amount,
+      applied_voucher: null,
+    };
+    return ok(this.mockBooking, 'Đã gỡ voucher');
+  }
+
+  private createMockPayment(body: unknown): unknown {
+    const req = (body ?? {}) as PaymentCreateRequest;
+    const id = this.paymentIdSeq++;
+    const isSuccess = req.simulate_result === 'SUCCESS';
+    const isFailed = req.simulate_result === 'FAILED';
+    const method = (req.payment_method ?? 'VNPAY').toUpperCase();
+    if (isSuccess) {
+      this.mockBooking = {
+        ...this.mockBooking,
+        status: 'CONFIRMED',
+        seat_holds: this.mockBooking.seat_holds.map((h) => ({ ...h, status: 'CONFIRMED' })),
+      };
+    }
+    const txn: PaymentTransaction = {
+      id,
+      booking_id: this.mockBooking.id,
+      booking_code: this.mockBooking.booking_code,
+      booking_status: this.mockBooking.status,
+      amount: this.mockBooking.total_amount,
+      currency: this.mockBooking.currency,
+      payment_method: method === 'PAYOS' || method === 'VIETQR' ? 'BANK_TRANSFER' : method,
+      gateway_name: method === 'VNPAY' ? 'VNPAY' : 'PAYOS',
+      gateway_transaction_id: isSuccess ? `MOCK-${method}-${id}` : null,
+      status: isSuccess ? 'SUCCESS' : isFailed ? 'FAILED' : 'PENDING',
+      retry_count: this.mockPayments.length,
+      payment_url:
+        method === 'VNPAY'
+          ? `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_TxnRef=${this.mockBooking.booking_code}-${id}`
+          : null,
+      viet_qr:
+        method === 'VNPAY'
+          ? null
+          : {
+              bank_name: 'Vietcombank — CN TP. Hồ Chí Minh',
+              account_number: '1029384756',
+              account_holder: 'CONG TY CO PHAN HANG KHONG VINAFLY',
+              amount: this.mockBooking.total_amount,
+              transfer_content: `VINAFLY ${this.mockBooking.booking_code}`,
+              qr_image_url: `https://img.vietqr.io/image/VCB-1029384756-compact2.png?amount=${this.mockBooking.total_amount}&addInfo=VINAFLY%20${this.mockBooking.booking_code}`,
+              qr_code_raw: null,
+              checkout_url: null,
+            },
+      created_at: new Date().toISOString(),
+      paid_at: isSuccess ? new Date().toISOString() : null,
+    };
+    this.mockPayments.push(txn);
+    return ok(txn, 'Khởi tạo giao dịch thanh toán thành công');
+  }
+
+  // ---------- Quản trị Chuyến bay, Giá bán & Tồn ghế (Cụm DA2) ----------
+
+  private aliveFlights(): FlightRecord[] {
+    return this.flights.filter((f) => !this.deletedFlights.has(f.id));
+  }
+
+  private ensureFlightSeatMap(flight: FlightRecord): FlightSeatMap {
+    let existing = this.flightSeatMaps.get(flight.id);
+    if (!existing) {
+      existing = buildMockFlightSeatMap(flight);
+      this.flightSeatMaps.set(flight.id, existing);
+    }
+    return existing;
+  }
+
+  private listFlights(url: string): unknown {
+    const params = readParams(url);
+    const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
+    const airlineId = params.get('airline_id');
+    const depId = params.get('departure_airport_id');
+    const arrId = params.get('arrival_airport_id');
+    const depDate = params.get('departure_date');
+    const opStatus = params.get('operation_status') ?? params.get('status');
+    const salesStatus = params.get('sales_status');
+
+    let rows = this.aliveFlights();
+    if (keyword) {
+      rows = rows.filter(
+        (f) =>
+          f.flight_number.toLowerCase().includes(keyword) ||
+          f.airline.airline_name.toLowerCase().includes(keyword) ||
+          f.departure_airport.airport_code.toLowerCase().includes(keyword) ||
+          f.arrival_airport.airport_code.toLowerCase().includes(keyword),
+      );
+    }
+    if (airlineId) rows = rows.filter((f) => String(f.airline.id) === airlineId);
+    if (depId) rows = rows.filter((f) => String(f.departure_airport.id) === depId);
+    if (arrId) rows = rows.filter((f) => String(f.arrival_airport.id) === arrId);
+    if (depDate) rows = rows.filter((f) => f.scheduled_departure.startsWith(depDate));
+    if (opStatus) rows = rows.filter((f) => f.operation_status === opStatus);
+    if (salesStatus) rows = rows.filter((f) => f.sales_status === salesStatus);
+
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getFlightDetail(id: number): unknown {
+    const found = this.aliveFlights().find((f) => f.id === id);
+    if (!found) return notFound('Không tìm thấy chuyến bay');
+    const seatMap = this.ensureFlightSeatMap(found);
+    const fares = this.flightFares.filter((ff) => ff.flight_id === id);
+    const detail: FlightDetailRecord = {
+      ...found,
+      total_seats: seatMap.total_seats,
+      available_seats: seatMap.available_seats,
+      fares,
+      passengers: FLIGHT_PASSENGERS_MOCK[id] ?? [],
+    };
+    return ok(detail);
+  }
+
+  private createFlight(body: unknown): unknown {
+    const p = (body ?? {}) as Partial<FlightPayload>;
+    if (!p.flight_number?.trim()) return businessError('Số hiệu chuyến bay không được để trống');
+    if (p.departure_airport_id === p.arrival_airport_id) {
+      return businessError('Sân bay đi và sân bay đến không được trùng nhau');
+    }
+    if (!p.scheduled_departure || !p.scheduled_arrival || p.scheduled_arrival <= p.scheduled_departure) {
+      return businessError('Giờ đến dự kiến phải sau giờ khởi hành');
+    }
+    const airline = AIRLINES_MOCK.find((a) => a.id === Number(p.airline_id));
+    const aircraft = AIRCRAFT_MOCK.find((a) => a.id === Number(p.aircraft_id));
+    const dep = AIRPORTS_MOCK.find((a) => a.id === Number(p.departure_airport_id));
+    const arr = AIRPORTS_MOCK.find((a) => a.id === Number(p.arrival_airport_id));
+    if (!airline || !aircraft || !dep || !arr) {
+      return businessError('Hãng bay, tàu bay hoặc sân bay không hợp lệ');
+    }
+    const duration = Math.max(
+      30,
+      Math.round(
+        (new Date(p.scheduled_arrival).getTime() - new Date(p.scheduled_departure).getTime()) /
+          60000,
+      ),
+    );
+    const now = new Date().toISOString();
+    const created: FlightRecord = {
+      id: this.flightIdSeq++,
+      flight_number: p.flight_number.trim().toUpperCase(),
+      airline,
+      aircraft,
+      departure_airport: dep,
+      arrival_airport: arr,
+      scheduled_departure: p.scheduled_departure,
+      scheduled_arrival: p.scheduled_arrival,
+      duration_minutes: duration,
+      operation_status: p.operation_status ?? 'SCHEDULED',
+      sales_status: p.sales_status ?? 'OPEN',
+      parent_flight_id: p.parent_flight_id ?? null,
+      parent_flight_number: null,
+      created_at: now,
+      updated_at: now,
+    };
+    this.flights.unshift(created);
+    return ok(created, 'Tạo chuyến bay thành công');
+  }
+
+  private updateFlight(id: number, body: unknown): unknown {
+    const target = this.aliveFlights().find((f) => f.id === id);
+    if (!target) return notFound('Không tìm thấy chuyến bay');
+    const p = (body ?? {}) as Partial<FlightPayload>;
+    if (p.departure_airport_id && p.arrival_airport_id && p.departure_airport_id === p.arrival_airport_id) {
+      return businessError('Sân bay đi và sân bay đến không được trùng nhau');
+    }
+    const nextDep = p.scheduled_departure ?? target.scheduled_departure;
+    const nextArr = p.scheduled_arrival ?? target.scheduled_arrival;
+    if (nextArr <= nextDep) {
+      return businessError('Giờ đến dự kiến phải sau giờ khởi hành');
+    }
+    const airline = p.airline_id
+      ? AIRLINES_MOCK.find((a) => a.id === Number(p.airline_id)) ?? target.airline
+      : target.airline;
+    const aircraft = p.aircraft_id
+      ? AIRCRAFT_MOCK.find((a) => a.id === Number(p.aircraft_id)) ?? target.aircraft
+      : target.aircraft;
+    const dep = p.departure_airport_id
+      ? AIRPORTS_MOCK.find((a) => a.id === Number(p.departure_airport_id)) ?? target.departure_airport
+      : target.departure_airport;
+    const arr = p.arrival_airport_id
+      ? AIRPORTS_MOCK.find((a) => a.id === Number(p.arrival_airport_id)) ?? target.arrival_airport
+      : target.arrival_airport;
+
+    Object.assign(target, {
+      flight_number: p.flight_number ? p.flight_number.trim().toUpperCase() : target.flight_number,
+      airline,
+      aircraft,
+      departure_airport: dep,
+      arrival_airport: arr,
+      scheduled_departure: nextDep,
+      scheduled_arrival: nextArr,
+      duration_minutes: Math.max(
+        30,
+        Math.round((new Date(nextArr).getTime() - new Date(nextDep).getTime()) / 60000),
+      ),
+      operation_status: p.operation_status ?? target.operation_status,
+      sales_status: p.sales_status ?? target.sales_status,
+      updated_at: new Date().toISOString(),
+    });
+    return ok(target, 'Cập nhật chuyến bay thành công');
+  }
+
+  private toggleFlightSales(id: number, status: 'OPEN' | 'CLOSED'): unknown {
+    const target = this.aliveFlights().find((f) => f.id === id);
+    if (!target) return notFound('Không tìm thấy chuyến bay');
+    target.sales_status = status;
+    target.updated_at = new Date().toISOString();
+    return ok(target, status === 'OPEN' ? 'Mở bán chuyến bay thành công' : 'Đóng bán chuyến bay thành công');
+  }
+
+  private deleteFlight(id: number): unknown {
+    const target = this.aliveFlights().find((f) => f.id === id);
+    if (!target) return notFound('Không tìm thấy chuyến bay');
+    this.deletedFlights.add(id);
+    return ok(null, 'Đã xóa chuyến bay');
+  }
+
+  private listFlightFares(url: string): unknown {
+    const params = readParams(url);
+    const flightId = params.get('flight_id');
+    const fareClassId = params.get('fare_class_id');
+    const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
+
+    let rows = [...this.flightFares];
+    if (flightId) rows = rows.filter((f) => String(f.flight_id) === flightId);
+    if (fareClassId) rows = rows.filter((f) => String(f.fare_class_id) === fareClassId);
+    if (keyword) {
+      rows = rows.filter(
+        (f) =>
+          f.flight_number.toLowerCase().includes(keyword) ||
+          f.fare_class_code.toLowerCase().includes(keyword) ||
+          f.fare_class_name.toLowerCase().includes(keyword),
+      );
+    }
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getFlightFare(id: number): unknown {
+    const found = this.flightFares.find((f) => f.id === id);
+    return found ? ok(found) : notFound('Không tìm thấy dòng giá vé');
+  }
+
+  private hasOverlapFare(
+    flightId: number,
+    fareClassId: number,
+    from: string | null,
+    to: string | null,
+    excludeId: number | null,
+  ): boolean {
+    const startA = from ? new Date(from).getTime() : 0;
+    const endA = to ? new Date(to).getTime() : Number.MAX_SAFE_INTEGER;
+    return this.flightFares.some((f) => {
+      if (f.id === excludeId || f.flight_id !== flightId || f.fare_class_id !== fareClassId) {
+        return false;
+      }
+      const startB = f.effective_from ? new Date(f.effective_from).getTime() : 0;
+      const endB = f.effective_to ? new Date(f.effective_to).getTime() : Number.MAX_SAFE_INTEGER;
+      return startA < endB && startB < endA;
+    });
+  }
+
+  private createFlightFare(body: unknown): unknown {
+    const p = (body ?? {}) as Partial<FlightFarePayload>;
+    const fl = this.aliveFlights().find((f) => f.id === Number(p.flight_id));
+    const fc = FARE_CLASSES_MOCK.find((c) => c.id === Number(p.fare_class_id));
+    if (!fl || !fc) return businessError('Chuyến bay hoặc hạng vé không hợp lệ');
+    if (fc.airline_id !== fl.airline.id) {
+      return businessError(`Hạng vé ${fc.fare_class_code} không thuộc hãng ${fl.airline.airline_code}`);
+    }
+    if (p.effective_from && p.effective_to && p.effective_to <= p.effective_from) {
+      return businessError('Thời điểm kết thúc hiệu lực phải sau thời điểm bắt đầu');
+    }
+    if (this.hasOverlapFare(fl.id, fc.id, p.effective_from ?? null, p.effective_to ?? null, null)) {
+      return businessError('Khoảng hiệu lực bị chồng lấn với dòng giá đã tồn tại của cùng chuyến và hạng vé');
+    }
+    const baseFare = Number(p.base_fare ?? 0);
+    const taxFee = Number(p.tax_fee ?? 0);
+    if (baseFare < 0 || taxFee < 0) return businessError('Giá cơ bản và thuế phí không được âm');
+
+    const created: FlightFare = {
+      id: this.flightFareIdSeq++,
+      flight_id: fl.id,
+      flight_number: fl.flight_number,
+      fare_class_id: fc.id,
+      fare_class_code: fc.fare_class_code,
+      fare_class_name: fc.fare_class_name,
+      seat_class: fc.seat_class,
+      base_fare: baseFare,
+      tax_fee: taxFee,
+      ...computeFarePrices(baseFare, taxFee),
+      currency: p.currency ?? 'VND',
+      effective_from: p.effective_from ?? new Date().toISOString().slice(0, 19),
+      effective_to: p.effective_to ?? null,
+      created_at: new Date().toISOString(),
+    };
+    this.flightFares.unshift(created);
+    return ok(created, 'Tạo giá vé theo chuyến thành công');
+  }
+
+  private updateFlightFare(id: number, body: unknown): unknown {
+    const target = this.flightFares.find((f) => f.id === id);
+    if (!target) return notFound('Không tìm thấy dòng giá vé');
+    const p = (body ?? {}) as Partial<FlightFarePayload>;
+    const nextFrom = p.effective_from !== undefined ? p.effective_from : target.effective_from;
+    const nextTo = p.effective_to !== undefined ? p.effective_to : target.effective_to;
+    if (nextFrom && nextTo && nextTo <= nextFrom) {
+      return businessError('Thời điểm kết thúc hiệu lực phải sau thời điểm bắt đầu');
+    }
+    if (this.hasOverlapFare(target.flight_id, target.fare_class_id, nextFrom, nextTo, id)) {
+      return businessError('Khoảng hiệu lực bị chồng lấn với dòng giá khác');
+    }
+    const baseFare = Number(p.base_fare ?? target.base_fare);
+    const taxFee = Number(p.tax_fee ?? target.tax_fee);
+    Object.assign(target, {
+      base_fare: baseFare,
+      tax_fee: taxFee,
+      ...computeFarePrices(baseFare, taxFee),
+      effective_from: nextFrom,
+      effective_to: nextTo,
+    });
+    return ok(target, 'Cập nhật giá vé theo chuyến thành công');
+  }
+
+  private deleteFlightFare(id: number): unknown {
+    const idx = this.flightFares.findIndex((f) => f.id === id);
+    if (idx < 0) return notFound('Không tìm thấy dòng giá vé');
+    this.flightFares.splice(idx, 1);
+    return ok(null, 'Đã xóa dòng giá vé');
+  }
+
+  private getFlightSeatMap(flightId: number): unknown {
+    const fl = this.aliveFlights().find((f) => f.id === flightId);
+    if (!fl) return notFound('Không tìm thấy chuyến bay');
+    return ok(this.ensureFlightSeatMap(fl));
+  }
+
+  private saveFlightSeatInventory(flightId: number, body: unknown): unknown {
+    const fl = this.aliveFlights().find((f) => f.id === flightId);
+    if (!fl) return notFound('Không tìm thấy chuyến bay');
+    const map = this.ensureFlightSeatMap(fl);
+    const req = (body ?? {}) as Partial<SeatInventoryRequestPayload>;
+    for (const item of req.seats ?? []) {
+      const seat = map.seats.find(
+        (s) =>
+          (item.flight_seat_id !== undefined && s.id === item.flight_seat_id) ||
+          (item.seat_code !== undefined && s.seat_code === item.seat_code),
+      );
+      if (!seat) continue;
+      if (item.status && (seat.status === 'BOOKED' || seat.status === 'HELD')) {
+        return businessError(`Không thể đổi trạng thái ghế ${seat.seat_code} đang được đặt hoặc giữ`);
+      }
+      if (item.status) seat.status = item.status;
+      if (item.seat_surcharge !== undefined) {
+        if (item.seat_surcharge < 0) return businessError('Phụ thu ghế không được âm');
+        seat.seat_surcharge = Number(item.seat_surcharge);
+      }
+    }
+    const updated = recalcSeatMapCounts(map);
+    this.flightSeatMaps.set(flightId, updated);
+    return ok(updated, 'Cập nhật tồn ghế chuyến bay thành công');
+  }
+
+  private toggleFlightSeatBlock(flightSeatId: number, block: boolean): unknown {
+    for (const [flightId, map] of this.flightSeatMaps.entries()) {
+      const seat = map.seats.find((s) => s.id === flightSeatId);
+      if (!seat) continue;
+      if (seat.status === 'BOOKED' || seat.status === 'HELD') {
+        return businessError(`Ghế ${seat.seat_code} đang có hành khách đặt/giữ, không thể ${block ? 'khóa' : 'mở khóa'}`);
+      }
+      seat.status = block ? 'BLOCKED' : 'AVAILABLE';
+      this.flightSeatMaps.set(flightId, recalcSeatMapCounts(map));
+      return ok(null, block ? 'Đã khóa ghế' : 'Đã mở khóa ghế');
+    }
+    return notFound('Không tìm thấy ghế chuyến bay');
+  }
+
+  // ---------- Luồng tìm chuyến & Quản lý đặt chỗ (Cụm DA3) ----------
+
+  private buildInitialBookings(): BookingDetail[] {
+    const primary = buildMockBookingDetail();
+    const confirmed: BookingDetail = {
+      ...primary,
+      id: 1049,
+      booking_code: 'DH-1049',
+      status: 'CONFIRMED',
+      total_amount: 2959000,
+      fare_amount: 2790000,
+      seat_surcharge_amount: 50000,
+      baggage_amount: 219000,
+      promotion_discount_amount: 100000,
+      voucher_discount_amount: 0,
+      agency_contact: {
+        agency_name: 'VinaFly Domestic Booking',
+        hotline: '1900 1234',
+        support_email: 'hotro@vinafly.vn',
+        note: 'Hệ thống không tự động hoàn tiền. Vui lòng liên hệ tổng đài đại lý để xử lý hoàn vé theo quy định hạng vé.',
+      },
+    };
+    const pending: BookingDetail = {
+      ...primary,
+      id: 1055,
+      booking_code: 'DH-1055',
+      customer_name: 'Lê Thu Hà',
+      customer_email: 'thuha@demo.local',
+      status: 'PENDING_PAYMENT',
+      total_amount: 1690000,
+      fare_amount: 1640000,
+      seat_surcharge_amount: 50000,
+      baggage_amount: 0,
+      promotion_discount_amount: 0,
+      voucher_discount_amount: 0,
+    };
+    const cancelled: BookingDetail = {
+      ...primary,
+      id: 1038,
+      booking_code: 'DH-1038',
+      customer_name: 'Trần Quốc Huy',
+      customer_email: 'quochuy@demo.local',
+      status: 'CANCELLED',
+      cancelled_at: '2026-11-18T09:15:00Z',
+      cancel_reason: 'Khách thay đổi lịch công tác',
+      total_amount: 2040000,
+      fare_amount: 2040000,
+      seat_surcharge_amount: 0,
+      baggage_amount: 0,
+      promotion_discount_amount: 0,
+      voucher_discount_amount: 0,
+    };
+    return [confirmed, pending, cancelled];
+  }
+
+  private createMockBooking(body: unknown): unknown {
+    const req = (body ?? {}) as { passengers?: { full_name: string; passenger_type: 'ADULT' | 'CHILD' | 'INFANT'; gender: 'MALE' | 'FEMALE' | 'OTHER'; birth_date: string }[] };
+    const base = buildMockBookingDetail();
+    const createdId = this.nextId++;
+    const created: BookingDetail = {
+      ...base,
+      id: createdId,
+      booking_code: `VF${createdId}`,
+      passengers: (req.passengers ?? []).map((p, idx) => ({
+        id: 300 + idx + 1,
+        full_name: p.full_name,
+        gender: p.gender,
+        birth_date: p.birth_date,
+        passenger_type: p.passenger_type,
+        passport_number: null,
+        phone: null,
+        email: null,
+      })),
+    };
+    this.mockBooking = created;
+    this.mockBookingsList.unshift(created);
+    return ok(created, 'Tạo đơn đặt vé thành công');
+  }
+
+  private searchPublicFlights(url: string): unknown {
+    const params = readParams(url);
+    const dep = (params.get('departure_airport_code') ?? '').trim().toUpperCase();
+    const arr = (params.get('arrival_airport_code') ?? '').trim().toUpperCase();
+
+    const openFlights = this.aliveFlights().filter(
+      (f) => f.sales_status === 'OPEN' && f.operation_status !== 'CANCELLED',
+    );
+
+    const items = openFlights
+      .filter((f) => {
+        if (dep && f.departure_airport.airport_code !== dep) return false;
+        if (arr && f.arrival_airport.airport_code !== arr) return false;
+        return true;
+      })
+      .map((f) => {
+        const seatMap = this.ensureFlightSeatMap(f);
+        const fares = [
+          {
+            flight_fare_id: f.id * 10 + 1,
+            fare_class_id: f.airline.id === 2 ? 5 : 1,
+            fare_class_code: `${f.airline.airline_code}_ECON_SAVER`,
+            fare_class_name: 'Phổ thông tiết kiệm',
+            seat_class: 'ECONOMY' as const,
+            base_fare: f.airline.id === 2 ? 950000 : 1320000,
+            tax_fee: 320000,
+            adult_price: f.airline.id === 2 ? 1270000 : 1640000,
+            child_price: f.airline.id === 2 ? 952500 : 1230000,
+            infant_price: f.airline.id === 2 ? 127000 : 164000,
+            currency: 'VND',
+            seats_available: seatMap.available_seats,
+            is_refundable: false,
+            refund_min_hours_before_departure: 0,
+            refund_percent: 0,
+            refund_description: 'Không hỗ trợ hoàn vé',
+          },
+          {
+            flight_fare_id: f.id * 10 + 2,
+            fare_class_id: f.airline.id === 2 ? 6 : 3,
+            fare_class_code: `${f.airline.airline_code}_PREM_ECO_FLEX`,
+            fare_class_name: 'Phổ thông đặc biệt',
+            seat_class: 'PREMIUM_ECONOMY' as const,
+            base_fare: f.airline.id === 2 ? 1550000 : 2320000,
+            tax_fee: 320000,
+            adult_price: f.airline.id === 2 ? 1870000 : 2640000,
+            child_price: f.airline.id === 2 ? 1402500 : 1980000,
+            infant_price: f.airline.id === 2 ? 187000 : 264000,
+            currency: 'VND',
+            seats_available: Math.max(4, Math.floor(seatMap.available_seats / 3)),
+            is_refundable: true,
+            refund_min_hours_before_departure: 24,
+            refund_percent: 95,
+            refund_description: 'Hoàn 95% giá vé trước 24 giờ khởi hành',
+          },
+          {
+            flight_fare_id: f.id * 10 + 3,
+            fare_class_id: f.airline.id === 2 ? 7 : 4,
+            fare_class_code: `${f.airline.airline_code}_BIZ_FLEX`,
+            fare_class_name: 'Thương gia linh hoạt',
+            seat_class: 'BUSINESS' as const,
+            base_fare: f.airline.id === 2 ? 3150000 : 3620000,
+            tax_fee: 320000,
+            adult_price: f.airline.id === 2 ? 3470000 : 3940000,
+            child_price: f.airline.id === 2 ? 2602500 : 2955000,
+            infant_price: f.airline.id === 2 ? 347000 : 394000,
+            currency: 'VND',
+            seats_available: Math.max(2, Math.floor(seatMap.available_seats / 5)),
+            is_refundable: true,
+            refund_min_hours_before_departure: 24,
+            refund_percent: 100,
+            refund_description: 'Hoàn 100% giá vé trước 24 giờ khởi hành',
+          },
+        ];
+
+        return {
+          id: f.id,
+          flight_id: f.id,
+          flight_number: f.flight_number,
+          airline: {
+            id: f.airline.id,
+            airline_code: f.airline.airline_code,
+            airline_name: f.airline.airline_name,
+            logo_url: f.airline.logo_url ?? null,
+          },
+          aircraft: {
+            id: f.aircraft.id,
+            aircraft_code: f.aircraft.aircraft_code,
+            model: f.aircraft.model,
+            seat_capacity: f.aircraft.seat_capacity,
+            aisle_after: f.aircraft.aisle_after ?? 'C',
+          },
+          departure_airport: {
+            id: f.departure_airport.id,
+            airport_code: f.departure_airport.airport_code,
+            airport_name: f.departure_airport.airport_name,
+            city_code: f.departure_airport.city?.city_code ?? null,
+            city_name: f.departure_airport.city?.city_name ?? null,
+          },
+          arrival_airport: {
+            id: f.arrival_airport.id,
+            airport_code: f.arrival_airport.airport_code,
+            airport_name: f.arrival_airport.airport_name,
+            city_code: f.arrival_airport.city?.city_code ?? null,
+            city_name: f.arrival_airport.city?.city_name ?? null,
+          },
+          scheduled_departure: f.scheduled_departure,
+          scheduled_arrival: f.scheduled_arrival,
+          duration_minutes: f.duration_minutes,
+          operation_status: f.operation_status,
+          sales_status: f.sales_status,
+          lowest_adult_price: fares[0].adult_price,
+          lowest_fare_class_code: fares[0].fare_class_code,
+          lowest_fare_class_name: fares[0].fare_class_name,
+          fares,
+        };
+      });
+
+    return ok(items);
+  }
+
+  private listBookings(url: string): unknown {
+    const params = readParams(url);
+    const status = (params.get('status') ?? '').trim().toUpperCase();
+    const keyword = (params.get('keyword') ?? '').trim().toLowerCase();
+    let rows = [...this.mockBookingsList];
+    if (status) {
+      rows = rows.filter((b) => b.status === status);
+    }
+    if (keyword) {
+      rows = rows.filter(
+        (b) =>
+          b.booking_code.toLowerCase().includes(keyword) ||
+          b.customer_name.toLowerCase().includes(keyword) ||
+          b.customer_email.toLowerCase().includes(keyword),
+      );
+    }
+    const page = Number(params.get('page') ?? 1);
+    const size = Number(params.get('size') ?? 20);
+    return ok(paginate(rows, page, size));
+  }
+
+  private getBookingById(id: number): unknown {
+    const found = this.mockBookingsList.find((b) => b.id === id);
+    if (found) return ok(found);
+    // Giữ tương thích với booking-checkout.spec.ts (id 1049 hoặc id bất kỳ dùng mockBooking)
+    return ok(this.mockBooking);
+  }
+
+  private cancelBooking(id: number, body: unknown): unknown {
+    const target = this.mockBookingsList.find((b) => b.id === id);
+    if (!target) return notFound('Không tìm thấy đơn đặt chỗ');
+    if (target.status === 'CANCELLED') {
+      return businessError('Đơn đặt chỗ đã được hủy trước đó');
+    }
+    const reason = ((body ?? {}) as { reason?: string }).reason?.trim() || 'Khách hàng yêu cầu hủy vé';
+    target.status = 'CANCELLED';
+    target.cancelled_at = new Date().toISOString();
+    target.cancel_reason = reason;
+    target.agency_contact = {
+      agency_name: 'VinaFly Domestic Booking',
+      hotline: '1900 1234',
+      support_email: 'hotro@vinafly.vn',
+      note: 'Hệ thống không tự động hoàn tiền. Vui lòng liên hệ 1900 1234 hoặc hotro@vinafly.vn để xử lý hoàn vé.',
+    };
+    return ok(target, 'Đã hủy đơn đặt chỗ thành công');
   }
 }

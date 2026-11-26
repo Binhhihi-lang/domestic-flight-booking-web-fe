@@ -1,7 +1,7 @@
 <div class="shell" [class.shell--collapsed]="collapsed()">
   <!-- ============ SIDEBAR ============ -->
   @if (sidebarOpen()) {
-    <div class="scrim" (click)="sidebarOpen.set(false)" aria-hidden="true"></div>
+  <div class="scrim" (click)="sidebarOpen.set(false)" aria-hidden="true"></div>
   }
 
   <aside class="sidebar" [class.sidebar--collapsed]="collapsed()" [class.sidebar--open]="sidebarOpen()">
@@ -9,57 +9,86 @@
       <a class="sidebar__brand" routerLink="/admin/dashboard" (click)="sidebarOpen.set(false)">
         <app-brand-logo size="md" tone="dark" [markOnly]="collapsed()" />
       </a>
-
-      <!-- Nút thu gọn: chỉ hiện trên desktop; mobile đã có hamburger. -->
-      <button
-        class="sidebar__collapse"
-        type="button"
-        [attr.aria-label]="collapsed() ? 'Mở rộng menu' : 'Thu gọn menu'"
-        [attr.aria-expanded]="!collapsed()"
-        (click)="toggleCollapse()"
-      >
-        <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
-      </button>
     </div>
 
-    <nav class="sidebar__nav">
+    <!-- Nút thu gọn nổi mép phải sidebar: chỉ hiện trên desktop; mobile đã có hamburger. -->
+    <button
+      class="sidebar__collapse"
+      type="button"
+      [attr.aria-label]="collapsed() ? 'Mở rộng menu' : 'Thu gọn menu'"
+      [attr.aria-expanded]="!collapsed()"
+      (click)="toggleCollapse()"
+    >
+      <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+
+    <nav class="sidebar__nav" aria-label="Điều hướng khu vực vận hành">
       @for (group of visibleGroups(); track group.label) {
-        <div class="sidebar__group">
-          @if (!collapsed()) {
-            <div class="sidebar__label">{{ group.label }}</div>
+      <div class="sidebar__group">
+        @if (!collapsed()) {
+        <div class="sidebar__label">{{ group.label }}</div>
+        } @else {
+        <div class="sidebar__sep" aria-hidden="true"></div>
+        }
+        @for (item of group.items; track item.id) {
+          @if (item.path) {
+          <a
+            class="sidebar__item"
+            [routerLink]="item.path"
+            routerLinkActive="on"
+            [matTooltip]="collapsed() ? item.label : ''"
+            matTooltipPosition="right"
+            (click)="sidebarOpen.set(false)"
+          >
+            <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+            @if (!collapsed()) {
+            <span class="sidebar__txt">{{ item.label }}</span>
+            }
+          </a>
           } @else {
-            <div class="sidebar__sep" aria-hidden="true"></div>
+          <button
+            class="sidebar__item sidebar__item--btn"
+            type="button"
+            [matTooltip]="collapsed() ? item.label : ''"
+            matTooltipPosition="right"
+            (click)="onItemAction(item)"
+          >
+            <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+            @if (!collapsed()) {
+            <span class="sidebar__txt">{{ item.label }}</span>
+            }
+          </button>
           }
-          @for (item of group.items; track item.path) {
-            <a
-              class="sidebar__item"
-              [routerLink]="item.path"
-              routerLinkActive="on"
-              [matTooltip]="collapsed() ? item.label : ''"
-              matTooltipPosition="right"
-              (click)="sidebarOpen.set(false)"
-            >
-              <mat-icon>{{ item.icon }}</mat-icon>
-              @if (!collapsed()) {
-                <span>{{ item.label }}</span>
-              }
-            </a>
-          }
-        </div>
+        }
+      </div>
       }
     </nav>
 
     <div class="sidebar__foot">
+      <div
+        class="adm-who"
+        [matTooltip]="collapsed() ? (authService.currentUser()?.full_name ?? '') + ' · ' + roleLabel() : ''"
+        matTooltipPosition="right"
+      >
+        <span class="adm-who__avatar" aria-hidden="true">{{ initials() }}</span>
+        @if (!collapsed()) {
+        <span class="adm-who__txt">
+          <b>{{ authService.currentUser()?.full_name || 'Tài khoản vận hành' }}</b>
+          <span>{{ roleLabel() }}</span>
+        </span>
+        }
+      </div>
+
       <a
-        class="sidebar__item"
+        class="sidebar__item sidebar__link"
         routerLink="/"
         [matTooltip]="collapsed() ? 'Về trang khách hàng' : ''"
         matTooltipPosition="right"
         (click)="sidebarOpen.set(false)"
       >
-        <mat-icon>storefront</mat-icon>
+        <mat-icon aria-hidden="true">open_in_new</mat-icon>
         @if (!collapsed()) {
-          <span>Về trang khách hàng</span>
+        <span class="sidebar__txt">Về trang khách hàng</span>
         }
       </a>
     </div>
@@ -67,15 +96,6 @@
 
   <!-- ============ MAIN ============ -->
   <div class="main">
-    <!-- Ảnh bìa: dải màu thương hiệu có hoạ tiết, tạo chiều sâu cho khu
-         vận hành giống dashboard tham chiếu. Thuần trang trí nên
-         aria-hidden; không chứa thông tin. -->
-    <div class="cover" aria-hidden="true">
-      <span class="cover__blob cover__blob--1"></span>
-      <span class="cover__blob cover__blob--2"></span>
-      <span class="cover__blob cover__blob--3"></span>
-    </div>
-
     <header class="header">
       <button
         class="header__menu"
@@ -88,43 +108,54 @@
       </button>
 
       <nav class="crumbs" aria-label="Đường dẫn">
-        <a routerLink="/admin/dashboard">Vận hành</a>
+        <a routerLink="/admin/dashboard">{{ authService.isAdmin() ? 'Quản trị' : 'Vận hành' }}</a>
         @if (pageTitle()) {
-          <mat-icon>chevron_right</mat-icon>
-          <span class="crumbs__here">{{ pageTitle() }}</span>
+        <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        <span class="crumbs__here">{{ pageTitle() }}</span>
         }
       </nav>
 
       <span class="header__sp"></span>
 
       <span class="header__date">
-        <mat-icon>calendar_month</mat-icon>
+        <mat-icon aria-hidden="true">calendar_today</mat-icon>
         <span class="tabular">{{ today }}</span>
       </span>
 
-      <button class="header__icon" type="button" aria-label="Thông báo">
-        <mat-icon>notifications_none</mat-icon>
-      </button>
+      <app-notification-bell />
 
-      <button class="header__user" type="button" [matMenuTriggerFor]="accountMenu">
+      <button class="header__user" type="button" [matMenuTriggerFor]="accountMenu" aria-label="Menu tài khoản">
+        <span class="avatar" aria-hidden="true">{{ initials() }}</span>
         <span class="header__meta">
           <span class="header__name">{{ authService.currentUser()?.full_name }}</span>
           <span class="header__role">{{ roleLabel() }}</span>
         </span>
-        <span class="avatar">{{ initials() }}</span>
-        <mat-icon class="header__caret">expand_more</mat-icon>
+        <mat-icon class="header__caret" aria-hidden="true">expand_more</mat-icon>
       </button>
 
-      <mat-menu #accountMenu="matMenu">
+      <mat-menu #accountMenu="matMenu" class="account-menu">
+        <div class="account-menu__head" (click)="$event.stopPropagation()">
+          <span class="account-menu__email">{{ authService.currentUser()?.email }}</span>
+          <span
+            class="account-menu__badge"
+            [class.account-menu__badge--staff]="!authService.isAdmin()"
+          >
+            {{ roleCode() }}
+          </span>
+        </div>
         <button mat-menu-item type="button" routerLink="/admin/profile">
           <mat-icon>person</mat-icon>
           <span>Hồ sơ cá nhân</span>
         </button>
+        <button mat-menu-item type="button" (click)="openSupport()">
+          <mat-icon>support_agent</mat-icon>
+          <span>Liên hệ hỗ trợ</span>
+        </button>
         <button mat-menu-item type="button" (click)="goToClient()">
-          <mat-icon>storefront</mat-icon>
+          <mat-icon>open_in_new</mat-icon>
           <span>Về trang khách hàng</span>
         </button>
-        <button mat-menu-item type="button" (click)="logout()">
+        <button mat-menu-item type="button" class="account-menu__danger" (click)="logout()">
           <mat-icon>logout</mat-icon>
           <span>Đăng xuất</span>
         </button>
@@ -137,7 +168,74 @@
 
     <footer class="foot">
       <span>© 2026 VinaFly — Khu vực vận hành.</span>
-      <span class="foot__v">Phiên bản 0.2 · Phase 1</span>
+      <span class="foot__v">VinaFly Operations · 2026</span>
     </footer>
   </div>
+
+  <!-- Hộp thoại Liên hệ hỗ trợ (đồng bộ #ov-support trong prototype admin.html) -->
+  @if (supportOpen()) {
+    <div class="vf-modal-backdrop" (click)="closeSupport()">
+      <div
+        class="vf-modal-panel adm-support"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="adm-support-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="adm-support__head">
+          <div class="adm-support__title">
+            <span class="adm-support__ic" aria-hidden="true">
+              <mat-icon>support_agent</mat-icon>
+            </span>
+            <div>
+              <h3 id="adm-support-title">Liên hệ hỗ trợ</h3>
+              <p>Gặp vướng khi vận hành? Gọi hoặc gửi thư cho bộ phận hỗ trợ kỹ thuật.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="adm-support__close"
+            aria-label="Đóng"
+            (click)="closeSupport()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="adm-support__body">
+          <div class="adm-contact">
+            <span class="avatar" aria-hidden="true">LN</span>
+            <div class="adm-contact__bd">
+              <b>Lê Hoàng Nam — Hỗ trợ kỹ thuật hệ thống</b>
+              <span>nam.le&#64;vinafly.vn · 090 123 4567</span>
+            </div>
+          </div>
+          <div class="adm-contact">
+            <span class="avatar" aria-hidden="true">PT</span>
+            <div class="adm-contact__bd">
+              <b>Phạm Thu Trang — Điều phối vận hành &amp; Hoàn vé</b>
+              <span>trang.pham&#64;vinafly.vn · 091 234 5678</span>
+            </div>
+          </div>
+          <div class="adm-contact">
+            <span class="avatar" aria-hidden="true">VF</span>
+            <div class="adm-contact__bd">
+              <b>Tổng đài đại lý VinaFly</b>
+              <span>hotro&#64;vinafly.vn · Hotline 1900 1234</span>
+            </div>
+          </div>
+          <div class="adm-support__note">
+            <mat-icon aria-hidden="true">schedule</mat-icon>
+            <span>
+              Thời gian hỗ trợ: 08:00 – 17:30, thứ Hai – thứ Sáu. Ngoài giờ, gửi thư và sẽ được phản hồi sáng hôm sau.
+            </span>
+          </div>
+        </div>
+
+        <div class="adm-support__foot">
+          <button type="button" class="adm-support__btn" (click)="closeSupport()">Đóng</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

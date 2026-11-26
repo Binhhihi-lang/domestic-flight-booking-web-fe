@@ -4,19 +4,24 @@
   min-height: 100vh;
 }
 
-/* ---------- Topbar ---------- */
+/* ---------- Topbar (Navy đậm đồng bộ prototype customer.html) ---------- */
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 50;
+  background: var(--color-dark);
+  color: var(--color-on-dark);
+  border-bottom: 1px solid var(--color-dark-line);
+}
+
+.topbar__in {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 var(--sp-xl);
+  height: 68px;
   display: flex;
   align-items: center;
-  gap: 22px;
-  min-height: 60px;
-  padding: 10px 26px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  flex-wrap: nowrap;
+  gap: var(--sp-xl);
 }
 
 .topbar__brand {
@@ -24,12 +29,26 @@
   align-items: center;
   text-decoration: none;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Đảm bảo logo sáng rõ trên nền navy đậm (vượt ViewEncapsulation của BrandLogo). */
+.topbar__brand ::ng-deep .brand__name {
+  color: var(--color-on-dark);
+}
+
+.topbar__brand ::ng-deep .brand__name-accent {
+  color: var(--color-primary-bright);
+}
+
+.topbar__brand ::ng-deep .brand__tagline {
+  color: var(--color-on-dark-subtle);
 }
 
 .topbar__nav {
   display: flex;
-  gap: 20px;
-  font-size: 14px;
+  align-items: center;
+  gap: var(--sp-xl);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -39,58 +58,112 @@
 }
 
 .topbar__nav a {
-  color: var(--color-ink);
+  position: relative;
+  color: var(--color-on-dark-muted);
+  font-size: var(--text-body);
   font-weight: 500;
+  padding: 22px 0;
   text-decoration: none;
   white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.topbar__nav a:hover {
+  color: var(--color-on-dark);
 }
 
 .topbar__nav a.on {
-  color: var(--color-primary-bright);
+  color: var(--color-on-dark);
   font-weight: 600;
+}
+
+.topbar__nav a.on::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--color-primary-bright);
 }
 
 .topbar__sp {
   flex: 1 1 auto;
 }
 
+.topbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  flex-shrink: 0;
+}
+
+/* Chuông thông báo sáng rõ trên nền tối navy. */
+.topbar ::ng-deep .notif__btn {
+  color: var(--color-on-dark-muted);
+}
+
+.topbar ::ng-deep .notif__btn:hover {
+  background: var(--color-dark-2);
+  color: var(--color-on-dark);
+}
+
+.topbar ::ng-deep .notif__badge {
+  border-color: var(--color-dark);
+}
+
 .topbar__menu {
   display: none;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
   border: 0;
   background: transparent;
-  padding: 8px;
+  padding: 0;
   cursor: pointer;
-  border-radius: var(--radius);
-  color: var(--color-ink);
+  border-radius: var(--radius-sm);
+  color: var(--color-on-dark);
+  flex-shrink: 0;
+}
+
+.topbar__menu:hover {
+  background: var(--color-dark-2);
 }
 
 .topbar__user {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  border: 0;
+  gap: var(--sp-sm);
+  padding: 5px 10px 5px 5px;
+  border: 1px solid var(--color-dark-line);
+  border-radius: 999px;
   background: transparent;
+  color: var(--color-on-dark);
   cursor: pointer;
   font-family: var(--font-body);
-  font-size: 13.5px;
+  font-size: var(--text-small);
   font-weight: 600;
-  color: var(--color-ink);
-  padding: 4px;
-  border-radius: var(--radius);
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.topbar__user:hover {
+  background: var(--color-dark-2);
 }
 
 .topbar__user-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: 148px;
 }
 
 .topbar__user mat-icon {
-  color: var(--color-ink-muted);
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  color: var(--color-on-dark-subtle);
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 .avatar {
@@ -98,13 +171,13 @@
   height: 34px;
   border-radius: 50%;
   background: linear-gradient(140deg, var(--color-primary), var(--color-primary-bright));
-  color: #fff;
+  color: var(--color-on-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--text-small);
   flex: 0 0 auto;
 }
 
@@ -113,22 +186,25 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border: 1.5px solid transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-small);
   font-weight: 600;
-  padding: 10px 18px;
+  padding: 9px 16px;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  transition: background-color var(--dur-fast) var(--ease);
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .btn mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 
 .btn--primary {
@@ -142,38 +218,53 @@
 
 .btn--ghost {
   background: transparent;
-  color: var(--color-ink);
-  border-color: var(--color-border);
+  color: var(--color-on-dark);
+  border-color: var(--color-dark-line);
 }
 
 .btn--ghost:hover {
-  background: var(--color-surface-alt);
+  background: var(--color-dark-2);
+  border-color: var(--color-primary-bright);
 }
 
-/* ---------- Ngăn kéo di động ---------- */
+/* ---------- Ngăn kéo di động (đồng bộ nền tối navy) ---------- */
 .drawer {
   display: none;
   flex-direction: column;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-dark);
+  border-bottom: 1px solid var(--color-dark-line);
+  box-shadow: var(--shadow-lg);
   position: sticky;
-  top: 56px;
-  z-index: 29;
+  top: 60px;
+  z-index: 49;
 }
 
 .drawer a {
-  padding: 14px 18px;
-  font-size: 14.5px;
+  padding: 14px var(--sp-lg);
+  font-size: var(--text-body);
   font-weight: 500;
-  color: var(--color-ink);
+  color: var(--color-on-dark-muted);
   text-decoration: none;
-  border-bottom: 1px solid var(--color-border-soft);
+  border-bottom: 1px solid var(--color-dark-line);
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.drawer a:last-child {
+  border-bottom: 0;
+}
+
+.drawer a:hover {
+  color: var(--color-on-dark);
+  background: var(--color-dark-2);
 }
 
 .drawer a.on {
-  color: var(--color-primary);
+  color: var(--color-on-dark);
   font-weight: 600;
-  background: var(--color-primary-soft);
+  background: var(--color-dark-2);
+  border-left: 3px solid var(--color-primary-bright);
 }
 
 /* ---------- Nội dung ---------- */
@@ -182,40 +273,55 @@
   min-width: 0;
 }
 
-/* ---------- Footer ---------- */
+/* ---------- Footer (Xám sáng nhẹ, chữ tối đồng bộ prototype customer.html) ---------- */
 .foot {
-  background: var(--color-dark);
-  color: var(--color-on-dark-muted);
-  margin-top: 44px;
+  background: color-mix(in srgb, var(--color-border) 55%, var(--color-surface));
+  color: var(--color-ink-muted);
+  border-top: 1px solid var(--color-border);
+  margin-top: var(--sp-4xl);
 }
 
 .foot__in {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 40px 26px 26px;
+  padding: var(--sp-3xl) var(--sp-xl) var(--sp-xl);
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1fr;
-  gap: 30px;
+  gap: var(--sp-2xl);
 }
 
 .foot__brand {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--sp-md);
 }
 
-.foot p {
-  font-size: 12.5px;
+.foot__brand a {
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.foot__brand ::ng-deep .brand__name {
+  color: var(--color-ink);
+}
+
+.foot__brand ::ng-deep .brand__name-accent {
+  color: var(--color-primary);
+}
+
+.foot__desc {
+  font-size: var(--text-small);
   line-height: 1.7;
-  margin: 0 0 14px;
-  color: var(--color-on-dark-subtle);
+  margin: 0 0 var(--sp-lg);
+  color: var(--color-ink-muted);
+  max-width: 40ch;
 }
 
 .foot h4 {
-  color: #fff;
-  font-size: 13.5px;
+  color: var(--color-ink);
+  font-size: var(--text-small);
   font-weight: 700;
-  margin: 0 0 13px;
+  margin: 0 0 var(--sp-md);
 }
 
 .foot ul {
@@ -228,79 +334,108 @@
 }
 
 .foot li {
-  font-size: 12.5px;
-  color: var(--color-on-dark-subtle);
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 7px;
+  line-height: 1.55;
 }
 
 .foot li mat-icon {
   font-size: 16px;
   width: 16px;
   height: 16px;
-  color: #6b7f96;
+  color: var(--color-ink-subtle);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.foot li a {
+  color: var(--color-ink-muted);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.foot li a:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
 }
 
 .foot__soc {
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--sp-sm);
+  margin-top: var(--sp-lg);
 }
 
 .foot__s {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-sm);
-  background: var(--color-dark-2);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink-muted);
+  display: inline-grid;
+  place-items: center;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
-.foot__s mat-icon {
-  font-size: 17px;
+.foot__s:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.foot__s svg {
   width: 17px;
   height: 17px;
-  color: var(--color-on-dark-subtle);
+  display: block;
+}
+
+.foot__bot-wrap {
+  border-top: 1px solid var(--color-border);
 }
 
 .foot__bot {
-  border-top: 1px solid var(--color-dark-line);
-  padding: 16px 26px;
+  padding: var(--sp-lg) var(--sp-xl);
   max-width: 1240px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
-  gap: 14px;
+  align-items: center;
+  gap: var(--sp-md);
   flex-wrap: wrap;
-  font-size: 12px;
-  color: #6b7f96;
+  font-size: var(--text-caption);
+  color: var(--color-ink-subtle);
 }
 
 .foot__pay {
   display: flex;
-  gap: 7px;
+  gap: var(--sp-sm);
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .foot__pay span {
-  background: var(--color-dark-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   padding: 3px 9px;
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-caption);
   font-weight: 600;
-  color: var(--color-on-dark-subtle);
+  color: var(--color-ink-muted);
 }
 
-/* =====================================================================
-   Media query đặt SAU tất cả rule gốc — đặt trước sẽ bị ghi đè.
-   ===================================================================== */
+/* ---------- Responsive ---------- */
 @media (max-width: 900px) {
-  .topbar {
-    gap: 8px;
-    padding: 7px 12px;
-    min-height: 52px;
+  .topbar__in {
+    height: 60px;
+    gap: var(--sp-md);
+    padding: 0 var(--sp-lg);
   }
 
   .topbar__nav {
@@ -317,11 +452,7 @@
 
   .topbar .btn {
     padding: 8px 12px;
-    font-size: 12.5px;
-  }
-
-  .topbar__brand {
-    font-size: 14.5px;
+    font-size: var(--text-small);
   }
 
   .topbar__user-name {
@@ -332,32 +463,42 @@
 @media (max-width: 860px) {
   .foot__in {
     grid-template-columns: 1fr 1fr;
+    gap: var(--sp-xl);
   }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 600px) {
+  .topbar__in {
+    height: 56px;
+    padding: 0 var(--sp-md);
+    gap: var(--sp-sm);
+  }
+
+  .drawer {
+    top: 56px;
+  }
+
   .foot__in {
     grid-template-columns: 1fr;
-    padding: 30px 18px 20px;
+    padding: var(--sp-2xl) var(--sp-lg) var(--sp-lg);
+  }
+
+  .foot__bot {
+    padding: var(--sp-md) var(--sp-lg);
   }
 }
 
 @media (max-width: 430px) {
-  /* iPhone SE 375px: logo + 2 nút vượt quá bề ngang, nên ẩn dòng tagline
-     dưới logo và bỏ chữ ở nút phụ, chỉ giữ dấu logo.
-
-     ::ng-deep là bắt buộc: .brand__tagline nằm trong app-brand-logo, mà
-     view encapsulation của Angular chặn selector của component cha. */
-  .topbar__brand ::ng-deep .brand__tagline {
-    display: none;
-  }
-
   .btn--hide-sm {
     display: none;
   }
+}
 
-  .topbar {
-    gap: 6px;
-    padding: 7px 10px;
+@media print {
+  .topbar,
+  .foot,
+  .drawer,
+  .scrim {
+    display: none !important;
   }
 }

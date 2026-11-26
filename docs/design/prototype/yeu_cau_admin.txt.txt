@@ -1,0 +1,38 @@
+Hãy tạo liên kết Prototype (On click -> Navigate to, animation: Instant; riêng Popup dùng Open overlay, căn giữa, nền mờ 40%) cho 48 màn hình khu vực Quản trị (Admin):
+
+1. Thanh Sidebar bên trái — áp dụng cho TẤT CẢ 46 Frame màn hình chính:
+- Logo "VinaFly" & "Dashboard" -> W-ADM-01
+- "Báo cáo & thống kê" -> W-ADM-02
+- "Người dùng" -> W-ADM-03 | "Vai trò" -> W-ADM-06 | "Quyền" -> W-ADM-07
+- "Hãng hàng không" -> W-ADM-08 | "Thành phố" -> W-ADM-11 | "Sân bay" -> W-ADM-13
+- "Máy bay" -> W-ADM-15 | "Hạng dịch vụ" -> W-ADM-18 | "Loại ghế" -> W-ADM-19
+- "Hạng vé" -> W-ADM-21 | "Quy định hoàn vé" -> W-ADM-23 | "Gói hành lý" -> W-ADM-25
+- "Giá bán theo chuyến" -> W-ADM-27 | "Tồn ghế" -> W-ADM-29
+- "Chuyến bay" -> W-ADM-30 | "Đặt chỗ" -> W-ADM-33
+- "Khuyến mãi" -> W-ADM-35 | "Voucher" -> W-ADM-38
+- "Tin tức" -> W-ADM-42 | "Danh mục tin" -> W-ADM-44
+- "Hồ sơ cá nhân" -> W-ADM-46
+
+2. Quy tắc nối CRUD (Danh sách <-> Chi tiết <-> Biểu mẫu):
+- Người dùng: W-ADM-03 bấm dòng -> W-ADM-04 (Chi tiết); nút "Thêm" / "Sửa" -> W-ADM-05 (Biểu mẫu); từ W-ADM-04/05 quay lại -> W-ADM-03
+- Hãng hàng không: W-ADM-08 bấm dòng -> W-ADM-10 (Chi tiết); nút "Thêm" / "Sửa" -> W-ADM-09 (Biểu mẫu); từ W-ADM-09/10 quay lại -> W-ADM-08
+- Thành phố: W-ADM-11 nút "Thêm" / "Sửa" <-> W-ADM-12
+- Sân bay: W-ADM-13 nút "Thêm" / "Sửa" <-> W-ADM-14
+- Máy bay: W-ADM-15 nút "Thêm" / "Sửa" <-> W-ADM-16; link "Cấu hình" sơ đồ ghế <-> W-ADM-17 (Sơ đồ ghế)
+- Loại ghế: W-ADM-19 nút "Thêm" / "Sửa" <-> W-ADM-20
+- Hạng vé: W-ADM-21 nút "Thêm" / "Sửa" <-> W-ADM-22
+- Quy định hoàn vé: W-ADM-23 nút "Thêm" / "Sửa" <-> W-ADM-24
+- Gói hành lý: W-ADM-25 nút "Thêm" / "Sửa" <-> W-ADM-26
+- Giá bán theo chuyến: W-ADM-27 nút "Thêm giá" / "Sửa" <-> W-ADM-28
+- Chuyến bay: W-ADM-30 bấm dòng -> W-ADM-32 (Chi tiết); nút "Thêm" / "Sửa" -> W-ADM-31 (Biểu mẫu); trong W-ADM-32 tab "Giá bán" -> W-ADM-27, tab "Tồn ghế" -> W-ADM-29, tab "Đặt chỗ" -> W-ADM-33
+- Đặt chỗ: W-ADM-33 bấm dòng -> W-ADM-34 (Chi tiết đặt chỗ); nút "Huỷ đặt chỗ" -> Open overlay W-ADM-M2 (Popup Huỷ đặt chỗ)
+- Khuyến mãi: W-ADM-35 bấm dòng -> W-ADM-37 (Chi tiết); nút "Thêm" / "Sửa" -> W-ADM-36 (Biểu mẫu)
+- Voucher: W-ADM-38 bấm dòng -> W-ADM-40 (Chi tiết); nút "Thêm" / "Sửa" -> W-ADM-39 (Biểu mẫu); trong W-ADM-40 nút "Tặng voucher" <-> W-ADM-41 (Gán voucher)
+- Tin tức: W-ADM-42 nút "Viết bài mới" / "Sửa" <-> W-ADM-43
+- Danh mục tin: W-ADM-44 nút "Thêm danh mục" / "Sửa" <-> W-ADM-45
+
+3. Popup Xoá dùng chung:
+- Các nút "Xoá" / "Xóa" trên các bảng danh sách -> Open overlay W-ADM-M1 (Popup Xác nhận xoá bản ghi)
+- Trong W-ADM-M1 và W-ADM-M2: nút "Đóng" / "Huỷ bỏ" / "Giữ đặt chỗ" / nút xác nhận -> Close overlay
+
+Đặt W-ADM-01 (Dashboard) làm Flow Starting Point (tên Flow: "Admin — Quản trị hệ thống").

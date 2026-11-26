@@ -22,6 +22,11 @@ export function crudRoutes(
   loader: () => Promise<Type<unknown>>,
   options: {
     adminOnly?: boolean;
+    /**
+     * Mở quyền XEM (list + detail) cho STAFF, chỉ khóa quyền GHI (new + edit)
+     * bằng `adminGuard`. Dùng cho danh mục Máy bay (`AIRCRAFT_READ` của STAFF).
+     */
+    writeAdminOnly?: boolean;
     detail?: boolean;
     /**
      * Component riêng cho form thêm/sửa — dùng khi module có nghiệp vụ phức tạp
@@ -29,22 +34,30 @@ export function crudRoutes(
      * biểu diễn được.
      */
     formLoader?: () => Promise<Type<unknown>>;
+    /**
+     * Component riêng cho trang chi tiết (`:id`) — dùng khi màn chi tiết cần
+     * hiển thị bảng con hoặc thao tác nghiệp vụ riêng (Phạm vi khuyến mãi,
+     * Tặng voucher, Lịch sử đặt chỗ của người dùng).
+     */
+    detailLoader?: () => Promise<Type<unknown>>;
   } = {},
 ): Routes {
-  const canActivate = options.adminOnly ? [adminGuard] : [];
+  const readGuards = options.adminOnly ? [adminGuard] : [];
+  const writeGuards = options.adminOnly || options.writeAdminOnly ? [adminGuard] : [];
   const withDetail = options.detail !== false;
   const formComponent = options.formLoader ?? loader;
+  const detailComponent = options.detailLoader ?? loader;
 
   const routes: Routes = [
     {
       path,
-      canActivate,
+      canActivate: readGuards,
       loadComponent: loader,
       data: { title, mode: 'list' },
     },
     {
       path: `${path}/new`,
-      canActivate,
+      canActivate: writeGuards,
       loadComponent: formComponent,
       data: { title: `Thêm ${title.toLowerCase()}`, mode: 'form' },
     },
@@ -54,13 +67,13 @@ export function crudRoutes(
     routes.push(
       {
         path: `${path}/:id`,
-        canActivate,
-        loadComponent: loader,
+        canActivate: readGuards,
+        loadComponent: detailComponent,
         data: { title, mode: 'detail' },
       },
       {
         path: `${path}/:id/edit`,
-        canActivate,
+        canActivate: writeGuards,
         loadComponent: formComponent,
         data: { title: `Sửa ${title.toLowerCase()}`, mode: 'form' },
       },
@@ -68,7 +81,7 @@ export function crudRoutes(
   } else {
     routes.push({
       path: `${path}/:id/edit`,
-      canActivate,
+      canActivate: writeGuards,
       loadComponent: formComponent,
       data: { title: `Sửa ${title.toLowerCase()}`, mode: 'form' },
     });

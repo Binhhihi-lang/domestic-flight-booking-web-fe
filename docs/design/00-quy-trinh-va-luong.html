@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>VinaFly — Quy trình &amp; Luồng thiết kế</title>
+<style>
+  :root {
+    --primary: #0770cd;
+    --primary-bright: #0194f3;
+    --primary-soft: #eaf7ff;
+    --accent: #ff5e1f;
+    --dark: #05285d;
+    --dark-2: #083a7d;
+    --ink: #03121a;
+    --ink-muted: #687176;
+    --ink-subtle: #6a737a;
+    --bg: #f7f9fa;
+    --surface: #ffffff;
+    --border: #dde3e8;
+    --border-soft: #edf1f4;
+    --success: #00a651;
+    --success-soft: #dcfce7;
+    --on-success-soft: #15803d;
+    --warning: #f2a81d;
+    --warning-soft: #fef3c7;
+    --on-warning-soft: #b45309;
+    --info-soft: #e0f2fe;
+    --on-info-soft: #0369a1;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 2px 10px rgba(3, 18, 26, 0.07);
+    --shadow-lg: 0 4px 16px rgba(3, 18, 26, 0.10);
+    --font-head: 'Be Vietnam Pro', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ================= COVER ================= */
+  .cover {
+    background: linear-gradient(135deg, #041f49 0%, var(--dark) 45%, #0a3a7d 100%);
+    color: #fff;
+    padding: 64px 80px 72px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::after {
+    content: "";
+    position: absolute;
+    right: -140px; top: -140px;
+    width: 520px; height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(1,148,243,0.28), transparent 68%);
+  }
+  .cover__mark {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 44px;
+    position: relative; z-index: 1;
+  }
+  .cover__badge {
+    width: 46px; height: 46px; border-radius: 12px;
+    background: linear-gradient(135deg, #0d47a2, var(--primary-bright));
+    display: grid; place-items: center;
+    box-shadow: 0 6px 18px rgba(1,148,243,0.35);
+  }
+  .cover__name {
+    font-family: var(--font-head);
+    font-weight: 700; font-size: 21px; letter-spacing: -0.3px;
+  }
+  .cover__tag {
+    font-size: 12px; color: #8ea3b8; margin-top: 1px;
+  }
+  .cover h1 {
+    font-family: var(--font-head);
+    font-size: 44px; line-height: 1.15; font-weight: 700;
+    letter-spacing: -1px;
+    max-width: 820px;
+    position: relative; z-index: 1;
+  }
+  .cover h1 em {
+    font-style: normal;
+    color: #6fc0ff;
+  }
+  .cover__sub {
+    margin-top: 18px;
+    font-size: 16px; color: #c3d0de;
+    max-width: 720px;
+    position: relative; z-index: 1;
+  }
+  .cover__meta {
+    display: flex; gap: 48px;
+    margin-top: 44px;
+    padding-top: 26px;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    position: relative; z-index: 1;
+  }
+  .cover__meta dt {
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #8ea3b8; margin-bottom: 6px;
+  }
+  .cover__meta dd {
+    font-size: 14px; font-weight: 500; color: #fff;
+  }
+
+  /* ================= SECTION SHELL ================= */
+  .sec { padding: 56px 80px; }
+  .sec--alt { background: var(--surface); }
+  .sec__head { margin-bottom: 32px; }
+  .sec__no {
+    display: inline-block;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    color: var(--primary);
+    background: var(--primary-soft);
+    padding: 4px 10px; border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  .sec__head h2 {
+    font-family: var(--font-head);
+    font-size: 27px; font-weight: 700; letter-spacing: -0.5px;
+  }
+  .sec__head p {
+    margin-top: 8px; color: var(--ink-muted); font-size: 15px;
+    max-width: 780px;
+  }
+
+  /* ================= TIMELINE 8 BƯỚC ================= */
+  .steps { position: relative; }
+  .steps::before {
+    content: "";
+    position: absolute;
+    left: 27px; top: 26px; bottom: 26px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--primary), var(--primary-bright), var(--border));
+  }
+  .step {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 20px;
+    align-items: start;
+    padding: 14px 0;
+    position: relative;
+  }
+  .step__no {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    display: grid; place-items: center;
+    font-family: var(--font-head);
+    font-weight: 700; font-size: 19px;
+    color: var(--primary);
+    position: relative; z-index: 1;
+  }
+  .step--gate .step__no {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 0 5px rgba(255,94,31,0.14);
+  }
+  .step__body {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+  }
+  .step--gate .step__body {
+    border-color: rgba(255,94,31,0.32);
+  }
+  .step__title {
+    font-family: var(--font-head);
+    font-size: 17px; font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .step__desc {
+    margin-top: 6px; font-size: 14px; color: var(--ink-muted);
+  }
+  .step__out {
+    margin-top: 10px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .chip {
+    font-size: 12px;
+    padding: 3px 9px; border-radius: 6px;
+    background: var(--primary-soft); color: #04578f;
+    font-weight: 500;
+  }
+  .chip--tool {
+    background: #f1f4f7; color: var(--ink-subtle);
+  }
+  .gate {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600;
+    background: var(--warning-soft); color: var(--on-warning-soft);
+    padding: 3px 9px; border-radius: 6px;
+  }
+  .step__side {
+    padding-top: 4px;
+    min-width: 150px;
+    text-align: right;
+    font-size: 12px;
+    color: var(--ink-subtle);
+  }
+
+  /* ================= FLOW ================= */
+  .flow { display: flex; flex-direction: column; gap: 14px; }
+  .flow__label {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-head);
+    font-size: 16px; font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .flow__label span {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    background: var(--dark); color: #fff;
+    padding: 3px 9px; border-radius: 6px;
+  }
+  .chain {
+    display: flex; align-items: stretch; gap: 0;
+    flex-wrap: nowrap;
+  }
+  .node {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    min-width: 0;
+    position: relative;
+  }
+  .node--start { border-left: 3px solid var(--primary); }
+  .node--end   { border-left: 3px solid var(--success); }
+  .node__k {
+    font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--ink-subtle); font-weight: 600;
+  }
+  .node__t {
+    font-family: var(--font-head);
+    font-size: 14px; font-weight: 600;
+    margin-top: 3px;
+  }
+  .node__r {
+    font-size: 12px; color: var(--ink-muted);
+    margin-top: 3px;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+  }
+  .arrow {
+    flex: 0 0 34px;
+    display: grid; place-items: center;
+    color: var(--primary);
+  }
+  .arrow svg { display: block; }
+
+  /* ================= SITEMAP ================= */
+  .map {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  .tree {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .tree__h {
+    font-family: var(--font-head);
+    font-size: 16px; font-weight: 700;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .tree__h small {
+    font-family: var(--font-body);
+    font-size: 12px; font-weight: 500; color: var(--ink-subtle);
+  }
+  .tree ul { list-style: none; }
+  .tree li { position: relative; }
+  .grp {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--ink-subtle);
+    margin: 14px 0 7px;
+  }
+  .grp:first-child { margin-top: 0; }
+  .leaf {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 4px 0 4px 20px;
+    font-size: 13px;
+    position: relative;
+  }
+  .leaf::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 50%;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transform: translateY(-50%);
+  }
+  .leaf--done::before { background: var(--success); }
+  .leaf--todo::before { background: var(--warning); }
+  .leaf__r {
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 11px; color: var(--ink-subtle);
+    margin-left: auto;
+  }
+  .legend {
+    display: flex; gap: 22px; margin-top: 22px;
+    font-size: 12px; color: var(--ink-muted);
+    flex-wrap: wrap;
+  }
+  .legend i {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; vertical-align: middle;
+  }
+
+  /* ================= FOOTER ================= */
+  .foot {
+    background: var(--dark);
+    color: #8ea3b8;
+    padding: 30px 80px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px;
+  }
+  .foot b { color: #fff; font-family: var(--font-head); }
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width: 1100px) {
+    .cover { padding: 48px 40px 56px; }
+    .cover h1 { font-size: 36px; }
+    .cover__meta { gap: 32px; flex-wrap: wrap; }
+    .sec { padding: 44px 40px; }
+    .foot { padding: 26px 40px; }
+    .map { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 760px) {
+    .cover { padding: 36px 20px 44px; }
+    .cover h1 { font-size: 27px; letter-spacing: -0.6px; }
+    .cover__sub { font-size: 14px; }
+    .cover__meta { gap: 20px 28px; margin-top: 30px; }
+    .cover__meta dd { font-size: 13px; }
+
+    .sec { padding: 36px 20px; }
+    .sec__head { margin-bottom: 24px; }
+    .sec__head h2 { font-size: 22px; }
+
+    /* Bước: bỏ cột phụ, dồn về một cột */
+    .step {
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+    }
+    .step__no { width: 40px; height: 40px; font-size: 15px; }
+    .steps::before { left: 19px; }
+    .step__side { display: none; }
+    .step__body { padding: 14px 16px; }
+    .step__title { font-size: 15px; }
+
+    /* Luồng: chuyển chuỗi ngang thành dọc */
+    .chain { flex-direction: column; gap: 0; }
+    .arrow {
+      flex: 0 0 26px;
+      transform: rotate(90deg);
+    }
+    .node { width: 100%; }
+
+    .tree { padding: 18px 16px; }
+    .leaf { font-size: 12px; }
+    .leaf__r { font-size: 10px; }
+
+    .legend { gap: 12px; font-size: 11px; }
+    .foot { padding: 22px 20px; flex-direction: column; gap: 6px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<header class="cover">
+  <div class="cover__mark">
+    <div class="cover__badge">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 5 L13 22 L22 5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="22" cy="5" r="3" fill="#FF5E1F"/>
+      </svg>
+    </div>
+    <div>
+      <div class="cover__name">VinaFly</div>
+      <div class="cover__tag">Bay nội địa, giá tốt mỗi ngày</div>
+    </div>
+  </div>
+
+  <h1>Quy trình &amp; luồng thiết kế<br /><em>Wireframe → Prototype</em></h1>
+  <p class="cover__sub">
+    Tài liệu nền của quy trình: 8 bước thiết kế giao diện, ba điểm duyệt bắt buộc,
+    hai luồng nghiệp vụ vàng và sơ đồ toàn bộ màn hình của hệ thống đặt vé máy bay nội địa.
+  </p>
+
+  <dl class="cover__meta">
+    <div><dt>Dự án</dt><dd>Website Đặt vé máy bay nội địa</dd></div>
+    <div><dt>Công cụ</dt><dd>Figma · Figma MCP · Angular 22</dd></div>
+    <div><dt>Phiên bản</dt><dd>1.0 · 28/10/2026</dd></div>
+    <div><dt>Phạm vi</dt><dd>36 màn hình · 3 phase</dd></div>
+  </dl>
+</header>
+
+<!-- ============ 1. QUY TRÌNH 8 BƯỚC ============ -->
+<section class="sec">
+  <div class="sec__head">
+    <span class="sec__no">01 — QUY TRÌNH</span>
+    <h2>Tám bước thiết kế giao diện</h2>
+    <p>
+      Mỗi bước có sản phẩm đầu ra rõ ràng. Sửa lỗi càng sớm càng rẻ: đổi một khối trong
+      wireframe mất vài phút, đổi cấu trúc trang sau khi đã lập trình Angular mất hàng giờ.
+    </p>
+  </div>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step__no">1</div>
+      <div class="step__body">
+        <div class="step__title">Phân tích yêu cầu</div>
+        <div class="step__desc">Xác định vai trò người dùng, chức năng và use case của từng phân hệ.</div>
+        <div class="step__out">
+          <span class="chip">Đặc tả use case</span>
+          <span class="chip">Danh sách màn hình</span>
+        </div>
+      </div>
+      <div class="step__side">Tài liệu use case</div>
+    </div>
+
+    <div class="step">
+      <div class="step__no">2</div>
+      <div class="step__body">
+        <div class="step__title">Luồng người dùng &amp; sitemap</div>
+        <div class="step__desc">Vẽ luồng thao tác chính và cây trang, xác định điểm vào và điểm kết thúc.</div>
+        <div class="step__out">
+          <span class="chip">User flow</span>
+          <span class="chip">Sitemap</span>
+          <span class="chip chip--tool">FigJam</span>
+        </div>
+      </div>
+      <div class="step__side">FigJam</div>
+    </div>
+
+    <div class="step step--gate">
+      <div class="step__no">3</div>
+      <div class="step__body">
+        <div class="step__title">
+          Wireframe độ chi tiết thấp
+          <span class="gate">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 1v10M2 1h7l-1.6 2.5L9 6H2" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            Duyệt cấu trúc
+          </span>
+        </div>
+        <div class="step__desc">Chỉ khung, hộp, chữ giả, đen trắng. Chưa màu, chưa ảnh — để không bị phân tâm khi bàn bố cục.</div>
+        <div class="step__out">
+          <span class="chip">Bộ wireframe đen trắng</span>
+          <span class="chip chip--tool">Figma Design</span>
+        </div>
+      </div>
+      <div class="step__side">Duyệt lần 1</div>
+    </div>
+
+    <div class="step">
+      <div class="step__no">4</div>
+      <div class="step__body">
+        <div class="step__title">Design system</div>
+        <div class="step__desc">Chốt màu, font, khoảng cách, bo góc và component dùng chung — một nguồn duy nhất cho cả thiết kế lẫn mã nguồn.</div>
+        <div class="step__out">
+          <span class="chip">Variables</span>
+          <span class="chip">Text style</span>
+          <span class="chip">Component library</span>
+        </div>
+      </div>
+      <div class="step__side">Đã hoàn thành</div>
+    </div>
+
+    <div class="step step--gate">
+      <div class="step__no">5</div>
+      <div class="step__body">
+        <div class="step__title">
+          Mockup độ chi tiết cao
+          <span class="gate">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 1v10M2 1h7l-1.6 2.5L9 6H2" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            Duyệt hình thức
+          </span>
+        </div>
+        <div class="step__desc">Áp design system lên wireframe đã duyệt, thêm dữ liệu mẫu thật và đủ trạng thái rỗng / lỗi / đang tải.</div>
+        <div class="step__out">
+          <span class="chip">Bộ màn hình high-fi</span>
+          <span class="chip chip--tool">Figma Design</span>
+        </div>
+      </div>
+      <div class="step__side">Duyệt lần 2</div>
+    </div>
+
+    <div class="step">
+      <div class="step__no">6</div>
+      <div class="step__body">
+        <div class="step__title">Prototype tương tác</div>
+        <div class="step__desc">Nối các màn hình thành luồng bấm được, chạy thử trong trình duyệt như ứng dụng thật.</div>
+        <div class="step__out">
+          <span class="chip">Prototype theo luồng</span>
+          <span class="chip chip--tool">Figma Prototype</span>
+          <span class="chip chip--tool">Figma Make</span>
+        </div>
+      </div>
+      <div class="step__side">Figma Prototype</div>
+    </div>
+
+    <div class="step step--gate">
+      <div class="step__no">7</div>
+      <div class="step__body">
+        <div class="step__title">
+          Đánh giá khả dụng
+          <span class="gate">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 1v10M2 1h7l-1.6 2.5L9 6H2" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            Duyệt toàn bộ
+          </span>
+        </div>
+        <div class="step__desc">Cho nhóm, giảng viên và vài người dùng thử đi hết luồng; ghi lại lỗi và chỉnh thiết kế.</div>
+        <div class="step__out">
+          <span class="chip">Danh sách góp ý</span>
+          <span class="chip">Bản thiết kế đã chỉnh</span>
+        </div>
+      </div>
+      <div class="step__side">Duyệt lần 3</div>
+    </div>
+
+    <div class="step">
+      <div class="step__no">8</div>
+      <div class="step__body">
+        <div class="step__title">Bàn giao &amp; hiện thực</div>
+        <div class="step__desc">Lập trình theo thiết kế, đối chiếu giao diện thật với bản thiết kế qua MCP thay vì đoán từ ảnh chụp.</div>
+        <div class="step__out">
+          <span class="chip">Giao diện khớp mockup</span>
+          <span class="chip">Ghi chú chênh lệch</span>
+          <span class="chip chip--tool">Figma MCP</span>
+          <span class="chip chip--tool">Claude Code</span>
+        </div>
+      </div>
+      <div class="step__side">Claude Code</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ 2. LUỒNG VÀNG ============ -->
+<section class="sec sec--alt">
+  <div class="sec__head">
+    <span class="sec__no">02 — LUỒNG NGHIỆP VỤ</span>
+    <h2>Hai luồng vàng</h2>
+    <p>
+      Hai luồng quyết định phần lớn cấu trúc dữ liệu và các màn hình còn lại.
+      Prototype phải bấm đi hết được hai luồng này trước khi mở rộng sang màn khác.
+    </p>
+  </div>
+
+  <div class="flow" style="margin-bottom:40px">
+    <div class="flow__label"><span>LUỒNG 1</span> Khách hàng tìm và đặt vé</div>
+    <div class="chain">
+      <div class="node node--start">
+        <div class="node__k">Bước 1</div>
+        <div class="node__t">Trang chủ</div>
+        <div class="node__r">/</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node">
+        <div class="node__k">Bước 2</div>
+        <div class="node__t">Kết quả tìm chuyến</div>
+        <div class="node__r">/flights</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node">
+        <div class="node__k">Bước 3</div>
+        <div class="node__t">Thông tin hành khách</div>
+        <div class="node__r">Chưa có màn</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node">
+        <div class="node__k">Bước 4</div>
+        <div class="node__t">Chọn ghế</div>
+        <div class="node__r">Chưa có màn</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node">
+        <div class="node__k">Bước 5</div>
+        <div class="node__t">Thanh toán</div>
+        <div class="node__r">Chưa có màn</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node node--end">
+        <div class="node__k">Bước 6</div>
+        <div class="node__t">Vé điện tử</div>
+        <div class="node__r">Chưa có màn</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow">
+    <div class="flow__label"><span>LUỒNG 2</span> Quản trị viên vận hành</div>
+    <div class="chain">
+      <div class="node node--start">
+        <div class="node__k">Bước 1</div>
+        <div class="node__t">Dashboard</div>
+        <div class="node__r">/admin/dashboard</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node">
+        <div class="node__k">Bước 2</div>
+        <div class="node__t">Danh sách máy bay</div>
+        <div class="node__r">/admin/aircrafts</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node">
+        <div class="node__k">Bước 3</div>
+        <div class="node__t">Sơ đồ ghế</div>
+        <div class="node__r">/admin/seat-configurations/:id</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node">
+        <div class="node__k">Bước 4</div>
+        <div class="node__t">Danh mục hãng bay</div>
+        <div class="node__r">/admin/airlines</div>
+      </div>
+      <div class="arrow"><svg width="22" height="12" viewBox="0 0 22 12" fill="none"><path d="M0 6h18M14 1.5L19 6l-5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+      <div class="node node--end">
+        <div class="node__k">Bước 5</div>
+        <div class="node__t">Thao tác hàng loạt</div>
+        <div class="node__r">Bulk toggle · Bulk delete</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. SITEMAP ============ -->
+<section class="sec">
+  <div class="sec__head">
+    <span class="sec__no">03 — SITEMAP</span>
+    <h2>Sơ đồ toàn bộ màn hình</h2>
+    <p>
+      Lấy trực tiếp từ <code style="font-family:ui-monospace,monospace;font-size:13px;background:#f1f4f7;padding:1px 5px;border-radius:4px">app.routes.ts</code> —
+      đây là danh sách chuẩn, không phải đề xuất.
+    </p>
+  </div>
+
+  <div class="map">
+
+    <div class="tree">
+      <div class="tree__h">Khu vực khách hàng <small>12 màn</small></div>
+      <ul>
+        <div class="grp">Công khai</div>
+        <li class="leaf leaf--done">Trang chủ <span class="leaf__r">/</span></li>
+        <li class="leaf leaf--done">Kết quả tìm chuyến <span class="leaf__r">/flights</span></li>
+        <li class="leaf leaf--done">Khuyến mãi <span class="leaf__r">/promotions</span></li>
+        <li class="leaf leaf--done">Chi tiết khuyến mãi <span class="leaf__r">/promotions/:id</span></li>
+        <li class="leaf leaf--done">Tin tức <span class="leaf__r">/news</span></li>
+        <li class="leaf leaf--done">Chi tiết tin tức <span class="leaf__r">/news/:id</span></li>
+
+        <div class="grp">Xác thực</div>
+        <li class="leaf leaf--done">Đăng nhập <span class="leaf__r">/login</span></li>
+        <li class="leaf leaf--done">Đăng ký <span class="leaf__r">/register</span></li>
+        <li class="leaf leaf--done">Quên mật khẩu <span class="leaf__r">/forgot-password</span></li>
+
+        <div class="grp">Tài khoản (cần đăng nhập)</div>
+        <li class="leaf leaf--done">Vé của tôi <span class="leaf__r">/account</span></li>
+        <li class="leaf leaf--done">Voucher của tôi <span class="leaf__r">/account/vouchers</span></li>
+        <li class="leaf leaf--done">Kho voucher <span class="leaf__r">/account/voucher-store</span></li>
+        <li class="leaf leaf--done">Hồ sơ cá nhân <span class="leaf__r">/account/profile</span></li>
+        <li class="leaf leaf--done">Đổi mật khẩu <span class="leaf__r">/account/security</span></li>
+
+        <div class="grp">Luồng đặt vé — chưa có màn</div>
+        <li class="leaf leaf--todo">Thông tin hành khách <span class="leaf__r">—</span></li>
+        <li class="leaf leaf--todo">Chọn ghế <span class="leaf__r">—</span></li>
+        <li class="leaf leaf--todo">Thanh toán <span class="leaf__r">—</span></li>
+        <li class="leaf leaf--todo">Vé điện tử <span class="leaf__r">—</span></li>
+        <li class="leaf leaf--todo">Chi tiết đặt chỗ <span class="leaf__r">—</span></li>
+      </ul>
+    </div>
+
+    <div class="tree">
+      <div class="tree__h">Khu vực vận hành <small>20 nhóm màn</small></div>
+      <ul>
+        <div class="grp">Tổng quan</div>
+        <li class="leaf leaf--done">Dashboard <span class="leaf__r">/admin/dashboard</span></li>
+
+        <div class="grp">Người dùng &amp; phân quyền</div>
+        <li class="leaf leaf--done">Người dùng <span class="leaf__r">/admin/users</span></li>
+        <li class="leaf leaf--done">Vai trò <span class="leaf__r">/admin/roles</span></li>
+        <li class="leaf leaf--done">Quyền <span class="leaf__r">/admin/permissions</span></li>
+
+        <div class="grp">Danh mục hàng không</div>
+        <li class="leaf leaf--done">Hãng hàng không <span class="leaf__r">/admin/airlines</span></li>
+        <li class="leaf leaf--done">Thành phố <span class="leaf__r">/admin/cities</span></li>
+        <li class="leaf leaf--done">Sân bay <span class="leaf__r">/admin/airports</span></li>
+        <li class="leaf leaf--done">Máy bay <span class="leaf__r">/admin/aircrafts</span></li>
+        <li class="leaf leaf--done">Loại ghế <span class="leaf__r">/admin/seat-types</span></li>
+        <li class="leaf leaf--done">Phụ thu nâng hạng <span class="leaf__r">/admin/seat-class-surcharges</span></li>
+        <li class="leaf leaf--done">Sơ đồ ghế <span class="leaf__r">/admin/seat-configurations/:id</span></li>
+
+        <div class="grp">Bán vé &amp; khuyến mãi</div>
+        <li class="leaf leaf--todo">Chuyến bay <span class="leaf__r">/admin/flights</span></li>
+        <li class="leaf leaf--todo">Đặt chỗ <span class="leaf__r">/admin/bookings</span></li>
+        <li class="leaf leaf--done">Khuyến mãi <span class="leaf__r">/admin/promotions</span></li>
+        <li class="leaf leaf--done">Voucher <span class="leaf__r">/admin/vouchers</span></li>
+
+        <div class="grp">Nội dung &amp; hệ thống</div>
+        <li class="leaf leaf--done">Tin tức <span class="leaf__r">/admin/news</span></li>
+        <li class="leaf leaf--done">Danh mục tin <span class="leaf__r">/admin/news-categories</span></li>
+        <li class="leaf leaf--done">Hồ sơ cá nhân <span class="leaf__r">/admin/profile</span></li>
+        <li class="leaf leaf--done">Design system <span class="leaf__r">/admin/style-guide</span></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <span><i style="background:var(--success)"></i>Đã có màn hình trong mã nguồn</span>
+    <span><i style="background:var(--warning)"></i>Chưa có màn — đang là route tạm</span>
+    <span><i style="background:var(--border)"></i>Chưa khai báo</span>
+  </div>
+</section>
+
+<footer class="foot">
+  <span><b>VinaFly</b> — Website Đặt vé máy bay nội địa</span>
+  <span>Quy trình &amp; Luồng thiết kế · v1.0 · 28/10/2026</span>
+</footer>
+
+</body>
+</html>

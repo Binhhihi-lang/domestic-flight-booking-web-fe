@@ -1,0 +1,258 @@
+<div class="wrap">
+  <app-page-header
+    title="Báo cáo & Thống kê"
+    subtitle="Phân tích doanh thu, cơ cấu hãng bay, trạng thái booking và hiệu quả từng tuyến bay"
+  >
+    <app-app-button variant="primary" size="sm" (clicked)="exportCsv()">
+      <mat-icon>download</mat-icon>
+      Xuất CSV
+    </app-app-button>
+  </app-page-header>
+
+  <!-- Thanh bộ lọc chuẩn .adm-filter--card -->
+  <section class="adm-filter adm-filter--card" aria-label="Bộ lọc báo cáo">
+    <div class="filter-top">
+      <div class="seg" role="tablist" aria-label="Chế độ báo cáo">
+        <button
+          type="button"
+          role="tab"
+          class="seg__btn"
+          [class.is-on]="mode() === 'revenue'"
+          [attr.aria-selected]="mode() === 'revenue'"
+          (click)="setMode('revenue')"
+        >
+          Doanh thu
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="seg__btn"
+          [class.is-on]="mode() === 'booking'"
+          [attr.aria-selected]="mode() === 'booking'"
+          (click)="setMode('booking')"
+        >
+          Booking
+        </button>
+      </div>
+
+      <div class="presets" role="group" aria-label="Khoảng thời gian nhanh">
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === 'day'"
+          (click)="applyPreset('day')"
+        >
+          Theo ngày
+        </button>
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === '7d'"
+          (click)="applyPreset('7d')"
+        >
+          7 ngày
+        </button>
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === '30d'"
+          (click)="applyPreset('30d')"
+        >
+          30 ngày
+        </button>
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === 'quarter'"
+          (click)="applyPreset('quarter')"
+        >
+          Quý
+        </button>
+        <button
+          type="button"
+          class="preset-btn"
+          [class.is-on]="activePreset() === 'year'"
+          (click)="applyPreset('year')"
+        >
+          Năm
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-fields">
+      <label class="field">
+        <span>Từ ngày</span>
+        <input
+          type="date"
+          [ngModel]="fromDate()"
+          (ngModelChange)="fromDate.set($event); onCustomDateChange()"
+        />
+      </label>
+
+      <label class="field">
+        <span>Đến ngày</span>
+        <input
+          type="date"
+          [ngModel]="toDate()"
+          (ngModelChange)="toDate.set($event); onCustomDateChange()"
+        />
+      </label>
+
+      <label class="field">
+        <span>Hãng khai thác</span>
+        <select
+          [ngModel]="selectedAirlineId()"
+          (ngModelChange)="selectedAirlineId.set($event ? +$event : null)"
+        >
+          <option [ngValue]="null">Tất cả hãng</option>
+          @for (a of airlines(); track a.id) {
+            <option [ngValue]="a.id">{{ a.airline_code }} — {{ a.airline_name }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Tuyến bay</span>
+        <select [ngModel]="routeFilter()" (ngModelChange)="routeFilter.set($event)">
+          <option value="">Tất cả tuyến</option>
+          @for (rt of routeOptions(); track rt.value) {
+            <option [value]="rt.value">{{ rt.label }}</option>
+          }
+        </select>
+      </label>
+
+      <app-app-button variant="primary" size="sm" (clicked)="loadReport()">
+        <mat-icon>assessment</mat-icon>
+        Xem báo cáo
+      </app-app-button>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state">Đang tổng hợp dữ liệu báo cáo...</div>
+  } @else if (report(); as r) {
+    <!-- 4 thẻ KPI thích ứng theo chế độ Doanh thu / Booking -->
+    <div class="kpi-grid">
+      @for (k of kpis(); track k.label; let idx = $index) {
+        <div class="kpi kpi--anim" [style.animation-delay.ms]="idx * 70">
+          <span class="kpi__label">{{ k.label }}</span>
+          <strong class="kpi__val tabular" [appCountUp]="k.numericValue" [countUpFormat]="k.format">
+            {{ k.value }}
+          </strong>
+          <small>{{ k.sub }}</small>
+        </div>
+      }
+    </div>
+
+    <!-- 2 biểu đồ cạnh nhau: Trái = Biểu đồ cột, Phải = Donut chart conic-gradient -->
+    <div class="rep-grid">
+      <app-app-card [title]="mode() === 'revenue' ? 'Doanh thu theo kỳ' : 'Booking theo kỳ'">
+        <div class="bars">
+          @for (b of chartBars(); track b.date; let idx = $index) {
+            <div class="bar" [title]="b.tooltip">
+              <span class="bar__val tabular">{{ b.displayVal }}</span>
+              <div class="bar__track">
+                <div
+                  class="bar__col bar__col--anim"
+                  [class.bar__col--peak]="b.isPeak"
+                  [style.height.%]="b.heightPercent"
+                  [style.animation-delay.ms]="idx * 45"
+                ></div>
+              </div>
+              <span class="bar__lbl">{{ b.day_label }}</span>
+            </div>
+          }
+        </div>
+      </app-app-card>
+
+      <app-app-card
+        [title]="
+          mode() === 'revenue' ? 'Tỷ trọng doanh thu theo hãng' : 'Cơ cấu trạng thái booking'
+        "
+      >
+        @if (donutSlices().length === 0) {
+          <p class="empty-note">Chưa có dữ liệu phân bổ cho khoảng thời gian đã chọn.</p>
+        } @else {
+          <div class="donut-wrap">
+            <div class="donut" [style.background]="donutGradient()" role="img" aria-label="Biểu đồ tỷ trọng">
+              <div class="donut__hole">
+                <span class="donut__hole-lbl">
+                  {{ mode() === 'revenue' ? 'Tổng doanh thu' : 'Tổng booking' }}
+                </span>
+                <strong class="donut__hole-val tabular">
+                  {{
+                    mode() === 'revenue'
+                      ? formatCompactVnd(r.revenue_total)
+                      : r.bookings_total.toLocaleString('vi-VN')
+                  }}
+                </strong>
+              </div>
+            </div>
+
+            <ul class="donut-legend">
+              @for (s of donutSlices(); track s.label) {
+                <li>
+                  <span class="donut-dot" [style.background]="s.colorVar"></span>
+                  <div class="donut-leg-txt">
+                    <span class="donut-leg-lbl">{{ s.label }}</span>
+                    <strong class="donut-leg-val tabular">{{ s.detail }}</strong>
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </app-app-card>
+    </div>
+
+    <!-- Bảng hiệu quả tuyến bay -->
+    <app-app-card title="Hiệu quả khai thác tuyến bay">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tuyến</th>
+              <th class="num">Chuyến khai thác</th>
+              <th class="num">Hành khách</th>
+              <th>Lấp đầy</th>
+              <th class="num">Doanh thu</th>
+              <th class="col-arrow" aria-label="Xem đơn đặt vé"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (route of r.top_routes; track route.route; let idx = $index) {
+              <tr
+                class="tbl-row-link"
+                tabindex="0"
+                (click)="goToRouteBookings()"
+                (keydown.enter)="goToRouteBookings()"
+              >
+                <td class="tabular">{{ idx + 1 }}</td>
+                <td><b>{{ route.route }}</b></td>
+                <td class="num tabular">
+                  {{ route.flights_count !== undefined ? route.flights_count.toLocaleString('vi-VN') : '—' }}
+                </td>
+                <td class="num tabular">
+                  {{ route.pax_count !== undefined ? route.pax_count.toLocaleString('vi-VN') : '—' }}
+                </td>
+                <td>
+                  <div class="fill-cell">
+                    <div class="fill-bar" aria-hidden="true">
+                      <div class="fill-bar__val" [style.width.%]="route.load_factor_percent"></div>
+                    </div>
+                    <span class="tabular">{{ route.load_factor_percent.toFixed(1) }}%</span>
+                  </div>
+                </td>
+                <td class="num tabular"><strong>{{ formatVnd(route.revenue) }}</strong></td>
+                <td class="col-arrow">
+                  <mat-icon class="row-arrow" aria-hidden="true">chevron_right</mat-icon>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-app-card>
+  }
+</div>

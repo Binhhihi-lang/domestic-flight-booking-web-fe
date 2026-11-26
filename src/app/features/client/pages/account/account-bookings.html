@@ -1,74 +1,135 @@
-<!-- ===== Booking sắp tới ===== -->
-<h2 class="sec-t">Booking sắp tới</h2>
-<p class="sec-s">2 booking đang hoạt động</p>
-
-@for (t of tickets; track t.code) {
-  <article class="ticket">
-    <div class="ticket__main">
-      <div class="ticket__code tabular">MÃ ĐẶT CHỖ · {{ t.code }}</div>
-      <div class="ticket__route">
-        <div>
-          <div class="ticket__pt tabular">{{ t.departTime }}</div>
-          <div class="ticket__pn">{{ t.departPlace }}</div>
-        </div>
-        <div class="ticket__arrow"><mat-icon>trending_flat</mat-icon></div>
-        <div>
-          <div class="ticket__pt tabular">{{ t.arriveTime }}</div>
-          <div class="ticket__pn">{{ t.arrivePlace }}</div>
-        </div>
-      </div>
-      <div class="ticket__meta">
-        <span><mat-icon>calendar_month</mat-icon> {{ t.date }}</span>
-        <span><mat-icon>flight</mat-icon> {{ t.flight }}</span>
-        <span><mat-icon>person</mat-icon> {{ t.passengers }}</span>
-        <span><mat-icon>event_seat</mat-icon> {{ t.seat }}</span>
-      </div>
+<section class="mb-page">
+  <header class="mb-head">
+    <div>
+      <h1>Vé của tôi</h1>
+      <p class="mb-sub">Theo dõi trạng thái đặt chỗ, xem vé điện tử hoặc yêu cầu hủy vé</p>
     </div>
+    <div class="mb-head__actions">
+      <a class="mb-lookup-link" routerLink="/lookup">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <span>Tra cứu đặt chỗ</span>
+      </a>
+      <a routerLink="/flights">
+        <app-app-button size="sm" variant="primary">Đặt chuyến mới</app-app-button>
+      </a>
+    </div>
+  </header>
 
-    <div class="ticket__side">
-      <app-status-badge [tone]="t.statusTone" [label]="t.statusLabel" />
-      <div class="ticket__total">
-        <div class="ticket__total-l">Tổng thanh toán</div>
-        <div class="ticket__total-v tabular">{{ t.total }}</div>
-      </div>
-      <button class="btn" [class]="'btn--' + t.action.variant" type="button">
-        {{ t.action.label }}
+  <div class="mb-tabs" role="tablist" aria-label="Lọc theo trạng thái đơn">
+    @for (t of tabs; track t.key) {
+      <button
+        type="button"
+        role="tab"
+        class="mb-tab"
+        [attr.aria-selected]="activeStatus() === t.key"
+        [class.mb-tab--active]="activeStatus() === t.key"
+        (click)="selectTab(t.key)"
+      >
+        <span>{{ t.label }}</span>
+        <span class="mb-tab__cnt tabular">{{ tabCounts()[t.key] }}</span>
       </button>
-      @if (t.note) {
-        <div class="ticket__note">{{ t.note }}</div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="mb-list">
+      <app-skeleton-block height="148px" />
+      <app-skeleton-block height="148px" />
+    </div>
+  } @else if (bookings().length === 0) {
+    <app-empty-state
+      icon="confirmation_number"
+      message="Chưa có đơn đặt chỗ ở trạng thái này"
+      hint="Tìm chuyến bay nội địa và đặt vé ngay hôm nay"
+    />
+  } @else {
+    <div class="mb-list">
+      @for (b of bookings(); track b.id) {
+        <article class="mb-card">
+          <div class="mb-card__top">
+            <div class="mb-code tabular">
+              <strong>{{ b.order_code || ('DH-' + b.id) }}</strong>
+              @if (b.status === 'CONFIRMED' && b.booking_code) {
+                <span class="mb-pnr">PNR: {{ b.booking_code }}</span>
+              }
+              <span class="mb-muted">
+                · {{ b.passenger_count ?? b.passengers?.length ?? 0 }} hành khách
+              </span>
+              @if (b.trip_type === 'ROUND_TRIP') {
+                <span class="mb-muted">· Khứ hồi</span>
+              }
+            </div>
+            <app-status-badge [tone]="statusTone(b.status)" [label]="statusLabel(b.status)" />
+          </div>
+
+          @if (b.segments[0]; as seg) {
+            <div class="mb-body">
+              <div class="mb-route">
+                <div class="mb-point">
+                  <div class="mb-time tabular">{{ formatTime(seg.scheduled_departure) }}</div>
+                  <div class="mb-airport">{{ seg.departure_airport_code }}</div>
+                  <div class="mb-city">{{ seg.departure_city_name }}</div>
+                </div>
+
+                <div class="mb-line">
+                  <div class="mb-dur">{{ formatDuration(seg) }}</div>
+                  <div class="mb-track" aria-hidden="true">
+                    <span class="mb-dot"></span>
+                    <span class="mb-bar"></span>
+                    <mat-icon>flight</mat-icon>
+                    <span class="mb-bar"></span>
+                    <span class="mb-dot"></span>
+                  </div>
+                  <div class="mb-flight-info">
+                    {{ seg.flight_number }} · {{ seg.airline_name }} · {{ seg.fare_class_name }}
+                  </div>
+                </div>
+
+                <div class="mb-point mb-point--right">
+                  <div class="mb-time tabular">{{ formatTime(seg.scheduled_arrival) }}</div>
+                  <div class="mb-airport">{{ seg.arrival_airport_code }}</div>
+                  <div class="mb-city">{{ seg.arrival_city_name }}</div>
+                </div>
+              </div>
+
+              <div class="mb-price-box">
+                <div class="mb-date">
+                  <mat-icon aria-hidden="true">calendar_today</mat-icon>
+                  <span>{{ formatDate(seg.scheduled_departure) }}</span>
+                </div>
+                <div class="mb-total-lbl">Tổng thanh toán</div>
+                <div class="mb-total-val tabular">{{ formatMoney(b.total_amount) }}</div>
+              </div>
+            </div>
+          }
+
+          <footer class="mb-card__foot">
+            <a [routerLink]="['/account/bookings', b.id]" class="mb-link">
+              <span>Xem chi tiết</span>
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+            </a>
+            <div class="mb-actions">
+              @if (b.status === 'PENDING_PAYMENT') {
+                <a [routerLink]="['/booking/payment']" [queryParams]="{ bookingId: b.id }">
+                  <app-app-button size="sm" variant="primary">Thanh toán ngay</app-app-button>
+                </a>
+              } @else if (b.status === 'CONFIRMED') {
+                <a [routerLink]="['/booking/confirmation']" [queryParams]="{ bookingId: b.id }">
+                  <app-app-button size="sm" variant="secondary">Xem vé điện tử</app-app-button>
+                </a>
+              }
+            </div>
+          </footer>
+        </article>
       }
     </div>
-  </article>
-}
+  }
 
-<!-- ===== Voucher ===== -->
-<h2 class="sec-t spaced">Voucher của tôi</h2>
-<p class="sec-s">3 voucher khả dụng · 1 đã dùng</p>
-
-@for (v of vouchers; track v.name) {
-  <article class="voucher" [class.voucher--dim]="v.dimmed">
-    <div class="voucher__left" [style.background]="v.gradient">
-      <div class="voucher__val">{{ v.value }}<small>{{ v.unit }}</small></div>
-      <div class="voucher__type">{{ v.type }}</div>
-    </div>
-
-    <div class="voucher__bd">
-      <div class="voucher__nm">{{ v.name }}</div>
-      <p class="voucher__ds">{{ v.description }}</p>
-      <div class="voucher__mt">
-        @for (m of v.meta; track m) {
-          <span>{{ m }}</span>
-        }
-      </div>
-    </div>
-
-    <div class="voucher__side">
-      <app-status-badge [tone]="v.statusTone" [label]="v.statusLabel" />
-      @if (v.action) {
-        <button class="btn btn--secondary btn--sm" type="button" [disabled]="v.action.disabled">
-          {{ v.action.label }}
-        </button>
-      }
-    </div>
-  </article>
-}
+  <aside class="mb-support" aria-label="Hỗ trợ đặt chỗ">
+    <mat-icon aria-hidden="true">support_agent</mat-icon>
+    <span>
+      Cần hỗ trợ đổi lịch bay, hoàn vé hoặc xuất hóa đơn? Liên hệ tổng đài
+      <strong class="tabular">1900 1234</strong> (24/7).
+    </span>
+  </aside>
+</section>
