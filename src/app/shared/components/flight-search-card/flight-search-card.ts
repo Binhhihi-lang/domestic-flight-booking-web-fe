@@ -104,6 +104,7 @@ export class FlightSearchCard implements OnInit {
   protected readonly toSignal = signal('SGN');
   protected from = 'HAN';
   protected to = 'SGN';
+  protected readonly minDate = offsetLocalDate(0);
   protected departDate = offsetLocalDate(1);
   protected returnDate = offsetLocalDate(4);
 
@@ -209,8 +210,12 @@ export class FlightSearchCard implements OnInit {
       this.to = this.pickAlternativeAirport(this.from);
       this.toSignal.set(this.to);
     }
-    if (this.initialDepartDate()) this.departDate = this.initialDepartDate();
-    if (this.initialReturnDate()) this.returnDate = this.initialReturnDate();
+    if (this.initialDepartDate()) {
+      this.departDate = this.initialDepartDate() < this.minDate ? this.minDate : this.initialDepartDate();
+    }
+    if (this.initialReturnDate()) {
+      this.returnDate = this.initialReturnDate() < this.departDate ? this.departDate : this.initialReturnDate();
+    }
     if (this.initialAdults() >= 1) this.adults.set(this.initialAdults());
     if (this.initialChildren() >= 0) this.children.set(this.initialChildren());
     if (this.initialInfants() >= 0) {
@@ -372,13 +377,37 @@ export class FlightSearchCard implements OnInit {
     this.closeAirportDropdown();
   }
 
+  protected onDepartDateChange(value: string): void {
+    this.departDate = value && value >= this.minDate ? value : this.minDate;
+    if (this.returnDate && this.returnDate < this.departDate) {
+      this.returnDate = this.departDate;
+    }
+  }
+
+  protected onReturnDateChange(value: string): void {
+    const minRet = this.departDate && this.departDate >= this.minDate ? this.departDate : this.minDate;
+    this.returnDate = value && value >= minRet ? value : minRet;
+  }
+
   protected submit(): void {
+    const safeDepart =
+      this.departDate && this.departDate >= this.minDate ? this.departDate : this.minDate;
+    const safeReturn =
+      this.tripType() === 'round'
+        ? this.returnDate && this.returnDate >= safeDepart
+          ? this.returnDate
+          : safeDepart
+        : '';
+    this.departDate = safeDepart;
+    if (this.tripType() === 'round') {
+      this.returnDate = safeReturn;
+    }
     this.searched.emit({
       tripType: this.tripType(),
       from: this.from,
       to: this.to,
-      departDate: this.departDate || offsetLocalDate(1),
-      returnDate: this.tripType() === 'round' ? (this.returnDate || offsetLocalDate(4)) : '',
+      departDate: safeDepart,
+      returnDate: safeReturn,
       passengers: {
         adults: this.adults(),
         children: this.children(),

@@ -5,6 +5,7 @@ import { catchError, of } from 'rxjs';
 import { BookingDetail, ETicketItem } from '@core/models/booking.model';
 import { BookingFlowService } from '@core/services/booking-flow.service';
 import { CheckoutService } from '@core/services/checkout.service';
+import { QrCodeComponent } from '@shared/components/qr-code/qr-code';
 import { environment } from '@env/environment';
 
 /**
@@ -19,7 +20,7 @@ import { environment } from '@env/environment';
 @Component({
   selector: 'app-booking-confirmation',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, MatIconModule],
+  imports: [RouterLink, MatIconModule, QrCodeComponent],
   templateUrl: './booking-confirmation.html',
   styleUrl: './booking-confirmation.css',
 })
@@ -103,6 +104,14 @@ export class BookingConfirmation implements OnInit {
     }
   }
 
+  protected verifyUrlOf(ticketCode: string): string {
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'http://localhost:4200';
+    return `${origin}/verify-ticket?code=${encodeURIComponent(ticketCode)}`;
+  }
+
   protected formatVnd(amount: number | null | undefined): string {
     return `${Math.round(amount ?? 0).toLocaleString('vi-VN')}đ`;
   }
@@ -127,5 +136,17 @@ export class BookingConfirmation implements OnInit {
     if (type === 'ADULT') return 'Người lớn';
     if (type === 'CHILD') return 'Trẻ em';
     return 'Em bé';
+  }
+
+  protected baggageSummaryOf(passengerId: number, passengerType: string): string {
+    if (passengerType === 'INFANT') {
+      return 'Đi cùng người lớn';
+    }
+    const items = (this.booking()?.baggages ?? []).filter((x) => x.passenger_id === passengerId);
+    if (items.length === 0) {
+      return '7kg xách tay';
+    }
+    const totalKg = items.reduce((sum, x) => sum + (x.weight_kg || 0) * (x.quantity || 1), 0);
+    return totalKg > 0 ? `7kg xách tay + ${totalKg}kg ký gửi` : '7kg xách tay + hành lý ký gửi';
   }
 }

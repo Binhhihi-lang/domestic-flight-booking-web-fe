@@ -66,9 +66,21 @@
               @for (t of tickets(); track t.id) {
                 <article class="boarding" data-testid="eticket-card">
                   <header class="boarding__head">
-                    <div>
-                      <span class="boarding__airline">{{ t.airline_name }}</span>
-                      <b class="boarding__flight">{{ t.flight_number }}</b>
+                    <div class="boarding__brand">
+                      @if (t.airline_logo_url) {
+                        <img
+                          class="boarding__logo"
+                          [src]="t.airline_logo_url"
+                          [alt]="t.airline_name"
+                          loading="lazy"
+                        />
+                      } @else {
+                        <span class="boarding__badge" aria-hidden="true">{{ t.airline_code }}</span>
+                      }
+                      <div>
+                        <span class="boarding__airline">{{ t.airline_name }}</span>
+                        <b class="boarding__flight">{{ t.flight_number }}</b>
+                      </div>
                     </div>
                     <span class="boarding__code tabular">Số vé: {{ t.ticket_code }}</span>
                   </header>
@@ -78,6 +90,7 @@
                       <div class="boarding__time tabular">{{ formatTime(t.scheduled_departure) }}</div>
                       <div class="boarding__airport">{{ t.departure_airport_code }}</div>
                       <div class="boarding__city">{{ t.departure_city_name }}</div>
+                      <div class="boarding__terminal">Nhà ga Nội địa (T1)</div>
                     </div>
                     <div class="boarding__mid">
                       <span>{{ formatDate(t.scheduled_departure) }}</span>
@@ -88,23 +101,44 @@
                       <div class="boarding__time tabular">{{ formatTime(t.scheduled_arrival) }}</div>
                       <div class="boarding__airport">{{ t.arrival_airport_code }}</div>
                       <div class="boarding__city">{{ t.arrival_city_name }}</div>
+                      <div class="boarding__terminal">Nhà ga Nội địa (T1)</div>
                     </div>
                   </div>
 
                   <footer class="boarding__foot">
-                    <div>
-                      <small>Hành khách</small>
-                      <b>{{ t.passenger_name }}</b>
-                      <span>({{ passengerTypeLabel(t.passenger_type) }})</span>
+                    <div class="boarding__meta">
+                      <div>
+                        <small>Hành khách</small>
+                        <b>{{ t.passenger_name }}</b>
+                        <span>({{ passengerTypeLabel(t.passenger_type) }})</span>
+                      </div>
+                      <div>
+                        <small>Mã PNR</small>
+                        <b>{{ t.pnr_code }}</b>
+                      </div>
+                      <div>
+                        <small>Số ghế</small>
+                        <b>{{ t.seat_code || 'Đi cùng người lớn' }}</b>
+                      </div>
+                      <div>
+                        <small>Hành lý</small>
+                        <b>{{ baggageSummaryOf(t.passenger_id, t.passenger_type) }}</b>
+                      </div>
                     </div>
-                    <div>
-                      <small>Mã PNR</small>
-                      <b>{{ t.pnr_code }}</b>
-                    </div>
-                    <div>
-                      <small>Số ghế</small>
-                      <b>{{ t.seat_code || 'Đi cùng người lớn' }}</b>
-                    </div>
+                    <a
+                      class="boarding__qr"
+                      [routerLink]="['/verify-ticket']"
+                      [queryParams]="{ code: t.ticket_code }"
+                      title="Quét hoặc bấm để xác thực vé điện tử"
+                      data-testid="eticket-qr-link"
+                    >
+                      <app-qr-code
+                        [value]="verifyUrlOf(t.ticket_code)"
+                        [size]="76"
+                        [alt]="'Mã QR xác thực vé ' + t.ticket_code"
+                      />
+                      <small>Quét xác thực</small>
+                    </a>
                   </footer>
                 </article>
               }
@@ -139,10 +173,14 @@
 
         @if (booking(); as b) {
           <section class="card summary">
-            <h3>Tóm tắt thanh toán</h3>
+            <h3><mat-icon>receipt_long</mat-icon> Chi tiết giá vé &amp; thanh toán</h3>
             <div class="summary__row">
               <span>Mã đơn hàng</span>
-              <b>{{ b.order_code || ('DH-' + b.id) }}</b>
+              <b class="tabular">{{ b.order_code || ('DH-' + b.id) }}</b>
+            </div>
+            <div class="summary__row">
+              <span>Trạng thái</span>
+              <b class="summary__paid">{{ b.status === 'CONFIRMED' ? 'Đã thanh toán' : b.status }}</b>
             </div>
             <div class="summary__row">
               <span>Khách hàng</span>
@@ -152,6 +190,31 @@
               <span>Email</span>
               <b>{{ b.customer_email }}</b>
             </div>
+            <div class="summary__divider"></div>
+            <div class="summary__row">
+              <span>Giá vé (bao gồm thuế, phí)</span>
+              <b class="tabular">{{ formatVnd(b.fare_amount) }}</b>
+            </div>
+            <div class="summary__row">
+              <span>Phụ thu chọn ghế</span>
+              <b class="tabular">{{ formatVnd(b.seat_surcharge_amount) }}</b>
+            </div>
+            <div class="summary__row">
+              <span>Hành lý ký gửi</span>
+              <b class="tabular">{{ formatVnd(b.baggage_amount) }}</b>
+            </div>
+            @if (b.promotion_discount_amount > 0) {
+              <div class="summary__row summary__row--discount">
+                <span>Khuyến mãi tự động</span>
+                <b class="tabular">−{{ formatVnd(b.promotion_discount_amount) }}</b>
+              </div>
+            }
+            @if (b.voucher_discount_amount > 0) {
+              <div class="summary__row summary__row--discount">
+                <span>Giảm giá Voucher</span>
+                <b class="tabular">−{{ formatVnd(b.voucher_discount_amount) }}</b>
+              </div>
+            }
             <div class="summary__row summary__row--total">
               <span>Tổng tiền đã thanh toán</span>
               <b class="tabular">{{ formatVnd(b.total_amount) }}</b>

@@ -7,6 +7,7 @@ import { catchError, of } from 'rxjs';
 import { BookingDetail, BookingStatus, ETicketItem } from '@core/models/booking.model';
 import { BookingFlowService } from '@core/services/booking-flow.service';
 import { CheckoutService } from '@core/services/checkout.service';
+import { QrCodeComponent } from '@shared/components/qr-code/qr-code';
 import { AppAlert } from '@shared/ui/app-alert/app-alert';
 import { AppButton } from '@shared/ui/app-button/app-button';
 import { SkeletonBlock } from '@shared/ui/skeleton-block/skeleton-block';
@@ -24,7 +25,7 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
 @Component({
   selector: 'app-booking-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, MatIconModule, AppAlert, AppButton, StatusBadge, SkeletonBlock],
+  imports: [FormsModule, RouterLink, MatIconModule, QrCodeComponent, AppAlert, AppButton, StatusBadge, SkeletonBlock],
   template: `
     <section class="bd-page" [class.wrap]="isAdminMode()">
       <header class="bd-head">
@@ -132,6 +133,19 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
                             <span><b>{{ t.passenger_name }}</b> ({{ passengerTypeLabel(t.passenger_type) }})</span>
                             <span class="bd-muted">PNR: {{ t.pnr_code }} · Ghế: {{ t.seat_code || 'Đi cùng người lớn' }} · {{ t.fare_class_name }}</span>
                           </div>
+                          <a
+                            class="bd-eticket__qr"
+                            [routerLink]="['/verify-ticket']"
+                            [queryParams]="{ code: t.ticket_code }"
+                            title="Quét hoặc bấm để xác thực vé điện tử"
+                          >
+                            <app-qr-code
+                              [value]="verifyUrlOf(t.ticket_code)"
+                              [size]="68"
+                              [alt]="'Mã QR xác thực vé ' + t.ticket_code"
+                            />
+                            <small>Xác thực QR</small>
+                          </a>
                         </div>
                       </article>
                     }
@@ -641,6 +655,28 @@ const moneyFmt = new Intl.NumberFormat('vi-VN');
         align-items: flex-start;
       }
     }
+    .bd-eticket__qr {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 5px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      text-decoration: none;
+      color: var(--color-ink-muted);
+    }
+    .bd-eticket__qr:hover {
+      border-color: var(--color-primary-bright);
+      color: var(--color-primary);
+    }
+    .bd-eticket__qr small {
+      font-size: 10px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
     @media print {
       .bd-page {
         padding: 0 !important;
@@ -785,6 +821,14 @@ export class BookingDetailPage {
     if (typeof window !== 'undefined') {
       window.print();
     }
+  }
+
+  protected verifyUrlOf(ticketCode: string): string {
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'http://localhost:4200';
+    return `${origin}/verify-ticket?code=${encodeURIComponent(ticketCode)}`;
   }
 
   protected seatOf(b: BookingDetail, paxId: number): string {

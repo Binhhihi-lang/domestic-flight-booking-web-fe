@@ -123,7 +123,7 @@
           name="cabin"
           value=""
           [checked]="selectedCabin() === ''"
-          (change)="selectedCabin.set('')"
+          (change)="selectCabin('')"
         />
         <span>Tất cả khoang</span>
       </label>
@@ -133,7 +133,7 @@
           name="cabin"
           value="ECONOMY"
           [checked]="selectedCabin() === 'ECONOMY'"
-          (change)="selectedCabin.set('ECONOMY')"
+          (change)="selectCabin('ECONOMY')"
         />
         <span>Phổ thông</span>
       </label>
@@ -143,7 +143,7 @@
           name="cabin"
           value="PREMIUM_ECONOMY"
           [checked]="selectedCabin() === 'PREMIUM_ECONOMY'"
-          (change)="selectedCabin.set('PREMIUM_ECONOMY')"
+          (change)="selectCabin('PREMIUM_ECONOMY')"
         />
         <span>Phổ thông đặc biệt</span>
       </label>
@@ -153,7 +153,7 @@
           name="cabin"
           value="BUSINESS"
           [checked]="selectedCabin() === 'BUSINESS'"
-          (change)="selectedCabin.set('BUSINESS')"
+          (change)="selectCabin('BUSINESS')"
         />
         <span>Thương gia</span>
       </label>
