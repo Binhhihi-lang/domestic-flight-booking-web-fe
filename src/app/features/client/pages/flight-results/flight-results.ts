@@ -49,6 +49,13 @@ const AIRLINE_COLORS: Record<string, string> = {
   VU: 'var(--color-warning)',
 };
 
+function todayIso(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
 function defaultTomorrowIso(): string {
   const d = new Date(Date.now() + 86_400_000);
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -203,11 +210,18 @@ export class FlightResults implements OnInit {
   });
 
   protected readonly priceBounds = computed(() => {
-    const prices = this.flights().map((f) => this.lowestPriceOf(f));
-    if (prices.length === 0) return { min: 500_000, max: 5_000_000 };
+    const cabin = this.selectedCabin();
+    const matching = cabin
+      ? this.flights().filter((f) => f.fares.some((fc) => fc.seat_class === cabin))
+      : this.flights();
+    const prices = matching.map((f) => this.lowestPriceOf(f));
+    if (prices.length === 0) return { min: 500_000, max: 10_000_000 };
+    const step = 50_000;
+    const min = Math.floor(Math.min(...prices) / step) * step;
+    const rawMax = Math.ceil(Math.max(...prices) / step) * step;
     return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
+      min,
+      max: rawMax > min ? rawMax : min + step,
     };
   });
 
@@ -249,8 +263,11 @@ export class FlightResults implements OnInit {
       const tt = (q.get('tripType') as TripType) || 'oneway';
       const from = (q.get('from') || 'HAN').trim().toUpperCase();
       const to = (q.get('to') || 'SGN').trim().toUpperCase();
-      const depart = q.get('depart') || defaultTomorrowIso();
-      const ret = q.get('returnDate') || '';
+      const minToday = todayIso();
+      const rawDepart = q.get('depart') || defaultTomorrowIso();
+      const depart = rawDepart < minToday ? minToday : rawDepart;
+      const rawRet = q.get('returnDate') || '';
+      const ret = rawRet && rawRet < depart ? depart : rawRet;
       const adults = Math.max(1, Number(q.get('adults') || 1));
       const children = Math.max(0, Number(q.get('children') || 0));
       const infants = Math.max(0, Math.min(Number(q.get('infants') || 0), adults));
@@ -295,8 +312,7 @@ export class FlightResults implements OnInit {
         next: (res) => {
           const items = res.data ?? [];
           this.flights.set(items);
-          const maxP = items.length > 0 ? Math.max(...items.map((f) => this.lowestPriceOf(f))) : 10_000_000;
-          this.maxPriceFilter.set(maxP);
+          this.maxPriceFilter.set(this.priceBounds().max);
           this.loading.set(false);
         },
         error: (err: Error) => {
@@ -344,6 +360,11 @@ export class FlightResults implements OnInit {
     if (next.has(key)) next.delete(key);
     else next.add(key);
     this.selectedTimeSlots.set(next);
+  }
+
+  protected selectCabin(cabin: string): void {
+    this.selectedCabin.set(cabin);
+    this.maxPriceFilter.set(this.priceBounds().max);
   }
 
   protected resetFilters(): void {

@@ -6,6 +6,7 @@ import { ApiResponse } from '@core/models/api-response.model';
 import {
   BookingDetail,
   ETicketItem,
+  ETicketVerifyResult,
   PaymentCreateRequest,
   PaymentTransaction,
 } from '@core/models/booking.model';
@@ -60,6 +61,13 @@ export class CheckoutService {
   getETickets(bookingId: number): Observable<ApiResponse<ETicketItem[]>> {
     return this.http.get<ApiResponse<ETicketItem[]>>(
       `${this.baseUrl}/bookings/${bookingId}/e-tickets`,
+    );
+  }
+
+  verifyPublicETicket(ticketCode: string): Observable<ApiResponse<ETicketVerifyResult>> {
+    return this.http.get<ApiResponse<ETicketVerifyResult>>(
+      `${this.baseUrl}/public/e-tickets/verify`,
+      { params: { ticket_code: ticketCode } },
     );
   }
 }

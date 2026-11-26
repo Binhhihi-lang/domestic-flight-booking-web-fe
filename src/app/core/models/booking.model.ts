@@ -178,6 +178,7 @@ export interface ETicketItem {
   flight_number: string;
   airline_code: string;
   airline_name: string;
+  airline_logo_url?: string | null;
   departure_airport_code: string;
   departure_airport_name: string;
   departure_city_name: string;
@@ -198,6 +199,28 @@ export interface ETicketItem {
   seat_code: string | null;
 }
 
+export interface ETicketVerifyResult {
+  ticket_code: string;
+  pnr_code: string;
+  status: 'ISSUED' | 'CANCELLED' | string;
+  issued_at: string;
+  airline_code: string;
+  airline_name: string;
+  airline_logo_url?: string | null;
+  flight_number: string;
+  departure_airport_code: string;
+  departure_city_name: string | null;
+  arrival_airport_code: string;
+  arrival_city_name: string | null;
+  scheduled_departure: string;
+  scheduled_arrival: string;
+  fare_class_name: string;
+  seat_class: string;
+  passenger_name: string;
+  passenger_type: 'ADULT' | 'CHILD' | 'INFANT' | string;
+  seat_code: string | null;
+}
+
 /** Tóm tắt một chặng trong danh sách đơn đặt chỗ (`BookingSummaryResponse`). */
 export interface BookingSegmentSummary {
   segment_id: number;
@@ -206,6 +229,7 @@ export interface BookingSegmentSummary {
   flight_number: string;
   airline_code: string;
   airline_name: string;
+  airline_logo_url?: string | null;
   departure_airport_code: string;
   departure_city_name: string;
   arrival_airport_code: string;

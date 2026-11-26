@@ -1,9 +1,9 @@
 export const environment = {
   production: true,
   /**
-   * Đường dẫn TƯƠNG ĐỐI: trình duyệt gọi cùng origin đang mở trang, nginx
-   * proxy /api → backend:8080. Nhờ vậy chạy được ở bất kỳ host/cổng nào
-   * (localhost, IP LAN, domain) mà không phải sửa code hay rebuild.
+   * Dùng đường dẫn tương đối '/api' để Nginx trên VPS (hoặc trong container)
+   * vừa phục vụ Frontend vừa proxy /api/* sang Backend (http://127.0.0.1:8089).
+   * Cùng origin nên chạy trực tiếp bằng IP VPS (http://103.74.100.134) hay tên miền đều được.
    */
   apiBaseUrl: '/api',
   useMock: false,
